@@ -1,12 +1,12 @@
 [submodule "glfw"]
-	path = glfw
+	path = submodules/glfw
 	url = https://github.com/glfw/glfw.git
 [submodule "glad"]
-	path = glad
+	path = submodules/glad
 	url = https://github.com/Dav1dde/glad.git
 [submodule "glm"]
-	path = glm
+	path = submodules/glm
 	url = https://github.com/g-truc/glm.git
 [submodule "AntTweakBar"]
-	path = AntTweakBar
+	path = submodules/AntTweakBar
 	url = https://github.com/ciechowoj/AntTweakBar.git
