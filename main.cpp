@@ -1,18 +1,24 @@
 #include <glm/glm.hpp>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <test.hpp>
- 
+
 int main(void)
-{ 
+{
     GLFWwindow* window;    
  
     /* Initialize the library */
     if (!glfwInit())
         return -1;
 
+    
     /* Create a windowed mode window and its OpenGL context */
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+
     if (!window)
     {
         glfwTerminate();
@@ -22,11 +28,19 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    gladLoadGL();
+
+    printf("%d %d\n", GLVersion.major, GLVersion.minor);
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
+    	glClearColor(1.f, 0.f, 0.f, 1.f);
 
+
+
+    	glClear(GL_COLOR_BUFFER_BIT);
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
