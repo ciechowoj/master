@@ -1,41 +1,52 @@
 
+INCLUDE_DIRS = \
+	-Isubmodules/AntTweakBar/include \
+	-Isubmodules/glfw/include \
+	-Isubmodules/glm \
+	-I.
+
+LIBRARY_DIRS = \
+	-Lbuild/glfw/src
+
 CC = g++
-CC_FLAGS = -g -O0 -w -Wall -std=c++11 -Iinclude -Igoogletest/googletest/include
-CC_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/$*.Td
-POST_CC = mv -f build/$*.Td build/$*.d
+CC_FLAGS = -g -O0 -w -Wall -std=c++11 $(INCLUDE_DIRS)
 
-HASTE_HEADERS = $(wildcard *.hpp)
-HASTE_SOURCES = $(wildcard *.cpp)
-HASTE_OBJECTS = $(HASTE_SOURCES:%.cpp=build/%.o)
+MAIN_HEADERS = $(wildcard *.hpp)
+MAIN_SOURCES = $(wildcard *.cpp)
+MAIN_OBJECTS = $(MAIN_SOURCES:%.cpp=build/master/%.o)
+MAIN_LIBS = -lglfw3 -lX11 -lXrandr -lXi -lXxf86vm -lXcursor -lXinerama -ldl -lpthread
+MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td
+MAIN_POST = mv -f build/master/$*.Td build/master/$*.d
 
-TEST_SOURCES = $(wildcard tests/*.cpp)
-TEST_OBJECTS = $(TEST_SOURCES:%.cpp=build/%.o)
+all: master
 
-GTEST_LIBS = -lgtest_main -lgtest -pthread
-GTEST_LIBS_DIR = -Lgoogletest/googletest/build
+master: build/master/master.bin
 
-run: build
-	./build/test.bin
+build/master/master.bin: $(MAIN_OBJECTS) build/glfw/src/libglfw3.a
+	$(CC) $(MAIN_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/master.bin
 
-build: build/libformat.a build/test.bin;
+build/master/%.o: %.cpp build/master/%.d build/master/sentinel
+	$(CC) -c $(MAIN_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@
+	$(MAIN_POST)
 
-build/test.bin: $(TEST_OBJECTS) build/libformat.a
-	$(CC) $(TEST_OBJECTS) $(GTEST_LIBS_DIR) $(GTEST_LIBS) -Lbuild -lformat -o build/test.bin
+master_dir: build/master/sentinel
 
-build/libformat.a: $(HASTE_OBJECTS)
-	ar rcs build/libformat.a $(HASTE_OBJECTS)
+build/master/sentinel:
+	mkdir -p build
+	mkdir -p build/master
+	touch build/master/sentinel
 
-build/%.o : %.cpp build/%.d
-	$(CC) -c $(CC_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@
-	$(POST_CC)
+build/master/%.d: ;
 
-build/tests/%.o : tests/%.cpp build/tests/%.d
-	$(CC) -c $(CC_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@
-	$(POST_CC)
+include $(MAIN_OBJECTS:build/master/%.o=build/master/%.d)
 
-build/%.d: ;
+build/glfw/src/libglfw3.a:
+	mkdir -p build
+	mkdir -p build/glfw
+	cd build/glfw && cmake ../../submodules/glfw/ && make
 
-include $(HASTE_SOURCES:%.cpp=build/%.d)
+run: all
+	./build/master/master.bin
 
-# clean:
-#	rm -f $(EXEC) $(OBJECTS)
+clean:
+	rm -rf build

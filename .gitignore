@@ -29,3 +29,5 @@
 
 # sublime text 3
 *.sublime-workspace
+
+build/*

@@ -1,4 +1,25 @@
 {
+	"build_systems":
+	[
+		{
+			"cmd": [ "make" ],
+			"name": "Build master",
+			"file_regex": "^(?:[^\\n@]*@)?([^\\(\\n]+)\\(([0-9]+)(?:,([0-9]+))?\\): (.*)$",
+			"working_dir": "${project_path}",
+
+			"variants":
+			[
+				{
+					"cmd": [ "make", "run" ],
+					"name": "Run master.",
+
+					"file_regex": "^(?:[^\\n@]*@)?([^\\(\\n]+)\\(([0-9]+)(?:,([0-9]+))?\\): (.*)$",
+					"working_dir": "${project_path}",
+				}
+			]
+		}
+	],
+
 	"folders":
 	[
 		{
