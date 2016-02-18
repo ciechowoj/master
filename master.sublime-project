@@ -4,6 +4,7 @@
 		{
 			"cmd": [ "make", "-s" ],
 			"name": "Build master.",
+			"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
 			"working_dir": "${project_path}",
 
 			"variants":
@@ -11,6 +12,7 @@
 				{
 					"cmd": [ "make", "-s", "run" ],
 					"name": "Run master.",
+					"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
 					"working_dir": "${project_path}",
 				},
 			],
