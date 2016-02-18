@@ -6,6 +6,8 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <raytrace.hpp>
+#include <imgui.h>
+#include <imgui_impl_glfw_gl3.h>
 
 struct window_context_t {
     int texture_width = 0;
@@ -182,7 +184,8 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
     }
 
     glfwMakeContextCurrent(window);
-    
+    glfwSwapInterval(0);
+
     if (!gladLoadGL()) {
         std::cerr << "Cannot load glad extensions." << std::endl;
         glfwTerminate();
@@ -199,6 +202,8 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
     glfwSetWindowSizeCallback(window, window_resize);
     window_resize(window, width, height);
     context->program_id = create_program();
+
+    ImGui_ImplGlfwGL3_Init(window, true);
 
     func(window);
 
@@ -227,10 +232,17 @@ int main(void) {
         int sampler_location = glGetUniformLocation(context->program_id, "sampler");
 
         std::vector<vec3> image;
+        
+        bool show_test_window = true;
+        bool show_another_window = false;
+        ImVec4 clear_color = ImColor(114, 144, 154);
 
         while (!glfwWindowShouldClose(window)) {
             glViewport(0, 0, context->texture_width, context->texture_height);
-            glClearColor(0.f, 1.f, 0.f, 1.f);
+            
+            ImGui_ImplGlfwGL3_NewFrame();
+
+            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
             glClear(GL_COLOR_BUFFER_BIT);
             
             glBindVertexArray(global_vao);
@@ -253,7 +265,31 @@ int main(void) {
 
             draw_fullscreen_quad(quad);
 
+            {
+                static float f = 0.0f;
+                ImGui::Text("Hello, world!");
+                ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+                ImGui::ColorEdit3("clear color", (float*)&clear_color);
+                if (ImGui::Button("Test Window")) show_test_window ^= 1;
+                if (ImGui::Button("Another Window")) show_another_window ^= 1;
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            }
 
+            if (show_another_window)
+            {
+                ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiSetCond_FirstUseEver);
+                ImGui::Begin("Another Window", &show_another_window);
+                ImGui::Text("Hello");
+                ImGui::End();
+            }
+
+            if (show_test_window)
+            {
+                ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+                ImGui::ShowTestWindow(&show_test_window);
+            }
+
+            ImGui::Render();
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
