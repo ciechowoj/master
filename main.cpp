@@ -15,6 +15,7 @@ struct window_context_t {
     bool texture_created = false;
     GLuint texture_id = 0;
     GLuint program_id = 0;
+    GLuint sampler_id = 0;
 };
 
 GLFWwindow* create_window(int x, int y) {
@@ -56,11 +57,14 @@ GLuint create_program() {
     const char* fragment_shader_source = R""(
 #version 330
 
+uniform sampler2D sampler; 
+
+in vec2 texcoord;
 out vec4 color;
 
 void main()
 {
-    color = vec4(1.0, 0.0, 1.0, 1.0);
+    color = texture2D(sampler, texcoord); // vec4(1.0, 0.0, 1.0, 1.0);
 }
     )"";
 
@@ -68,9 +72,11 @@ void main()
 #version 330
 
 layout(location = 0)in vec3 position;
+out vec2 texcoord;
 
 void main()
 {
+    texcoord = (position.xy + vec2(1, 1)) * .5f;
     gl_Position = vec4(position, 1.f);
 }
     )"";
@@ -154,6 +160,9 @@ void window_resize(GLFWwindow* window, int width, int height) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
         context->texture_width = width;
         context->texture_height = height;
+        glGenSamplers(1, &context->sampler_id);
+        glSamplerParameteri(context->sampler_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glSamplerParameteri(context->sampler_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
 
     std::cerr << "Window resized to (" << width << ", " << height << ")." << std::endl;
@@ -216,16 +225,36 @@ int main(void) {
     return run(640, 480, [](GLFWwindow* window) {
         window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
 
-        GLuint triangleVBO = create_fullscreen_quad();
+        GLuint quad = create_fullscreen_quad();
 
         glUseProgram(context->program_id);
+        int sampler_location = glGetUniformLocation(context->program_id, "sampler");
+
+
+        std::vector<vec3> image;
 
         while (!glfwWindowShouldClose(window)) {
             glViewport(0, 0, context->texture_width, context->texture_height);
             glClearColor(0.f, 1.f, 0.f, 1.f);
             glClear(GL_COLOR_BUFFER_BIT);
             
-            draw_fullscreen_quad(triangleVBO);
+            glActiveTexture(GL_TEXTURE0 + 0);
+            glBindTexture(GL_TEXTURE_2D, context->texture_id);
+            glBindSampler(0, context->sampler_id);
+            glUniform1i(sampler_location, 0);
+
+            image.resize(context->texture_width * context->texture_height);
+            raytrace(image, context->texture_width, context->texture_height, camera_t(), scene_t());
+
+            glTexSubImage2D(
+                GL_TEXTURE_2D, 0, 0, 0, 
+                context->texture_width, 
+                context->texture_height,
+                GL_RGB,
+                GL_FLOAT,
+                image.data());
+
+            draw_fullscreen_quad(quad);
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
