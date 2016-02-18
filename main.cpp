@@ -6,7 +6,6 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <raytrace.hpp>
-#include <AntTweakBar.h>
 
 struct window_context_t {
     int texture_width = 0;
@@ -160,7 +159,6 @@ void window_resize(GLFWwindow* window, int width, int height) {
         glGenSamplers(1, &context->sampler_id);
         glSamplerParameteri(context->sampler_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glSamplerParameteri(context->sampler_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        TwWindowSize(width, height);
 
         context->texture_width = width;
         context->texture_height = height;
@@ -202,13 +200,6 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
     window_resize(window, width, height);
     context->program_id = create_program();
 
-    TwInit(TW_OPENGL_CORE, NULL);
-    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW);
-    glfwSetCursorPosCallback (window, (GLFWcursorposfun)TwEventMousePosGLFW);
-    glfwSetScrollCallback (window, (GLFWscrollfun)TwEventMouseWheelGLFW);
-    glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW);
-    glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW);
-
     func(window);
 
     if (context->texture_created) {
@@ -237,9 +228,6 @@ int main(void) {
 
         std::vector<vec3> image;
 
-        TwBar *myBar;
-        myBar = TwNewBar("NameOfMyTweakBar");
-
         while (!glfwWindowShouldClose(window)) {
             glViewport(0, 0, context->texture_width, context->texture_height);
             glClearColor(0.f, 1.f, 0.f, 1.f);
@@ -265,7 +253,6 @@ int main(void) {
 
             draw_fullscreen_quad(quad);
 
-            TwDraw();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
