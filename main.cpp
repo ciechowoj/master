@@ -114,6 +114,33 @@ void main()
     return program;
 }
 
+GLuint create_fullscreen_quad() {
+    float data[6][3] = {
+       { -1.0, +1.0, 0.0  },
+       { -1.0, -1.0, 0.0  },
+       { +1.0, -1.0, 0.0  },
+       { -1.0, +1.0, 0.0  },
+       { +1.0, -1.0, 0.0  },
+       { +1.0, +1.0, 0.0  },
+   };
+
+    GLuint result = 0;
+
+    glGenBuffers(1, &result);
+    glBindBuffer(GL_ARRAY_BUFFER, result);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    return result;
+}
+
+void draw_fullscreen_quad(GLuint quad) {
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, quad);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDisableVertexAttribArray(0);
+}
+
 void window_resize(GLFWwindow* window, int width, int height) {
     window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
 
@@ -125,6 +152,8 @@ void window_resize(GLFWwindow* window, int width, int height) {
     if (context->texture_width != width || context->texture_height != height) {
         glBindTexture(GL_TEXTURE_2D, context->texture_id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
+        context->texture_width = width;
+        context->texture_height = height;
     }
 
     std::cerr << "Window resized to (" << width << ", " << height << ")." << std::endl;
@@ -187,41 +216,16 @@ int main(void) {
     return run(640, 480, [](GLFWwindow* window) {
         window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
 
-
-        GLuint triangleVBO;
-
-        float data[3][3] = {
-                                           {  0.0, 1.0, 0.0   },
-                                           { -1.0, -1.0, 0.0  },
-                                           {  1.0, -1.0, 0.0  }
-                                       };
-
-        /*---------------------- Initialise VBO - (Note: do only once, at start of program) ---------------------*/
-        /* Create a new VBO and use the variable "triangleVBO" to store the VBO id */
-        glGenBuffers(1, &triangleVBO);
-
-        /* Make the new VBO active */
-        glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
-
-        /* Upload vertex data to the video device */
-        glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
-
-        /* Specify that our coordinate data is going into attribute index 0(shaderAttribute), and contains three floats per vertex */
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-        /* Enable attribute index 0(shaderAttribute) as being used */
-        glEnableVertexAttribArray(0);
-
-        /* Make the new VBO active. */
-        glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+        GLuint triangleVBO = create_fullscreen_quad();
 
         glUseProgram(context->program_id);
 
         while (!glfwWindowShouldClose(window)) {
+            glViewport(0, 0, context->texture_width, context->texture_height);
             glClearColor(0.f, 1.f, 0.f, 1.f);
             glClear(GL_COLOR_BUFFER_BIT);
-            glDrawArrays(GL_TRIANGLES, 0, (sizeof(data) / 3) / sizeof(GLfloat));
-
+            
+            draw_fullscreen_quad(triangleVBO);
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
