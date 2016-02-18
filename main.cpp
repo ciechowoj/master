@@ -1,13 +1,12 @@
+#include <string>
+#include <iostream>
+#include <functional>
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <raytrace.hpp>
-#include <tiny_obj_loader.h>
-#include <string>
-#include <iostream>
-#include <functional>
-#include <string>
+#include <AntTweakBar.h>
 
 struct window_context_t {
     int texture_width = 0;
@@ -158,11 +157,13 @@ void window_resize(GLFWwindow* window, int width, int height) {
     if (context->texture_width != width || context->texture_height != height) {
         glBindTexture(GL_TEXTURE_2D, context->texture_id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
-        context->texture_width = width;
-        context->texture_height = height;
         glGenSamplers(1, &context->sampler_id);
         glSamplerParameteri(context->sampler_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glSamplerParameteri(context->sampler_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        TwWindowSize(width, height);
+
+        context->texture_width = width;
+        context->texture_height = height;
     }
 
     std::cerr << "Window resized to (" << width << ", " << height << ")." << std::endl;
@@ -201,14 +202,14 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
     window_resize(window, width, height);
     context->program_id = create_program();
 
-    GLuint global_vao = 0;
-
-    glGenVertexArrays(1, &global_vao);
-    glBindVertexArray(global_vao);
+    TwInit(TW_OPENGL_CORE, NULL);
+    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW);
+    glfwSetCursorPosCallback (window, (GLFWcursorposfun)TwEventMousePosGLFW);
+    glfwSetScrollCallback (window, (GLFWscrollfun)TwEventMouseWheelGLFW);
+    glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW);
+    glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW);
 
     func(window);
-
-    glDeleteVertexArrays(1, &global_vao);
 
     if (context->texture_created) {
         glDeleteTextures(1, &context->texture_id);
@@ -225,19 +226,27 @@ int main(void) {
     return run(640, 480, [](GLFWwindow* window) {
         window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
 
+        GLuint global_vao = 0;
+        glGenVertexArrays(1, &global_vao);
+        glBindVertexArray(global_vao);
+
         GLuint quad = create_fullscreen_quad();
 
         glUseProgram(context->program_id);
         int sampler_location = glGetUniformLocation(context->program_id, "sampler");
 
-
         std::vector<vec3> image;
+
+        TwBar *myBar;
+        myBar = TwNewBar("NameOfMyTweakBar");
 
         while (!glfwWindowShouldClose(window)) {
             glViewport(0, 0, context->texture_width, context->texture_height);
             glClearColor(0.f, 1.f, 0.f, 1.f);
             glClear(GL_COLOR_BUFFER_BIT);
             
+            glBindVertexArray(global_vao);
+
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, context->texture_id);
             glBindSampler(0, context->sampler_id);
@@ -255,10 +264,14 @@ int main(void) {
                 image.data());
 
             draw_fullscreen_quad(quad);
+
+            TwDraw();
+
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
 
+        glDeleteVertexArrays(1, &global_vao);
         
     });
 }
