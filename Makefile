@@ -5,6 +5,7 @@ INCLUDE_DIRS = \
 	-Isubmodules/tinyobjloader \
 	-Isubmodules/imgui \
 	-Isubmodules/imgui/examples/opengl3_example \
+	-Isubmodules/googletest/googletest/include \
 	-Ibuild/glad/loader/include \
 	-Ibuild/imgui \
 	-I.
@@ -13,15 +14,16 @@ LIBRARY_DIRS = \
 	-Lbuild/glfw/src \
 	-Lbuild/tinyobjloader \
 	-Lbuild/imgui \
+	-Lbuild/googletest \
 	-Lbuild/glad
 
 CC = g++
-CC_FLAGS = -g -O0 -w -Wall -std=c++11 $(INCLUDE_DIRS)
+CC_FLAGS = -g -O3 -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS
 
 MAIN_HEADERS = $(wildcard *.hpp)
 MAIN_SOURCES = $(wildcard *.cpp)
 MAIN_OBJECTS = $(MAIN_SOURCES:%.cpp=build/master/%.o)
-MAIN_LIBS = -lglfw3 -lX11 -lXrandr -lXi -lXxf86vm -lXcursor -lXinerama -ldl -lpthread -lglad -ltinyobjloader -limgui
+MAIN_LIBS = -lglfw3 -lX11 -lXrandr -lXi -lXxf86vm -lXcursor -lXinerama -ldl -lpthread -lglad -ltinyobjloader -limgui -lgtest
 MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td
 MAIN_POST = mv -f build/master/$*.Td build/master/$*.d
 
@@ -34,6 +36,8 @@ build/master/master.bin: \
 	build/glfw/src/libglfw3.a \
 	build/tinyobjloader/libtinyobjloader.a \
 	build/imgui/libimgui.a \
+	build/googletest/libgtest.a \
+	Makefile \
 	$(MAIN_OBJECTS)
 	$(CC) $(MAIN_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/master.bin
 
@@ -73,7 +77,6 @@ build/tinyobjloader/libtinyobjloader.a:
 	cd build/tinyobjloader && $(CC) -c ../../submodules/tinyobjloader/tiny_obj_loader.cc -o tiny_obj_loader.o -Isubmodules/tinyobjloader
 	cd build/tinyobjloader && ar rcs libtinyobjloader.a tiny_obj_loader.o
 
-
 IMGUI_SOURCES = \
 	submodules/imgui/imgui.cpp \
 	submodules/imgui/imgui_demo.cpp \
@@ -98,6 +101,12 @@ build/imgui/sentinel:
 	mkdir -p build/imgui/examples 
 	mkdir -p build/imgui/examples/opengl3_example
 	touch build/imgui/sentinel
+
+build/googletest/libgtest.a:
+	mkdir -p build
+	mkdir -p build/googletest
+	cd build/googletest && cmake ../../submodules/googletest/googletest
+	cd build/googletest && make
 
 run: all
 	./build/master/master.bin
