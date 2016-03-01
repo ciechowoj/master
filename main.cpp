@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
         
         bool show_test_window = true;
 
-        auto scene = obj::load("models/triangle.obj");
+        auto scene = obj::load("models/cube.obj");
 
         cout << scene << endl;
         cout << scene.shapes << endl;
@@ -30,11 +30,12 @@ int main(int argc, char **argv) {
         camera_t camera;
 
         float yaw = 0, pitch = 0;
-        vec3 position = vec3(0);
+        vec3 position = vec3(0, 0, -10);
+        int line = 0;
 
         loop(window, [&](int width, int height) {
             image.resize(width * height);
-            raytrace(image, width, height, camera, scene);
+            raytrace(image, width, height, camera, scene, 0.033, line);
             draw_fullscreen_quad(window, image);
             
             ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
@@ -42,10 +43,10 @@ int main(int argc, char **argv) {
 
             ImGui::Begin("Camera");
             vec3 t = vec3(1, 2, 3);
-            ImGui::InputFloat("yaw", &yaw);
-            ImGui::InputFloat("pitch", &pitch);
-            ImGui::InputVec("positioKBn", &position);
-            camera.view = eulerAngleYX(yaw, pitch) * translate(position);
+            ImGui::SliderFloat("yaw", &yaw, -glm::pi<float>(), glm::pi<float>());
+            ImGui::SliderFloat("pitch",  &pitch, -glm::half_pi<float>(), glm::half_pi<float>());
+            ImGui::InputVec("position", &position);
+            camera.view = translate(position) * eulerAngleXY(pitch, yaw);
 
             ImGui::InputMat("view", &camera.view);
             ImGui::InputFloat("fovy", &camera.fovy);

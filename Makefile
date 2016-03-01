@@ -18,7 +18,7 @@ LIBRARY_DIRS = \
 	-Lbuild/glad
 
 CC = g++
-CC_FLAGS = -g -O3 -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CC_FLAGS = -march=native -O2 -g -pg -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 MAIN_HEADERS = $(wildcard *.hpp)
 MAIN_SOURCES = $(wildcard *.cpp)
@@ -45,7 +45,7 @@ build/master/master.bin: \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	$(TEST_OBJECTS)
-	$(CC) $(MAIN_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/master.bin
+	$(CC) $(MAIN_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/master.bin
 
 build/master/%.o: %.cpp build/master/%.d build/master/sentinel
 	$(CC) -c $(MAIN_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@
@@ -84,7 +84,7 @@ build/glad/loader/src/glad.c:
 build/tinyobjloader/libtinyobjloader.a:
 	mkdir -p build
 	mkdir -p build/tinyobjloader
-	cd build/tinyobjloader && $(CC) -c ../../submodules/tinyobjloader/tiny_obj_loader.cc -o tiny_obj_loader.o -Isubmodules/tinyobjloader
+	cd build/tinyobjloader && $(CC) $(CC_FLAGS) -c ../../submodules/tinyobjloader/tiny_obj_loader.cc -o tiny_obj_loader.o -Isubmodules/tinyobjloader
 	cd build/tinyobjloader && ar rcs libtinyobjloader.a tiny_obj_loader.o
 
 IMGUI_SOURCES = \
@@ -122,4 +122,7 @@ run: all
 	./build/master/master.bin
 
 clean:
+	rm -rf build/master	
+
+distclean:
 	rm -rf build

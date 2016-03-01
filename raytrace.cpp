@@ -1,3 +1,4 @@
+#include <GLFW/glfw3.h>
 #include <cmath>
 #include <raytrace.hpp>
 #include <streamops.hpp>
@@ -105,12 +106,39 @@ intersect_t trace(const obj::scene_t& scene, const ray_t& ray) {
 void raytrace(std::vector<vec3>& image, int width, int height, const camera_t& camera, const obj::scene_t& scene) {
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-
             ray_t ray;
             ray.pos = (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz();
             ray.dir = (camera.view * vec4(shoot(width, height, x, y, camera.fovy), 0.f)).xyz();
 
+            if (!isnan(trace(scene, ray).depth)) {
+                image[y * width + x] = vec3(1.f);
+            }
+            else {
+                image[y * width + x] = vec3(1.f, 0.f, 0.f);
+            }
+        }
+    }
+}
 
+void raytrace(
+    std::vector<vec3>& image, 
+    int width, 
+    int height, 
+    const camera_t& camera, 
+    const obj::scene_t& scene, 
+    float budget, 
+    int& line)
+{
+    double start = glfwGetTime();
+
+    while (glfwGetTime() < start + budget) {
+        line = (line + 1) % height;
+        int y = line;
+        
+        for (int x = 0; x < width; ++x) {
+            ray_t ray;
+            ray.pos = (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz();
+            ray.dir = (camera.view * vec4(shoot(width, height, x, y, camera.fovy), 0.f)).xyz();
 
             if (!isnan(trace(scene, ray).depth)) {
                 image[y * width + x] = vec3(1.f);

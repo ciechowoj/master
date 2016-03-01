@@ -35,9 +35,9 @@ TEST(raytrace, ray_triangle_intersection1) {
 		vec3(0.0f, 1.0f, -2.0f),
 	};
 
-	ASSERT_TRUE(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.f, 0.f, -1.f)).p < INFINITY);
-	ASSERT_TRUE(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.1f, 0.1f, -1.f)).p < INFINITY);
-	ASSERT_FALSE(intersect(triangle, ray_t(0.f, 0.f, 0.f, -0.1f, -0.1f, -1.f)).p == INFINITY);
+	ASSERT_TRUE(!isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.f, 0.f, -1.f))));
+	ASSERT_TRUE(!isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.1f, 0.1f, -1.f))));
+	ASSERT_FALSE(isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, -0.1f, -0.1f, -1.f))));
 }
 
 TEST(raytrace, ray_triangle_intersection2) {
@@ -47,9 +47,9 @@ TEST(raytrace, ray_triangle_intersection2) {
 		vec3(1.0f, -1.0f, -2.0f),
 	};
 
-	ASSERT_TRUE(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.f, 0.f, -1.f)).p < INFINITY);
-	ASSERT_TRUE(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.1f, 0.1f, -1.f)).p < INFINITY);
-	ASSERT_TRUE(intersect(triangle, ray_t(0.f, 0.f, 0.f, -0.1f, -0.1f, -1.f)).p < INFINITY);
-	ASSERT_TRUE(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.00120279, 0.00120279, -0.999999)).p < INFINITY);
+	ASSERT_TRUE(!isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.f, 0.f, -1.f))));
+	ASSERT_TRUE(!isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.1f, 0.1f, -1.f))));
+	ASSERT_TRUE(!isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, -0.1f, -0.1f, -1.f))));
+	ASSERT_TRUE(!isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.00120279, 0.00120279, -0.999999))));
 }
 

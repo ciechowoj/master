@@ -40,7 +40,14 @@ vec3 shoot(int width, int height, int x, int y, float fovy);
 
 void raytrace(std::vector<vec3>& image, int width, int height, const camera_t& camera, const obj::scene_t& scene);
 
-
+void raytrace(
+    std::vector<vec3>& image, 
+    int width, 
+    int height, 
+    const camera_t& camera, 
+    const obj::scene_t& scene, 
+    float budget,
+    int& line);
 
 
 
