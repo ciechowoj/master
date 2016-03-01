@@ -12,7 +12,7 @@ GLFWwindow* create_window(int x, int y) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    return glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    return glfwCreateWindow(x, y, "Hello World", NULL, NULL);
 }
 
 GLuint create_shader(GLenum type, const std::string& source) {

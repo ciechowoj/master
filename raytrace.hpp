@@ -7,30 +7,8 @@
 using namespace glm;
 
 struct camera_t {
-    camera_t(
-        const vec3& position, 
-        const vec3& direction, 
-        float aspect, 
-        float fovy = glm::pi<float>() / 3.f) 
-        : position(position) 
-        , direction(direction)
-        , aspect(aspect) 
-        , fovy(fovy) {
-    }
-
-    camera_t(
-        const vec3& position, 
-        const vec3& direction, 
-        int width, 
-        int height, 
-        float fovy = glm::pi<float>() / 3.f)
-        : camera_t(position, direction, float(width) / float(height), fovy) {
-    }
-
-    vec3 position;
-    vec3 direction;
-    float aspect;
-    float fovy;
+    mat4 view;
+    float fovy = glm::pi<float>() / 3.f;
 };
 
 struct ray_t {
@@ -53,44 +31,14 @@ inline bool is_zero(float a) {
     return -::epsilon < a && a < ::epsilon;
 }
 
-inline bool intersect(const vec3* triangle, const ray_t& ray) { 
-    vec3 e1 = triangle[1] - triangle[0];
-    vec3 e2 = triangle[2] - triangle[0];
+float intersect(const vec3* triangle, const ray_t& ray);
 
-    vec3 p = cross(ray.dir, e2);
-
-    float det = dot(e1, p);
-
-    if (is_zero(det)) {
-        return false;
-    }
-
-    float inv_det = 1.f / det;
- 
-    vec3 t = ray.pos - triangle[0];
-
-    float u = dot(t, p) * inv_det;
-
-    if (u < 0.f || u > 1.f) {
-        return false; 
-    }
- 
-    vec3 q = cross(t, e1);
-
-    float v = dot(ray.dir, q) * inv_det;
-
-    if (v < 0.f || u + v > 1.f) {
-        return false;
-    }
- 
-    // float r = dot(e2, q) * inv_det;
- 
-    return true;
-} 
+bool eq(float fa, float fb, int ulps = 2);
+bool eq(const vec3& a, const vec3& b);
 
 vec3 shoot(int width, int height, int x, int y, float fovy);
 
-void raytrace(std::vector<vec3>& image, int width, int height, const camera_t& camera, const scene_t& scene);
+void raytrace(std::vector<vec3>& image, int width, int height, const camera_t& camera, const obj::scene_t& scene);
 
 
 
