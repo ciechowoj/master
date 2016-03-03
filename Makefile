@@ -45,7 +45,7 @@ build/master/master.bin: \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	$(TEST_OBJECTS)
-	$(CC) $(MAIN_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/master.bin
+	$(CC) $(MAIN_OBJECTS) $(TEST_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/master.bin
 
 build/master/%.o: %.cpp build/master/%.d build/master/sentinel
 	$(CC) -c $(MAIN_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@

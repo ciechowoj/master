@@ -1,6 +1,6 @@
 # ccw
 
-mtlib cornel_box.mtl
+mtllib cornell_box.mtl
 
 o triangle
 usemtl red

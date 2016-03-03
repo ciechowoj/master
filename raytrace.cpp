@@ -73,12 +73,6 @@ vec3 shoot(int width, int height, int x, int y, float fovy) {
     return normalize(vec3(fx, fy, -znear));
 }
 
-struct intersect_t {
-    size_t shape = 0;
-    size_t face = 0;
-    float depth = NAN;
-};
-
 intersect_t trace(const obj::scene_t& scene, const ray_t& ray) {
     intersect_t result;
     float min_depth = INFINITY;
@@ -103,6 +97,19 @@ intersect_t trace(const obj::scene_t& scene, const ray_t& ray) {
     return result;
 }
 
+vec3 trace_color(const obj::scene_t& scene, const ray_t& ray) {
+    auto intersect = trace(scene, ray);
+
+    if (!isnan(intersect.depth)) {
+        int material_id = scene.shapes[intersect.shape].mesh.material_ids[intersect.face];
+
+        return *((vec3*)scene.materials[material_id].diffuse);
+    }
+    else {
+        return vec3(0.f);
+    }
+}
+
 void raytrace(std::vector<vec3>& image, int width, int height, const camera_t& camera, const obj::scene_t& scene) {
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
@@ -110,17 +117,12 @@ void raytrace(std::vector<vec3>& image, int width, int height, const camera_t& c
             ray.pos = (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz();
             ray.dir = (camera.view * vec4(shoot(width, height, x, y, camera.fovy), 0.f)).xyz();
 
-            if (!isnan(trace(scene, ray).depth)) {
-                image[y * width + x] = vec3(1.f);
-            }
-            else {
-                image[y * width + x] = vec3(1.f, 0.f, 0.f);
-            }
+            image[y * width + x] = trace_color(scene, ray);
         }
     }
 }
 
-void raytrace(
+int raytrace(
     std::vector<vec3>& image, 
     int width, 
     int height, 
@@ -130,24 +132,23 @@ void raytrace(
     int& line)
 {
     double start = glfwGetTime();
+    int num_lines = 0;
 
     while (glfwGetTime() < start + budget) {
         line = (line + 1) % height;
+        ++num_lines;
         int y = line;
-        
+
         for (int x = 0; x < width; ++x) {
             ray_t ray;
             ray.pos = (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz();
             ray.dir = (camera.view * vec4(shoot(width, height, x, y, camera.fovy), 0.f)).xyz();
 
-            if (!isnan(trace(scene, ray).depth)) {
-                image[y * width + x] = vec3(1.f);
-            }
-            else {
-                image[y * width + x] = vec3(1.f, 0.f, 0.f);
-            }
+            image[y * width + x] = trace_color(scene, ray);
         }
     }
+
+    return num_lines;
 }
 
 

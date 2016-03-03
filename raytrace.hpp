@@ -2,27 +2,13 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
-#include <loader.hpp>
+#include <scene.hpp>
 
 using namespace glm;
 
 struct camera_t {
     mat4 view;
     float fovy = glm::pi<float>() / 3.f;
-};
-
-struct ray_t {
-    vec3 pos, dir;
-
-    ray_t()
-        : pos(0.0f)
-        , dir(0.0f, 0.0f, -1.0f) {
-    }
-
-    ray_t(float px, float py, float pz, float dx, float dy, float dz)
-        : pos(px, py, pz)
-        , dir(dx, dy, dz) { 
-    }
 };
 
 static const float epsilon = 0.00001f;
@@ -40,7 +26,7 @@ vec3 shoot(int width, int height, int x, int y, float fovy);
 
 void raytrace(std::vector<vec3>& image, int width, int height, const camera_t& camera, const obj::scene_t& scene);
 
-void raytrace(
+int raytrace(
     std::vector<vec3>& image, 
     int width, 
     int height, 

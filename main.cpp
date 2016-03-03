@@ -5,13 +5,14 @@
 #include <streamops.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
+#include <octree.hpp>
 
 using namespace std;
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    if (RUN_ALL_TESTS() != 0) {
+    if (false && RUN_ALL_TESTS() != 0) {
         return 1;
     }
 
@@ -19,23 +20,32 @@ int main(int argc, char **argv) {
         std::vector<vec3> image;
         
         bool show_test_window = true;
+ 
+        auto scene = obj::load("models/cornell_box.obj");
 
-        auto scene = obj::load("models/cube.obj");
+        octree_t octree(scene, 8);
 
-        cout << scene << endl;
-        cout << scene.shapes << endl;
-        cout << scene.shapes[0].mesh << endl;
-        cout << scene.shapes[0].mesh.indices << endl;
+        cout << "aabb: " << octree.aabb() << endl;
+
 
         camera_t camera;
 
-        float yaw = 0, pitch = 0;
-        vec3 position = vec3(0, 0, -10);
+        float yaw = glm::pi<float>(), pitch = -0.0;
+        vec3 position = vec3(2.5, 2.5, -6);
         int line = 0;
-
+        double tpp = 0.001;
+        double tpf = 100;
         loop(window, [&](int width, int height) {
             image.resize(width * height);
-            raytrace(image, width, height, camera, scene, 0.033, line);
+
+            double start = glfwGetTime();
+            int num_lines = raytrace(image, width, height, camera, scene, 0.033, line);
+            int num_pixels = num_lines * width;
+
+            double elapsed = glfwGetTime() - start;
+            tpp = 0.99 * tpp + 0.01 * (elapsed / num_pixels) * 1000.0;
+            tpf = 0.99 * tpf + 0.01 * (elapsed * height / num_lines) * 1000.0;
+
             draw_fullscreen_quad(window, image);
             
             ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
@@ -50,6 +60,13 @@ int main(int argc, char **argv) {
 
             ImGui::InputMat("view", &camera.view);
             ImGui::InputFloat("fovy", &camera.fovy);
+            ImGui::End();
+
+            ImGui::Begin("Statistics");
+            float ftpp = float(tpp);
+            float ftpf = float(tpf);
+            ImGui::InputFloat("tpp [ms]", &ftpp);
+            ImGui::InputFloat("tpf [ms]", &ftpf);
             ImGui::End();
         });
     });

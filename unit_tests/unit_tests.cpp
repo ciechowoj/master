@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <glm/gtc/constants.hpp>
 #include <raytrace.hpp>
+#include <scene.hpp>
 #include <cmath>
 
 #if !defined GLM_FORCE_RADIANS
@@ -37,7 +38,7 @@ TEST(raytrace, ray_triangle_intersection1) {
 
 	ASSERT_TRUE(!isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.f, 0.f, -1.f))));
 	ASSERT_TRUE(!isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.1f, 0.1f, -1.f))));
-	ASSERT_FALSE(isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, -0.1f, -0.1f, -1.f))));
+	ASSERT_TRUE(isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, -0.1f, -0.1f, -1.f))));
 }
 
 TEST(raytrace, ray_triangle_intersection2) {
@@ -53,3 +54,9 @@ TEST(raytrace, ray_triangle_intersection2) {
 	ASSERT_TRUE(!isnan(intersect(triangle, ray_t(0.f, 0.f, 0.f, 0.00120279, 0.00120279, -0.999999))));
 }
 
+TEST(aabb, should_create_aabb_from_scene) {
+	auto scene = obj::load("models/cornell_box.obj");
+	auto aabb = ::aabb(scene);
+	ASSERT_TRUE(eq(aabb.a, vec3(0)));
+	ASSERT_TRUE(eq(aabb.b, vec3(5.56, 5.488, 5.592)));
+}

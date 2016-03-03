@@ -12,7 +12,10 @@
 	url = https://github.com/google/googletest.git
 [submodule "submodules/tinyobjloader"]
 	path = submodules/tinyobjloader
-	url = https://github.com/syoyo/tinyobjloader.git
+	url = git@github.com:ciechowoj/tinyobjloader.git
 [submodule "submodules/imgui"]
 	path = submodules/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "submodules/embree"]
+	path = submodules/embree
+	url = https://github.com/embree/embree.git
