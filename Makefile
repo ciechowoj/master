@@ -7,6 +7,7 @@ INCLUDE_DIRS = \
 	-Isubmodules/imgui/examples/opengl3_example \
 	-Isubmodules/googletest/googletest/include \
 	-Isubmodules/embree/include \
+	-Isubmodules/assimp/include \
 	-Ibuild/glad/loader/include \
 	-Ibuild/imgui \
 	-I.
@@ -17,7 +18,8 @@ LIBRARY_DIRS = \
 	-Lbuild/imgui \
 	-Lbuild/googletest \
 	-Lbuild/glad \
-	-Lbuild/embree
+	-Lbuild/embree \
+	-Lbuild/assimp/code
 
 CC = g++
 CC_FLAGS = -march=native -O2 -g -pg -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
@@ -32,11 +34,19 @@ EMBREE_LIBS = \
 	-lembree_avx2 \
 	-lembree_sse42
 
+GLFW_LIBS = \
+	-lglfw3 \
+	-lX11 \
+	-lXrandr \
+	-lXi \
+	-lXxf86vm \
+	-lXcursor \
+	-lXinerama
 
 MAIN_HEADERS = $(wildcard *.hpp)
 MAIN_SOURCES = $(wildcard *.cpp)
 MAIN_OBJECTS = $(MAIN_SOURCES:%.cpp=build/master/%.o)
-MAIN_LIBS = -lglfw3 -lX11 -lXrandr -lXi -lXxf86vm -lXcursor -lXinerama -ldl -lpthread -lglad -ltinyobjloader -limgui -lgtest $(EMBREE_LIBS)
+MAIN_LIBS =  $(GLFW_LIBS) -ldl -lpthread -lglad -ltinyobjloader -limgui -lgtest $(EMBREE_LIBS) -lassimp -lz
 MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td
 MAIN_POST = mv -f build/master/$*.Td build/master/$*.d
 
@@ -56,6 +66,7 @@ build/master/master.bin: \
 	build/imgui/libimgui.a \
 	build/googletest/libgtest.a \
 	build/embree/libembree.a \
+	build/assimp/code/libassimp.a \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	$(TEST_OBJECTS)
@@ -136,6 +147,12 @@ build/embree/libembree.a:
 	mkdir -p build/embree
 	cd build/embree && cmake ../../submodules/embree -DENABLE_STATIC_LIB=ON
 	cd build/embree && make embree
+
+build/assimp/code/libassimp.a:
+	mkdir -p build
+	mkdir -p build/assimp
+	cd build/assimp && cmake ../../submodules/assimp -DBUILD_SHARED_LIBS=OFF
+	cd build/assimp && make
 
 run: all
 	./build/master/master.bin

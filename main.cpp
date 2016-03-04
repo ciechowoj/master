@@ -10,6 +10,9 @@
 #include <pmmintrin.h>
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
+#include <assimp/cimport.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 using namespace std;
 
@@ -20,15 +23,17 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    aiImportFile("", aiProcessPreset_TargetRealtime_MaxQuality);
+
     RTCDevice device = rtcNewDevice(NULL);
 
     rtcDeleteDevice(device);
 
     return run(1000, 800, [](GLFWwindow* window) {
         std::vector<vec3> image;
-        
+
         bool show_test_window = true;
- 
+
         auto scene = obj::load("models/cornell_box.obj");
 
         octree_t octree(scene, 8);
@@ -54,7 +59,7 @@ int main(int argc, char **argv) {
             tpf = 0.99 * tpf + 0.01 * (elapsed * height / num_lines) * 1000.0;
 
             draw_fullscreen_quad(window, image);
-            
+
             ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
             ImGui::ShowTestWindow(&show_test_window);
 
