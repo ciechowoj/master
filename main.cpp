@@ -6,6 +6,8 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
 #include <octree.hpp>
+#include <xmmintrin.h>
+#include <pmmintrin.h>
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
 
@@ -32,7 +34,6 @@ int main(int argc, char **argv) {
         octree_t octree(scene, 8);
 
         cout << "aabb: " << octree.aabb() << endl;
-
 
         camera_t camera;
 
