@@ -6,6 +6,8 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
 #include <octree.hpp>
+#include <embree2/rtcore.h>
+#include <embree2/rtcore_ray.h>
 
 using namespace std;
 
@@ -15,6 +17,10 @@ int main(int argc, char **argv) {
     if (false && RUN_ALL_TESTS() != 0) {
         return 1;
     }
+
+    RTCDevice device = rtcNewDevice(NULL);
+
+    rtcDeleteDevice(device);
 
     return run(1000, 800, [](GLFWwindow* window) {
         std::vector<vec3> image;

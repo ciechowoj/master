@@ -6,6 +6,7 @@ INCLUDE_DIRS = \
 	-Isubmodules/imgui \
 	-Isubmodules/imgui/examples/opengl3_example \
 	-Isubmodules/googletest/googletest/include \
+	-Isubmodules/embree/include \
 	-Ibuild/glad/loader/include \
 	-Ibuild/imgui \
 	-I.
@@ -15,15 +16,27 @@ LIBRARY_DIRS = \
 	-Lbuild/tinyobjloader \
 	-Lbuild/imgui \
 	-Lbuild/googletest \
-	-Lbuild/glad
+	-Lbuild/glad \
+	-Lbuild/embree
 
 CC = g++
 CC_FLAGS = -march=native -O2 -g -pg -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
+EMBREE_LIBS = \
+	-lembree \
+	-ltbb \
+	-lsys \
+	-lsimd \
+	-llexers \
+	-lembree_avx \
+	-lembree_avx2 \
+	-lembree_sse42
+
+
 MAIN_HEADERS = $(wildcard *.hpp)
 MAIN_SOURCES = $(wildcard *.cpp)
 MAIN_OBJECTS = $(MAIN_SOURCES:%.cpp=build/master/%.o)
-MAIN_LIBS = -lglfw3 -lX11 -lXrandr -lXi -lXxf86vm -lXcursor -lXinerama -ldl -lpthread -lglad -ltinyobjloader -limgui -lgtest
+MAIN_LIBS = -lglfw3 -lX11 -lXrandr -lXi -lXxf86vm -lXcursor -lXinerama -ldl -lpthread -lglad -ltinyobjloader -limgui -lgtest $(EMBREE_LIBS)
 MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td
 MAIN_POST = mv -f build/master/$*.Td build/master/$*.d
 
@@ -42,6 +55,7 @@ build/master/master.bin: \
 	build/tinyobjloader/libtinyobjloader.a \
 	build/imgui/libimgui.a \
 	build/googletest/libgtest.a \
+	build/embree/libembree.a \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	$(TEST_OBJECTS)
@@ -63,8 +77,7 @@ build/master/sentinel:
 
 build/master/%.d: ;
 
-include $(MAIN_OBJECTS:build/master/%.o=build/master/%.d)
-
+-include $(MAIN_OBJECTS:build/master/%.o=build/master/%.d)
 
 build/glfw/src/libglfw3.a:
 	mkdir -p build
@@ -117,6 +130,12 @@ build/googletest/libgtest.a:
 	mkdir -p build/googletest
 	cd build/googletest && cmake ../../submodules/googletest/googletest
 	cd build/googletest && make
+
+build/embree/libembree.a:
+	mkdir -p build
+	mkdir -p build/embree
+	cd build/embree && cmake ../../submodules/embree -DENABLE_STATIC_LIB=ON
+	cd build/embree && make embree
 
 run: all
 	./build/master/master.bin
