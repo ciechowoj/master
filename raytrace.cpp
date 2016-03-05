@@ -1,5 +1,6 @@
-#include <GLFW/glfw3.h>
 #include <cmath>
+#include <GLFW/glfw3.h>
+#include <tbb/tbb.h>
 #include <raytrace.hpp>
 #include <streamops.hpp>
 
@@ -73,52 +74,43 @@ vec3 shoot(int width, int height, int x, int y, float fovy) {
     return normalize(vec3(fx, fy, -znear));
 }
 
-intersect_t trace(const obj::scene_t& scene, const ray_t& ray) {
+intersect_t trace(const haste::Scene& scene, const ray_t& ray) {
+    RTCRay rtcRay;
+    (*(vec3*)rtcRay.org) = ray.pos;
+    (*(vec3*)rtcRay.dir) = ray.dir;
+    rtcRay.tnear = 0.f;
+    rtcRay.tfar = INFINITY;
+    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.mask = 0xFFFFFFFF;
+    rtcRay.time = 0.f;
+    rtcIntersect (scene.rtcScene, rtcRay);
+
     intersect_t result;
-    float min_depth = INFINITY;
+    result.shape = rtcRay.geomID;
+    result.face = rtcRay.instID;
 
-    for (size_t shape = 0; shape < scene.shapes.size(); ++shape) {
-        const size_t num_faces = scene.shapes[shape].mesh.indices.size() / 3;
-        const float* positions = scene.shapes[shape].mesh.positions.data();
-        const unsigned* indices = scene.shapes[shape].mesh.indices.data();
-
-        for (size_t face = 0; face < num_faces; ++face) {
-            float depth = intersect(positions, indices + face * 3, ray);
-
-            if (depth < min_depth) {
-                min_depth = depth;
-                result.depth = depth;
-                result.shape = shape;
-                result.face = face;
-            }
-        }
+    if (rtcRay.geomID != RTC_INVALID_GEOMETRY_ID) {
+        result.depth = rtcRay.tfar;
+    }
+    else {
+        result.depth = NAN;
     }
 
     return result;
 }
 
-vec3 trace_color(const obj::scene_t& scene, const ray_t& ray) {
+vec3 trace_color(const haste::Scene& scene, const ray_t& ray) {
     auto intersect = trace(scene, ray);
 
     if (!isnan(intersect.depth)) {
-        int material_id = scene.shapes[intersect.shape].mesh.material_ids[intersect.face];
+        int material_id = scene.meshes[intersect.shape].materialID;
 
-        return *((vec3*)scene.materials[material_id].diffuse);
+        return scene.materials[material_id].diffuse;
     }
     else {
         return vec3(0.f);
-    }
-}
-
-void raytrace(std::vector<vec3>& image, int width, int height, const camera_t& camera, const obj::scene_t& scene) {
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            ray_t ray;
-            ray.pos = (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz();
-            ray.dir = (camera.view * vec4(shoot(width, height, x, y, camera.fovy), 0.f)).xyz();
-
-            image[y * width + x] = trace_color(scene, ray);
-        }
     }
 }
 
@@ -127,7 +119,7 @@ int raytrace(
     int width, 
     int height, 
     const camera_t& camera, 
-    const obj::scene_t& scene, 
+    const haste::Scene& scene, 
     float budget, 
     int& line)
 {
@@ -138,14 +130,17 @@ int raytrace(
         line = (line + 1) % height;
         ++num_lines;
         int y = line;
+        parallel_for(
+            tbb::blocked_range<int>(0, width), 
+            [&](const tbb::blocked_range<int>& range) {
+            for (int x = range.begin(); x < range.end(); ++x) {
+                ray_t ray;
+                ray.pos = (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz();
+                ray.dir = (camera.view * vec4(shoot(width, height, x, y, camera.fovy), 0.f)).xyz();
 
-        for (int x = 0; x < width; ++x) {
-            ray_t ray;
-            ray.pos = (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz();
-            ray.dir = (camera.view * vec4(shoot(width, height, x, y, camera.fovy), 0.f)).xyz();
-
-            image[y * width + x] = trace_color(scene, ray);
-        }
+                image[y * width + x] = trace_color(scene, ray);
+            }
+        });
     }
 
     return num_lines;

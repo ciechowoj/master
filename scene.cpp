@@ -123,7 +123,6 @@ Scene loadScene(RTCDevice device, string path) {
     Assimp::Importer importer;
 
     auto flags =
-        aiProcess_CalcTangentSpace |
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices;
 
@@ -188,9 +187,9 @@ Scene loadScene(RTCDevice device, string path) {
         meshes.push_back(mesh);
     }
 
-    vector<Material> materials;
+    rtcCommit(rtcScene);
 
-    std::cout << "numMaterials: " << scene->mNumMaterials << std::endl;
+    vector<Material> materials;
 
     for (size_t i = 0; i < scene->mNumMaterials; ++i) {
         Material material;

@@ -5,17 +5,12 @@
 #include <streamops.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
-#include <octree.hpp>
 #include <xmmintrin.h>
 #include <pmmintrin.h>
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
 
-
 using namespace std;
-
-
-
 
 int main(int argc, char **argv) {
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -37,14 +32,6 @@ int main(int argc, char **argv) {
         auto scene2 = haste::loadScene(device, "models/cornell_box.obj");
         auto scene = obj::load("models/cornell_box.obj");
 
-        for (auto itr : scene2.materials) {
-            cout << itr.name << endl;
-        }
-
-        octree_t octree(scene, 8);
-
-        cout << "aabb: " << octree.aabb() << endl;
-
         camera_t camera;
 
         float yaw = glm::pi<float>(), pitch = -0.0;
@@ -56,7 +43,7 @@ int main(int argc, char **argv) {
             image.resize(width * height);
 
             double start = glfwGetTime();
-            int num_lines = raytrace(image, width, height, camera, scene, 0.033, line);
+            int num_lines = raytrace(image, width, height, camera, scene2, 0.033, line);
             int num_pixels = num_lines * width;
 
             double elapsed = glfwGetTime() - start;
@@ -65,8 +52,8 @@ int main(int argc, char **argv) {
 
             draw_fullscreen_quad(window, image);
 
-            ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-            ImGui::ShowTestWindow(&show_test_window);
+            // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+            // ImGui::ShowTestWindow(&show_test_window);
 
             ImGui::Begin("Camera");
             vec3 t = vec3(1, 2, 3);

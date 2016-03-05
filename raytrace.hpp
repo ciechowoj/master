@@ -24,14 +24,12 @@ bool eq(const vec3& a, const vec3& b);
 
 vec3 shoot(int width, int height, int x, int y, float fovy);
 
-void raytrace(std::vector<vec3>& image, int width, int height, const camera_t& camera, const obj::scene_t& scene);
-
 int raytrace(
     std::vector<vec3>& image, 
     int width, 
     int height, 
     const camera_t& camera, 
-    const obj::scene_t& scene, 
+    const haste::Scene& scene, 
     float budget,
     int& line);
 
