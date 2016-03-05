@@ -10,31 +10,36 @@
 #include <pmmintrin.h>
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
-#include <assimp/cimport.h>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+
 
 using namespace std;
 
+
+
+
 int main(int argc, char **argv) {
+    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+
     ::testing::InitGoogleTest(&argc, argv);
 
     if (false && RUN_ALL_TESTS() != 0) {
         return 1;
     }
 
-    aiImportFile("", aiProcessPreset_TargetRealtime_MaxQuality);
-
-    RTCDevice device = rtcNewDevice(NULL);
-
-    rtcDeleteDevice(device);
-
     return run(1000, 800, [](GLFWwindow* window) {
+        RTCDevice device = rtcNewDevice(NULL);
+
         std::vector<vec3> image;
 
         bool show_test_window = true;
 
+        auto scene2 = haste::loadScene(device, "models/cornell_box.obj");
         auto scene = obj::load("models/cornell_box.obj");
+
+        for (auto itr : scene2.materials) {
+            cout << itr.name << endl;
+        }
 
         octree_t octree(scene, 8);
 
@@ -81,5 +86,7 @@ int main(int argc, char **argv) {
             ImGui::InputFloat("tpf [ms]", &ftpf);
             ImGui::End();
         });
+
+        rtcDeleteDevice(device);
     });
 }

@@ -5,6 +5,9 @@
 #include <tiny_obj_loader.h>
 #include <glm/glm.hpp>
 
+#include <embree2/rtcore.h>
+#include <embree2/rtcore_ray.h>
+
 namespace obj = tinyobj;
 
 namespace tinyobj {
@@ -85,7 +88,29 @@ std::ostream& operator<<(
 	const aabb_t& aabb);
 
 
+namespace haste {
 
+using std::vector;
+using std::string;
+using std::size_t;
 
+struct Material {
+	string name;
+	vec3 diffuse;
+};
 
+struct Mesh {
+	string name;
+	unsigned geometryID;
+	unsigned materialID;
+};
 
+struct Scene {
+	RTCScene rtcScene;
+	vector<Material> materials;
+	vector<Mesh> meshes;
+};
+
+Scene loadScene(RTCDevice device, string path);
+
+}
