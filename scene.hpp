@@ -49,6 +49,7 @@ struct Mesh {
 	unsigned materialID;
     vector<int> indices;
     vector<vec3> normals;
+    vector<vec3> vertices;
 };
 
 struct Scene {
@@ -58,6 +59,12 @@ struct Scene {
     vector<Mesh> meshes;
 };
 
+struct Cache {
+    RTCScene rtcScene = nullptr;
+};
+
 Scene loadScene(RTCDevice device, string path);
+
+void updateCache(Cache& cache, RTCDevice device, const Scene& scene);
 
 }

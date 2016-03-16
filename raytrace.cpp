@@ -160,25 +160,24 @@ vec3 trace_color(const haste::Scene& scene, const ray_t& ray) {
     if (result.geomID != RTC_INVALID_GEOMETRY_ID) {
         const Mesh* mesh = scene.meshes.data() + result.geomID;
 
-        int material_id = scene.meshes[result.geomID].materialID;
+        if (result.geomID < scene.meshes.size()) {
 
-        float w = 1.f - result.u - result.v;
-        vec3 N = w * mesh->normals[mesh->indices[result.primID * 3 + 0]] +
-                 result.u * mesh->normals[mesh->indices[result.primID * 3 + 1]] +
-                 result.v * mesh->normals[mesh->indices[result.primID * 3 + 2]];
+            int material_id = scene.meshes[result.geomID].materialID;
 
-        N = normalize(N);
+            float w = 1.f - result.u - result.v;
+            vec3 N = w * mesh->normals[mesh->indices[result.primID * 3 + 0]] +
+                     result.u * mesh->normals[mesh->indices[result.primID * 3 + 1]] +
+                     result.v * mesh->normals[mesh->indices[result.primID * 3 + 2]];
 
-        vec3 P = ray.pos + normalize(ray.dir) * result.tfar;
+            N = normalize(N);
 
-        // return clamp(N * 0.5f + 0.5f, 0.0f, 1.0f);
+            vec3 P = ray.pos + normalize(ray.dir) * result.tfar;
 
-        return sampleLights(
-            scene,
-            scene.materials[material_id],
-            P, 
-            N,
-            vec3(0)); // + scene.materials[material_id].ambient;
+            return clamp(N * 0.5f + 0.5f, 0.0f, 1.0f);
+        }
+        else {
+            return vec3(1);
+        }
     }
     else {
         return vec3(0.f);
