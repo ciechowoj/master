@@ -36,28 +36,11 @@ using std::vector;
 using std::string;
 using std::size_t;
 
-enum class LightType {
-    Area,
-    Directional,
-    Point,
-    Spot,
-};
-
-struct Light {
-    string name;
-    LightType type;
-    vec3 emissive;
-    struct {
-        vec3 position;
-        vec3 u, v;
-    } area;
-    float size;
-};
-
 struct Material {
 	string name;
     vec3 ambient;
 	vec3 diffuse;
+    vec3 emissive;
 };
 
 struct Mesh {
@@ -70,9 +53,9 @@ struct Mesh {
 
 struct Scene {
 	RTCScene rtcScene;
-    vector<Light> lights;
-	vector<Material> materials;
-	vector<Mesh> meshes;
+    vector<Material> materials;
+    vector<Mesh> areaLights;
+    vector<Mesh> meshes;
 };
 
 Scene loadScene(RTCDevice device, string path);

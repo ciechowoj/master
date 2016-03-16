@@ -31,9 +31,8 @@ int main(int argc, char **argv) {
 
         auto scene = haste::loadScene(device, "models/cornell-box/CornellBox-Sphere.obj");
 
-        for (auto light : scene.lights) {
+        for (auto light : scene.areaLights) {
             cout << light.name << endl;
-            cout << light.area.position << endl;
         }
 
         camera_t camera;

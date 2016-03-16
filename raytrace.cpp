@@ -143,13 +143,13 @@ vec3 sampleLights(
 {
     auto result = vec3(0.0f);
 
-    for (auto&& light : scene.lights) {
+    /*for (auto&& light : scene.lights) {
         if (!occluded(scene, position, light.area.position)) {
             float D = length(light.area.position - position);
             vec3 L = normalize(light.area.position - position);
             result += dot(L, N) * material.diffuse * light.emissive / (D * D);
         }
-    }
+    }*/
 
     return result;
 }
