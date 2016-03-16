@@ -6,6 +6,7 @@
 
 using namespace std;
 using namespace glm;
+using namespace haste;
 
 float intersect(const float* tris, const unsigned* indices, const ray_t& ray) {
     vec3 v0 = *(vec3*)(tris + indices[0] * 3);
@@ -101,13 +102,83 @@ intersect_t trace(const haste::Scene& scene, const ray_t& ray) {
     return result;
 }
 
+RTCRay intersect(const Scene& scene, const vec3& position, const vec3& direction) {
+    RTCRay rtcRay;
+    (*(vec3*)rtcRay.org) = position;
+    (*(vec3*)rtcRay.dir) = direction;
+    rtcRay.tnear = 0.f;
+    rtcRay.tfar = INFINITY;
+    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.mask = 0xFFFFFFFF;
+    rtcRay.time = 0.f;
+    rtcIntersect(scene.rtcScene, rtcRay);
+    return rtcRay;   
+}
+
+bool occluded(const Scene& scene, const vec3& source, const vec3& target) {
+    vec3 direction = target - source;
+
+    RTCRay rtcRay;
+    (*(vec3*)rtcRay.org) = source;
+    (*(vec3*)rtcRay.dir) = direction;
+    rtcRay.tnear = 0.01f;
+    rtcRay.tfar = 0.9f;
+    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.mask = 0xFFFFFFFF;
+    rtcRay.time = 0.f;
+    rtcOccluded(scene.rtcScene, rtcRay);
+    return rtcRay.geomID == 0;
+}
+
+vec3 sampleLights(
+    const Scene& scene, 
+    const Material& material,
+    const vec3& position, 
+    const vec3& N, 
+    const vec3& camera) 
+{
+    auto result = vec3(0.0f);
+
+    for (auto&& light : scene.lights) {
+        if (!occluded(scene, position, light.area.position)) {
+            float D = length(light.area.position - position);
+            vec3 L = normalize(light.area.position - position);
+            result += dot(L, N) * material.diffuse * light.emissive / (D * D);
+        }
+    }
+
+    return result;
+}
+
 vec3 trace_color(const haste::Scene& scene, const ray_t& ray) {
-    auto intersect = trace(scene, ray);
+    auto result = intersect(scene, ray.pos, ray.dir);
 
-    if (!isnan(intersect.depth)) {
-        int material_id = scene.meshes[intersect.shape].materialID;
+    if (result.geomID != RTC_INVALID_GEOMETRY_ID) {
+        const Mesh* mesh = scene.meshes.data() + result.geomID;
 
-        return scene.materials[material_id].diffuse;
+        int material_id = scene.meshes[result.geomID].materialID;
+
+        float w = 1.f - result.u - result.v;
+        vec3 N = w * mesh->normals[mesh->indices[result.primID * 3 + 0]] +
+                 result.u * mesh->normals[mesh->indices[result.primID * 3 + 1]] +
+                 result.v * mesh->normals[mesh->indices[result.primID * 3 + 2]];
+
+        N = normalize(N);
+
+        vec3 P = ray.pos + normalize(ray.dir) * result.tfar;
+
+        // return clamp(N * 0.5f + 0.5f, 0.0f, 1.0f);
+
+        return sampleLights(
+            scene,
+            scene.materials[material_id],
+            P, 
+            N,
+            vec3(0)); // + scene.materials[material_id].ambient;
     }
     else {
         return vec3(0.f);

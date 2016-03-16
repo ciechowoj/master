@@ -54,7 +54,7 @@ out vec4 color;
 
 void main()
 {
-    color = texture2D(sampler, texcoord); // vec4(1.0, 0.0, 1.0, 1.0);
+    color = clamp(texture2D(sampler, texcoord), 0, 1); // vec4(1.0, 0.0, 1.0, 1.0);
 }
     )"";
 

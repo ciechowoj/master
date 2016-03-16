@@ -1,9 +1,7 @@
 # cornell_box.obj and cornell_box.mtl are grabbed from Intel's embree project.
 # original cornell box data
-  # comment
-
+# comment
 # empty line including some space
-   
 
 mtllib cornell_box.mtl
 
@@ -24,7 +22,7 @@ v 2.65 0.0 2.96
 v 3.14 0.0 4.56
 v 4.72 0.0 4.06
 
-f 1 2 3 4 
+f 1 2 3 4
 f 8 7 6 5
 f 12 11 10 9
 

@@ -2,27 +2,40 @@
 	"build_systems":
 	[
 		{
-			"cmd": [ "make", "-s" ],
-			"name": "Build master.",
+			"cmd":
+			[
+				"make",
+				"-s"
+			],
 			"file_regex": "^(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
-			"working_dir": "${project_path}",
-
+			"name": "Build master.",
 			"variants":
 			[
 				{
-					"cmd": [ "make", "-s", "run" ],
-					"name": "Run master.",
+					"cmd":
+					[
+						"make",
+						"-s",
+						"run"
+					],
 					"file_regex": "^(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
-					"working_dir": "${project_path}",
-				},
+					"name": "Run master.",
+					"working_dir": "${project_path}"
+				}
 			],
+			"working_dir": "${project_path}"
+		},
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Anaconda Python Builder",
+			"selector": "source.python",
+			"shell_cmd": "\"python\" -u \"$file\""
 		}
 	],
-
 	"folders":
 	[
 		{
-			"path": ".",
-		},
+			"path": "."
+		}
 	]
 }

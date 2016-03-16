@@ -29,12 +29,17 @@ int main(int argc, char **argv) {
 
         bool show_test_window = true;
 
-        auto scene = haste::loadScene(device, "models/cornell_box.obj");
+        auto scene = haste::loadScene(device, "models/cornell-box/CornellBox-Sphere.obj");
+
+        for (auto light : scene.lights) {
+            cout << light.name << endl;
+            cout << light.area.position << endl;
+        }
 
         camera_t camera;
 
-        float yaw = glm::pi<float>(), pitch = -0.0;
-        vec3 position = vec3(2.5, 2.5, -6);
+        float yaw = 0, pitch = -0.0;
+        vec3 position = vec3(0, 0.75, 2.4);
         int line = 0;
         double tpp = 0.001;
         double tpf = 100;
