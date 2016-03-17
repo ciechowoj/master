@@ -12,6 +12,7 @@
 #include <loader.hpp>
 
 using namespace std;
+using namespace haste;
 
 int main(int argc, char **argv) {
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -19,14 +20,14 @@ int main(int argc, char **argv) {
 
     ::testing::InitGoogleTest(&argc, argv);
 
-    if (false && RUN_ALL_TESTS() != 0) {
+    if (RUN_ALL_TESTS() != 0) {
         return 1;
     }
 
     return run(1000, 800, [](GLFWwindow* window) {
         RTCDevice device = rtcNewDevice(NULL);
 
-        std::vector<vec3> image;
+        std::vector<vec4> image;
 
         bool show_test_window = true;
 
@@ -38,7 +39,7 @@ int main(int argc, char **argv) {
             cout << name << endl;
         }
 
-        camera_t camera;
+        Camera camera;
 
         float yaw = 0, pitch = -0.0;
         vec3 position = vec3(0, 0.75, 2.4);
@@ -66,7 +67,14 @@ int main(int argc, char **argv) {
             ImGui::SliderFloat("yaw", &yaw, -glm::pi<float>(), glm::pi<float>());
             ImGui::SliderFloat("pitch",  &pitch, -glm::half_pi<float>(), glm::half_pi<float>());
             ImGui::InputVec("position", &position);
-            camera.view = translate(position) * eulerAngleXY(pitch, yaw);
+            auto newView = translate(position) * eulerAngleXY(pitch, yaw);
+
+            if (newView != camera.view) {
+                image.clear();
+                image.resize(width * height);
+            }
+
+            camera.view = newView;
 
             ImGui::InputMat("view", &camera.view);
             ImGui::InputFloat("fovy", &camera.fovy);

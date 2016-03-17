@@ -161,36 +161,23 @@ vec3 trace_color(
 }
 
 int raytrace(
-    std::vector<vec3>& image, 
+    std::vector<vec4>& image, 
     int width, 
     int height, 
-    const camera_t& camera, 
+    const haste::Camera& camera, 
     const haste::Scene& scene,
     const haste::SceneCache& cache,
     float budget, 
     int& line)
 {
-    double start = glfwGetTime();
-    int num_lines = 0;
+    renderInteractive(image, width, camera, [&](Ray ray) -> vec3 {
+        ray_t ray2;
+        ray2.pos = ray.origin;
+        ray2.dir = ray.direction;
+        return trace_color(scene, cache, ray2);
+    });
 
-    while (glfwGetTime() < start + budget) {
-        line = (line + 1) % height;
-        ++num_lines;
-        int y = line;
-        parallel_for(
-            tbb::blocked_range<int>(0, width), 
-            [&](const tbb::blocked_range<int>& range) {
-            for (int x = range.begin(); x < range.end(); ++x) {
-                ray_t ray;
-                ray.pos = (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz();
-                ray.dir = (camera.view * vec4(shoot(width, height, x, y, camera.fovy), 0.f)).xyz();
-
-                image[y * width + x] = trace_color(scene, cache, ray);
-            }
-        });
-    }
-
-    return num_lines;
+    return 1;
 }
 
 

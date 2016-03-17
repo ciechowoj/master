@@ -7,15 +7,15 @@
 namespace haste {
 
 Ray shoot(
-    const Camera& camera, 
-    int x, 
-    int y, 
-    float winv2, 
-    float hinv2, 
-    float aspect, 
-    float znear) 
+    const Camera& camera,
+    int x,
+    int y,
+    float winv2,
+    float hinv2,
+    float aspect,
+    float znear)
 {
-    float fx = ((float(x) + 0.5f) * winv2 * - 1.f) * aspect;
+    float fx = ((float(x) + 0.5f) * winv2 - 1.f) * aspect;
     float fy = (float(y) + 0.5f) * hinv2 - 1.f;
 
     return Ray {
@@ -24,31 +24,31 @@ Ray shoot(
     };
 }
 
-void _render(
+void render(
     vector<vec4>& imageData,
     const ImageDesc& imageDesc,
     const Camera& camera,
-    std::function<vec3(Ray ray)> trace) 
+    const std::function<vec3(Ray ray)>& trace)
 {
-    int xBegin = imageDesc.x;
-    int xEnd = xBegin + imageDesc.w;
+    const int width = imageDesc.pitch;
+    const int height = imageData.size() / width;
 
-    int rXBegin = xEnd - 1;
-    int rXEnd = xBegin - 1;
+    const int xBegin = max(0, imageDesc.x);
+    const int xEnd = min(xBegin + imageDesc.w, width);
 
-    int yBegin = imageDesc.y;
-    int yEnd = yBegin + imageDesc.h;
+    const int rXBegin = xEnd - 1;
+    const int rXEnd = xBegin - 1;
 
-    int width = imageDesc.pitch;
-    int height = imageData.size() / width;
+    const int yBegin = max(0, imageDesc.y);
+    const int yEnd = min(yBegin + imageDesc.h, height);
 
     runtime_assert(width * height == imageData.size());
     runtime_assert(0 <= xBegin && xEnd <= width);
     runtime_assert(0 <= yBegin && yEnd <= height);
-    
+
     float znear = 1.f / tan(camera.fovy * 0.5f);
     float aspect = float(width) / float(height);
-    
+
     float winv2 = 2.f / float(width);
     float hinv2 = 2.f / float(height);
 
@@ -73,51 +73,61 @@ void _render(
     }
 }
 
-int findLastBlock(
-    const vector<vec4>& imageData,
-    size_t pitch) {
-
-    int width = pitch;
-    int height = imageData.size() / width;
-
-    int a = 0;
-    int b = height;
-
-    float x = imageData[width - 1].w;
-
-    
-
-
-
-}
-
-void _renderBlock(
+void render(
     vector<vec4>& imageData,
     size_t pitch,
-    int blockIndex,
-    int blockSize,
-    int rows,
-    int cols,
     const Camera& camera,
-    const function<vec3(Ray ray)>& trace) 
+    const function<vec3(Ray ray)>& trace)
 {
-    int width = pitch;
-    int height = imageData.size() / pitch;
-
     ImageDesc imageDesc;
-    imageDesc.x = blockIndex % cols * blockSize;
-    imageDesc.y = blockIndex / cols * blockSize;
-    imageDesc.w = blockSize;
-    imageDesc.h = blockSize;
+    imageDesc.x = 0;
+    imageDesc.y = 0;
+    imageDesc.w = pitch;
+    imageDesc.h = imageData.size() / pitch;
     imageDesc.pitch = pitch;
 
-    _render(
+    render(
         imageData,
         imageDesc,
         camera,
         trace);
 }
 
+int findLastBlock(
+    const vector<vec4>& imageData,
+    size_t pitch,
+    size_t block)
+{
+    if (imageData.front().w == imageData.back().w) {
+        return 0;
+    }
+    else {
+        const int width = pitch;
+        const int height = imageData.size() / width;
+        const int cols = (width + block - 1) / block;
+        const int rows = (height + block - 1) / block;
+
+        int a = 0;
+        int b = cols * rows;
+        float q = imageData.back().a;
+
+        while (a != b) {
+            int h = a + (b - a) / 2;
+
+            int x = h % cols * block;
+            int y = h / cols * block;
+
+            if (imageData[y * width + x].w > q) {
+                a = h + 1;
+            }
+            else {
+                b = h;
+            }
+        }
+
+        return a;
+    }
+}
 
 void renderInteractive(
     vector<vec4>& imageData,
@@ -125,7 +135,7 @@ void renderInteractive(
     const Camera& camera,
     const function<vec3(Ray ray)>& trace)
 {
-    const float budget = 0.020;
+    const float budget = 0.010;
     double start = glfwGetTime();
     const int block = 128;
 
@@ -135,40 +145,34 @@ void renderInteractive(
     const int cols = (width + block - 1) / block;
     const int numBlocks = rows * cols;
 
-    const unsigned cores = std::thread::hardware_concurrency();
+    const unsigned tasks = std::thread::hardware_concurrency() * 4;
 
-    int itr = 0;
+    int itr = findLastBlock(imageData, pitch, block);
+
+    auto localRender = [=, &imageData](int index) {
+        ImageDesc imageDesc;
+        imageDesc.x = index % cols * block;
+        imageDesc.y = index / cols * block;
+        imageDesc.w = block;
+        imageDesc.h = block;
+        imageDesc.pitch = pitch;
+
+        render(imageData, imageDesc, camera, trace);
+    };
 
     while (glfwGetTime() < start + budget) {
         tbb::task_group group;
 
-        for (unsigned i = 0; i < cores - 1; ++i) {
-            group.run([=, &imageData] { _renderBlock(
-                imageData, 
-                pitch, 
-                itr + i, 
-                block, 
-                rows,
-                cols,
-                camera, 
-                trace); });
+        for (unsigned i = 0; i < tasks; ++i) {
+            group.run([=] { localRender(itr + i); });
         }
 
-        _renderBlock(
-            imageData, 
-            pitch, 
-            itr + cores - 1, 
-            block, 
-            rows,
-            cols,
-            camera, 
-            trace);
+        localRender(itr + tasks);
 
         group.wait();
 
-        itr = (itr + cores) % numBlocks;
+        itr = (itr + tasks + 1) % numBlocks;
     }
 }
-
 
 }

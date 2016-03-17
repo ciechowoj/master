@@ -27,11 +27,17 @@ void render(
     vector<vec4>& imageData,
     const ImageDesc& imageDesc,
     const Camera& camera,
-    function<vec3(Ray ray)> trace);
+    const function<vec3(Ray ray)>& trace);
+
+void render(
+    vector<vec4>& imageData,
+    size_t pitch,
+    const Camera& camera,
+    const function<vec3(Ray ray)>& trace);
 
 void renderInteractive(
     vector<vec4>& imageData,
-    const ImageDesc& imageDesc,
+    size_t pitch,
     const Camera& camera,
     const function<vec3(Ray ray)>& trace);
 

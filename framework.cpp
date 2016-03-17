@@ -31,7 +31,7 @@ GLuint create_shader(GLenum type, const std::string& source) {
 
         std::vector<GLchar> info(length);
         glGetShaderInfoLog(shader, length, &length, info.data());
-        
+
         glDeleteShader(shader);
 
         std::cerr << "Failed to compile shader. Info log:\n"
@@ -47,14 +47,15 @@ GLuint create_program() {
     const char* fragment_shader_source = R""(
 #version 330
 
-uniform sampler2D sampler; 
+uniform sampler2D sampler;
 
 in vec2 texcoord;
 out vec4 color;
 
 void main()
 {
-    color = clamp(texture2D(sampler, texcoord), 0, 1); // vec4(1.0, 0.0, 1.0, 1.0);
+    vec4 sample = texture2D(sampler, texcoord);
+    color = clamp(vec4(sample.rgb / sample.a, 1), 0, 1);
 }
     )"";
 
@@ -91,14 +92,14 @@ void main()
 
         std::vector<GLchar> info(length);
         glGetProgramInfoLog(program, length, &length, info.data());
-        
+
         glDeleteProgram(program);
         glDeleteShader(vertex_shader);
         glDeleteShader(fragment_shader);
 
         std::cerr << "Failed to link program. Info log:\n"
             << info.data() << std::endl;
-        
+
         return 0;
     }
 
@@ -147,8 +148,8 @@ void draw_fullscreen_quad(GLuint quad) {
 }
 
 void draw_fullscreen_quad(
-    GLFWwindow* window, 
-    const std::vector<glm::vec3>& image) {
+    GLFWwindow* window,
+    const std::vector<glm::vec4>& image) {
 
     window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
     glUseProgram(context->program_id);
@@ -156,10 +157,10 @@ void draw_fullscreen_quad(
     bind_fullscreen_texture(window);
 
     glTexSubImage2D(
-        GL_TEXTURE_2D, 0, 0, 0, 
-        context->texture_width, 
+        GL_TEXTURE_2D, 0, 0, 0,
+        context->texture_width,
         context->texture_height,
-        GL_RGB,
+        GL_RGBA,
         GL_FLOAT,
         image.data());
 
@@ -176,7 +177,7 @@ void window_resize(GLFWwindow* window, int width, int height) {
 
     if (context->texture_width != width || context->texture_height != height) {
         glBindTexture(GL_TEXTURE_2D, context->texture_id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
         glGenSamplers(1, &context->sampler_id);
         glSamplerParameteri(context->sampler_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glSamplerParameteri(context->sampler_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -211,9 +212,9 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
         return -1;
     }
 
-    std::cerr << "Loaded OpenGL " 
-        << GLVersion.major << "." 
-        << GLVersion.minor << " profile." 
+    std::cerr << "Loaded OpenGL "
+        << GLVersion.major << "."
+        << GLVersion.minor << " profile."
         << std::endl;
 
     window_context_t* context = new window_context_t();
@@ -249,12 +250,12 @@ int loop(GLFWwindow* window, const std::function<void(int, int)>& loop) {
     while (!glfwWindowShouldClose(window)) {
         window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
         glViewport(0, 0, context->texture_width, context->texture_height);
-        
+
         ImGui_ImplGlfwGL3_NewFrame();
 
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
-        
+
         loop(context->texture_width, context->texture_height);
 
         ImGui::Render();

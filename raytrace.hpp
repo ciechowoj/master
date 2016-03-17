@@ -3,13 +3,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <scene.hpp>
+#include <camera.hpp>
 
 using namespace glm;
 
-struct camera_t {
-    mat4 view;
-    float fovy = glm::pi<float>() / 3.f;
-};
 
 static const float epsilon = 0.00001f;
 
@@ -24,10 +21,10 @@ bool eq(const vec3& a, const vec3& b);
 vec3 shoot(int width, int height, int x, int y, float fovy);
 
 int raytrace(
-    std::vector<vec3>& image, 
+    std::vector<vec4>& image, 
     int width, 
     int height, 
-    const camera_t& camera, 
+    const haste::Camera& camera, 
     const haste::Scene& scene,
     const haste::SceneCache& cache,
     float budget,
