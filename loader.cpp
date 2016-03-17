@@ -63,8 +63,7 @@ bool isEmissive(const aiScene* scene, size_t meshID) {
 
 Mesh makeMesh(
     const aiScene* scene,
-    size_t i,
-    size_t numMeshes) {
+    size_t i) {
 
     vector<vec3> vertices;
 
@@ -106,6 +105,56 @@ Mesh makeMesh(
     return mesh;
 }
 
+void appendLights(
+    AreaLights& lights,
+    const aiScene* scene,
+    size_t i) {
+
+    lights.names.push_back(scene->mMeshes[i]->mName.C_Str());
+    size_t numIndices = lights.indices.size();
+    lights.offsets.push_back(numIndices);
+
+    size_t numVertices = lights.vertices.size();
+    lights.vertices.resize(numVertices + scene->mMeshes[i]->mNumVertices);
+
+    for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
+        lights.vertices.push_back(vec3(0));
+        lights.vertices[numVertices + j].x = scene->mMeshes[i]->mVertices[j].x;
+        lights.vertices[numVertices + j].y = scene->mMeshes[i]->mVertices[j].y;
+        lights.vertices[numVertices + j].z = scene->mMeshes[i]->mVertices[j].z;
+    }
+
+    lights.indices.resize(numIndices + scene->mMeshes[i]->mNumFaces * 3);
+
+    for (size_t j = 0; j < scene->mMeshes[i]->mNumFaces; ++j) {
+        if (scene->mMeshes[i]->mFaces[j].mNumIndices != 3) {
+            throw std::runtime_error("Loaded scene contains non triangle faces.");
+        }
+
+        for (size_t k = 0; k < 3; ++k) {
+            lights.indices[numIndices + j * 3 + k] = scene->mMeshes[i]->mFaces[j].mIndices[k];
+        }
+    }
+
+    if (scene->mMeshes[i]->mNormals == nullptr) {
+        throw std::runtime_error("Normal vectors are not present.");
+    }
+
+    lights.normals.resize(lights.vertices.size());
+
+    for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
+        lights.normals[numVertices + j] = toVec3(scene->mMeshes[i]->mNormals[j]);
+    }
+
+    size_t numFaces = numIndices / 3;
+    lights.wattages.resize(lights.indices.size() / 3);
+
+    for (size_t j = 0; j < scene->mMeshes[i]->mNumFaces; ++j) {
+        auto materialID = scene->mMeshes[i]->mMaterialIndex;
+        lights.wattages[numFaces + j] = emissive(scene->mMaterials[materialID]);
+    }
+}
+
 Scene loadScene(string path) {
     Assimp::Importer importer;
 
@@ -128,14 +177,17 @@ Scene loadScene(string path) {
             emissive.push_back(i);
         }
         else {
-            meshes.push_back(makeMesh(scene, i, meshes.size()));
+            meshes.push_back(makeMesh(scene, i));
         }
     }
 
-    vector<Mesh> areaLights;
+    AreaLights areaLights;
 
     for (size_t i = 0; i < emissive.size(); ++i) {
-        areaLights.push_back(makeMesh(scene, emissive[i], meshes.size() + areaLights.size()));
+        appendLights(
+            areaLights, 
+            scene, 
+            emissive[i]);
     }
 
     vector<Material> materials;

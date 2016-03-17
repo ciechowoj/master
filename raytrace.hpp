@@ -17,7 +17,6 @@ inline bool is_zero(float a) {
     return -::epsilon < a && a < ::epsilon;
 }
 
-float intersect(const vec3* triangle, const ray_t& ray);
 
 bool eq(float fa, float fb, int ulps = 2);
 bool eq(const vec3& a, const vec3& b);
@@ -30,7 +29,7 @@ int raytrace(
     int height, 
     const camera_t& camera, 
     const haste::Scene& scene,
-    const haste::Cache& cache,
+    const haste::SceneCache& cache,
     float budget,
     int& line);
 

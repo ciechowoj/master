@@ -7,7 +7,7 @@
 				"make",
 				"-s"
 			],
-			"file_regex": "^(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
+			"file_regex": "^(?:(?:  what\\(\\):  )|..)(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
 			"name": "Build master.",
 			"variants":
 			[
@@ -18,19 +18,14 @@
 						"-s",
 						"run"
 					],
-					"file_regex": "^(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
+
+					"file_regex": "^(?:(?:  what\\(\\):  )|)(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
 					"name": "Run master.",
 					"working_dir": "${project_path}"
 				}
 			],
 			"working_dir": "${project_path}"
 		},
-		{
-			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
-			"name": "Anaconda Python Builder",
-			"selector": "source.python",
-			"shell_cmd": "\"python\" -u \"$file\""
-		}
 	],
 	"folders":
 	[

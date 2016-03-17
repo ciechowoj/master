@@ -75,7 +75,7 @@ vec3 shoot(int width, int height, int x, int y, float fovy) {
     return normalize(vec3(fx, fy, -znear));
 }
 
-RTCRay intersect(const Cache& cache, const vec3& position, const vec3& direction) {
+RTCRay intersect(const SceneCache& cache, const vec3& position, const vec3& direction) {
     RTCRay rtcRay;
     (*(vec3*)rtcRay.org) = position;
     (*(vec3*)rtcRay.dir) = direction;
@@ -90,7 +90,7 @@ RTCRay intersect(const Cache& cache, const vec3& position, const vec3& direction
     return rtcRay;   
 }
 
-bool occluded(const Cache& cache, const vec3& source, const vec3& target) {
+bool occluded(const SceneCache& cache, const vec3& source, const vec3& target) {
     vec3 direction = target - source;
 
     RTCRay rtcRay;
@@ -129,7 +129,7 @@ vec3 sampleLights(
 
 vec3 trace_color(
     const haste::Scene& scene,
-    const haste::Cache& cache,
+    const haste::SceneCache& cache,
     const ray_t& ray) {
     auto result = intersect(cache, ray.pos, ray.dir);
 
@@ -166,7 +166,7 @@ int raytrace(
     int height, 
     const camera_t& camera, 
     const haste::Scene& scene,
-    const haste::Cache& cache,
+    const haste::SceneCache& cache,
     float budget, 
     int& line)
 {

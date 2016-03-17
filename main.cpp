@@ -31,11 +31,11 @@ int main(int argc, char **argv) {
         bool show_test_window = true;
 
         auto scene = haste::loadScene("models/cornell-box/CornellBox-Sphere.obj");
-        haste::Cache cache;
+        haste::SceneCache cache;
         haste::updateCache(cache, device, scene);
 
-        for (auto light : scene.areaLights) {
-            cout << light.name << endl;
+        for (auto name : scene.areaLights.names) {
+            cout << name << endl;
         }
 
         camera_t camera;

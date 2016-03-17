@@ -1,0 +1,6 @@
+#pragma once
+#include <string>
+
+void _runtime_assert(std::string file, std::size_t line);
+
+#define runtime_assert(condition) { if (!(condition)) _runtime_assert(__FILE__, __LINE__); }
