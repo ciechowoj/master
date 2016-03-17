@@ -75,34 +75,7 @@ vec3 shoot(int width, int height, int x, int y, float fovy) {
     return normalize(vec3(fx, fy, -znear));
 }
 
-intersect_t trace(const haste::Scene& scene, const ray_t& ray) {
-    RTCRay rtcRay;
-    (*(vec3*)rtcRay.org) = ray.pos;
-    (*(vec3*)rtcRay.dir) = ray.dir;
-    rtcRay.tnear = 0.f;
-    rtcRay.tfar = INFINITY;
-    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.mask = 0xFFFFFFFF;
-    rtcRay.time = 0.f;
-    rtcIntersect (scene.rtcScene, rtcRay);
-
-    intersect_t result;
-    result.shape = rtcRay.geomID;
-    result.face = rtcRay.instID;
-
-    if (rtcRay.geomID != RTC_INVALID_GEOMETRY_ID) {
-        result.depth = rtcRay.tfar;
-    }
-    else {
-        result.depth = NAN;
-    }
-
-    return result;
-}
-
-RTCRay intersect(const Scene& scene, const vec3& position, const vec3& direction) {
+RTCRay intersect(const Cache& cache, const vec3& position, const vec3& direction) {
     RTCRay rtcRay;
     (*(vec3*)rtcRay.org) = position;
     (*(vec3*)rtcRay.dir) = direction;
@@ -113,11 +86,11 @@ RTCRay intersect(const Scene& scene, const vec3& position, const vec3& direction
     rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.mask = 0xFFFFFFFF;
     rtcRay.time = 0.f;
-    rtcIntersect(scene.rtcScene, rtcRay);
+    rtcIntersect(cache.rtcScene, rtcRay);
     return rtcRay;   
 }
 
-bool occluded(const Scene& scene, const vec3& source, const vec3& target) {
+bool occluded(const Cache& cache, const vec3& source, const vec3& target) {
     vec3 direction = target - source;
 
     RTCRay rtcRay;
@@ -130,7 +103,7 @@ bool occluded(const Scene& scene, const vec3& source, const vec3& target) {
     rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.mask = 0xFFFFFFFF;
     rtcRay.time = 0.f;
-    rtcOccluded(scene.rtcScene, rtcRay);
+    rtcOccluded(cache.rtcScene, rtcRay);
     return rtcRay.geomID == 0;
 }
 
@@ -154,8 +127,11 @@ vec3 sampleLights(
     return result;
 }
 
-vec3 trace_color(const haste::Scene& scene, const ray_t& ray) {
-    auto result = intersect(scene, ray.pos, ray.dir);
+vec3 trace_color(
+    const haste::Scene& scene,
+    const haste::Cache& cache,
+    const ray_t& ray) {
+    auto result = intersect(cache, ray.pos, ray.dir);
 
     if (result.geomID != RTC_INVALID_GEOMETRY_ID) {
         const Mesh* mesh = scene.meshes.data() + result.geomID;
@@ -189,7 +165,8 @@ int raytrace(
     int width, 
     int height, 
     const camera_t& camera, 
-    const haste::Scene& scene, 
+    const haste::Scene& scene,
+    const haste::Cache& cache,
     float budget, 
     int& line)
 {
@@ -208,7 +185,7 @@ int raytrace(
                 ray.pos = (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz();
                 ray.dir = (camera.view * vec4(shoot(width, height, x, y, camera.fovy), 0.f)).xyz();
 
-                image[y * width + x] = trace_color(scene, ray);
+                image[y * width + x] = trace_color(scene, cache, ray);
             }
         });
     }

@@ -9,6 +9,7 @@
 #include <pmmintrin.h>
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
+#include <loader.hpp>
 
 using namespace std;
 
@@ -29,7 +30,9 @@ int main(int argc, char **argv) {
 
         bool show_test_window = true;
 
-        auto scene = haste::loadScene(device, "models/cornell-box/CornellBox-Sphere.obj");
+        auto scene = haste::loadScene("models/cornell-box/CornellBox-Sphere.obj");
+        haste::Cache cache;
+        haste::updateCache(cache, device, scene);
 
         for (auto light : scene.areaLights) {
             cout << light.name << endl;
@@ -46,7 +49,7 @@ int main(int argc, char **argv) {
             image.resize(width * height);
 
             double start = glfwGetTime();
-            int num_lines = raytrace(image, width, height, camera, scene, 0.033, line);
+            int num_lines = raytrace(image, width, height, camera, scene, cache, 0.033, line);
             int num_pixels = num_lines * width;
 
             double elapsed = glfwGetTime() - start;

@@ -1,20 +1,14 @@
 #pragma once
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 #include <cmath>
 #include <glm/glm.hpp>
 
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
 
-
 using namespace glm; 
-
-struct intersect_t {
-    size_t shape = 0;
-    size_t face = 0;
-    float depth = NAN;
-};
 
 struct ray_t {
     vec3 pos, dir;
@@ -53,7 +47,6 @@ struct Mesh {
 };
 
 struct Scene {
-	RTCScene rtcScene;
     vector<Material> materials;
     vector<Mesh> areaLights;
     vector<Mesh> meshes;
@@ -62,8 +55,6 @@ struct Scene {
 struct Cache {
     RTCScene rtcScene = nullptr;
 };
-
-Scene loadScene(RTCDevice device, string path);
 
 void updateCache(Cache& cache, RTCDevice device, const Scene& scene);
 
