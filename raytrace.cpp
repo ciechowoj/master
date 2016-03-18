@@ -170,14 +170,12 @@ int raytrace(
     float budget, 
     int& line)
 {
-    renderInteractive(image, width, camera, [&](Ray ray) -> vec3 {
+    return renderInteractive(image, width, camera, [&](Ray ray) -> vec3 {
         ray_t ray2;
         ray2.pos = ray.origin;
         ray2.dir = ray.direction;
         return trace_color(scene, cache, ray2);
     });
-
-    return 1;
 }
 
 

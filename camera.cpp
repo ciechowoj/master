@@ -24,7 +24,7 @@ Ray shoot(
     };
 }
 
-void render(
+size_t render(
     vector<vec4>& imageData,
     const ImageDesc& imageDesc,
     const Camera& camera,
@@ -71,9 +71,11 @@ void render(
             }
         }
     }
+
+    return (xEnd - xBegin) * (yEnd - yBegin);
 }
 
-void render(
+size_t render(
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,
@@ -86,7 +88,7 @@ void render(
     imageDesc.h = imageData.size() / pitch;
     imageDesc.pitch = pitch;
 
-    render(
+    return render(
         imageData,
         imageDesc,
         camera,
@@ -129,7 +131,7 @@ int findLastBlock(
     }
 }
 
-void renderInteractive(
+size_t renderInteractive(
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,
@@ -137,7 +139,7 @@ void renderInteractive(
 {
     const float budget = 0.010;
     double start = glfwGetTime();
-    const int block = 128;
+    const int block = 64;
 
     const int width = pitch;
     const int height = imageData.size() / pitch;
@@ -145,11 +147,13 @@ void renderInteractive(
     const int cols = (width + block - 1) / block;
     const int numBlocks = rows * cols;
 
-    const unsigned tasks = std::thread::hardware_concurrency() * 4;
+    const unsigned tasks = std::thread::hardware_concurrency() * 4 - 1;
 
     int itr = findLastBlock(imageData, pitch, block);
 
-    auto localRender = [=, &imageData](int index) {
+    tbb::atomic<size_t> numRays(0);
+
+    auto localRender = [=, &imageData, &numRays](int index) {
         ImageDesc imageDesc;
         imageDesc.x = index % cols * block;
         imageDesc.y = index / cols * block;
@@ -157,7 +161,7 @@ void renderInteractive(
         imageDesc.h = block;
         imageDesc.pitch = pitch;
 
-        render(imageData, imageDesc, camera, trace);
+        numRays += render(imageData, imageDesc, camera, trace);
     };
 
     while (glfwGetTime() < start + budget) {
@@ -173,6 +177,8 @@ void renderInteractive(
 
         itr = (itr + tasks + 1) % numBlocks;
     }
+
+    return numRays;
 }
 
 }

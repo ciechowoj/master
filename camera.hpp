@@ -23,19 +23,19 @@ struct ImageDesc {
     size_t pitch = 0;
 };
 
-void render(
+size_t render(
     vector<vec4>& imageData,
     const ImageDesc& imageDesc,
     const Camera& camera,
     const function<vec3(Ray ray)>& trace);
 
-void render(
+size_t render(
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,
     const function<vec3(Ray ray)>& trace);
 
-void renderInteractive(
+size_t renderInteractive(
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,

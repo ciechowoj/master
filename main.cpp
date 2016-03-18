@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
 
     ::testing::InitGoogleTest(&argc, argv);
 
-    if (RUN_ALL_TESTS() != 0) {
+    if (false && RUN_ALL_TESTS() != 0) {
         return 1;
     }
 
@@ -50,12 +50,11 @@ int main(int argc, char **argv) {
             image.resize(width * height);
 
             double start = glfwGetTime();
-            int num_lines = raytrace(image, width, height, camera, scene, cache, 0.033, line);
-            int num_pixels = num_lines * width;
+            size_t num_pixels = raytrace(image, width, height, camera, scene, cache, 0.033, line);
 
             double elapsed = glfwGetTime() - start;
-            tpp = 0.99 * tpp + 0.01 * (elapsed / num_pixels) * 1000.0;
-            tpf = 0.99 * tpf + 0.01 * (elapsed * height / num_lines) * 1000.0;
+            tpp = 0.95 * tpp + 0.05 * (elapsed / num_pixels) * 1000.0;
+            tpf = tpp * image.size();
 
             draw_fullscreen_quad(window, image);
 
