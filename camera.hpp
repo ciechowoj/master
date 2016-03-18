@@ -15,7 +15,7 @@ struct Ray {
 
 struct Camera {
     mat4 view;
-    float fovy = glm::pi<float>() / 3.f;
+    float fovy = pi<float>() / 3.f;
 };
 
 struct ImageDesc {

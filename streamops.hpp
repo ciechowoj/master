@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
-#include <glm/glm.hpp>
+#include <glm>
+
+namespace haste {
 
 inline std::ostream& operator<<(std::ostream& stream, const vec3& vector) {
 	return stream << "[" << vector.x << ", " << vector.y << ", " << vector.z << "]";
@@ -25,5 +27,4 @@ template <class T> inline std::ostream& operator<<(
 	return stream;
 }
 
-
-
+}

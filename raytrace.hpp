@@ -25,10 +25,7 @@ int raytrace(
     int width, 
     int height, 
     const haste::Camera& camera, 
-    const haste::Scene& scene,
-    const haste::SceneCache& cache,
-    float budget,
-    int& line);
+    const haste::Scene& scene);
 
 
 

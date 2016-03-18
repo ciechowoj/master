@@ -34,6 +34,15 @@ vec3 AreaLights::lerpNormal(size_t face, vec3 uvw) const {
         + normals[indices[face * 3 + 2]] * uvw.y;
 }
 
+Scene::Scene(
+    vector<Material>&& materials,
+    vector<Mesh>&& meshes,
+    AreaLights&& areaLights)
+    : materials(move(materials))
+    , meshes(move(meshes))
+    , areaLights(move(areaLights))
+{ }
+
 unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
     unsigned geomID = rtcNewTriangleMesh(
         rtcScene,
@@ -99,7 +108,10 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
         rtcDeleteScene(rtcScene);
     }
 
-    rtcScene = rtcDeviceNewScene(device, RTC_SCENE_STATIC, RTC_INTERSECT1);
+    rtcScene = rtcDeviceNewScene(
+        device, 
+        RTC_SCENE_STATIC | RTC_SCENE_HIGH_QUALITY, 
+        RTC_INTERSECT1);
 
     if (rtcScene == nullptr) {
         throw std::runtime_error("Cannot create RTCScene.");
@@ -124,19 +136,45 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
     rtcCommit(rtcScene);
 }
 
-void updateLightCache(LightCache& cache, const AreaLights& lights) {
-    size_t numFaces = lights.numFaces();
-    cache.weights.resize(numFaces);
-
-    for (size_t i = 0; i < numFaces; ++i) {
-        cache.weights[i] = lights.faceArea(i) * lights.facePower(i);
+void Scene::buildAccelStructs(RTCDevice device) const {
+    if (rtcScene == nullptr) {
+        updateRTCScene(rtcScene, device, *this);
+        buildLightStructs();
     }
-
-    cache.lightsSampler = PiecewiseSampler(
-        cache.weights.data(), 
-        cache.weights.data() + cache.weights.size());
 }
 
+RTCRay Scene::intersect(const vec3& origin, const vec3& direction) const {
+    RTCRay rtcRay;
+    (*(vec3*)rtcRay.org) = origin;
+    (*(vec3*)rtcRay.dir) = direction;
+    rtcRay.tnear = 0.f;
+    rtcRay.tfar = INFINITY;
+    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.mask = 0xFFFFFFFF;
+    rtcRay.time = 0.f;
+    rtcIntersect(rtcScene, rtcRay);
+    
+    return rtcRay;
+}
+
+bool Scene::occluded(const vec3& origin, const vec3& target) const {
+    RTCRay rtcRay;
+    (*(vec3*)rtcRay.org) = origin;
+    (*(vec3*)rtcRay.dir) = target - origin;
+    rtcRay.tnear = 0.0001f;
+    rtcRay.tfar = 0.0009f;
+    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.mask = 0xFFFFFFFF;
+    rtcRay.time = 0.f;
+    rtcOccluded(rtcScene, rtcRay);
+    return rtcRay.geomID == 0;
+}
+
+/*
 LightSample LightCache::sampleLight() {
     size_t face = size_t(lightsSampler.sample() * lights->numFaces());
     vec3 uvw = faceSampler.sample();
@@ -147,10 +185,18 @@ LightSample LightCache::sampleLight() {
         lights->lerpNormal(face, uvw)
     };
 }
+*/
+void Scene::buildLightStructs() const {
+    size_t numFaces = areaLights.numFaces();
+    lightWeights.resize(numFaces);
 
-void updateCache(SceneCache& cache, RTCDevice device, const Scene& scene) {
-    updateRTCScene(cache.rtcScene, device, scene);
-    updateLightCache(cache.lightCache, scene.areaLights);
+    for (size_t i = 0; i < numFaces; ++i) {
+        lightWeights[i] = areaLights.faceArea(i) * areaLights.facePower(i);
+    }
+
+    lightSampler = PiecewiseSampler(
+        lightWeights.data(), 
+        lightWeights.data() + lightWeights.size());
 }
 
 }

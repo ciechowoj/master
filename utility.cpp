@@ -3,44 +3,55 @@
 namespace haste {
 
 UniformSampler::UniformSampler() {
-	std::random_device device;
-	engine.seed(device());
+    std::random_device device;
+    engine.seed(device());
 }
 
 float UniformSampler::sample() {
-	return std::uniform_real_distribution<float>()(engine);
+    return std::uniform_real_distribution<float>()(engine);
 }
 
 PiecewiseSampler::PiecewiseSampler() { }
 
 PiecewiseSampler::PiecewiseSampler(const float* weightsBegin, const float* weightsEnd) {
-	std::random_device device;
-	engine.seed(device());
+    std::random_device device;
+    engine.seed(device());
 
-	size_t numWeights = weightsEnd - weightsBegin;
+    size_t numWeights = weightsEnd - weightsBegin;
 
-	distribution = std::piecewise_constant_distribution<float>(
-		numWeights,
-		0.f,
-		1.f,
-		[&](float x) { return weightsBegin[size_t(x * (numWeights + 1))]; }
-		);
+    distribution = std::piecewise_constant_distribution<float>(
+        numWeights,
+        0.f,
+        1.f,
+        [&](float x) { return weightsBegin[size_t(x * (numWeights + 1))]; }
+        );
 }
 
 float PiecewiseSampler::sample() {
-	return distribution(engine);
+    return distribution(engine);
 }
 
 vec3 BarycentricSampler::sample() {
-	float u = uniform.sample();
-	float v = uniform.sample();
+    float u = uniform.sample();
+    float v = uniform.sample();
 
-	if (u + v <= 1) {
-		return vec3(u, v, 1 - u - v);
-	}
-	else {
-		return vec3(1 - u, 1 - v, u + v - 1);
-	}
+    if (u + v <= 1) {
+        return vec3(u, v, 1 - u - v);
+    }
+    else {
+        return vec3(1 - u, 1 - v, u + v - 1);
+    }
+}
+
+BxDF lambertBRDF(const vec3& diffuse) {
+    const vec3 f = diffuse / pi<float>();
+
+    return [=](const vec3& normal, 
+        const vec3& tangent, 
+        const vec3& in, 
+        const vec3& out) -> vec3 {
+        return f;
+    };
 }
 
 }

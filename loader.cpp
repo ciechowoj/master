@@ -2,9 +2,12 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include <utility.hpp>
 #include <loader.hpp>
 
 namespace haste {
+
+using std::move;
 
 std::string dirname(const std::string& path) {
     auto index = path.find_last_of("/\\");
@@ -197,14 +200,16 @@ Scene loadScene(string path) {
         material.name = name(scene->mMaterials[i]);
         material.ambient = ambient(scene->mMaterials[i]);
         material.diffuse = diffuse(scene->mMaterials[i]);
+        material.brdf = lambertBRDF(material.diffuse);
 
         materials.push_back(material);
     }
 
-    Scene result;
-    result.meshes = std::move(meshes);
-    result.areaLights = std::move(areaLights);
-    result.materials = std::move(materials);
+    Scene result = Scene(
+        move(materials),
+        move(meshes), 
+        move(areaLights));
+
     return result;
 }
 

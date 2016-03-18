@@ -32,8 +32,7 @@ int main(int argc, char **argv) {
         bool show_test_window = true;
 
         auto scene = haste::loadScene("models/cornell-box/CornellBox-Sphere.obj");
-        haste::SceneCache cache;
-        haste::updateCache(cache, device, scene);
+        scene.buildAccelStructs(device);
 
         for (auto name : scene.areaLights.names) {
             cout << name << endl;
@@ -43,14 +42,14 @@ int main(int argc, char **argv) {
 
         float yaw = 0, pitch = -0.0;
         vec3 position = vec3(0, 0.75, 2.4);
-        int line = 0;
         double tpp = 0.001;
         double tpf = 100;
+
         loop(window, [&](int width, int height) {
             image.resize(width * height);
 
             double start = glfwGetTime();
-            size_t num_pixels = raytrace(image, width, height, camera, scene, cache, 0.033, line);
+            size_t num_pixels = raytrace(image, width, height, camera, scene);
 
             double elapsed = glfwGetTime() - start;
             tpp = 0.95 * tpp + 0.05 * (elapsed / num_pixels) * 1000.0;

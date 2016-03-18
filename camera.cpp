@@ -1,12 +1,15 @@
 #include <thread>
 #include <tbb/tbb.h>
-#include <camera.hpp>
-#include <runtime_assert>
 #include <GLFW/glfw3.h>
+
+#include <runtime_assert>
+#include <camera.hpp>
+#include <utility.hpp>
 
 namespace haste {
 
 Ray shoot(
+    UniformSampler& sampler,
     const Camera& camera,
     int x,
     int y,
@@ -15,8 +18,8 @@ Ray shoot(
     float aspect,
     float znear)
 {
-    float fx = ((float(x) + 0.5f) * winv2 - 1.f) * aspect;
-    float fy = (float(y) + 0.5f) * hinv2 - 1.f;
+    float fx = ((float(x) + sampler.sample()) * winv2 - 1.f) * aspect;
+    float fy = (float(y) + sampler.sample()) * hinv2 - 1.f;
 
     return Ray {
         (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz(),
@@ -30,6 +33,8 @@ size_t render(
     const Camera& camera,
     const std::function<vec3(Ray ray)>& trace)
 {
+    UniformSampler sampler;
+
     const int width = imageDesc.pitch;
     const int height = imageData.size() / width;
 
@@ -54,7 +59,7 @@ size_t render(
 
     for (int y = yBegin; y < yEnd; ++y) {
         for (int x = xBegin; x < xEnd; ++x) {
-            Ray ray = shoot(camera, x, y, winv2, hinv2, aspect, znear);
+            Ray ray = shoot(sampler, camera, x, y, winv2, hinv2, aspect, znear);
             vec3 old = imageData[y * width + x].xyz();
             float count = imageData[y * width + x].w;
             imageData[y * width + x] = vec4(old + trace(ray), count + 1.f);
@@ -64,7 +69,7 @@ size_t render(
 
         if (y < yEnd) {
             for (int x = rXBegin; x > rXEnd; --x) {
-                Ray ray = shoot(camera, x, y, winv2, hinv2, aspect, znear);
+                Ray ray = shoot(sampler, camera, x, y, winv2, hinv2, aspect, znear);
                 vec3 old = imageData[y * width + x].xyz();
                 float count = imageData[y * width + x].w;
                 imageData[y * width + x] = vec4(old + trace(ray), count + 1.f);

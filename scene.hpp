@@ -1,43 +1,27 @@
 #pragma once
-#include <iostream>
-#include <stdexcept>
 #include <vector>
-#include <random>
-#include <cmath>
-#include <glm/glm.hpp>
 
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
 
 #include <utility.hpp>
 
-using namespace glm; 
-
-struct ray_t {
-    vec3 pos, dir;
-
-    ray_t()
-        : pos(0.0f)
-        , dir(0.0f, 0.0f, -1.0f) {
-    }
-
-    ray_t(float px, float py, float pz, float dx, float dy, float dz)
-        : pos(px, py, pz)
-        , dir(dx, dy, dz) { 
-    }
-};
-
 namespace haste {
+
+using namespace glm; 
 
 using std::vector;
 using std::string;
 using std::size_t;
+using std::move;
 
 struct Material {
 	string name;
     vec3 ambient;
 	vec3 diffuse;
     vec3 emissive;
+
+    BxDF brdf;
 };
 
 struct Mesh {
@@ -65,34 +49,39 @@ struct AreaLights {
     vec3 lerpNormal(size_t face, vec3 uvw) const;
 };
 
-struct Scene {
-    vector<Material> materials;
-    vector<Mesh> meshes;
-    AreaLights areaLights;
-};
-
 struct LightSample {
     vec3 power;
     vec3 position;
     vec3 normal;
 };
 
-struct LightCache {
-    const AreaLights* lights;
-    PiecewiseSampler lightsSampler;
-    BarycentricSampler faceSampler;
-    vector<float> weights;
+class Scene {
+public:
+    Scene(
+        vector<Material>&& materials,
+        vector<Mesh>&& meshes,
+        AreaLights&& areaLights);
 
-    LightSample sampleLight();
+    const vector<Material> materials;
+    const vector<Mesh> meshes;
+    const AreaLights areaLights;
+
+    void buildAccelStructs(RTCDevice device) const;
+    
+
+    RTCRay intersect(const vec3& origin, const vec3& direction) const;
+    bool occluded(const vec3& origin, const vec3& target) const;
+
+    LightSample sampleLight() const;
+
+private:
+    mutable RTCScene rtcScene;
+    mutable PiecewiseSampler lightSampler;
+    mutable vector<float> lightWeights;
+    mutable BarycentricSampler faceSampler;
+
+    void buildLightStructs() const;
+
 };
-
-struct SceneCache {
-    const Scene* scene = nullptr;
-    RTCScene rtcScene = nullptr;
-    LightCache lightCache;
-};
-
-void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene);
-void updateCache(SceneCache& cache, RTCDevice device, const Scene& scene);
 
 }

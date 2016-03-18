@@ -4,11 +4,10 @@
 
 namespace haste {
 
-void raycast(
-	std::vector<vec3>& imageData,
-	const ImageDesc& imageDesc,
+size_t raycastInteractive(
+	std::vector<vec4>& image,
+	size_t pitch,
 	const Camera& camera,
-	const Scene& scene,
-	size_t numSamples);
+	const Scene& scene);
 
 }
