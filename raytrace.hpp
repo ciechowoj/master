@@ -22,8 +22,7 @@ vec3 shoot(int width, int height, int x, int y, float fovy);
 
 int raytrace(
     std::vector<vec4>& image, 
-    int width, 
-    int height, 
+    size_t pitch,
     const haste::Camera& camera, 
     const haste::Scene& scene);
 

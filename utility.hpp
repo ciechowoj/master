@@ -36,8 +36,8 @@ private:
 typedef function<vec3(
     const vec3& normal, 
     const vec3& tangent, 
-    const vec3& in, 
-    const vec3& out)> BxDF;
+    const vec3& incident,
+    const vec3& reflected)> BxDF;
 
 BxDF lambertBRDF(const vec3& diffuse);
 

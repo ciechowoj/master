@@ -55,6 +55,11 @@ struct LightSample {
     vec3 normal;
 };
 
+struct RayHit : public RTCRay {
+    vec3 position;
+    bool hit() const;
+};
+
 class Scene {
 public:
     Scene(
@@ -68,12 +73,15 @@ public:
 
     void buildAccelStructs(RTCDevice device) const;
     
+    bool isMesh(const RayHit& hit) const;
+    const Material& material(const RayHit& hit) const;
+    vec3 lightExitance(const RayHit& hit) const;
+    vec3 lerpNormal(const RayHit& hit) const;
 
-    RTCRay intersect(const vec3& origin, const vec3& direction) const;
-    bool occluded(const vec3& origin, const vec3& target) const;
+    RayHit intersect(const vec3& origin, const vec3& direction) const;
+    float occluded(const vec3& origin, const vec3& target) const;
 
     LightSample sampleLight() const;
-
 private:
     mutable RTCScene rtcScene;
     mutable PiecewiseSampler lightSampler;
@@ -83,5 +91,9 @@ private:
     void buildLightStructs() const;
 
 };
+
+inline bool RayHit::hit() const {
+    return geomID != RTC_INVALID_GEOMETRY_ID;
+}
 
 }

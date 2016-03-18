@@ -143,8 +143,25 @@ void Scene::buildAccelStructs(RTCDevice device) const {
     }
 }
 
-RTCRay Scene::intersect(const vec3& origin, const vec3& direction) const {
-    RTCRay rtcRay;
+bool Scene::isMesh(const RayHit& hit) const {
+    return hit.geomID < meshes.size();
+}
+
+const Material& Scene::material(const RayHit& hit) const {
+    return materials[meshes[hit.geomID].materialID];
+}
+
+vec3 Scene::lerpNormal(const RayHit& hit) const {
+    const float w = 1.f - hit.u - hit.v;
+    auto& mesh = meshes[hit.geomID];
+
+    return w * mesh.normals[mesh.indices[hit.primID * 3 + 0]] +
+         hit.u * mesh.normals[mesh.indices[hit.primID * 3 + 1]] +
+         hit.v * mesh.normals[mesh.indices[hit.primID * 3 + 2]];
+}
+
+RayHit Scene::intersect(const vec3& origin, const vec3& direction) const {
+    RayHit rtcRay;
     (*(vec3*)rtcRay.org) = origin;
     (*(vec3*)rtcRay.dir) = direction;
     rtcRay.tnear = 0.f;
@@ -156,36 +173,37 @@ RTCRay Scene::intersect(const vec3& origin, const vec3& direction) const {
     rtcRay.time = 0.f;
     rtcIntersect(rtcScene, rtcRay);
     
+    rtcRay.position = origin + direction * rtcRay.tfar;
+
     return rtcRay;
 }
 
-bool Scene::occluded(const vec3& origin, const vec3& target) const {
+float Scene::occluded(const vec3& origin, const vec3& target) const {
     RTCRay rtcRay;
     (*(vec3*)rtcRay.org) = origin;
     (*(vec3*)rtcRay.dir) = target - origin;
     rtcRay.tnear = 0.0001f;
-    rtcRay.tfar = 0.0009f;
+    rtcRay.tfar = 0.9999f;
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.mask = 0xFFFFFFFF;
     rtcRay.time = 0.f;
     rtcOccluded(rtcScene, rtcRay);
-    return rtcRay.geomID == 0;
+    return rtcRay.geomID == 0 ? 0.f : 1.f;
 }
 
-/*
-LightSample LightCache::sampleLight() {
-    size_t face = size_t(lightsSampler.sample() * lights->numFaces());
+LightSample Scene::sampleLight() const {
+    size_t face = size_t(lightSampler.sample() * areaLights.numFaces());
     vec3 uvw = faceSampler.sample();
 
     return LightSample { 
-        lights->wattages[face], 
-        lights->lerpPosition(face, uvw),
-        lights->lerpNormal(face, uvw)
+        areaLights.wattages[face] * lightWeights[face], 
+        areaLights.lerpPosition(face, uvw),
+        areaLights.lerpNormal(face, uvw)
     };
 }
-*/
+
 void Scene::buildLightStructs() const {
     size_t numFaces = areaLights.numFaces();
     lightWeights.resize(numFaces);
@@ -197,6 +215,10 @@ void Scene::buildLightStructs() const {
     lightSampler = PiecewiseSampler(
         lightWeights.data(), 
         lightWeights.data() + lightWeights.size());
+
+    for (size_t i = 0; i < numFaces; ++i) {
+        lightWeights[i] = 1.f / lightWeights[i];
+    }
 }
 
 }

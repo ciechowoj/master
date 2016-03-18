@@ -8,32 +8,12 @@ using namespace std;
 using namespace glm;
 using namespace haste;
 
-vec3 sampleLights(
-    const Scene& scene, 
-    const Material& material,
-    const vec3& position, 
-    const vec3& N, 
-    const vec3& camera) 
-{
-    auto result = vec3(0.0f);
-
-    /*for (auto&& light : scene.lights) {
-        if (!occluded(scene, position, light.area.position)) {
-            float D = length(light.area.position - position);
-            vec3 L = normalize(light.area.position - position);
-            result += dot(L, N) * material.diffuse * light.emissive / (D * D);
-        }
-    }*/
-
-    return result;
-}
-
 vec3 trace_color(
     const haste::Scene& scene,
     const Ray& ray) {
     auto result = scene.intersect(ray.origin, ray.direction);
 
-    if (result.geomID != RTC_INVALID_GEOMETRY_ID) {
+    if (result.hit()) {
         const Mesh* mesh = scene.meshes.data() + result.geomID;
 
         if (result.geomID < scene.meshes.size()) {
@@ -62,12 +42,11 @@ vec3 trace_color(
 
 int raytrace(
     std::vector<vec4>& image, 
-    int width, 
-    int height, 
+    size_t pitch,
     const haste::Camera& camera, 
     const haste::Scene& scene)
 {
-    return renderInteractive(image, width, camera, [&](Ray ray) -> vec3 {
+    return renderInteractive(image, pitch, camera, [&](Ray ray) -> vec3 {
         return trace_color(scene, ray);
     });
 }

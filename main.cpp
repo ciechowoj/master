@@ -7,9 +7,9 @@
 #include <glm/gtx/transform.hpp>
 #include <xmmintrin.h>
 #include <pmmintrin.h>
-#include <embree2/rtcore.h>
-#include <embree2/rtcore_ray.h>
 #include <loader.hpp>
+#include <raycast.hpp>
+#include <runtime_assert>
 
 using namespace std;
 using namespace haste;
@@ -26,6 +26,8 @@ int main(int argc, char **argv) {
 
     return run(1000, 800, [](GLFWwindow* window) {
         RTCDevice device = rtcNewDevice(NULL);
+
+        runtime_assert(device != nullptr);
 
         std::vector<vec4> image;
 
@@ -49,7 +51,7 @@ int main(int argc, char **argv) {
             image.resize(width * height);
 
             double start = glfwGetTime();
-            size_t num_pixels = raytrace(image, width, height, camera, scene);
+            size_t num_pixels = raytrace(image, width, camera, scene);
 
             double elapsed = glfwGetTime() - start;
             tpp = 0.95 * tpp + 0.05 * (elapsed / num_pixels) * 1000.0;

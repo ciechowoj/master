@@ -46,7 +46,7 @@ GLFW_LIBS = \
 MAIN_HEADERS = $(wildcard *.hpp)
 MAIN_SOURCES = $(wildcard *.cpp)
 MAIN_OBJECTS = $(MAIN_SOURCES:%.cpp=build/master/%.o)
-MAIN_LIBS =  $(GLFW_LIBS) -ldl -lpthread -lglad -ltinyobjloader -limgui -lgtest $(EMBREE_LIBS) -lassimp -lz
+MAIN_LIBS =  $(GLFW_LIBS) -ldl -lpthread -lglad -limgui -lgtest $(EMBREE_LIBS) -lassimp -lz
 MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td
 MAIN_POST = mv -f build/master/$*.Td build/master/$*.d
 
@@ -62,7 +62,6 @@ master: build/master/master.bin
 build/master/master.bin: \
 	build/glad/libglad.a \
 	build/glfw/src/libglfw3.a \
-	build/tinyobjloader/libtinyobjloader.a \
 	build/imgui/libimgui.a \
 	build/googletest/libgtest.a \
 	build/embree/libembree.a \
@@ -105,11 +104,11 @@ build/glad/loader/src/glad.c:
 	cd build/glad && python setup.py build
 	cd build/glad && python -m glad --profile compatibility --out-path loader --api "gl=3.3" --generator c
 
-build/tinyobjloader/libtinyobjloader.a:
-	mkdir -p build
-	mkdir -p build/tinyobjloader
-	cd build/tinyobjloader && $(CC) $(CC_FLAGS) -c ../../submodules/tinyobjloader/tiny_obj_loader.cc -o tiny_obj_loader.o -Isubmodules/tinyobjloader
-	cd build/tinyobjloader && ar rcs libtinyobjloader.a tiny_obj_loader.o
+#build/tinyobjloader/libtinyobjloader.a:
+#	mkdir -p build
+#	mkdir -p build/tinyobjloader
+#	cd build/tinyobjloader && $(CC) $(CC_FLAGS) -c ../../submodules/tinyobjloader/tiny_obj_loader.cc -o tiny_obj_loader.o -Isubmodules/tinyobjloader
+#	cd build/tinyobjloader && ar rcs libtinyobjloader.a tiny_obj_loader.o
 
 IMGUI_SOURCES = \
 	submodules/imgui/imgui.cpp \
