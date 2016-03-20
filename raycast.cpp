@@ -27,7 +27,11 @@ vec3 raycast(
             float V = scene.occluded(intersect.position, light.position);
             float G = max(0.f, dot(incident, normal)) * distanceInv;
 
-            vec3 f = material.bsdf.eval(normal, tangent, incident, reflected);
+            vec3 binormal = normalize(cross(tangent, normal));
+            mat3 lightToWorld = mat3(binormal, normal, tangent);
+            mat3 worldToLight = transpose(lightToWorld);
+
+            vec3 f = material.bsdf.eval(worldToLight * incident, worldToLight * reflected);
 
             return f * light.radiance * V * G;
         }

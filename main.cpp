@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
             image.resize(width * height);
 
             double start = glfwGetTime();
-            size_t num_pixels = raycastInteractive(image, width, camera, scene);
+            size_t num_pixels = pathtraceInteractive(image, width, camera, scene);
 
             double elapsed = glfwGetTime() - start;
             tpp = 0.95 * tpp + 0.05 * (elapsed / num_pixels) * 1000.0;
