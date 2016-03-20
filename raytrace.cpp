@@ -13,7 +13,7 @@ vec3 trace_color(
     const Ray& ray) {
     auto result = scene.intersect(ray.origin, ray.direction);
 
-    if (result.hit()) {
+    if (result.isPresent()) {
         const Mesh* mesh = scene.meshes.data() + result.geomID;
 
         if (result.geomID < scene.meshes.size()) {

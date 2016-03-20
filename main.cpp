@@ -8,6 +8,7 @@
 #include <xmmintrin.h>
 #include <pmmintrin.h>
 #include <loader.hpp>
+#include <pathtrace.hpp>
 #include <raycast.hpp>
 #include <runtime_assert>
 
@@ -36,7 +37,7 @@ int main(int argc, char **argv) {
         auto scene = haste::loadScene("models/cornell-box/CornellBox-Sphere.obj");
         scene.buildAccelStructs(device);
 
-        for (auto name : scene.areaLights.names) {
+        for (auto name : scene.lights.names) {
             cout << name << endl;
         }
 
@@ -51,7 +52,7 @@ int main(int argc, char **argv) {
             image.resize(width * height);
 
             double start = glfwGetTime();
-            size_t num_pixels = raytrace(image, width, camera, scene);
+            size_t num_pixels = raycastInteractive(image, width, camera, scene);
 
             double elapsed = glfwGetTime() - start;
             tpp = 0.95 * tpp + 0.05 * (elapsed / num_pixels) * 1000.0;

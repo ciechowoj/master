@@ -19,7 +19,7 @@ float AreaLights::faceArea(size_t face) const {
 }
 
 float AreaLights::facePower(size_t face) const {
-    return length(wattages[face]);
+    return length(radiances[face]) * faceArea(face) * pi<float>();
 }
 
 vec3 AreaLights::lerpPosition(size_t face, vec3 uvw) const {
@@ -34,14 +34,57 @@ vec3 AreaLights::lerpNormal(size_t face, vec3 uvw) const {
         + normals[indices[face * 3 + 2]] * uvw.y;
 }
 
+vec3 AreaLights::lerpNormal(const RayIsect& hit) const {
+    float w = 1.0f - hit.u - hit.v;
+
+    return normals[indices[hit.primID * 3 + 0]] * w
+        + normals[indices[hit.primID * 3 + 1]] * hit.u
+        + normals[indices[hit.primID * 3 + 2]] * hit.v;
+}
+
+LightSample AreaLights::sample(const vec3& position) const {
+    size_t face = size_t(lightSampler.sample() * numFaces());
+    vec3 uvw = faceSampler.sample();
+
+    LightSample sample;
+    sample.radiance = radiances[face] * lightWeights[face];
+    sample.position = lerpPosition(face, uvw);
+    sample.incident = normalize(sample.position - position);
+
+    return sample;
+}
+
+vec3 AreaLights::eval(const RayIsect& isect) const {
+    return radiances[isect.primID];
+}
+
+void AreaLights::buildLightStructs() const {
+    size_t numFaces = this->numFaces();
+    lightWeights.resize(numFaces);
+
+    for (size_t i = 0; i < numFaces; ++i) {
+        lightWeights[i] = faceArea(i) / facePower(i);
+    }
+
+    lightSampler = PiecewiseSampler(
+        lightWeights.data(), 
+        lightWeights.data() + lightWeights.size());
+
+    for (size_t i = 0; i < numFaces; ++i) {
+        lightWeights[i] = 1.f / lightWeights[i];
+    }
+}
+
 Scene::Scene(
     vector<Material>&& materials,
     vector<Mesh>&& meshes,
     AreaLights&& areaLights)
     : materials(move(materials))
     , meshes(move(meshes))
-    , areaLights(move(areaLights))
-{ }
+    , lights(move(areaLights))
+{ 
+    rtcScene = nullptr;
+}
 
 unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
     unsigned geomID = rtcNewTriangleMesh(
@@ -126,7 +169,7 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
         }
     }
 
-    unsigned geomID = makeRTCMesh(rtcScene, scene.areaLights);
+    unsigned geomID = makeRTCMesh(rtcScene, scene.lights);
 
     if (geomID != scene.meshes.size()) {
         rtcDeleteScene(rtcScene);
@@ -136,22 +179,26 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
     rtcCommit(rtcScene);
 }
 
-void Scene::buildAccelStructs(RTCDevice device) const {
+void Scene::buildAccelStructs(RTCDevice device) {
     if (rtcScene == nullptr) {
         updateRTCScene(rtcScene, device, *this);
-        buildLightStructs();
+        lights.buildLightStructs();
     }
 }
 
-bool Scene::isMesh(const RayHit& hit) const {
+bool Scene::isMesh(const RayIsect& hit) const {
     return hit.geomID < meshes.size();
 }
 
-const Material& Scene::material(const RayHit& hit) const {
+bool Scene::isLight(const RayIsect& isect) const {
+    return isect.geomID == meshes.size();
+}
+
+const Material& Scene::material(const RayIsect& hit) const {
     return materials[meshes[hit.geomID].materialID];
 }
 
-vec3 Scene::lerpNormal(const RayHit& hit) const {
+vec3 Scene::lerpNormal(const RayIsect& hit) const {
     const float w = 1.f - hit.u - hit.v;
     auto& mesh = meshes[hit.geomID];
 
@@ -160,8 +207,8 @@ vec3 Scene::lerpNormal(const RayHit& hit) const {
          hit.v * mesh.normals[mesh.indices[hit.primID * 3 + 2]];
 }
 
-RayHit Scene::intersect(const vec3& origin, const vec3& direction) const {
-    RayHit rtcRay;
+RayIsect Scene::intersect(const vec3& origin, const vec3& direction) const {
+    RayIsect rtcRay;
     (*(vec3*)rtcRay.org) = origin;
     (*(vec3*)rtcRay.dir) = direction;
     rtcRay.tnear = 0.f;
@@ -191,34 +238,6 @@ float Scene::occluded(const vec3& origin, const vec3& target) const {
     rtcRay.time = 0.f;
     rtcOccluded(rtcScene, rtcRay);
     return rtcRay.geomID == 0 ? 0.f : 1.f;
-}
-
-LightSample Scene::sampleLight() const {
-    size_t face = size_t(lightSampler.sample() * areaLights.numFaces());
-    vec3 uvw = faceSampler.sample();
-
-    return LightSample { 
-        areaLights.wattages[face] * lightWeights[face], 
-        areaLights.lerpPosition(face, uvw),
-        areaLights.lerpNormal(face, uvw)
-    };
-}
-
-void Scene::buildLightStructs() const {
-    size_t numFaces = areaLights.numFaces();
-    lightWeights.resize(numFaces);
-
-    for (size_t i = 0; i < numFaces; ++i) {
-        lightWeights[i] = areaLights.faceArea(i) * areaLights.facePower(i);
-    }
-
-    lightSampler = PiecewiseSampler(
-        lightWeights.data(), 
-        lightWeights.data() + lightWeights.size());
-
-    for (size_t i = 0; i < numFaces; ++i) {
-        lightWeights[i] = 1.f / lightWeights[i];
-    }
 }
 
 }

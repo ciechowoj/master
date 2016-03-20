@@ -21,8 +21,8 @@ LIBRARY_DIRS = \
 	-Lbuild/embree \
 	-Lbuild/assimp/code
 
-CC = g++
-CC_FLAGS = -march=native -O2 -g -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CC = g++-4.9
+CC_FLAGS = -march=native -O0 -g -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \

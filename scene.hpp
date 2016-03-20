@@ -8,12 +8,19 @@
 
 namespace haste {
 
-using namespace glm; 
+using namespace glm;
 
 using std::vector;
 using std::string;
 using std::size_t;
 using std::move;
+
+struct RayIsect : public RTCRay {
+    vec3 position;
+    bool isPresent() const;
+
+    vec3 gnormal() const { return normalize(vec3(-Ng[0], -Ng[1], -Ng[2])); }
+};
 
 struct Material {
 	string name;
@@ -33,11 +40,20 @@ struct Mesh {
     vector<vec3> vertices;
 };
 
-struct AreaLights {
+struct LightSample {
+    vec3 radiance;
+    vec3 incident;
+    vec3 position;
+};
+
+class Scene;
+
+class AreaLights {
+public:
     vector<string> names;
     vector<size_t> offsets;
     vector<int> indices;
-    vector<vec3> wattages;
+    vector<vec3> radiances;
     vector<vec3> vertices;
     vector<vec3> normals;
 
@@ -47,18 +63,21 @@ struct AreaLights {
     float facePower(size_t face) const;
     vec3 lerpPosition(size_t face, vec3 uvw) const;
     vec3 lerpNormal(size_t face, vec3 uvw) const;
+    vec3 lerpNormal(const RayIsect& hit) const;
+
+    LightSample sample(const vec3& position) const;
+    vec3 eval(const RayIsect& isect) const;
+
+public:
+    mutable PiecewiseSampler lightSampler;
+    mutable BarycentricSampler faceSampler;
+    mutable vector<float> lightWeights;
+
+    void buildLightStructs() const;
+
+    friend class Scene;
 };
 
-struct LightSample {
-    vec3 power;
-    vec3 position;
-    vec3 normal;
-};
-
-struct RayHit : public RTCRay {
-    vec3 position;
-    bool hit() const;
-};
 
 class Scene {
 public:
@@ -69,30 +88,25 @@ public:
 
     const vector<Material> materials;
     const vector<Mesh> meshes;
-    const AreaLights areaLights;
+    const AreaLights lights;
 
-    void buildAccelStructs(RTCDevice device) const;
-    
-    bool isMesh(const RayHit& hit) const;
-    const Material& material(const RayHit& hit) const;
-    vec3 lightExitance(const RayHit& hit) const;
-    vec3 lerpNormal(const RayHit& hit) const;
+    void buildAccelStructs(RTCDevice device);
 
-    RayHit intersect(const vec3& origin, const vec3& direction) const;
+    bool isMesh(const RayIsect& hit) const;
+    bool isLight(const RayIsect& isect) const;
+
+    const Material& material(const RayIsect& hit) const;
+    vec3 lightExitance(const RayIsect& hit) const;
+    vec3 lerpNormal(const RayIsect& hit) const;
+
+    RayIsect intersect(const vec3& origin, const vec3& direction) const;
     float occluded(const vec3& origin, const vec3& target) const;
 
-    LightSample sampleLight() const;
 private:
     mutable RTCScene rtcScene;
-    mutable PiecewiseSampler lightSampler;
-    mutable vector<float> lightWeights;
-    mutable BarycentricSampler faceSampler;
-
-    void buildLightStructs() const;
-
 };
 
-inline bool RayHit::hit() const {
+inline bool RayIsect::isPresent() const {
     return geomID != RTC_INVALID_GEOMETRY_ID;
 }
 
