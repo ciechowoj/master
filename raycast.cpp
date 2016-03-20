@@ -27,7 +27,7 @@ vec3 raycast(
             float V = scene.occluded(intersect.position, light.position);
             float G = max(0.f, dot(incident, normal)) * distanceInv;
 
-            vec3 f = material.brdf(normal, tangent, incident, reflected);
+            vec3 f = material.bsdf.eval(normal, tangent, incident, reflected);
 
             return f * light.radiance * V * G;
         }

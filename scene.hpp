@@ -4,7 +4,7 @@
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
 
-#include <utility.hpp>
+#include <BSDF.hpp>
 
 namespace haste {
 
@@ -28,7 +28,7 @@ struct Material {
 	vec3 diffuse;
     vec3 emissive;
 
-    BxDF brdf;
+    BSDF bsdf;
 };
 
 struct Mesh {

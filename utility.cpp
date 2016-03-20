@@ -43,15 +43,12 @@ vec3 BarycentricSampler::sample() {
     }
 }
 
-BxDF lambertBRDF(const vec3& diffuse) {
-    const vec3 f = diffuse / pi<float>();
+vec3 HemisphereSampler::sample() {
+    float a = uniform.sample();
+    float b = uniform.sample() * pi<float>() * 2.0f;
+    float c = sqrt(1 - a * a);
 
-    return [=](const vec3& normal, 
-        const vec3& tangent, 
-        const vec3& in, 
-        const vec3& out) -> vec3 {
-        return f;
-    };
+    return vec3(cos(b) * c, a, sin(b) * c);
 }
 
 }

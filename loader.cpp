@@ -201,7 +201,7 @@ Scene loadScene(string path) {
         material.name = name(scene->mMaterials[i]);
         material.ambient = ambient(scene->mMaterials[i]);
         material.diffuse = diffuse(scene->mMaterials[i]);
-        material.brdf = lambertBRDF(material.diffuse);
+        material.bsdf = BSDF::lambert(material.diffuse);
 
         materials.push_back(material);
     }

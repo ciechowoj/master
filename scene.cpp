@@ -46,10 +46,13 @@ LightSample AreaLights::sample(const vec3& position) const {
     size_t face = size_t(lightSampler.sample() * numFaces());
     vec3 uvw = faceSampler.sample();
 
+    vec3 normal = lerpNormal(face, uvw);
+    vec3 radiance = radiances[face] * lightWeights[face];
+
     LightSample sample;
-    sample.radiance = radiances[face] * lightWeights[face];
     sample.position = lerpPosition(face, uvw);
     sample.incident = normalize(sample.position - position);
+    sample.radiance = dot(normal, -sample.incident) < 0.0f ? vec3(0.0f) : radiance;
 
     return sample;
 }
@@ -62,8 +65,16 @@ void AreaLights::buildLightStructs() const {
     size_t numFaces = this->numFaces();
     lightWeights.resize(numFaces);
 
+    float total = 0.f;
     for (size_t i = 0; i < numFaces; ++i) {
         lightWeights[i] = faceArea(i) / facePower(i);
+        total += lightWeights[i];
+    }
+
+    float totalInv = 1.0f / total;
+
+    for (size_t i = 0; i < numFaces; ++i) {
+        lightWeights[i] *= totalInv;
     }
 
     lightSampler = PiecewiseSampler(

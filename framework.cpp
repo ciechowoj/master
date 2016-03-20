@@ -55,7 +55,7 @@ out vec4 color;
 void main()
 {
     vec4 sample = texture2D(sampler, texcoord);
-    color = clamp(vec4(sample.rgb / sample.a, 1), 0, 1);
+    color = clamp(vec4(sample.rgb / sample.a * 0.1, 1), 0, 1);
 }
     )"";
 
