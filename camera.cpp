@@ -186,4 +186,22 @@ size_t renderInteractive(
     return numRays;
 }
 
+size_t renderGammaBoard(
+    vector<vec4>& imageData,
+    size_t pitch) {
+
+    size_t width = pitch;
+    size_t height = imageData.size() / pitch;
+
+    float widthInv = 32.0f / float(width - 64);
+
+    for (size_t y = 0; y < height; ++y) {
+        for (size_t x = 0; x < width; ++x) {
+            imageData[y * pitch + x] = vec4(glm::pow(vec3(x / 32) * widthInv, vec3(1.0f)), 1.f);
+        }
+    }
+
+    return width * height;
+}
+
 }

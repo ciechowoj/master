@@ -22,7 +22,7 @@ LIBRARY_DIRS = \
 	-Lbuild/assimp/code
 
 CC = g++-4.9
-CC_FLAGS = -march=native -O3 -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CC_FLAGS = -march=native -O2 -ffast-math -g -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \

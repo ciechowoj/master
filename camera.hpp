@@ -7,6 +7,7 @@ namespace haste {
 
 using std::vector;
 using std::function;
+using namespace glm;
 
 struct Ray {
     vec3 origin;
@@ -40,5 +41,9 @@ size_t renderInteractive(
     size_t pitch,
     const Camera& camera,
     const function<vec3(Ray ray)>& trace);
+
+size_t renderGammaBoard(
+    vector<vec4>& imageData,
+    size_t pitch);
 
 }

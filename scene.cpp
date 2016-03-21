@@ -52,7 +52,8 @@ LightSample AreaLights::sample(const vec3& position) const {
     LightSample sample;
     sample.position = lerpPosition(face, uvw);
     sample.incident = normalize(sample.position - position);
-    sample.radiance = dot(normal, -sample.incident) < 0.0f ? vec3(0.0f) : radiance;
+    sample.radiance = max(vec3(0.0f), radiance * dot(normal, -sample.incident));
+    // sample.radiance = dot(normal, -sample.incident) < 0.0f ? vec3(0.0f) : radiance;
 
     return sample;
 }

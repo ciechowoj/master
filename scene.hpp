@@ -102,6 +102,7 @@ public:
     RayIsect intersect(const vec3& origin, const vec3& direction) const;
     float occluded(const vec3& origin, const vec3& target) const;
 
+    mutable UniformSampler sampler;
 private:
     mutable RTCScene rtcScene;
 };

@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
         bool show_test_window = true;
 
-        auto scene = haste::loadScene("models/cornell-box/CornellBox-Sphere.obj");
+        auto scene = haste::loadScene("models/cornell-box/CornellBox-Original.obj");
         scene.buildAccelStructs(device);
 
         for (auto name : scene.lights.names) {
@@ -44,15 +44,18 @@ int main(int argc, char **argv) {
         Camera camera;
 
         float yaw = 0, pitch = -0.0;
-        vec3 position = vec3(0, 0.75, 2.4);
+        vec3 position = vec3(0, 1.0f, 2.8);
         double tpp = 0.001;
         double tpf = 100;
+        double mainStart = glfwGetTime();
 
         loop(window, [&](int width, int height) {
             image.resize(width * height);
 
             double start = glfwGetTime();
             size_t num_pixels = pathtraceInteractive(image, width, camera, scene);
+
+            // size_t num_pixels = renderGammaBoard(image, width);
 
             double elapsed = glfwGetTime() - start;
             tpp = 0.95 * tpp + 0.05 * (elapsed / num_pixels) * 1000.0;
@@ -86,6 +89,9 @@ int main(int argc, char **argv) {
             float ftpf = float(tpf);
             ImGui::InputFloat("tpp [ms]", &ftpp);
             ImGui::InputFloat("tpf [ms]", &ftpf);
+            ImGui::InputFloat("samples ", &image[0].w);
+            float mainElapsed = float(glfwGetTime() - mainStart);
+            ImGui::InputFloat("elapsed [s] ", &mainElapsed);
             ImGui::End();
         });
 
