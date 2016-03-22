@@ -1,7 +1,7 @@
 
 # Path tracer.
 
-![Cornelbox](https://github.com/ciechowoj/master/splashscreen.png)
+![Cornelbox](https://github.com/ciechowoj/master/blob/master/splashscreen.png)
 
 # Building
 
