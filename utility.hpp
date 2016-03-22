@@ -1,11 +1,16 @@
 #pragma once
 #include <random>
 #include <functional>
+#include <string>
+#include <vector>
 #include <glm>
 
 namespace haste {
 
 using std::function;
+using std::vector;
+using std::string;
+using std::pair;
 using namespace glm;
 
 class UniformSampler {
@@ -40,4 +45,19 @@ private:
     UniformSampler uniform;
 };
 
+void saveEXR(
+    const string& path, 
+    const vector<vec3>& data, 
+    size_t pitch);
+
+void saveEXR(
+    const string& path, 
+    const vector<vec4>& data, 
+    size_t pitch);
+
+string homePath();
+string baseName(string path);
+pair<string, string> splitext(string path);
+
 }
+

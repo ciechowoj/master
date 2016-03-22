@@ -15,6 +15,8 @@
 using namespace std;
 using namespace haste;
 
+string fixedPath(string base, string scene, int samples);
+
 int main(int argc, char **argv) {
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
     _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
@@ -34,7 +36,8 @@ int main(int argc, char **argv) {
 
         bool show_test_window = true;
 
-        auto scene = haste::loadScene("models/cornell-box/CornellBox-Original.obj");
+        auto scenePath = "models/cornell-box/CornellBox-Original.obj";
+        auto scene = haste::loadScene(scenePath);
         scene.buildAccelStructs(device);
 
         for (auto name : scene.lights.names) {
@@ -48,14 +51,16 @@ int main(int argc, char **argv) {
         double tpp = 0.001;
         double tpf = 100;
         double mainStart = glfwGetTime();
+        static const size_t pathSize = 255;
+        char path[pathSize] = "./";
+        string defpath = homePath() + "/";
+        strcpy(path, defpath.c_str());
 
         loop(window, [&](int width, int height) {
             image.resize(width * height);
 
             double start = glfwGetTime();
             size_t num_pixels = pathtraceInteractive(image, width, camera, scene);
-
-            // size_t num_pixels = renderGammaBoard(image, width);
 
             double elapsed = glfwGetTime() - start;
             tpp = 0.95 * tpp + 0.05 * (elapsed / num_pixels) * 1000.0;
@@ -92,9 +97,48 @@ int main(int argc, char **argv) {
             ImGui::InputFloat("samples ", &image[0].w);
             float mainElapsed = float(glfwGetTime() - mainStart);
             ImGui::InputFloat("elapsed [s] ", &mainElapsed);
+            ImGui::Separator();
+
+            ImGui::InputText("", path, int(pathSize - 1));
+            ImGui::SameLine();
+            
+            if (ImGui::Button("Save EXR")) {
+                saveEXR(path, image, width);
+            }
+
+            string fixed = fixedPath(path, scenePath, size_t(image[0].w));
+            ImGui::LabelText("", "%s", fixed.c_str());
+            ImGui::SameLine();
+            ImGui::Button("Save EXR");
+
             ImGui::End();
         });
 
         rtcDeleteDevice(device);
     });
 }
+
+string fixedPath(string base, string scene, int samples) {
+    string ext;
+    tie(base, ext) = splitext(base);
+
+    if (ext.empty()) {
+        ext = ".exr";
+    }
+
+    string sceneBase, sceneExt;
+    tie(sceneBase, sceneExt) = splitext(scene);
+
+    stringstream result;
+
+    if (!base.empty() && base[base.size() - 1] != '/') {
+        result << base << "." << baseName(sceneBase) << "." << samples << ext;
+    }
+    else {
+        result << base << baseName(sceneBase) << "." << samples << ext;   
+    }
+
+    return result.str();
+
+}
+

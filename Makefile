@@ -1,5 +1,6 @@
 
 INCLUDE_DIRS = \
+	-I/usr/include/OpenEXR \
 	-Isubmodules/glfw/include \
 	-Isubmodules/glm \
 	-Isubmodules/tinyobjloader \
@@ -43,10 +44,16 @@ GLFW_LIBS = \
 	-lXcursor \
 	-lXinerama
 
+STD_LIBS = \
+	-ldl \
+	-lpthread \
+	-lIlmImf \
+	-lIex
+
 MAIN_HEADERS = $(wildcard *.hpp)
 MAIN_SOURCES = $(wildcard *.cpp)
 MAIN_OBJECTS = $(MAIN_SOURCES:%.cpp=build/master/%.o)
-MAIN_LIBS =  $(GLFW_LIBS) -ldl -lpthread -lglad -limgui -lgtest $(EMBREE_LIBS) -lassimp -lz
+MAIN_LIBS = $(GLFW_LIBS) $(STD_LIBS) -lglad -limgui -lgtest $(EMBREE_LIBS) -lassimp -lz
 MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td
 MAIN_POST = mv -f build/master/$*.Td build/master/$*.d
 
