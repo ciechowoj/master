@@ -1,6 +1,8 @@
 
 # Path tracer.
 
+![Cornelbox](https://github.com/ciechowoj/master/splashscreen.png)
+
 # Building
 
 Required dependencies:

@@ -109,7 +109,10 @@ int main(int argc, char **argv) {
             string fixed = fixedPath(path, scenePath, size_t(image[0].w));
             ImGui::LabelText("", "%s", fixed.c_str());
             ImGui::SameLine();
-            ImGui::Button("Save EXR");
+            
+            if (ImGui::Button("Save EXR")) {
+                saveEXR(fixed, image, width);
+            }   
 
             ImGui::End();
         });
