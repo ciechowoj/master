@@ -150,12 +150,12 @@ void appendLights(
     }
 
     size_t numFaces = numIndices / 3;
-    lights.radiances.resize(lights.indices.size() / 3);
+    lights.exitances.resize(lights.indices.size() / 3);
 
     for (size_t j = 0; j < scene->mMeshes[i]->mNumFaces; ++j) {
         auto materialID = scene->mMeshes[i]->mMaterialIndex;
         vec3 power = emissive(scene->mMaterials[materialID]);
-        lights.radiances[numFaces + j] = power / (lights.faceArea(numFaces + j) * pi<float>());
+        lights.exitances[numFaces + j] = power / lights.faceArea(numFaces + j);
     }
 }
 

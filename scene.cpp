@@ -19,7 +19,7 @@ float AreaLights::faceArea(size_t face) const {
 }
 
 float AreaLights::facePower(size_t face) const {
-    return length(radiances[face]) * faceArea(face) * pi<float>();
+    return length(exitances[face]) * faceArea(face) * pi<float>();
 }
 
 vec3 AreaLights::lerpPosition(size_t face, vec3 uvw) const {
@@ -43,11 +43,13 @@ vec3 AreaLights::lerpNormal(const RayIsect& hit) const {
 }
 
 LightSample AreaLights::sample(const vec3& position) const {
+    // below computations are probably incorrect (to be fixed)
+
     size_t face = size_t(lightSampler.sample() * numFaces());
     vec3 uvw = faceSampler.sample();
 
     vec3 normal = lerpNormal(face, uvw);
-    vec3 radiance = radiances[face] * lightWeights[face];
+    vec3 radiance = exitances[face] * lightWeights[face];
 
     LightSample sample;
     sample.position = lerpPosition(face, uvw);
@@ -59,7 +61,7 @@ LightSample AreaLights::sample(const vec3& position) const {
 }
 
 vec3 AreaLights::eval(const RayIsect& isect) const {
-    return radiances[isect.primID];
+    return exitances[isect.primID];
 }
 
 void AreaLights::buildLightStructs() const {

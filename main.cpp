@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
             size_t num_pixels = pathtraceInteractive(image, width, camera, scene);
 
             double elapsed = glfwGetTime() - start;
-            tpp = 0.95 * tpp + 0.05 * (elapsed / num_pixels) * 1000.0;
+            tpp = 0.99 * tpp + 0.01 * (elapsed / num_pixels) * 1000.0;
             tpf = tpp * image.size();
 
             draw_fullscreen_quad(window, image);
@@ -109,11 +109,14 @@ int main(int argc, char **argv) {
             string fixed = fixedPath(path, scenePath, size_t(image[0].w));
             ImGui::LabelText("", "%s", fixed.c_str());
             ImGui::SameLine();
-            
+
+            ImGui::PushID("save-exr");
+
             if (ImGui::Button("Save EXR")) {
                 saveEXR(fixed, image, width);
             }   
 
+            ImGui::PopID();
             ImGui::End();
         });
 
