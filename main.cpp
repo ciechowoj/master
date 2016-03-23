@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <framework.hpp>
-#include <raytrace.hpp>
 #include <imgui_ex.h>
 #include <streamops.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -16,6 +15,28 @@ using namespace std;
 using namespace haste;
 
 string fixedPath(string base, string scene, int samples);
+
+struct GUI {
+    static const size_t pathSize = 255;
+    char path[pathSize];
+    float yaw = 0, pitch = -0.0;
+    vec3 position = vec3(0, 1.0f, 2.8);
+    double tpp = 0.001;
+    double tpf = 100;
+    double mainStart = glfwGetTime();
+    string scenePath;
+    string defpath = homePath() + "/";
+
+    mat4 view;
+    float fovy = pi<float>() / 3.0f;
+
+    GUI(string scenePath);
+    void update(
+        const vector<vec4>& image,
+        size_t width,
+        float elapsed);
+};
+
 
 int main(int argc, char **argv) {
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -40,84 +61,27 @@ int main(int argc, char **argv) {
         auto scene = haste::loadScene(scenePath);
         scene.buildAccelStructs(device);
 
-        for (auto name : scene.lights.names) {
-            cout << name << endl;
-        }
-
         Camera camera;
-
-        float yaw = 0, pitch = -0.0;
-        vec3 position = vec3(0, 1.0f, 2.8);
-        double tpp = 0.001;
-        double tpf = 100;
-        double mainStart = glfwGetTime();
-        static const size_t pathSize = 255;
-        char path[pathSize] = "./";
-        string defpath = homePath() + "/";
-        strcpy(path, defpath.c_str());
-
+        GUI gui(scenePath);
+        
         loop(window, [&](int width, int height) {
             image.resize(width * height);
 
             double start = glfwGetTime();
             size_t num_pixels = pathtraceInteractive(image, width, camera, scene);
 
-            double elapsed = glfwGetTime() - start;
-            tpp = 0.99 * tpp + 0.01 * (elapsed / num_pixels) * 1000.0;
-            tpf = tpp * image.size();
-
             draw_fullscreen_quad(window, image);
+            gui.update(
+                image,
+                width,
+                float(glfwGetTime() - start));
 
-            // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-            // ImGui::ShowTestWindow(&show_test_window);
-
-            ImGui::Begin("Camera");
-            vec3 t = vec3(1, 2, 3);
-            ImGui::SliderFloat("yaw", &yaw, -glm::pi<float>(), glm::pi<float>());
-            ImGui::SliderFloat("pitch",  &pitch, -glm::half_pi<float>(), glm::half_pi<float>());
-            ImGui::InputVec("position", &position);
-            auto newView = translate(position) * eulerAngleXY(pitch, yaw);
-
-            if (newView != camera.view) {
+            if (gui.view != camera.view || gui.fovy != camera.fovy) {
                 image.clear();
                 image.resize(width * height);
+                camera.view = gui.view;
+                camera.fovy = gui.fovy;
             }
-
-            camera.view = newView;
-
-            ImGui::InputMat("view", &camera.view);
-            ImGui::InputFloat("fovy", &camera.fovy);
-            ImGui::End();
-
-            ImGui::Begin("Statistics");
-            float ftpp = float(tpp);
-            float ftpf = float(tpf);
-            ImGui::InputFloat("tpp [ms]", &ftpp);
-            ImGui::InputFloat("tpf [ms]", &ftpf);
-            ImGui::InputFloat("samples ", &image[0].w);
-            float mainElapsed = float(glfwGetTime() - mainStart);
-            ImGui::InputFloat("elapsed [s] ", &mainElapsed);
-            ImGui::Separator();
-
-            ImGui::InputText("", path, int(pathSize - 1));
-            ImGui::SameLine();
-            
-            if (ImGui::Button("Save EXR")) {
-                saveEXR(path, image, width);
-            }
-
-            string fixed = fixedPath(path, scenePath, size_t(image[0].w));
-            ImGui::LabelText("", "%s", fixed.c_str());
-            ImGui::SameLine();
-
-            ImGui::PushID("save-exr");
-
-            if (ImGui::Button("Save EXR")) {
-                saveEXR(fixed, image, width);
-            }   
-
-            ImGui::PopID();
-            ImGui::End();
         });
 
         rtcDeleteDevice(device);
@@ -145,6 +109,65 @@ string fixedPath(string base, string scene, int samples) {
     }
 
     return result.str();
-
 }
 
+GUI::GUI(string scenePath) 
+    : scenePath(scenePath) {
+    strcpy(path, defpath.c_str());
+}
+
+void GUI::update(
+    const vector<vec4>& image,
+    size_t width,
+    float elapsed) 
+{
+    // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+    // ImGui::ShowTestWindow(&show_test_window);
+
+    tpp = 0.99 * tpp + 0.01 * (elapsed / image.size()) * 1000.0;
+    tpf = tpp * image.size();
+
+    ImGui::Begin("Camera");
+    vec3 t = vec3(1, 2, 3);
+    ImGui::SliderFloat("yaw", &yaw, -glm::pi<float>(), glm::pi<float>());
+    ImGui::SliderFloat("pitch",  &pitch, -glm::half_pi<float>(), glm::half_pi<float>());
+    ImGui::InputVec("position", &position);
+
+    ImGui::InputMat("view", &view);
+    ImGui::InputFloat("fovy", &fovy);
+    ImGui::End();
+
+    view = translate(position) * eulerAngleXY(pitch, yaw);
+
+    ImGui::Begin("Statistics");
+    float ftpp = float(tpp);
+    float ftpf = float(tpf);
+    ImGui::InputFloat("tpp [ms]", &ftpp);
+    ImGui::InputFloat("tpf [ms]", &ftpf);
+
+    float numSamples = image[0].w;
+    ImGui::InputFloat("samples ", &numSamples);
+    float mainElapsed = float(glfwGetTime() - mainStart);
+    ImGui::InputFloat("elapsed [s] ", &mainElapsed);
+    ImGui::Separator();
+
+    ImGui::InputText("", path, int(pathSize - 1));
+    ImGui::SameLine();
+    
+    if (ImGui::Button("Save EXR")) {
+        saveEXR(path, image, width);
+    }
+
+    string fixed = fixedPath(path, scenePath, size_t(image[0].w));
+    ImGui::LabelText("", "%s", fixed.c_str());
+    ImGui::SameLine();
+
+    ImGui::PushID("save-exr");
+
+    if (ImGui::Button("Save EXR")) {
+        saveEXR(fixed, image, width);
+    }   
+
+    ImGui::PopID();
+    ImGui::End();
+}

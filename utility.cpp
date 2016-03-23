@@ -161,4 +161,63 @@ pair<string, string> splitext(string path) {
     }
 }
 
+void renderPoints(
+    vector<vec3>& points,
+    size_t width,
+    const vec3& color,
+    const mat4& proj) 
+{
+    size_t height = points.size() / width;
+    float f5width = 0.5f * float(width);
+    float f5height = 0.5f * float(points.size() / width);
+
+    for (size_t i = 0; i < points.size(); ++i) {
+        vec4 h = proj * vec4(points[i], 1.0);
+        vec3 v = h.xyz() / h.w;
+
+        if (-1.0f <= v.z && v.z < +1.0f) {
+            size_t x = size_t((v.x + 1.0f) * f5width + 0.5f);
+            size_t y = size_t((v.x + 1.0f) * f5height + 0.5f);
+
+            if (0 <= x && x < width && 0 <= y && y < height) {
+                points[y * width + x] = color;
+            }
+        }
+    }
+}
+
+vec3 centroid(const vector<vec3>& points) {
+    vec3 result = vec3(0.0f);
+
+    for (size_t i = 0; i < points.size(); ++i) {
+        result += points[i];
+    }
+
+    return result / float(points.size());
+}
+
+void renderPoints(
+    vector<vec3>& points,
+    size_t width,
+    const vec3& color,
+    const vec3& origin) 
+{
+    size_t height = points.size() / width;
+    vec3 center = centroid(points);
+
+    mat4 proj = perspective(
+        pi<float>() / 3.0f, 
+        float(width) / float(height), 
+        0.1f, 
+        1000.0f);
+
+    mat4 view = lookAt(origin, center, vec3(0, 1, 0));
+
+    renderPoints(
+        points,
+        width,
+        color,
+        proj * view);
+}
+
 }

@@ -59,5 +59,17 @@ string homePath();
 string baseName(string path);
 pair<string, string> splitext(string path);
 
+void renderPoints(
+    vector<vec3>& points,
+    size_t width,
+    const vec3& color,
+    const mat4& proj);
+
+void renderPoints(
+    vector<vec3>& points,
+    size_t width,
+    const vec3& color,
+    const vec3& origin);
+
 }
 
