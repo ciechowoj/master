@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <glm/gtc/constants.hpp>
-#include <raytrace.hpp>
 #include <scene.hpp>
 #include <cmath>
 
