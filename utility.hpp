@@ -45,6 +45,13 @@ private:
     UniformSampler uniform;
 };
 
+class HemisphereCosineSampler {
+public:
+    vec3 sample();
+private:
+    UniformSampler uniform;
+};
+
 void saveEXR(
     const string& path, 
     const vector<vec3>& data, 
@@ -60,16 +67,27 @@ string baseName(string path);
 pair<string, string> splitext(string path);
 
 void renderPoints(
-    vector<vec3>& points,
+    vector<vec4>& image,
     size_t width,
+    const vector<vec3>& points,
     const vec3& color,
     const mat4& proj);
 
 void renderPoints(
-    vector<vec3>& points,
+    vector<vec4>& image,
     size_t width,
+    const vector<vec3>& points,
     const vec3& color,
     const vec3& origin);
+
+void renderPoints(
+    vector<vec4>& image,
+    size_t width,
+    const vector<vec3>& points,
+    const vec3& color,
+    float theta,
+    float phi,
+    float radius);
 
 }
 

@@ -50,20 +50,16 @@ int main(int argc, char **argv) {
 
     return run(1000, 800, [](GLFWwindow* window) {
         RTCDevice device = rtcNewDevice(NULL);
-
         runtime_assert(device != nullptr);
-
-        std::vector<vec4> image;
-
-        bool show_test_window = true;
 
         auto scenePath = "models/cornell-box/CornellBox-Original.obj";
         auto scene = haste::loadScene(scenePath);
         scene.buildAccelStructs(device);
 
+        std::vector<vec4> image;
         Camera camera;
         GUI gui(scenePath);
-        
+
         loop(window, [&](int width, int height) {
             image.resize(width * height);
 
@@ -71,6 +67,7 @@ int main(int argc, char **argv) {
             size_t num_pixels = pathtraceInteractive(image, width, camera, scene);
 
             draw_fullscreen_quad(window, image);
+
             gui.update(
                 image,
                 width,
