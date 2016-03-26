@@ -64,31 +64,6 @@ vec3 AreaLights::eval(const RayIsect& isect) const {
     return exitances[isect.primID];
 }
 
-void AreaLights::buildLightStructs() const {
-    size_t numFaces = this->numFaces();
-    lightWeights.resize(numFaces);
-
-    float total = 0.f;
-    for (size_t i = 0; i < numFaces; ++i) {
-        lightWeights[i] = faceArea(i) / facePower(i);
-        total += lightWeights[i];
-    }
-
-    float totalInv = 1.0f / total;
-
-    for (size_t i = 0; i < numFaces; ++i) {
-        lightWeights[i] *= totalInv;
-    }
-
-    lightSampler = PiecewiseSampler(
-        lightWeights.data(), 
-        lightWeights.data() + lightWeights.size());
-
-    for (size_t i = 0; i < numFaces; ++i) {
-        lightWeights[i] = 1.f / lightWeights[i];
-    }
-}
-
 Scene::Scene(
     vector<Material>&& materials,
     vector<Mesh>&& meshes,

@@ -40,7 +40,12 @@ public:
     vec3 lerpNormal(size_t face, vec3 uvw) const;
     vec3 lerpNormal(const RayIsect& hit) const;
 
-    vec3 queryTotalPower() const;
+    float queryTotalPower() const;
+    vec3 queryTotalPower3() const;
+    float queryAreaLightPower(size_t id) const;
+    vec3 queryAreaLightPower3(size_t id) const;
+    float queryAreaLightArea(size_t id) const;
+
     LightPhoton emit() const;
 
     LightSample sample(const vec3& position) const;
