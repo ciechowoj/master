@@ -27,6 +27,8 @@ struct GUI {
     string scenePath;
     string defpath = homePath() + "/";
 
+    float time = 0.0f;
+
     mat4 view;
     float fovy = pi<float>() / 3.0f;
 
@@ -60,12 +62,32 @@ int main(int argc, char **argv) {
         Camera camera;
         GUI gui(scenePath);
 
+        vector<LightPhoton> photons;
+
+        for (size_t i = 0; i < 10000; ++i) {
+            photons.push_back(scene.lights.emit());
+        }
+
+        vector<LightPhoton> photons2(photons.size());
+
         loop(window, [&](int width, int height) {
+            // image.clear();
             image.resize(width * height);
 
             double start = glfwGetTime();
             size_t num_pixels = pathtraceInteractive(image, width, camera, scene);
 
+            /*for (size_t i = 0; i < photons.size(); ++i) {
+                photons2[i] = scene.lights.emit();
+                photons2[i].position = photons2[i].position + gui.time * photons2[i].direction;
+            }
+
+            renderPhotons(
+                image,
+                width,
+                photons2,
+                camera.proj(width, height) * inverse(camera.view));*/
+            
             draw_fullscreen_quad(window, image);
 
             gui.update(
@@ -128,6 +150,7 @@ void GUI::update(
     vec3 t = vec3(1, 2, 3);
     ImGui::SliderFloat("yaw", &yaw, -glm::pi<float>(), glm::pi<float>());
     ImGui::SliderFloat("pitch",  &pitch, -glm::half_pi<float>(), glm::half_pi<float>());
+    ImGui::SliderFloat("time",  &time, 0.0f, 1.0f);
     ImGui::InputVec("position", &position);
 
     ImGui::InputMat("view", &view);

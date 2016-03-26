@@ -20,12 +20,15 @@ PiecewiseSampler::PiecewiseSampler(const float* weightsBegin, const float* weigh
 
     size_t numWeights = weightsEnd - weightsBegin;
 
+    auto lambda = [&](float x) { 
+        return weightsBegin[min(size_t(x * numWeights), numWeights - 1)]; 
+    };
+
     distribution = std::piecewise_constant_distribution<float>(
         numWeights,
         0.f,
         1.f,
-        [&](float x) { return weightsBegin[size_t(x * (numWeights + 1))]; }
-        );
+        lambda);
 }
 
 float PiecewiseSampler::sample() {
@@ -238,7 +241,6 @@ void renderPoints(
         color,
         proj * view);
 }
-
 
 void renderPoints(
     vector<vec4>& image,

@@ -8,6 +8,14 @@
 
 namespace haste {
 
+mat4 Camera::proj(size_t width, size_t height) const {
+    return perspective(
+        fovy, 
+        float(width) / float(height), 
+        0.1f, 
+        1000.0f);
+}
+
 Ray shoot(
     UniformSampler& sampler,
     const Camera& camera,

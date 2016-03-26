@@ -17,6 +17,8 @@ struct Ray {
 struct Camera {
     mat4 view;
     float fovy = pi<float>() / 3.f;
+
+    mat4 proj(size_t width, size_t height) const;
 };
 
 struct ImageDesc {

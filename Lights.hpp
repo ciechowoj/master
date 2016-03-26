@@ -70,4 +70,10 @@ public:
     friend class Scene;
 };
 
+void renderPhotons(
+    vector<vec4>& image,
+    size_t width,
+    const vector<LightPhoton>& photons,
+    const mat4& proj);
+
 }

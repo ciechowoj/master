@@ -42,24 +42,6 @@ vec3 AreaLights::lerpNormal(const RayIsect& hit) const {
         + toWorldMs[indices[hit.primID * 3 + 2]][1] * hit.v;
 }
 
-LightSample AreaLights::sample(const vec3& position) const {
-    // below computations are probably incorrect (to be fixed)
-
-    size_t face = size_t(lightSampler.sample() * numFaces());
-    vec3 uvw = faceSampler.sample();
-
-    vec3 normal = lerpNormal(face, uvw);
-    vec3 radiance = exitances[face] * lightWeights[face];
-
-    LightSample sample;
-    sample.position = lerpPosition(face, uvw);
-    sample.incident = normalize(sample.position - position);
-    sample.radiance = max(vec3(0.0f), radiance * dot(normal, -sample.incident));
-    // sample.radiance = dot(normal, -sample.incident) < 0.0f ? vec3(0.0f) : radiance;
-
-    return sample;
-}
-
 vec3 AreaLights::eval(const RayIsect& isect) const {
     return exitances[isect.primID];
 }

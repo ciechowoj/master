@@ -1,3 +1,4 @@
+#include <iostream>
 #include <runtime_assert>
 #include <Lights.hpp>
 
@@ -56,9 +57,9 @@ float AreaLights::queryAreaLightArea(size_t id) const {
     return length(cross(u, v)) * 0.5f;
 }
 
-size_t AreaLights::sampleLight() const
-{
-    return min(size_t(lightSampler.sample() * numFaces()), numFaces() - 1);
+size_t AreaLights::sampleLight() const {
+    auto sample = lightSampler.sample(); 
+    return min(size_t(sample * numFaces()), numFaces() - 1);
 }
 
 SurfacePoint AreaLights::sampleSurface(size_t id) const {
@@ -92,6 +93,23 @@ LightPhoton AreaLights::emit() const {
     return result;
 }
 
+LightSample AreaLights::sample(const vec3& position) const {
+    // below computations are probably incorrect (to be fixed)
+
+    size_t face = sampleLight();
+    vec3 uvw = faceSampler.sample();
+
+    vec3 normal = lerpNormal(face, uvw);
+    vec3 radiance = exitances[face] * lightWeights[face];
+
+    LightSample sample;
+    sample.position = lerpPosition(face, uvw);
+    sample.incident = normalize(sample.position - position);
+    sample.radiance = max(vec3(0.0f), radiance * dot(normal, -sample.incident));
+
+    return sample;
+}
+
 void AreaLights::buildLightStructs() const {
     size_t numFaces = this->numFaces();
     lightWeights.resize(numFaces);
@@ -110,6 +128,36 @@ void AreaLights::buildLightStructs() const {
 
     for (size_t i = 0; i < numFaces; ++i) {
         lightWeights[i] = 1.f / lightWeights[i];
+    }
+}
+
+void renderPhotons(
+    vector<vec4>& image,
+    size_t width,
+    const vector<LightPhoton>& photons,
+    const mat4& proj)
+{
+    size_t height = image.size() / width;
+    float f5width = 0.5f * float(width);
+    float f5height = 0.5f * float(height);
+
+    for (size_t k = 0; k < photons.size(); ++k) {
+        vec4 h = proj * vec4(photons[k].position, 1.0);
+        vec3 v = h.xyz() / h.w;
+
+        if (-1.0f <= v.z && v.z <= +1.0f) {
+            int x = int((v.x + 1.0f) * f5width + 0.5f);
+            int y = int((v.y + 1.0f) * f5height + 0.5f);
+
+            for (int j = y - 1; j <= y + 1; ++j) {
+                for (int i = x - 1; i <= x + 1; ++i) {
+                    if (0 <= i && i < width && 0 <= j && j < height) {
+                        image[j * width + i] = vec4(photons[k].power, 1.0f);
+                        image[j * width + i] = clamp(image[j * width + i], 0.0f, 1.0f);
+                    }
+                }
+            }
+        }
     }
 }
 
