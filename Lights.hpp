@@ -23,6 +23,11 @@ struct LightPhoton {
 	vec3 power;
 };
 
+struct SurfacePoint {
+    vec3 position;
+    mat3 toWorldM;
+};
+
 class AreaLights {
 public:
     vector<string> names;
@@ -30,7 +35,7 @@ public:
     vector<int> indices;
     vector<vec3> exitances;
     vector<vec3> vertices;
-    vector<vec3> normals;
+    vector<mat3> toWorldMs;
 
     size_t numLights() const;
     size_t numFaces() const;
@@ -45,6 +50,9 @@ public:
     float queryAreaLightPower(size_t id) const;
     vec3 queryAreaLightPower3(size_t id) const;
     float queryAreaLightArea(size_t id) const;
+    size_t sampleLight() const;
+    SurfacePoint sampleSurface(size_t id) const;
+    mat3 queryTransform(size_t id) const;
 
     LightPhoton emit() const;
 
@@ -54,6 +62,7 @@ public:
 public:
     mutable PiecewiseSampler lightSampler;
     mutable BarycentricSampler faceSampler;
+    mutable HemisphereCosineSampler cosineSampler;
     mutable vector<float> lightWeights;
 
     void buildLightStructs() const;

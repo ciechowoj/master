@@ -143,10 +143,29 @@ void appendLights(
         throw std::runtime_error("Normal vectors are not present.");
     }
 
-    lights.normals.resize(lights.vertices.size());
+    lights.toWorldMs.resize(lights.vertices.size());
 
-    for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
-        lights.normals[numVertices + j] = toVec3(scene->mMeshes[i]->mNormals[j]);
+    if (scene->mMeshes[i]->mTangents != nullptr &&
+        scene->mMeshes[i]->mBitangents != nullptr) {
+        for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
+            size_t k = numVertices + j;
+            lights.toWorldMs[k][0] = toVec3(scene->mMeshes[i]->mBitangents[j]);
+            lights.toWorldMs[k][1] = toVec3(scene->mMeshes[i]->mNormals[j]);
+            lights.toWorldMs[k][2] = toVec3(scene->mMeshes[i]->mTangents[j]);
+        }
+    }
+    else {
+        for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
+            size_t k = numVertices + j;
+            vec3 normal = toVec3(scene->mMeshes[i]->mNormals[j]);
+            vec3 tangent = lights.vertices[k + 1] - lights.vertices[k + 0];
+            tangent = tangent - dot(normal, tangent) * normal;
+            vec3 bitangent = cross(normal, tangent);
+
+            lights.toWorldMs[k][0] = normalize(bitangent);
+            lights.toWorldMs[k][1] = normal;
+            lights.toWorldMs[k][2] = normalize(tangent);
+        }
     }
 
     size_t numFaces = numIndices / 3;
@@ -213,9 +232,5 @@ Scene loadScene(string path) {
 
     return result;
 }
-
-
-
-
 
 }

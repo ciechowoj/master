@@ -29,17 +29,17 @@ vec3 AreaLights::lerpPosition(size_t face, vec3 uvw) const {
 }
 
 vec3 AreaLights::lerpNormal(size_t face, vec3 uvw) const {
-    return normals[indices[face * 3 + 0]] * uvw.z
-        + normals[indices[face * 3 + 1]] * uvw.x
-        + normals[indices[face * 3 + 2]] * uvw.y;
+    return toWorldMs[indices[face * 3 + 0]][1] * uvw.z
+        + toWorldMs[indices[face * 3 + 1]][1] * uvw.x
+        + toWorldMs[indices[face * 3 + 2]][1] * uvw.y;
 }
 
 vec3 AreaLights::lerpNormal(const RayIsect& hit) const {
     float w = 1.0f - hit.u - hit.v;
 
-    return normals[indices[hit.primID * 3 + 0]] * w
-        + normals[indices[hit.primID * 3 + 1]] * hit.u
-        + normals[indices[hit.primID * 3 + 2]] * hit.v;
+    return toWorldMs[indices[hit.primID * 3 + 0]][1] * w
+        + toWorldMs[indices[hit.primID * 3 + 1]][1] * hit.u
+        + toWorldMs[indices[hit.primID * 3 + 2]][1] * hit.v;
 }
 
 LightSample AreaLights::sample(const vec3& position) const {
