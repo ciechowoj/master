@@ -20,26 +20,19 @@ using std::move;
 
 struct RayIsect : public RTCRay {
     vec3 position;
+
     bool isPresent() const;
 
     vec3 gnormal() const { return normalize(vec3(-Ng[0], -Ng[1], -Ng[2])); }
 };
 
-struct Material {
-	string name;
-    vec3 ambient;
-	vec3 diffuse;
-    vec3 emissive;
-
-    BSDF bsdf;
-};
-
 struct Mesh {
-	string name;
-	unsigned geometryID;
-	unsigned materialID;
+    string name;
+    unsigned materialID;
     vector<int> indices;
+    vector<vec3> bitangents;
     vector<vec3> normals;
+    vector<vec3> tangents;
     vector<vec3> vertices;
 };
 
@@ -53,21 +46,20 @@ class Scene;
 class Scene {
 public:
     Scene(
-        vector<Material>&& materials,
+        Materials&& materials,
         vector<Mesh>&& meshes,
         AreaLights&& areaLights);
 
-    const vector<Material> materials;
     const vector<Mesh> meshes;
     const AreaLights lights;
-    // const Materials materials;
+    const Materials materials;
 
     void buildAccelStructs(RTCDevice device);
 
     bool isMesh(const RayIsect& hit) const;
     bool isLight(const RayIsect& isect) const;
 
-    const Material& queryMaterial(const RayIsect& hit) const;
+    const BSDF& queryBSDF(const RayIsect& hit) const;
     vec3 lightExitance(const RayIsect& hit) const;
     vec3 lerpNormal(const RayIsect& hit) const;
 

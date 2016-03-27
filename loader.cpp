@@ -72,9 +72,7 @@ Mesh makeMesh(
 
     for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
         vertices.push_back(vec3(0));
-        vertices[j].x = scene->mMeshes[i]->mVertices[j].x;
-        vertices[j].y = scene->mMeshes[i]->mVertices[j].y;
-        vertices[j].z = scene->mMeshes[i]->mVertices[j].z;
+        vertices[j] = toVec3(scene->mMeshes[i]->mVertices[j]);
     }
 
     vector<int> indices(scene->mMeshes[i]->mNumFaces * 3);
@@ -213,16 +211,13 @@ Scene loadScene(string path) {
             emissive[i]);
     }
 
-    vector<Material> materials;
+    Materials materials;
 
     for (size_t i = 0; i < scene->mNumMaterials; ++i) {
-        Material material;
-        material.name = name(scene->mMaterials[i]);
-        material.ambient = ambient(scene->mMaterials[i]);
-        material.diffuse = diffuse(scene->mMaterials[i]);
-        material.bsdf = BSDF::lambert(material.diffuse);
-
-        materials.push_back(material);
+        materials.names.push_back(name(scene->mMaterials[i]));
+        materials.diffuses.push_back(diffuse(scene->mMaterials[i]));
+        materials.speculars.push_back(specular(scene->mMaterials[i]));
+        materials.bsdfs.push_back(BSDF::lambert(materials.diffuses.back()));
     }
     
     Scene result = Scene(

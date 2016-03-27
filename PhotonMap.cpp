@@ -22,7 +22,7 @@ vector<LightPhoton> scatter(const Scene& scene, size_t number) {
             photon.direction = -photon.direction;
             photons.push_back(photon);
 
-            // SurfacePoint point = scene.querySurface(isect);
+            SurfacePoint point = scene.querySurface(isect);
 
             /*scene.materials.scatter(photon, isect.primID, point);
 

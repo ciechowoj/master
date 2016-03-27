@@ -47,13 +47,13 @@ vec3 AreaLights::eval(const RayIsect& isect) const {
 }
 
 Scene::Scene(
-    vector<Material>&& materials,
+    Materials&& materials,
     vector<Mesh>&& meshes,
     AreaLights&& areaLights)
     : materials(move(materials))
     , meshes(move(meshes))
     , lights(move(areaLights))
-{ 
+{
     rtcScene = nullptr;
 }
 
@@ -123,8 +123,8 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
     }
 
     rtcScene = rtcDeviceNewScene(
-        device, 
-        RTC_SCENE_STATIC | RTC_SCENE_HIGH_QUALITY, 
+        device,
+        RTC_SCENE_STATIC | RTC_SCENE_HIGH_QUALITY,
         RTC_INTERSECT1);
 
     if (rtcScene == nullptr) {
@@ -165,8 +165,8 @@ bool Scene::isLight(const RayIsect& isect) const {
     return isect.geomID == meshes.size();
 }
 
-const Material& Scene::queryMaterial(const RayIsect& hit) const {
-    return materials[meshes[hit.geomID].materialID];
+const BSDF& Scene::queryBSDF(const RayIsect& hit) const {
+   return materials.bsdfs[meshes[hit.geomID].materialID];
 }
 
 vec3 Scene::lerpNormal(const RayIsect& hit) const {
@@ -176,6 +176,31 @@ vec3 Scene::lerpNormal(const RayIsect& hit) const {
     return w * mesh.normals[mesh.indices[hit.primID * 3 + 0]] +
          hit.u * mesh.normals[mesh.indices[hit.primID * 3 + 1]] +
          hit.v * mesh.normals[mesh.indices[hit.primID * 3 + 2]];
+}
+
+SurfacePoint Scene::querySurface(const RayIsect& isect) const {
+    const float w = 1.f - isect.u - isect.v;
+    auto& mesh = meshes[isect.geomID];
+
+    SurfacePoint point;
+    point.position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
+
+    point.toWorldM[0] =
+        w * mesh.bitangents[mesh.indices[isect.primID * 3 + 0]] +
+        isect.u * mesh.bitangents[mesh.indices[isect.primID * 3 + 1]] +
+        isect.v * mesh.bitangents[mesh.indices[isect.primID * 3 + 2]];
+
+    point.toWorldM[1] =
+        w * mesh.normals[mesh.indices[isect.primID * 3 + 0]] +
+        isect.u * mesh.normals[mesh.indices[isect.primID * 3 + 1]] +
+        isect.v * mesh.normals[mesh.indices[isect.primID * 3 + 2]];
+
+    point.toWorldM[2] =
+        w * mesh.tangents[mesh.indices[isect.primID * 3 + 0]] +
+        isect.u * mesh.tangents[mesh.indices[isect.primID * 3 + 1]] +
+        isect.v * mesh.tangents[mesh.indices[isect.primID * 3 + 2]];
+
+    return point;
 }
 
 RayIsect Scene::intersect(const vec3& origin, const vec3& direction) const {
@@ -190,7 +215,7 @@ RayIsect Scene::intersect(const vec3& origin, const vec3& direction) const {
     rtcRay.mask = 0xFFFFFFFF;
     rtcRay.time = 0.f;
     rtcIntersect(rtcScene, rtcRay);
-    
+
     rtcRay.position = origin + direction * rtcRay.tfar;
 
     return rtcRay;

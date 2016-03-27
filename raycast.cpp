@@ -13,7 +13,7 @@ vec3 raycast(
         if (scene.isMesh(intersect)) {
             auto light = scene.lights.sample(intersect.position);
 
-            auto& material = scene.queryMaterial(intersect);
+            auto& bsdf = scene.queryBSDF(intersect);
 
             vec3 normal = scene.lerpNormal(intersect);
             vec3 tangent = vec3(1, 0, 0); // dummy
@@ -31,7 +31,7 @@ vec3 raycast(
             mat3 lightToWorld = mat3(binormal, normal, tangent);
             mat3 worldToLight = transpose(lightToWorld);
 
-            vec3 f = material.bsdf.eval(worldToLight * incident, worldToLight * reflected);
+            vec3 f = bsdf.eval(worldToLight * incident, worldToLight * reflected);
 
             return f * light.radiance * V * G;
         }
