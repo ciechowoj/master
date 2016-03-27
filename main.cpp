@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
                 width,
                 photons2,
                 camera.proj(width, height) * inverse(camera.view));*/
-            
+
             draw_fullscreen_quad(window, image);
 
             gui.update(
@@ -124,13 +124,13 @@ string fixedPath(string base, string scene, int samples) {
         result << base << "." << baseName(sceneBase) << "." << samples << ext;
     }
     else {
-        result << base << baseName(sceneBase) << "." << samples << ext;   
+        result << base << baseName(sceneBase) << "." << samples << ext;
     }
 
     return result.str();
 }
 
-GUI::GUI(string scenePath) 
+GUI::GUI(string scenePath)
     : scenePath(scenePath) {
     strcpy(path, defpath.c_str());
 }
@@ -138,7 +138,7 @@ GUI::GUI(string scenePath)
 void GUI::update(
     const vector<vec4>& image,
     size_t width,
-    float elapsed) 
+    float elapsed)
 {
     // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
     // ImGui::ShowTestWindow(&show_test_window);
@@ -173,7 +173,7 @@ void GUI::update(
 
     ImGui::InputText("", path, int(pathSize - 1));
     ImGui::SameLine();
-    
+
     if (ImGui::Button("Save EXR")) {
         saveEXR(path, image, width);
     }
@@ -186,7 +186,7 @@ void GUI::update(
 
     if (ImGui::Button("Save EXR")) {
         saveEXR(fixed, image, width);
-    }   
+    }
 
     ImGui::PopID();
     ImGui::End();

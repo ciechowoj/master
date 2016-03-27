@@ -1,4 +1,3 @@
-#include <iostream>
 #include <runtime_assert>
 #include <Lights.hpp>
 
@@ -62,8 +61,8 @@ size_t AreaLights::sampleLight() const {
     return min(size_t(sample * numFaces()), numFaces() - 1);
 }
 
-SurfacePoint AreaLights::sampleSurface(size_t id) const {
-    SurfacePoint result;
+LightPoint AreaLights::sampleSurface(size_t id) const {
+    LightPoint result;
 
     vec3 uvw = faceSampler.sample();
 
@@ -83,7 +82,7 @@ SurfacePoint AreaLights::sampleSurface(size_t id) const {
 LightPhoton AreaLights::emit() const {
     size_t id = sampleLight();
 
-    SurfacePoint point = sampleSurface(id);
+    LightPoint point = sampleSurface(id);
 
     LightPhoton result;
     result.position = point.position;

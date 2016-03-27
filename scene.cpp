@@ -165,7 +165,7 @@ bool Scene::isLight(const RayIsect& isect) const {
     return isect.geomID == meshes.size();
 }
 
-const Material& Scene::material(const RayIsect& hit) const {
+const Material& Scene::queryMaterial(const RayIsect& hit) const {
     return materials[meshes[hit.geomID].materialID];
 }
 

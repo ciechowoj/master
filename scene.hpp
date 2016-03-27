@@ -6,6 +6,7 @@
 
 #include <BSDF.hpp>
 #include <Lights.hpp>
+#include <Materials.hpp>
 #include <PhotonMap.hpp>
 
 namespace haste {
@@ -42,6 +43,11 @@ struct Mesh {
     vector<vec3> vertices;
 };
 
+struct SurfacePoint {
+    vec3 position;
+    mat3 toWorldM;
+};
+
 class Scene;
 
 class Scene {
@@ -54,15 +60,18 @@ public:
     const vector<Material> materials;
     const vector<Mesh> meshes;
     const AreaLights lights;
+    // const Materials materials;
 
     void buildAccelStructs(RTCDevice device);
 
     bool isMesh(const RayIsect& hit) const;
     bool isLight(const RayIsect& isect) const;
 
-    const Material& material(const RayIsect& hit) const;
+    const Material& queryMaterial(const RayIsect& hit) const;
     vec3 lightExitance(const RayIsect& hit) const;
     vec3 lerpNormal(const RayIsect& hit) const;
+
+    SurfacePoint querySurface(const RayIsect& isect) const;
 
     RayIsect intersect(const vec3& origin, const vec3& direction) const;
     float occluded(const vec3& origin, const vec3& target) const;

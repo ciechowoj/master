@@ -58,7 +58,7 @@ vec3 pathtrace(
             break;
         }
 
-        auto& bsdf = scene.material(isect).bsdf;
+        auto& bsdf = scene.queryMaterial(isect).bsdf;
 
         vec3 normal = normalize(scene.lerpNormal(isect));
         vec3 tangent = vec3(1, 1, 0); // dummy

@@ -23,7 +23,7 @@ struct LightPhoton {
 	vec3 power;
 };
 
-struct SurfacePoint {
+struct LightPoint {
     vec3 position;
     mat3 toWorldM;
 };
@@ -51,7 +51,7 @@ public:
     vec3 queryAreaLightPower3(size_t id) const;
     float queryAreaLightArea(size_t id) const;
     size_t sampleLight() const;
-    SurfacePoint sampleSurface(size_t id) const;
+    LightPoint sampleSurface(size_t id) const;
     mat3 queryTransform(size_t id) const;
 
     LightPhoton emit() const;

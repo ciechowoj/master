@@ -13,7 +13,7 @@ vec3 raycast(
         if (scene.isMesh(intersect)) {
             auto light = scene.lights.sample(intersect.position);
 
-            auto& material = scene.material(intersect);
+            auto& material = scene.queryMaterial(intersect);
 
             vec3 normal = scene.lerpNormal(intersect);
             vec3 tangent = vec3(1, 0, 0); // dummy
