@@ -1,3 +1,4 @@
+#include <runtime_assert>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -64,9 +65,77 @@ bool isEmissive(const aiScene* scene, size_t meshID) {
     return emissive(material) != vec3(0.0f);
 }
 
+Mesh aiMeshToMesh(const aiMesh* mesh) {
+    runtime_assert(mesh != nullptr);
+    runtime_assert(mesh->mNormals != nullptr);
+    runtime_assert(mesh->mVertices != nullptr);
+
+    Mesh result;
+
+    if (mesh->mBitangents == nullptr ||
+        mesh->mTangents == nullptr) {
+        result.indices.resize(mesh->mNumFaces * 3);
+        result.bitangents.resize(mesh->mNumFaces * 3);
+        result.normals.resize(mesh->mNumFaces * 3);
+        result.tangents.resize(mesh->mNumFaces * 3);
+        result.vertices.resize(mesh->mNumFaces * 3);
+
+        for (size_t j = 0; j < mesh->mNumFaces; ++j) {
+            runtime_assert(mesh->mFaces[j].mNumIndices == 3);
+
+            for (size_t k = 0; k < 3; ++k) {
+                unsigned index = mesh->mFaces[j].mIndices[k];
+                result.indices[j * 3 + k] = j * 3 + k;
+                result.normals[j * 3 + k] = toVec3(mesh->mNormals[index]);
+                result.vertices[j * 3 + k] = toVec3(mesh->mVertices[index]);
+            }
+
+            vec3 edge = result.vertices[j * 3 + 1] - result.vertices[j * 3 + 0];
+
+            for (size_t k = 0; k < 3; ++k) {
+                vec3 normal = result.normals[j * 3 + k];
+                vec3 tangent = normalize(edge - dot(normal, edge) * normal);
+                vec3 bitangent = normalize(cross(normal, tangent));
+                result.bitangents[j * 3 + k] = bitangent;
+                result.tangents[j * 3 + k] = tangent;
+            }
+        }
+    }
+    else {
+        result.bitangents.resize(mesh->mNumVertices);
+        result.normals.resize(mesh->mNumVertices);
+        result.tangents.resize(mesh->mNumVertices);
+        result.vertices.resize(mesh->mNumVertices);
+
+        for (size_t j = 0; j < mesh->mNumVertices; ++j) {
+            result.bitangents[j] = toVec3(mesh->mBitangents[j]);
+            result.normals[j] = toVec3(mesh->mNormals[j]);
+            result.tangents[j] = toVec3(mesh->mTangents[j]);
+            result.vertices[j] = toVec3(mesh->mVertices[j]);
+        }
+
+        result.indices.resize(mesh->mNumFaces * 3);
+
+        for (size_t j = 0; j < mesh->mNumFaces; ++j) {
+            runtime_assert(mesh->mFaces[j].mNumIndices == 3);
+
+            for (size_t k = 0; k < 3; ++k) {
+                result.indices[j * 3 + k] = mesh->mFaces[j].mIndices[k];
+            }
+        }
+    }
+
+    result.name = mesh->mName.C_Str();
+    result.materialID = mesh->mMaterialIndex;
+
+    return result;
+}
+
 Mesh makeMesh(
     const aiScene* scene,
     size_t i) {
+
+    auto mesh = scene->mMeshes[i];
 
     vector<vec3> vertices;
 
@@ -97,13 +166,13 @@ Mesh makeMesh(
         normals[j] = toVec3(scene->mMeshes[i]->mNormals[j]);
     }
 
-    Mesh mesh;
-    mesh.materialID = scene->mMeshes[i]->mMaterialIndex;
-    mesh.name = scene->mMeshes[i]->mName.C_Str();
-    mesh.indices = std::move(indices);
-    mesh.normals = std::move(normals);
-    mesh.vertices = std::move(vertices);
-    return mesh;
+    Mesh result;
+    result.materialID = scene->mMeshes[i]->mMaterialIndex;
+    result.name = scene->mMeshes[i]->mName.C_Str();
+    result.indices = std::move(indices);
+    result.normals = std::move(normals);
+    result.vertices = std::move(vertices);
+    return result;
 }
 
 void appendLights(
@@ -198,7 +267,7 @@ Scene loadScene(string path) {
             emissive.push_back(i);
         }
         else {
-            meshes.push_back(makeMesh(scene, i));
+            meshes.push_back(aiMeshToMesh(scene->mMeshes[i]));
         }
     }
 
@@ -206,8 +275,8 @@ Scene loadScene(string path) {
 
     for (size_t i = 0; i < emissive.size(); ++i) {
         appendLights(
-            areaLights, 
-            scene, 
+            areaLights,
+            scene,
             emissive[i]);
     }
 
@@ -219,10 +288,10 @@ Scene loadScene(string path) {
         materials.speculars.push_back(specular(scene->mMaterials[i]));
         materials.bsdfs.push_back(BSDF::lambert(materials.diffuses.back()));
     }
-    
+
     Scene result = Scene(
         move(materials),
-        move(meshes), 
+        move(meshes),
         move(areaLights));
 
     return result;

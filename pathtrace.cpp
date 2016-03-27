@@ -60,11 +60,11 @@ vec3 pathtrace(
 
         auto& bsdf = scene.queryBSDF(isect);
 
-        vec3 normal = normalize(scene.lerpNormal(isect));
-        vec3 tangent = vec3(1, 1, 0); // dummy
-        vec3 binormal = normalize(cross(tangent, normal));
-        tangent = normalize(cross(normal, binormal));
-        mat3 lightToWorld = mat3(binormal, normal, tangent);
+        SurfacePoint point = scene.querySurface(isect);
+
+        vec3 normal = point.toWorldM[1];
+
+        mat3 lightToWorld = point.toWorldM;
         mat3 worldToLight = transpose(lightToWorld);
 
         accum += throughput * sampleLight(

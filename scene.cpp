@@ -1,3 +1,4 @@
+#include <runtime_assert>
 #include <scene.hpp>
 #include <streamops.hpp>
 #include <cstring>
@@ -179,6 +180,8 @@ vec3 Scene::lerpNormal(const RayIsect& hit) const {
 }
 
 SurfacePoint Scene::querySurface(const RayIsect& isect) const {
+    runtime_assert(isect.geomID < meshes.size());
+
     const float w = 1.f - isect.u - isect.v;
     auto& mesh = meshes[isect.geomID];
 
@@ -199,6 +202,8 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
         w * mesh.tangents[mesh.indices[isect.primID * 3 + 0]] +
         isect.u * mesh.tangents[mesh.indices[isect.primID * 3 + 1]] +
         isect.v * mesh.tangents[mesh.indices[isect.primID * 3 + 2]];
+
+    point.materialID = mesh.materialID;
 
     return point;
 }

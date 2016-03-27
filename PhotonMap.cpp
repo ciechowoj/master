@@ -9,35 +9,28 @@ vector<LightPhoton> scatter(const Scene& scene, size_t number) {
     for (size_t i = 0; i < number; ++i) {
         LightPhoton photon = scene.lights.emit();
 
-        while (true) {
+        for (size_t i = 0; i < 3; ++i) {
             RayIsect isect = scene.intersect(
                 photon.position,
                 photon.direction);
 
-            if (!isect.isPresent()) {
+            if (!isect.isPresent() || !scene.isMesh(isect)) {
                 break;
             }
 
             photon.position = isect.position;
-            photon.direction = -photon.direction;
+            photon.direction = photon.direction;
+            
+            //if (i == 1)
             photons.push_back(photon);
 
             SurfacePoint point = scene.querySurface(isect);
 
-            /*scene.materials.scatter(photon, isect.primID, point);
-
-            auto& bsdf = scene.material().bsdf;
-
-            if(!bsdf.scatter(photon)) {
+            if(!scene.materials.scatter(point.materialID, photon, point)) {
                 break;
-            }*/
+            }
         }
-
-
-
     }
-
-
 
     return photons;
 }

@@ -39,6 +39,7 @@ struct Mesh {
 struct SurfacePoint {
     vec3 position;
     mat3 toWorldM;
+    size_t materialID;
 };
 
 class Scene;
@@ -63,7 +64,7 @@ public:
     vec3 lightExitance(const RayIsect& hit) const;
     vec3 lerpNormal(const RayIsect& hit) const;
 
-    SurfacePoint querySurface(const RayIsect& isect) const;
+    SurfacePoint querySurface(const RayIsect& isect) const; 
 
     RayIsect intersect(const vec3& origin, const vec3& direction) const;
     float occluded(const vec3& origin, const vec3& target) const;

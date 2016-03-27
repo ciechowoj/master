@@ -39,7 +39,6 @@ struct GUI {
         float elapsed);
 };
 
-
 int main(int argc, char **argv) {
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
     _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
@@ -68,24 +67,20 @@ int main(int argc, char **argv) {
             photons.push_back(scene.lights.emit());
         }
 
-        vector<LightPhoton> photons2(photons.size());
+        photons = scatter(scene, 10000);
 
         loop(window, [&](int width, int height) {
             // image.clear();
             image.resize(width * height);
+            size_t num_pixels = 1;
 
             double start = glfwGetTime();
-            size_t num_pixels = pathtraceInteractive(image, width, camera, scene);
+            num_pixels = pathtraceInteractive(image, width, camera, scene);
 
-            /*for (size_t i = 0; i < photons.size(); ++i) {
-                photons2[i] = scene.lights.emit();
-                photons2[i].position = photons2[i].position + gui.time * photons2[i].direction;
-            }
-
-            renderPhotons(
+            /*renderPhotons(
                 image,
                 width,
-                photons2,
+                photons,
                 camera.proj(width, height) * inverse(camera.view));*/
 
             draw_fullscreen_quad(window, image);
