@@ -1,13 +1,30 @@
+#include <runtime_assert>
 #include <Materials.hpp>
 #include <scene.hpp>
 
 namespace haste {
-    
+
 bool Materials::scatter(
-    size_t id, 
-    LightPhoton& photon, 
-    const SurfacePoint& point) const {
-    photon.direction = reflect(photon.direction, point.toWorldM[1]);
+    LightPhoton& photon,
+    const SurfacePoint& point) const
+{
+    const float inv3 = 1.0f / 3.0f;
+    size_t id = point.materialID;
+    runtime_assert(id < diffuses.size());
+
+    vec3 diffuse = diffuses[id];
+    float diffuseAvg = (diffuse.x + diffuse.y + diffuse.z) * inv3;
+
+    if (uniformSampler.sample() < diffuseAvg) {
+        float diffuseAvgInv = 1.0f / diffuseAvg;
+        photon.power = photon.power * diffuse * diffuseAvgInv;
+        photon.direction = point.toWorldM * cosineSampler.sample();
+        
+        return true;   
+    }
+    else {
+        return false;
+    }
 }
 
 }

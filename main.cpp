@@ -61,13 +61,7 @@ int main(int argc, char **argv) {
         Camera camera;
         GUI gui(scenePath);
 
-        vector<LightPhoton> photons;
-
-        for (size_t i = 0; i < 10000; ++i) {
-            photons.push_back(scene.lights.emit());
-        }
-
-        photons = scatter(scene, 10000);
+        vector<LightPhoton> photons = scatter(scene, 50000);
 
         loop(window, [&](int width, int height) {
             // image.clear();

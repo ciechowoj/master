@@ -16,12 +16,12 @@ public:
     vector<BSDF> bsdfs;
 
     bool scatter(
-        size_t id, 
         LightPhoton& photon, 
         const SurfacePoint& point) const;
 
 private:
-
+	mutable UniformSampler uniformSampler;
+	mutable HemisphereCosineSampler cosineSampler;
 };
 
 }

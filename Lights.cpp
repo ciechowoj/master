@@ -57,7 +57,7 @@ float AreaLights::queryAreaLightArea(size_t id) const {
 }
 
 size_t AreaLights::sampleLight() const {
-    auto sample = lightSampler.sample(); 
+    auto sample = lightSampler.sample();
     return min(size_t(sample * numFaces()), numFaces() - 1);
 }
 
@@ -88,6 +88,8 @@ LightPhoton AreaLights::emit() const {
     result.position = point.position;
     result.direction = point.toWorldM * cosineSampler.sample();
     result.power = queryAreaLightPower3(id);
+    float length1 = 1.f / (result.power.x + result.power.y + result.power.z);
+    result.power = result.power * length1;
 
     return result;
 }
@@ -139,6 +141,7 @@ void renderPhotons(
     size_t height = image.size() / width;
     float f5width = 0.5f * float(width);
     float f5height = 0.5f * float(height);
+    int radius = 0;
 
     for (size_t k = 0; k < photons.size(); ++k) {
         vec4 h = proj * vec4(photons[k].position, 1.0);
@@ -148,11 +151,12 @@ void renderPhotons(
             int x = int((v.x + 1.0f) * f5width + 0.5f);
             int y = int((v.y + 1.0f) * f5height + 0.5f);
 
-            for (int j = y - 1; j <= y + 1; ++j) {
-                for (int i = x - 1; i <= x + 1; ++i) {
+            for (int j = y - radius; j <= y + radius; ++j) {
+                for (int i = x - radius; i <= x + radius; ++i) {
                     if (0 <= i && i < width && 0 <= j && j < height) {
-                        image[j * width + i] = vec4(photons[k].power, 1.0f);
-                        image[j * width + i] = clamp(image[j * width + i], 0.0f, 1.0f);
+                        vec3 power = photons[k].power * float(photons.size()) * 0.1f;
+                        power = clamp(power, 0.0f, 1.0f);
+                        image[j * width + i] = vec4(image[j * width + i].xyz() + power, 1.0f);
                     }
                 }
             }
