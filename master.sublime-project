@@ -9,20 +9,24 @@
 			],
 			"file_regex": "^(?:(?:  what\\(\\):  )|..)(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
 			"name": "Build master.",
+
 			"variants":
 			[
 				{
-					"cmd":
-					[
-						"make",
-						"-s",
-						"run"
-					],
+					"cmd": ["make", "-s", "run"],
 					"file_regex": "^(?:(?:  what\\(\\):  )|)(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
 					"name": "Run master.",
 					"working_dir": "${project_path}"
-				}
+				},
+
+				{
+					"cmd": ["make", "-s", "test"],
+					"file_regex": "^(?:(?:  what\\(\\):  )|)(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
+					"name": "Test master.",
+					"working_dir": "${project_path}"
+				},
 			],
+
 			"working_dir": "${project_path}"
 		},
 		{

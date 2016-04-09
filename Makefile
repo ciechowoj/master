@@ -82,7 +82,7 @@ build/master/%.o: %.cpp build/master/%.d build/master/sentinel
 	$(CC) -c $(MAIN_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@
 	$(MAIN_POST)
 
-build/master/unit_tests/%.o: unit_tests/%.cpp build/master/unit_tests/%.d build/master/sentinel
+build/master/unit_tests/%.o: unit_tests/%.cpp build/master/%.d build/master/unit_tests/%.d build/master/sentinel
 	$(CC) -c $(TEST_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@
 	$(MAIN_POST)
 
@@ -95,6 +95,7 @@ build/master/sentinel:
 build/master/%.d: ;
 
 -include $(MAIN_OBJECTS:build/master/%.o=build/master/%.d)
+-include $(TEST_OBJECTS:build/master/unit_tests/%.o=build/master/unit_tests/%.d)
 
 build/glfw/src/libglfw3.a:
 	mkdir -p build
@@ -162,6 +163,9 @@ build/assimp/code/libassimp.a:
 
 run: all
 	./build/master/master.bin
+
+test: all
+	./build/master/master.bin --gtest_filter=KDTree3D*:BitfieldVector*
 
 clean:
 	rm -rf build/master	

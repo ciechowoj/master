@@ -45,9 +45,7 @@ int main(int argc, char **argv) {
 
     ::testing::InitGoogleTest(&argc, argv);
 
-    if (false && RUN_ALL_TESTS() != 0) {
-        return 1;
-    }
+    return RUN_ALL_TESTS();
 
     return run(1000, 800, [](GLFWwindow* window) {
         RTCDevice device = rtcNewDevice(NULL);
