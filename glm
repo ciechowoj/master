@@ -10,3 +10,7 @@ namespace haste {
 using namespace glm;
 
 }
+
+template <class Stream> Stream& operator<<(Stream& stream, const glm::vec3& v) {
+    return stream << "[" << v.x << ", " << v.y << ", " << v.z << "]";
+}
