@@ -41,6 +41,17 @@ private:
     vector<size_t> data;
 };
 
+inline size_t max_axis(const pair<vec3, vec3>& aabb) {
+    vec3 diff = abs(aabb.first - aabb.second);
+     
+    if (diff.x < diff.y) {
+        return diff.y < diff.z ? 2 : 1;
+    }
+    else {
+        return diff.x < diff.z ? 2 : 0; 
+    }
+}
+
 template <class T> class KDTree3D {
 public:
     KDTree3D() {
@@ -111,11 +122,10 @@ private:
     void build(
         const pair<T*, T*>& subtree,
         const pair<size_t*, size_t*> subranges[3],
-        const pair<vec3, vec3>& bbox) {
-
-        vec3 diff = abs(bbox.first - bbox.second);
+        const pair<vec3, vec3>& aabb) {
 
 
+        size_t axis = max_axis(aabb);
 
 
 

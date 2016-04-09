@@ -23,6 +23,12 @@ TEST(BitfieldVector, basic_tests) {
     EXPECT_EQ(5, c.get(99));
 }
 
+TEST(KDTree3D, max_axis) {
+    EXPECT_EQ(0, max_axis(make_pair(vec3(1, 2, 3), vec3(-4, 0, 0))));
+    EXPECT_EQ(1, max_axis(make_pair(vec3(1, -20, 3), vec3(-4, 0, 0))));
+    EXPECT_EQ(2, max_axis(make_pair(vec3(1, 2, 30), vec3(-4, 0, 0))));
+}
+
 TEST(KDTree3D, should_create_empty) {
     KDTree3D<vec3> a;
 }
