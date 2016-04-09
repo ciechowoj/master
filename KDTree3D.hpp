@@ -7,6 +7,7 @@ namespace haste {
 
 using std::vector;
 using std::move;
+using std::swap;
 using std::pair;
 using std::make_pair;
 
@@ -74,25 +75,24 @@ public:
             vector<size_t> X(data.size());
             vector<size_t> Y(data.size());
             vector<size_t> Z(data.size());
+            vector<size_t> unique(data.size());
 
             iota(X);
             iota(Y);
             iota(Z);
+            iota(unique);
 
-            sort<0>(X, data);
-            sort<1>(Y, data);
-            sort<2>(Z, data);
+            sort<0>(X, unique, data);
+            sort<1>(Y, unique, data);
+            sort<2>(Z, unique, data);
 
-            pair<size_t*, size_t*> ranges[3] = {
-                make_pair(X.data(), X.data() + X.size()),
-                make_pair(Y.data(), Y.data() + Y.size()),
-                make_pair(Z.data(), Z.data() + Z.size())
+            size_t* ranges[3] = {
+                X.data(),
+                Y.data(),
+                Z.data()
             };
 
-            build(
-                make_pair(data.data(), data.data() + data.size()),
-                ranges,
-                make_pair(lower, upper));
+            build(0, data.size(), make_pair(lower, upper), ranges, unique.data());
         }
     }
 
@@ -105,6 +105,8 @@ private:
     vector<T> data;
     BitfieldVector<2> flags;
 
+    static const size_t leaf = 3;
+
     static void iota(vector<size_t>& a) {
         for (size_t i = 0; i < a.size(); ++i) {
             a[i] = i;
@@ -113,25 +115,90 @@ private:
 
     template <size_t D> static void sort(
         vector<size_t>& v,
+        const vector<size_t>& unique,
         const vector<T>& data) {
         std::sort(v.begin(), v.end(), [&](size_t a, size_t b) -> bool {
-            return data[a][D] < data[b][D];
+            return data[a][D] == data[b][D] ? unique[a] < unique[b] : data[a][D] < data[b][D];
         });
     }
 
+    void rearrange(
+        size_t axis,
+        size_t begin,
+        size_t end,
+        size_t median,
+        size_t* subranges[3],
+        size_t* unique) 
+    {
+        size_t size = end - begin;
+        size_t adjoint = subranges[axis][median];
+
+        if (adjoint != median) {
+            for (size_t j = 0; j < 3; ++j) {
+                for (size_t i = begin; i < end; ++i) {
+                    if (subranges[j][i] == median) {
+                        subranges[j][i] = adjoint;
+                        break;
+                    }
+                }
+
+                subranges[j][median] = median;
+            }
+
+            swap(data[median], data[adjoint]);
+            swap(unique[median], unique[adjoint]);
+        }
+
+        auto less = [&](size_t a, size_t b) -> bool {
+            return data[a][axis] == data[b][axis] 
+                ? unique[a] < unique[b] 
+                : data[a][axis] < data[b][axis];
+        };
+
+        for (size_t j = 0; j < 3; ++j) {
+            size_t* subrange = subranges[j];
+            size_t l = begin;
+            size_t g = median + 1;
+
+            while (g < end) {
+                if (less(subrange[g], median)) {
+                    while (less(subrange[l], median)) {
+                        ++l;
+                    }
+
+                    swap(subrange[l], subrange[g]);
+                }
+
+                ++g;
+            }
+        }
+    }
+
     void build(
-        const pair<T*, T*>& subtree,
-        const pair<size_t*, size_t*> subranges[3],
-        const pair<vec3, vec3>& aabb) {
+        size_t begin, 
+        size_t end,
+        const pair<vec3, vec3>& aabb,
+        size_t* subranges[3],
+        size_t* unique)
+    {
+        size_t size = end - begin;
 
+        if (size > 1) {
+            size_t axis = max_axis(aabb);
+            size_t median = begin + size / 2;
+            rearrange(axis, begin, end, median, subranges, unique);
+            flags.set(median, axis);
 
-        size_t axis = max_axis(aabb);
+            pair<vec3, vec3> left_aabb = aabb, right_aabb = aabb;
+            left_aabb.second[axis] = data[median][axis];
+            right_aabb.first[axis] = data[median][axis];
 
-
-
-
-
-
+            build(begin, median, left_aabb, subranges, unique);
+            build(median + 1, end, left_aabb, subranges, unique);
+        }
+        else if (size == 1) {
+            flags.set(begin, leaf);
+        }
     }
 
     static vec3 position(const T& x) {
