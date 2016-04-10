@@ -22,8 +22,11 @@ LIBRARY_DIRS = \
 	-Lbuild/embree \
 	-Lbuild/assimp/code
 
-CC = g++
-CC_FLAGS = -march=native -O2 -ffast-math -g -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CC = gcc
+CCFLAGS = -march=native -O2 -ffast-math -g -w -Wall $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+
+CXX = g++
+CXXFLAGS = -march=native -O2 -ffast-math -g -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \
@@ -82,21 +85,21 @@ build/master/master.bin: \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	build/master/main.o
-	$(CC) $(MAIN_OBJECTS) build/master/main.o $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/master.bin
+	$(CXX) $(MAIN_OBJECTS) build/master/main.o $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/master.bin
 
 build/master/unittest.bin: \
 	$(LIB_DEPENDENCIES) \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	$(TEST_OBJECTS)
-	$(CC) $(MAIN_OBJECTS) $(TEST_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/unittest.bin
+	$(CXX) $(MAIN_OBJECTS) $(TEST_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/unittest.bin
 
 build/master/%.o: %.cpp build/master/%.d build/master/sentinel
-	$(CC) -c $(MAIN_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@
+	$(CXX) -c $(MAIN_DEPENDENCY_FLAGS) $(CXXFLAGS) $< -o $@
 	$(MAIN_POST)
 
 build/master/unit_tests/%.o: unit_tests/%.cpp build/master/%.d build/master/unit_tests/%.d build/master/sentinel
-	$(CC) -c $(TEST_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@
+	$(CXX) -c $(TEST_DEPENDENCY_FLAGS) $(CXXFLAGS) $< -o $@
 	$(MAIN_POST)
 
 build/master/sentinel:
@@ -125,12 +128,6 @@ build/glad/loader/src/glad.c:
 	cd build/glad && python setup.py build
 	cd build/glad && python -m glad --profile compatibility --out-path loader --api "gl=3.3" --generator c
 
-#build/tinyobjloader/libtinyobjloader.a:
-#	mkdir -p build
-#	mkdir -p build/tinyobjloader
-#	cd build/tinyobjloader && $(CC) $(CC_FLAGS) -c ../../submodules/tinyobjloader/tiny_obj_loader.cc -o tiny_obj_loader.o -Isubmodules/tinyobjloader
-#	cd build/tinyobjloader && ar rcs libtinyobjloader.a tiny_obj_loader.o
-
 IMGUI_SOURCES = \
 	submodules/imgui/imgui.cpp \
 	submodules/imgui/imgui_demo.cpp \
@@ -143,7 +140,7 @@ build/imgui/libimgui.a: $(IMGUI_OBJECTS)
 	ar rcs build/imgui/libimgui.a $(IMGUI_OBJECTS)
 
 build/imgui/%.o: submodules/imgui/%.cpp build/imgui/GL/gl3w.h
-	$(CC) -c $(CC_FLAGS) $< -o $@ -Ibuild/glad/loader/include
+	$(CC) -c $(CCFLAGS) $< -o $@ -Ibuild/glad/loader/include
 
 build/imgui/GL/gl3w.h: build/imgui/sentinel
 	echo "#include <glad/glad.h>\n" >> build/imgui/GL/gl3w.h
