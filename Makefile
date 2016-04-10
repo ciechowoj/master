@@ -51,7 +51,8 @@ STD_LIBS = \
 	-lIex
 
 MAIN_HEADERS = $(wildcard *.hpp)
-MAIN_SOURCES = $(wildcard *.cpp)
+MAIN_SOURCES := $(wildcard *.cpp)
+MAIN_SOURCES := $(filter-out main.cpp, $(MAIN_SOURCES))
 MAIN_OBJECTS = $(MAIN_SOURCES:%.cpp=build/master/%.o)
 MAIN_LIBS = $(GLFW_LIBS) $(STD_LIBS) -lglad -limgui -lgtest $(EMBREE_LIBS) -lassimp -lz
 MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td
@@ -62,21 +63,33 @@ TEST_OBJECTS = $(TEST_SOURCES:%.cpp=build/master/%.o)
 TEST_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/unit_tests/$*.Td
 TEST_POST = mv -f build/master/unit_tests/$*.Td build/master/unit_tests/$*.d
 
-all: master
-
-master: build/master/master.bin
-
-build/master/master.bin: \
+LIB_DEPENDENCIES = \
 	build/glad/libglad.a \
 	build/glfw/src/libglfw3.a \
 	build/imgui/libimgui.a \
 	build/googletest/libgtest.a \
 	build/embree/libembree.a \
-	build/assimp/code/libassimp.a \
+	build/assimp/code/libassimp.a
+
+all: master unittest
+
+master: build/master/master.bin
+
+unittest: build/master/unittest.bin
+
+build/master/master.bin: \
+	$(LIB_DEPENDENCIES) \
+	Makefile \
+	$(MAIN_OBJECTS) \
+	build/master/main.o
+	$(CC) $(MAIN_OBJECTS) build/master/main.o $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/master.bin
+
+build/master/unittest.bin: \
+	$(LIB_DEPENDENCIES) \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	$(TEST_OBJECTS)
-	$(CC) $(MAIN_OBJECTS) $(TEST_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/master.bin
+	$(CC) $(MAIN_OBJECTS) $(TEST_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/unittest.bin
 
 build/master/%.o: %.cpp build/master/%.d build/master/sentinel
 	$(CC) -c $(MAIN_DEPENDENCY_FLAGS) $(CC_FLAGS) $< -o $@
@@ -165,7 +178,7 @@ run: all
 	./build/master/master.bin
 
 test: all
-	./build/master/master.bin --gtest_filter=KDTree3D.*
+	./build/master/unittest.bin --gtest_filter=KDTree3D.*
 
 clean:
 	rm -rf build/master	
