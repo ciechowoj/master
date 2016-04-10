@@ -1,0 +1,7 @@
+language:
+  - c
+  - cpp
+
+compiler: gcc
+
+script: "make test"
