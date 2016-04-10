@@ -2,7 +2,6 @@
 #include <glm>
 #include <vector>
 #include <algorithm>
-#include <iostream>
 
 namespace haste {
 
@@ -14,7 +13,7 @@ using std::make_pair;
 
 template <size_t N> class BitfieldVector {
 private:
-    static const size_t flags_per_item = (sizeof(size_t) * 8) / N;
+    static const size_t _flags_per_item = (sizeof(size_t) * 8) / N;
     static const size_t mask = ~(~size_t(0) >> N << N);
 public:
     BitfieldVector() { }
@@ -24,18 +23,18 @@ public:
     }
 
     void resize(size_t size) {
-        data.resize((size + flags_per_item - 1) / flags_per_item);
+        data.resize((size + _flags_per_item - 1) / _flags_per_item);
     }
 
     void set(size_t index, size_t value) {
-        size_t item = index / flags_per_item;
-        size_t shift = index % flags_per_item * N;
+        size_t item = index / _flags_per_item;
+        size_t shift = index % _flags_per_item * N;
         data[item] = (data[item] & ~(mask << shift)) | (value << shift);
     }
 
     size_t get(size_t index) const {
-        size_t item = index / flags_per_item;
-        size_t shift = index % flags_per_item * N;
+        size_t item = index / _flags_per_item;
+        size_t shift = index % _flags_per_item * N;
         return (data[item] >> shift) & mask;
     }
 
@@ -51,24 +50,31 @@ private:
 
 inline size_t max_axis(const pair<vec3, vec3>& aabb) {
     vec3 diff = abs(aabb.first - aabb.second);
-     
+
     if (diff.x < diff.y) {
         return diff.y < diff.z ? 2 : 1;
     }
     else {
-        return diff.x < diff.z ? 2 : 0; 
+        return diff.x < diff.z ? 2 : 0;
     }
 }
 
 template <class T> class KDTree3D {
-public:
-    KDTree3D() {
+private:
+    struct QueryKState {
+        T* heap;
+        size_t capacity;
+        size_t size;
+        float limit;
+        vec3 query;
+    };
 
-    }
+public:
+    KDTree3D() { }
 
     KDTree3D(vector<T>&& that) {
         _data = move(that);
-        flags.resize(_data.size());
+        _flags.resize(_data.size());
 
         if (!_data.empty()) {
             vec3 lower = position(_data[0]), upper = position(_data[0]);
@@ -101,10 +107,10 @@ public:
             };
 
             build(
-                0, 
-                _data.size(), 
-                make_pair(lower, upper), 
-                ranges, 
+                0,
+                _data.size(),
+                make_pair(lower, upper),
+                ranges,
                 unique.data(),
                 scratch.data());
 
@@ -114,7 +120,7 @@ public:
 
                 while (k != X[k]) {
                     swap(_data[j], _data[X[j]]);
-                    // flags.swap(j, X[j]);
+                    // _flags.swap(j, X[j]);
                     X[j] = j;
                     j = k;
                     k = X[k];
@@ -126,7 +132,18 @@ public:
     KDTree3D(const vector<T>& that)
         : KDTree3D(vector<T>(that)) { }
 
-    vector<T> query_k(size_t k) const;
+    size_t query_k(T* dst, const vec3& q, size_t k, float d) const {
+        QueryKState state;
+        state.heap = dst;
+        state.capacity = k;
+        state.size = 0;
+        state.limit = d * d;
+        state.query = q;
+
+        query_k(state, 0, _data.size());
+
+        return state.size;
+    }
 
     const T* data() const {
         return _data.data();
@@ -137,18 +154,18 @@ public:
     }
 
     size_t axis() const {
-        return flags.get(size() / 2);
+        return _flags.get(size() / 2);
     }
 
     KDTree3D copy_left() const {
         KDTree3D result;
         size_t median = size() / 2;
         result._data.resize(median);
-        result.flags.resize(median);
+        result._flags.resize(median);
 
         for (size_t i = 0; i < median; ++i) {
             result._data[i] = _data[i];
-            result.flags.set(i, flags.get(i));
+            result._flags.set(i, _flags.get(i));
         }
 
         return result;
@@ -159,11 +176,11 @@ public:
         size_t median = size() / 2;
         size_t rsize = size() - median - 1;
         result._data.resize(rsize);
-        result.flags.resize(rsize);
+        result._flags.resize(rsize);
 
         for (size_t i = 0; i < rsize; ++i) {
             result._data[i] = _data[i + median + 1];
-            result.flags.set(i, flags.get(i + median + 1));
+            result._flags.set(i, _flags.get(i + median + 1));
         }
 
         return result;
@@ -171,7 +188,61 @@ public:
 
 private:
     vector<T> _data;
-    BitfieldVector<2> flags;
+    BitfieldVector<2> _flags;
+
+    size_t query_k(
+        QueryKState& state,
+        size_t begin,
+        size_t end) const
+    {
+        if (end != begin) {
+            size_t median = begin + (end - begin) / 2;
+            size_t axis = _flags.get(median);
+            vec3 point = position(_data[median]);
+            float query_dist = distance2(point, state.query);
+
+            auto less = [&](const T& a, const T& b) -> bool {
+                return distance2(a, state.query) < distance2(b, state.query);
+            };
+
+            if (query_dist < state.limit) {
+                if (state.size < state.capacity) {
+                    state.heap[state.size] = _data[median];
+                    ++state.size;
+                    std::push_heap(state.heap, state.heap + state.size, less);
+
+                    if (state.size == state.capacity) {
+                        state.limit = min(state.limit, distance2(state.heap[0], state.query));
+                    }
+                }
+                else {
+                    std::pop_heap(state.heap, state.heap + state.size, less);
+                    state.heap[state.size - 1] = _data[median];
+                    std::push_heap(state.heap, state.heap + state.size, less);
+                    state.limit = min(state.limit, distance2(state.heap[0], state.query));
+                }
+            }
+
+            if (axis != 3) {
+                float split_dist = state.query[axis] - _data[median][axis];
+
+                if (split_dist < 0.0) {
+                    query_k(state, begin, median);
+
+                    if (split_dist * split_dist < state.limit) {
+                        query_k(state, median + 1, end);
+                    }
+                }
+                else {
+                    query_k(state, median + 1, end);
+
+                    if (split_dist * split_dist < state.limit) {
+                        query_k(state, begin, median);
+                    }
+                }
+            }
+        }
+    }
 
     static const size_t leaf = 3;
 
@@ -197,7 +268,7 @@ private:
         size_t median,
         size_t* subranges[3],
         size_t* unique,
-        size_t* scratch) 
+        size_t* scratch)
     {
         size_t median_index = subranges[axis][median];
 
@@ -223,8 +294,8 @@ private:
         }
 
         auto less = [&](size_t a, size_t b) -> bool {
-            return _data[a][axis] == _data[b][axis] 
-                ? unique[a] < unique[b] 
+            return _data[a][axis] == _data[b][axis]
+                ? unique[a] < unique[b]
                 : _data[a][axis] < _data[b][axis];
         };
 
@@ -270,7 +341,7 @@ private:
     }
 
     void build(
-        size_t begin, 
+        size_t begin,
         size_t end,
         const pair<vec3, vec3>& aabb,
         size_t* subranges[3],
@@ -284,7 +355,7 @@ private:
             size_t median = begin + size / 2;
 
             rearrange(axis, begin, end, median, subranges, unique, scratch);
-            flags.set(median, axis);
+            _flags.set(median, axis);
 
             pair<vec3, vec3> left_aabb = aabb, right_aabb = aabb;
             left_aabb.second[axis] = _data[median][axis];
@@ -294,7 +365,7 @@ private:
             build(median + 1, end, right_aabb, subranges, unique, scratch);
         }
         else if (size == 1) {
-            flags.set(begin, leaf);
+            _flags.set(begin, leaf);
         }
     }
 

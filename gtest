@@ -1,0 +1,32 @@
+#pragma once
+
+#include <gtest/gtest.h>
+#include <glm>
+#include <vector>
+
+namespace glm {
+
+void PrintTo(const glm::vec3& value, ::std::ostream* stream) {
+	*stream << "[" << value[0] << ", " << value[1] << ", " << value[2] << "]";
+}
+
+}
+
+namespace std {
+
+void PrintTo(const std::vector<glm::vec3>& value, ::std::ostream* stream) {
+	*stream << "[";
+
+	if (!value.empty()) {
+		*stream << ::testing::PrintToString(value[0]);
+
+		for (size_t i = 1; i < value.size(); ++i) {
+			*stream << ", " << ::testing::PrintToString(value[i]);
+		}
+	}
+
+	*stream << "]";
+}
+
+}
+

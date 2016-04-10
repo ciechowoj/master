@@ -43,9 +43,8 @@ int main(int argc, char **argv) {
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
     _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 
-    ::testing::InitGoogleTest(&argc, argv);
-
-    return RUN_ALL_TESTS();
+    // ::testing::InitGoogleTest(&argc, argv);
+    // return RUN_ALL_TESTS();
 
     return run(1000, 800, [](GLFWwindow* window) {
         RTCDevice device = rtcNewDevice(NULL);

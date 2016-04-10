@@ -165,7 +165,7 @@ run: all
 	./build/master/master.bin
 
 test: all
-	./build/master/master.bin --gtest_filter=KDTree3D*:BitfieldVector*
+	./build/master/master.bin --gtest_filter=KDTree3D.*
 
 clean:
 	rm -rf build/master	
