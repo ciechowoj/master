@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <scene.hpp>
+#include <Scene.hpp>
 #include <cmath>
 
 #if !defined GLM_FORCE_RADIANS

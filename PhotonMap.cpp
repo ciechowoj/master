@@ -1,5 +1,5 @@
 #include <PhotonMap.hpp>
-#include <scene.hpp>
+#include <Scene.hpp>
 
 namespace haste {
 

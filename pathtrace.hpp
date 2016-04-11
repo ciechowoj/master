@@ -1,5 +1,5 @@
 #pragma once
-#include <scene.hpp>
+#include <Scene.hpp>
 #include <camera.hpp>
 
 namespace haste {

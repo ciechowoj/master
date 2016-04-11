@@ -1,6 +1,6 @@
 #include <runtime_assert>
 #include <Materials.hpp>
-#include <scene.hpp>
+#include <Scene.hpp>
 
 namespace haste {
 
@@ -19,8 +19,8 @@ bool Materials::scatter(
         float diffuseAvgInv = 1.0f / diffuseAvg;
         photon.power = photon.power * diffuse * diffuseAvgInv;
         photon.direction = point.toWorldM * cosineSampler.sample();
-        
-        return true;   
+
+        return true;
     }
     else {
         return false;
