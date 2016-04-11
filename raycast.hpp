@@ -1,6 +1,6 @@
 #pragma once
 #include <Scene.hpp>
-#include <camera.hpp>
+#include <Camera.hpp>
 
 namespace haste {
 

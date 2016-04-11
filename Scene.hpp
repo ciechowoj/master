@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <vector>
 
 #include <embree2/rtcore.h>
@@ -12,6 +13,8 @@
 namespace haste {
 
 using namespace glm;
+
+template <class T> using shared = std::shared_ptr<T>;
 
 using std::vector;
 using std::string;

@@ -1,11 +1,8 @@
 #pragma once
-#include <memory>
-#include <camera.hpp>
+#include <Camera.hpp>
 #include <Scene.hpp>
 
 namespace haste {
-
-template <class T> using shared = std::shared_ptr<T>;
 
 class PhotonMapping {
 public:
