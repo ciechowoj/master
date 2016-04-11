@@ -8,7 +8,7 @@ vec3 sampleLight(
     const vec3& normal,
     const vec3& reflected,
     const mat3& worldToLight,
-    const BSDF& bsdf) 
+    const BSDF& bsdf)
 {
     auto light = scene.lights.sample(position);
 
@@ -19,7 +19,7 @@ vec3 sampleLight(
         float sqDistanceInv = 1.f / (distance * distance);
 
         vec3 throughput = bsdf.eval(
-            worldToLight * incident, 
+            worldToLight * incident,
             worldToLight * reflected);
 
         float visible = scene.occluded(position, light.position);
@@ -31,7 +31,6 @@ vec3 sampleLight(
         return vec3(0.0f);
     }
 }
-
 
 vec3 pathtrace(
     Ray ray,
@@ -86,7 +85,7 @@ vec3 pathtrace(
         ray.origin = isect.position;
 
         float prob = min(0.5f, length(throughput));
-        
+
         if (prob < scene.sampler.sample()) {
             break;
         }
@@ -97,34 +96,6 @@ vec3 pathtrace(
         ++bounce;
     }
 
-
-    /*if (intersect.hit()) {
-        if (scene.isMesh(intersect)) {
-            auto light = scene.sampleLight();
-
-            auto& material = scene.material(intersect);
-
-            vec3 normal = scene.lerpNormal(intersect);
-            vec3 tangent = vec3(1, 0, 0); // dummy
-
-            vec3 incident = light.position - intersect.position;
-            float distanceInv = 1.f / length(incident);
-            incident *= distanceInv;
-            vec3 reflected = -ray.direction;
-
-            float V = scene.occluded(intersect.position, light.position);
-            float G = max(0.f, dot(-incident, light.normal)) * max(0.f, dot(incident, normal)) * distanceInv;
-
-            vec3 f = material.brdf(normal, tangent, incident, reflected);
-
-            return f * light.power * V * G;
-        }
-        else {
-            vec3 normal = scene.areaLights.lerpNormal(intersect);
-            return scene.lightExitance(intersect) * dot(normal, -ray.direction);
-        }
-    }*/
-    
     return accum;
 }
 
