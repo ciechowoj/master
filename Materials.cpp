@@ -5,7 +5,7 @@
 namespace haste {
 
 bool Materials::scatter(
-    LightPhoton& photon,
+    Photon& photon,
     const SurfacePoint& point) const
 {
     const float inv3 = 1.0f / 3.0f;

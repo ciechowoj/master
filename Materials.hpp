@@ -4,9 +4,9 @@
 #include <BSDF.hpp>
 
 namespace haste {
-    
+
 struct SurfacePoint;
-struct LightPhoton;
+struct Photon;
 
 class Materials {
 public:
@@ -16,7 +16,7 @@ public:
     vector<BSDF> bsdfs;
 
     bool scatter(
-        LightPhoton& photon, 
+        Photon& photon,
         const SurfacePoint& point) const;
 
 private:

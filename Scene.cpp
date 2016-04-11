@@ -5,37 +5,37 @@
 
 namespace haste {
 
-size_t AreaLights::numLights() const {
+size_t Lights::numLights() const {
     return names.size();
 }
 
-size_t AreaLights::numFaces() const {
+size_t Lights::numFaces() const {
     return indices.size() / 3;
 }
 
-float AreaLights::faceArea(size_t face) const {
+float Lights::faceArea(size_t face) const {
     vec3 u = vertices[indices[face * 3 + 1]] - vertices[indices[face * 3 + 0]];
     vec3 v = vertices[indices[face * 3 + 2]] - vertices[indices[face * 3 + 0]];
     return length(cross(u, v)) * 0.5f;
 }
 
-float AreaLights::facePower(size_t face) const {
+float Lights::facePower(size_t face) const {
     return length(exitances[face]) * faceArea(face) * pi<float>();
 }
 
-vec3 AreaLights::lerpPosition(size_t face, vec3 uvw) const {
+vec3 Lights::lerpPosition(size_t face, vec3 uvw) const {
     return vertices[indices[face * 3 + 0]] * uvw.z
         + vertices[indices[face * 3 + 1]] * uvw.x
         + vertices[indices[face * 3 + 2]] * uvw.y;
 }
 
-vec3 AreaLights::lerpNormal(size_t face, vec3 uvw) const {
+vec3 Lights::lerpNormal(size_t face, vec3 uvw) const {
     return toWorldMs[indices[face * 3 + 0]][1] * uvw.z
         + toWorldMs[indices[face * 3 + 1]][1] * uvw.x
         + toWorldMs[indices[face * 3 + 2]][1] * uvw.y;
 }
 
-vec3 AreaLights::lerpNormal(const RayIsect& hit) const {
+vec3 Lights::lerpNormal(const RayIsect& hit) const {
     float w = 1.0f - hit.u - hit.v;
 
     return toWorldMs[indices[hit.primID * 3 + 0]][1] * w
@@ -43,14 +43,14 @@ vec3 AreaLights::lerpNormal(const RayIsect& hit) const {
         + toWorldMs[indices[hit.primID * 3 + 2]][1] * hit.v;
 }
 
-vec3 AreaLights::eval(const RayIsect& isect) const {
+vec3 Lights::eval(const RayIsect& isect) const {
     return exitances[isect.primID];
 }
 
 Scene::Scene(
     Materials&& materials,
     vector<Mesh>&& meshes,
-    AreaLights&& areaLights)
+    Lights&& areaLights)
     : materials(move(materials))
     , meshes(move(meshes))
     , lights(move(areaLights))
@@ -88,7 +88,7 @@ unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
     return geomID;
 }
 
-unsigned makeRTCMesh(RTCScene rtcScene, const AreaLights& lights) {
+unsigned makeRTCMesh(RTCScene rtcScene, const Lights& lights) {
     unsigned geomID = rtcNewTriangleMesh(
         rtcScene,
         RTC_GEOMETRY_STATIC,

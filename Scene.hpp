@@ -49,10 +49,11 @@ public:
     Scene(
         Materials&& materials,
         vector<Mesh>&& meshes,
-        AreaLights&& areaLights);
+        Lights&& areaLights);
 
     const vector<Mesh> meshes;
-    const AreaLights lights;
+    const Lights lights;
+    const PhotonMap photons;
     const Materials materials;
 
     void buildAccelStructs(RTCDevice device);
@@ -64,7 +65,7 @@ public:
     vec3 lightExitance(const RayIsect& hit) const;
     vec3 lerpNormal(const RayIsect& hit) const;
 
-    SurfacePoint querySurface(const RayIsect& isect) const; 
+    SurfacePoint querySurface(const RayIsect& isect) const;
 
     RayIsect intersect(const vec3& origin, const vec3& direction) const;
     float occluded(const vec3& origin, const vec3& target) const;

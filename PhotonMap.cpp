@@ -3,15 +3,18 @@
 
 namespace haste {
 
-vector<LightPhoton> scatter(const Scene& scene, size_t number) {
-    vector<LightPhoton> photons;
+PhotonMap::PhotonMap() {
+}
+
+PhotonMap::PhotonMap(const Scene& scene, size_t numPhotons) {
+    vector<Photon> photons;
 
     float totalPower = scene.lights.queryTotalPower();
-    float numberInv = 1.0f / float(number);
-    float scaleFactor = totalPower * numberInv;
+    float numPhotonsInv = 1.0f / float(numPhotons);
+    float scaleFactor = totalPower * numPhotonsInv;
 
-    for (size_t i = 0; i < number; ++i) {
-        LightPhoton photon = scene.lights.emit();
+    for (size_t i = 0; i < numPhotons; ++i) {
+        Photon photon = scene.lights.emit();
         photon.power *= scaleFactor;
 
         for (size_t i = 0; ; ++i) {
@@ -36,7 +39,7 @@ vector<LightPhoton> scatter(const Scene& scene, size_t number) {
         }
     }
 
-    return photons;
+    _photons = KDTree3D<Photon>(photons);
 }
 
 }

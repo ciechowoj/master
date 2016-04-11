@@ -22,12 +22,12 @@ namespace haste {
 // v1 ************************************** v2
 //
 
-float AreaLights::queryTotalPower() const {
+float Lights::queryTotalPower() const {
     vec3 power = queryTotalPower3();
     return power.x + power.y + power.z;
 }
 
-vec3 AreaLights::queryTotalPower3() const {
+vec3 Lights::queryTotalPower3() const {
     runtime_assert(indices.size() % 3 == 0);
 
     vec3 result(0.0f);
@@ -41,27 +41,27 @@ vec3 AreaLights::queryTotalPower3() const {
     return result;
 }
 
-float AreaLights::queryAreaLightPower(size_t id) const {
+float Lights::queryAreaLightPower(size_t id) const {
     vec3 power = queryAreaLightPower3(id);
     return power.x + power.y + power.z;
 }
 
-vec3 AreaLights::queryAreaLightPower3(size_t id) const {
+vec3 Lights::queryAreaLightPower3(size_t id) const {
     return exitances[id] * queryAreaLightArea(id);
 }
 
-float AreaLights::queryAreaLightArea(size_t id) const {
+float Lights::queryAreaLightArea(size_t id) const {
     vec3 u = vertices[indices[id * 3 + 1]] - vertices[indices[id * 3 + 0]];
     vec3 v = vertices[indices[id * 3 + 2]] - vertices[indices[id * 3 + 0]];
     return length(cross(u, v)) * 0.5f;
 }
 
-size_t AreaLights::sampleLight() const {
+size_t Lights::sampleLight() const {
     auto sample = lightSampler.sample();
     return min(size_t(sample * numFaces()), numFaces() - 1);
 }
 
-LightPoint AreaLights::sampleSurface(size_t id) const {
+LightPoint Lights::sampleSurface(size_t id) const {
     LightPoint result;
 
     vec3 uvw = faceSampler.sample();
@@ -79,12 +79,12 @@ LightPoint AreaLights::sampleSurface(size_t id) const {
     return result;
 }
 
-LightPhoton AreaLights::emit() const {
+Photon Lights::emit() const {
     size_t id = sampleLight();
 
     LightPoint point = sampleSurface(id);
 
-    LightPhoton result;
+    Photon result;
     result.position = point.position;
     result.direction = point.toWorldM * cosineSampler.sample();
     result.power = queryAreaLightPower3(id);
@@ -94,7 +94,7 @@ LightPhoton AreaLights::emit() const {
     return result;
 }
 
-LightSample AreaLights::sample(const vec3& position) const {
+LightSample Lights::sample(const vec3& position) const {
     // below computations are probably incorrect (to be fixed)
 
     size_t face = sampleLight();
@@ -111,7 +111,7 @@ LightSample AreaLights::sample(const vec3& position) const {
     return sample;
 }
 
-void AreaLights::buildLightStructs() const {
+void Lights::buildLightStructs() const {
     size_t numFaces = this->numFaces();
     lightWeights.resize(numFaces);
 
@@ -135,7 +135,7 @@ void AreaLights::buildLightStructs() const {
 void renderPhotons(
     vector<vec4>& image,
     size_t width,
-    const vector<LightPhoton>& photons,
+    const vector<Photon>& photons,
     const mat4& proj)
 {
     size_t height = image.size() / width;

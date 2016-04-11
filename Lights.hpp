@@ -1,6 +1,6 @@
 #pragma once
-#include <glm>
 #include <utility.hpp>
+#include <PhotonMap.hpp>
 
 namespace haste {
 
@@ -17,18 +17,12 @@ struct LightSample {
     vec3 position;
 };
 
-struct LightPhoton {
-	vec3 position;
-	vec3 direction;
-	vec3 power;
-};
-
 struct LightPoint {
     vec3 position;
     mat3 toWorldM;
 };
 
-class AreaLights {
+class Lights {
 public:
     vector<string> names;
     vector<size_t> offsets;
@@ -54,7 +48,7 @@ public:
     LightPoint sampleSurface(size_t id) const;
     mat3 queryTransform(size_t id) const;
 
-    LightPhoton emit() const;
+    Photon emit() const;
 
     LightSample sample(const vec3& position) const;
     vec3 eval(const RayIsect& isect) const;
@@ -73,7 +67,7 @@ public:
 void renderPhotons(
     vector<vec4>& image,
     size_t width,
-    const vector<LightPhoton>& photons,
+    const vector<Photon>& photons,
     const mat4& proj);
 
 }

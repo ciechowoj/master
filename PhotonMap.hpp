@@ -1,22 +1,35 @@
 #pragma once
-#include <glm>
-#include <vector>
-#include <Lights.hpp>
+#include <KDTree3D.hpp>
 
 namespace haste {
 
-using std::vector;
-
 class Scene;
 
-vector<LightPhoton> scatter(const Scene& scene, size_t number);
+struct Photon {
+    vec3 position;
+    vec3 direction;
+    vec3 power;
+
+    float operator[](size_t index) const {
+    	return position[index];
+    }
+
+    float& operator[](size_t index) {
+    	return position[index];
+    }
+};
 
 class PhotonMap {
 public:
     PhotonMap();
-    PhotonMap(vector<LightPhoton>&& photons);
+    PhotonMap(const Scene& scene, size_t numPhotons);
+
+    vec3 estimateRadiance(
+    	const vec3& point,
+    	const vec3& normal,
+    	const vec3& outgoing) const;
 private:
-    vector<LightPhoton> photons;
+    KDTree3D<Photon> _photons;
 };
 
 }

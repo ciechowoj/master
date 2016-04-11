@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
         Camera camera;
         GUI gui(scenePath);
 
-        vector<LightPhoton> photons = scatter(scene, 50000);
+        PhotonMap photons = PhotonMap(scene, 50000);
 
         loop(window, [&](int width, int height) {
             // image.clear();
