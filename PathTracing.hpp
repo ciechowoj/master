@@ -31,7 +31,8 @@ private:
 	shared<const Scene> _scene;
 	vector<vec4> _image;
 
-	
+	size_t _numRays = 0;
+	double _renderTime = 0.0;
 
 	PathTracing(const PathTracing&) = delete;
 	PathTracing& operator=(const PathTracing&) = delete;

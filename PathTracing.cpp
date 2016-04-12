@@ -1,3 +1,4 @@
+#include <GLFW/glfw3.h>
 #include <PathTracing.hpp>
 
 namespace haste {
@@ -134,9 +135,15 @@ void PathTracing::hardReset() {
 }
 
 void PathTracing::updateInteractive(double timeQuantum) {
+	double startTime = glfwGetTime();
+	size_t startRays = _scene->numRays();
+
 	renderInteractive(_image, _width, *_camera, [&](Ray ray) -> vec3 {
         return pathtrace(ray, *_scene);
     });
+
+	_renderTime += glfwGetTime() - startTime;
+	_numRays += _scene->numRays() - startRays;
 }
 
 string PathTracing::stageName() const {
@@ -148,11 +155,11 @@ double PathTracing::stageProgress() const {
 }
 
 size_t PathTracing::numRays() const {
-	return 0;
+	return _numRays;
 }
 
 double PathTracing::renderTime() const {
-	return 0.0;
+	return _renderTime;
 }
 
 double PathTracing::raysPerSecond() const {
