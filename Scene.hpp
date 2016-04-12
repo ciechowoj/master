@@ -9,7 +9,6 @@
 #include <BSDF.hpp>
 #include <Lights.hpp>
 #include <Materials.hpp>
-#include <PhotonMap.hpp>
 
 namespace haste {
 
@@ -59,7 +58,6 @@ public:
 
     const vector<Mesh> meshes;
     const Lights lights;
-    const PhotonMap photons;
     const Materials materials;
 
     void buildAccelStructs(RTCDevice device);

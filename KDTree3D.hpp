@@ -202,7 +202,7 @@ private:
             float query_dist = distance2(point, state.query);
 
             auto less = [&](const T& a, const T& b) -> bool {
-                return distance2(a, state.query) < distance2(b, state.query);
+                return distance2(position(a), state.query) < distance2(position(b), state.query);
             };
 
             if (query_dist < state.limit) {
@@ -212,14 +212,18 @@ private:
                     std::push_heap(state.heap, state.heap + state.size, less);
 
                     if (state.size == state.capacity) {
-                        state.limit = min(state.limit, distance2(state.heap[0], state.query));
+                        state.limit = min(
+                            state.limit,
+                            distance2(position(state.heap[0]), state.query));
                     }
                 }
                 else {
                     std::pop_heap(state.heap, state.heap + state.size, less);
                     state.heap[state.size - 1] = _data[median];
                     std::push_heap(state.heap, state.heap + state.size, less);
-                    state.limit = min(state.limit, distance2(state.heap[0], state.query));
+                    state.limit = min(
+                        state.limit,
+                        distance2(position(state.heap[0]), state.query));
                 }
             }
 

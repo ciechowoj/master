@@ -1,6 +1,5 @@
 #pragma once
 #include <utility.hpp>
-#include <PhotonMap.hpp>
 
 namespace haste {
 
@@ -10,6 +9,20 @@ using namespace glm;
 
 class Scene;
 struct RayIsect;
+
+struct Photon {
+    vec3 position;
+    vec3 direction;
+    vec3 power;
+
+    float operator[](size_t index) const {
+        return position[index];
+    }
+
+    float& operator[](size_t index) {
+        return position[index];
+    }
+};
 
 struct LightSample {
     vec3 radiance;
