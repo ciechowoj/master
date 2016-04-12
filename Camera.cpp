@@ -144,7 +144,7 @@ int findLastBlock(
     }
 }
 
-size_t renderInteractive(
+double renderInteractive(
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,
@@ -164,9 +164,9 @@ size_t renderInteractive(
 
     int itr = findLastBlock(imageData, pitch, block);
 
-    tbb::atomic<size_t> numRays(0);
+    tbb::atomic<size_t> numBlocksRendered(0);
 
-    auto localRender = [=, &imageData, &numRays](int index) {
+    auto localRender = [=, &imageData, &numBlocksRendered](int index) {
         ImageDesc imageDesc;
         imageDesc.x = index % cols * block;
         imageDesc.y = index / cols * block;
@@ -174,7 +174,9 @@ size_t renderInteractive(
         imageDesc.h = block;
         imageDesc.pitch = pitch;
 
-        numRays += render(imageData, imageDesc, camera, trace);
+        ++numBlocksRendered;
+
+        render(imageData, imageDesc, camera, trace);
     };
 
     while (glfwGetTime() < start + budget) {
@@ -191,7 +193,7 @@ size_t renderInteractive(
         itr = (itr + tasks + 1) % numBlocks;
     }
 
-    return numRays;
+    return double((itr + numBlocksRendered) % numBlocks) / numBlocks;
 }
 
 size_t renderGammaBoard(

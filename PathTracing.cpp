@@ -1,3 +1,4 @@
+#include <sstream>
 #include <GLFW/glfw3.h>
 #include <PathTracing.hpp>
 
@@ -106,7 +107,7 @@ void PathTracing::updateInteractive(double timeQuantum) {
     double startTime = glfwGetTime();
     size_t startRays = _scene->numRays();
 
-    renderInteractive(_image, _width, *_camera, [&](Ray ray) -> vec3 {
+    _progress = renderInteractive(_image, _width, *_camera, [&](Ray ray) -> vec3 {
         return pathtrace(ray, *_scene);
     });
 
@@ -115,7 +116,13 @@ void PathTracing::updateInteractive(double timeQuantum) {
 }
 
 string PathTracing::stageName() const {
-    return "Tracing paths";
+    std::stringstream stream;
+    stream << "Tracing paths (" << numSamples() << " samples)";
+    return stream.str();
+}
+
+double PathTracing::stageProgress() const {
+    return _progress;
 }
 
 }

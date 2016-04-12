@@ -29,11 +29,10 @@ void Technique::setScene(const shared<const Scene>& scene) {
 
 void Technique::softReset() {
     if (_image.size() != _width * _height) {
-        _image.resize(_width * _height, vec4(0));
+        _image.resize(_width * _height);
     }
-    else {
-        std::fill_n(_image.data(), _image.size(), vec4(0));
-    }
+
+    std::fill_n(_image.data(), _image.size(), vec4(0));
 }
 
 void Technique::hardReset() {
@@ -41,7 +40,7 @@ void Technique::hardReset() {
 }
 
 double Technique::stageProgress() const {
-    return _image.empty() ? 1 : atan(numSamples() / 100.0);
+    return _image.empty() ? 1 : atan(numSamples() / 100.0) * two_over_pi<double>();
 }
 
 size_t Technique::numRays() const {
@@ -57,7 +56,7 @@ double Technique::raysPerSecond() const {
 }
 
 size_t Technique::numSamples() const {
-    return size_t(_image[0].w);
+    return _image.empty() ? 0 : size_t(_image[0].w);
 }
 
 const vector<vec4>& Technique::image() const {

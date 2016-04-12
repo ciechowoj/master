@@ -27,8 +27,8 @@ public:
     const vector<vec4>& image() const;
 
 protected:
-    size_t _width;
-    size_t _height;
+    size_t _width = 0;
+    size_t _height = 0;
     shared<const Camera> _camera;
     shared<const Scene> _scene;
     vector<vec4> _image;

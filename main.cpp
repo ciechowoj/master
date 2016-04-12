@@ -28,14 +28,20 @@ struct GUI {
     string scenePath;
     string defpath = homePath() + "/";
 
+    double timePerFrame = 0.0;
+    double raysPerSecond = 0.0;
+
     float time = 0.0f;
 
     mat4 view;
     float fovy = pi<float>() / 3.0f;
 
     GUI(string scenePath);
+
+    void updateCamera();
+
     void update(
-        const vector<vec4>& image,
+        const Technique& technique,
         size_t width,
         float elapsed);
 };
@@ -68,7 +74,7 @@ int main(int argc, char **argv) {
             draw_fullscreen_quad(window, technique.image());
 
             gui.update(
-                technique.image(),
+                technique,
                 width,
                 float(glfwGetTime() - start));
 
@@ -106,22 +112,24 @@ string fixedPath(string base, string scene, int samples) {
     return result.str();
 }
 
+pair<float, string> formatRaysPerSecond(double numRays) {
+    if (numRays > 1000000) {
+        return make_pair(float(numRays / 1000000), "Mrays/s");
+    }
+    else if (numRays > 1000) {
+        return make_pair(float(numRays / 1000), "Krays/s");
+    }
+    else {
+        return make_pair(float(numRays), "rays/s");
+    }
+}
+
 GUI::GUI(string scenePath)
     : scenePath(scenePath) {
     strcpy(path, defpath.c_str());
 }
 
-void GUI::update(
-    const vector<vec4>& image,
-    size_t width,
-    float elapsed)
-{
-    // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-    // ImGui::ShowTestWindow(&show_test_window);
-
-    tpp = 0.99 * tpp + 0.01 * (elapsed / image.size()) * 1000.0;
-    tpf = tpp * image.size();
-
+void GUI::updateCamera() {
     ImGui::Begin("Camera");
     vec3 t = vec3(1, 2, 3);
     ImGui::SliderFloat("yaw", &yaw, -glm::pi<float>(), glm::pi<float>());
@@ -134,34 +142,66 @@ void GUI::update(
     ImGui::End();
 
     view = translate(position) * eulerAngleXY(pitch, yaw);
+}
+
+void GUI::update(
+    const Technique& technique,
+    size_t width,
+    float elapsed)
+{
+    // bool show_test_window = true;
+    // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+    // ImGui::ShowTestWindow(&show_test_window);
+
+    tpp = 0.99 * tpp + 0.01 * (elapsed / technique.image().size()) * 1000.0;
+    tpf = tpp * technique.image().size();
+
+    updateCamera();
 
     ImGui::Begin("Statistics");
-    float ftpp = float(tpp);
-    float ftpf = float(tpf);
-    ImGui::InputFloat("tpp [ms]", &ftpp);
-    ImGui::InputFloat("tpf [ms]", &ftpf);
 
-    float numSamples = image.empty() ? 0.f : image[0].w;
-    ImGui::InputFloat("samples ", &numSamples);
+    ImGui::ProgressBar(technique.stageProgress(), ImVec2(-1,0), technique.stageName().c_str());
+
+    if (timePerFrame == 0.0) {
+        timePerFrame = elapsed;
+    }
+    else {
+        timePerFrame = 0.95 * timePerFrame + 0.05 * elapsed * 1000.0;
+    }
+
+    float localTimePerFrame = float(timePerFrame);
+    ImGui::InputFloat("ms/frame", &localTimePerFrame);
+
+    auto localRaysPerSecond = formatRaysPerSecond(technique.raysPerSecond());
+    ImGui::InputFloat(
+        localRaysPerSecond.second.c_str(),
+        &localRaysPerSecond.first);
+
+    float localRenderTime = float(technique.renderTime());
+    ImGui::InputFloat("render time [s]", &localRenderTime);
+
     float mainElapsed = float(glfwGetTime() - mainStart);
-    ImGui::InputFloat("elapsed [s] ", &mainElapsed);
+    ImGui::InputFloat("real time [s] ", &mainElapsed);
+
+    float numSamples = technique.numSamples();
+    ImGui::InputFloat("samples ", &numSamples);
     ImGui::Separator();
 
     ImGui::InputText("", path, int(pathSize - 1));
     ImGui::SameLine();
 
     if (ImGui::Button("Save EXR")) {
-        saveEXR(path, image, width);
+        saveEXR(path, technique.image(), width);
     }
 
-    string fixed = fixedPath(path, scenePath, size_t(image.empty() ? 0.f : image[0].w));
+    string fixed = fixedPath(path, scenePath, technique.numSamples());
     ImGui::LabelText("", "%s", fixed.c_str());
     ImGui::SameLine();
 
     ImGui::PushID("save-exr");
 
     if (ImGui::Button("Save EXR")) {
-        saveEXR(fixed, image, width);
+        saveEXR(fixed, technique.image(), width);
     }
 
     ImGui::PopID();

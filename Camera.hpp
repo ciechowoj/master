@@ -38,7 +38,7 @@ size_t render(
     const Camera& camera,
     const function<vec3(Ray ray)>& trace);
 
-size_t renderInteractive(
+double renderInteractive(
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,
