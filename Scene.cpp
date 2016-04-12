@@ -56,6 +56,9 @@ Scene::Scene(
     , lights(move(areaLights))
 {
     rtcScene = nullptr;
+
+    _numIntersectRays = 0;
+    _numOccludedRays = 0;
 }
 
 unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
@@ -223,6 +226,8 @@ RayIsect Scene::intersect(const vec3& origin, const vec3& direction) const {
 
     rtcRay.position = origin + direction * rtcRay.tfar;
 
+    ++_numIntersectRays;
+
     return rtcRay;
 }
 
@@ -238,7 +243,22 @@ float Scene::occluded(const vec3& origin, const vec3& target) const {
     rtcRay.mask = 0xFFFFFFFF;
     rtcRay.time = 0.f;
     rtcOccluded(rtcScene, rtcRay);
+
+    ++_numOccludedRays;
+
     return rtcRay.geomID == 0 ? 0.f : 1.f;
+}
+
+size_t Scene::numIntersectRays() const {
+    return _numIntersectRays;
+}
+
+size_t Scene::numOccludedRays() const {
+    return _numOccludedRays;
+}
+
+size_t Scene::numRays() const {
+    return _numIntersectRays + _numOccludedRays;
 }
 
 }

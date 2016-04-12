@@ -49,13 +49,13 @@ int main(int argc, char **argv) {
 
         auto scenePath = "models/cornell-box/CornellBox-Original.obj";
         auto scene = haste::loadScene(scenePath);
-        scene.buildAccelStructs(device);
+        scene->buildAccelStructs(device);
 
         std::vector<vec4> image;
         Camera camera;
         GUI gui(scenePath);
 
-        PhotonMap photons = PhotonMap(scene, 50000);
+        PhotonMap photons = PhotonMap(*scene, 50000);
 
         loop(window, [&](int width, int height) {
             // image.clear();
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
             size_t num_pixels = 1;
 
             double start = glfwGetTime();
-            num_pixels = pathtraceInteractive(image, width, camera, scene);
+            num_pixels = pathtraceInteractive(image, width, camera, *scene);
 
             /*renderPhotons(
                 image,

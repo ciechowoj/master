@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <atomic>
 
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
@@ -15,6 +16,8 @@ namespace haste {
 using namespace glm;
 
 template <class T> using shared = std::shared_ptr<T>;
+using std::make_shared;
+
 
 using std::vector;
 using std::string;
@@ -73,8 +76,15 @@ public:
     RayIsect intersect(const vec3& origin, const vec3& direction) const;
     float occluded(const vec3& origin, const vec3& target) const;
 
+    size_t numIntersectRays() const;
+    size_t numOccludedRays() const;
+    size_t numRays() const;
+
     mutable UniformSampler sampler;
 private:
+    mutable std::atomic<size_t> _numIntersectRays;
+    mutable std::atomic<size_t> _numOccludedRays;
+
     mutable RTCScene rtcScene;
 };
 

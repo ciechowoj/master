@@ -3,6 +3,6 @@
 
 namespace haste {
 
-Scene loadScene(string path);
+shared<Scene> loadScene(string path);
 
 }

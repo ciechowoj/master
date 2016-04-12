@@ -245,7 +245,7 @@ void appendLights(
     }
 }
 
-Scene loadScene(string path) {
+shared<Scene> loadScene(string path) {
     Assimp::Importer importer;
 
     auto flags =
@@ -289,7 +289,7 @@ Scene loadScene(string path) {
         materials.bsdfs.push_back(BSDF::lambert(materials.diffuses.back()));
     }
 
-    Scene result = Scene(
+    shared<Scene> result = make_shared<Scene>(
         move(materials),
         move(meshes),
         move(areaLights));

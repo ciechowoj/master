@@ -59,7 +59,7 @@ double PhotonMapping::stageProgress() const {
         case _Scatter: return double(_scattered.size()) / _numPhotons;
         case _Build: return 0.0;
         case _BuildDone: return 1.0;
-        case _Gather: _image.empty() ? 1 : atan(_image[0].w / 100.0);
+        case _Gather: return _image.empty() ? 1 : atan(_image[0].w / 100.0);
     }
 }
 

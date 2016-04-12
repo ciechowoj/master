@@ -23,6 +23,7 @@ public:
     double raysPerSecond() const;
 
     const vector<vec4>& image() const;
+
 private:
     enum _Stage {
         _Scatter,
