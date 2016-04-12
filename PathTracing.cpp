@@ -102,73 +102,20 @@ vec3 pathtrace(
 
 PathTracing::PathTracing() { }
 
-void PathTracing::setImageSize(size_t width, size_t height) {
-	if (_width != width || _height != height) {
-		_width = width;
-		_height = height;
-		softReset();
-	}
-}
-
-void PathTracing::setCamera(const shared<const Camera>& camera) {
-	_camera = camera;
-
-	softReset();
-}
-
-void PathTracing::setScene(const shared<const Scene>& scene) {
-	_scene = scene;
-
-	softReset();
-}
-
-void PathTracing::softReset() {
-	if (_image.size() != _width * _height) {
-		_image.resize(_width * _height, vec4(0));
-	}
-	else {
-		std::fill_n(_image.data(), _image.size(), vec4(0));
-	}
-}
-
-void PathTracing::hardReset() {
-	softReset();
-}
-
 void PathTracing::updateInteractive(double timeQuantum) {
-	double startTime = glfwGetTime();
-	size_t startRays = _scene->numRays();
+    double startTime = glfwGetTime();
+    size_t startRays = _scene->numRays();
 
-	renderInteractive(_image, _width, *_camera, [&](Ray ray) -> vec3 {
+    renderInteractive(_image, _width, *_camera, [&](Ray ray) -> vec3 {
         return pathtrace(ray, *_scene);
     });
 
-	_renderTime += glfwGetTime() - startTime;
-	_numRays += _scene->numRays() - startRays;
+    _renderTime += glfwGetTime() - startTime;
+    _numRays += _scene->numRays() - startRays;
 }
 
 string PathTracing::stageName() const {
-	return "Tracing paths";
-}
-
-double PathTracing::stageProgress() const {
-	return _image.empty() ? 1 : atan(_image[0].w / 100.0);
-}
-
-size_t PathTracing::numRays() const {
-	return _numRays;
-}
-
-double PathTracing::renderTime() const {
-	return _renderTime;
-}
-
-double PathTracing::raysPerSecond() const {
-	return numRays() / renderTime();
-}
-
-const vector<vec4>& PathTracing::image() const {
-	return _image;
+    return "Tracing paths";
 }
 
 }
