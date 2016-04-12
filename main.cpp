@@ -7,9 +7,10 @@
 #include <xmmintrin.h>
 #include <pmmintrin.h>
 #include <loader.hpp>
-#include <pathtrace.hpp>
 #include <raycast.hpp>
 #include <runtime_assert>
+
+#include <PathTracing.hpp>
 
 using namespace std;
 using namespace haste;
@@ -49,40 +50,32 @@ int main(int argc, char **argv) {
 
         auto scenePath = "models/cornell-box/CornellBox-Original.obj";
         auto scene = haste::loadScene(scenePath);
+        auto camera = make_shared<Camera>();
         scene->buildAccelStructs(device);
 
-        std::vector<vec4> image;
-        Camera camera;
         GUI gui(scenePath);
 
-        PhotonMap photons = PhotonMap(*scene, 50000);
+        PathTracing technique;
+        technique.setScene(scene);
+        technique.setCamera(camera);
 
         loop(window, [&](int width, int height) {
-            // image.clear();
-            image.resize(width * height);
-            size_t num_pixels = 1;
+            technique.setImageSize(width, height);
 
             double start = glfwGetTime();
-            num_pixels = pathtraceInteractive(image, width, camera, *scene);
+            technique.updateInteractive(0.33);
 
-            /*renderPhotons(
-                image,
-                width,
-                photons,
-                camera.proj(width, height) * inverse(camera.view));*/
-
-            draw_fullscreen_quad(window, image);
+            draw_fullscreen_quad(window, technique.image());
 
             gui.update(
-                image,
+                technique.image(),
                 width,
                 float(glfwGetTime() - start));
 
-            if (gui.view != camera.view || gui.fovy != camera.fovy) {
-                image.clear();
-                image.resize(width * height);
-                camera.view = gui.view;
-                camera.fovy = gui.fovy;
+            if (gui.view != camera->view || gui.fovy != camera->fovy) {
+                camera->view = gui.view;
+                camera->fovy = gui.fovy;
+                technique.softReset();
             }
         });
 
@@ -148,7 +141,7 @@ void GUI::update(
     ImGui::InputFloat("tpp [ms]", &ftpp);
     ImGui::InputFloat("tpf [ms]", &ftpf);
 
-    float numSamples = image[0].w;
+    float numSamples = image.empty() ? 0.f : image[0].w;
     ImGui::InputFloat("samples ", &numSamples);
     float mainElapsed = float(glfwGetTime() - mainStart);
     ImGui::InputFloat("elapsed [s] ", &mainElapsed);
@@ -161,7 +154,7 @@ void GUI::update(
         saveEXR(path, image, width);
     }
 
-    string fixed = fixedPath(path, scenePath, size_t(image[0].w));
+    string fixed = fixedPath(path, scenePath, size_t(image.empty() ? 0.f : image[0].w));
     ImGui::LabelText("", "%s", fixed.c_str());
     ImGui::SameLine();
 

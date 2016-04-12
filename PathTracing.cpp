@@ -103,10 +103,11 @@ vec3 pathtrace(
 PathTracing::PathTracing() { }
 
 void PathTracing::setImageSize(size_t width, size_t height) {
-	_width = width;
-	_height = height;
-
-	softReset();
+	if (_width != width || _height != height) {
+		_width = width;
+		_height = height;
+		softReset();
+	}
 }
 
 void PathTracing::setCamera(const shared<const Camera>& camera) {
@@ -122,7 +123,7 @@ void PathTracing::setScene(const shared<const Scene>& scene) {
 }
 
 void PathTracing::softReset() {
-	if (_image.size() == _width * _height) {
+	if (_image.size() != _width * _height) {
 		_image.resize(_width * _height, vec4(0));
 	}
 	else {
