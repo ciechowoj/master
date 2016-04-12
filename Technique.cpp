@@ -24,7 +24,7 @@ void Technique::setCamera(const shared<const Camera>& camera) {
 void Technique::setScene(const shared<const Scene>& scene) {
     _scene = scene;
 
-    softReset();
+    hardReset();
 }
 
 void Technique::softReset() {

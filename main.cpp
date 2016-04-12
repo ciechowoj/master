@@ -11,6 +11,7 @@
 #include <runtime_assert>
 
 #include <PathTracing.hpp>
+#include <PhotonMapping.hpp>
 
 using namespace std;
 using namespace haste;
@@ -61,7 +62,7 @@ int main(int argc, char **argv) {
 
         GUI gui(scenePath);
 
-        PathTracing technique;
+        PhotonMapping technique(1000000);
         technique.setScene(scene);
         technique.setCamera(camera);
 
@@ -69,7 +70,7 @@ int main(int argc, char **argv) {
             technique.setImageSize(width, height);
 
             double start = glfwGetTime();
-            technique.updateInteractive(0.33);
+            technique.updateInteractive(0.033);
 
             draw_fullscreen_quad(window, technique.image());
 
@@ -152,9 +153,6 @@ void GUI::update(
     // bool show_test_window = true;
     // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
     // ImGui::ShowTestWindow(&show_test_window);
-
-    tpp = 0.99 * tpp + 0.01 * (elapsed / technique.image().size()) * 1000.0;
-    tpf = tpp * technique.image().size();
 
     updateCamera();
 

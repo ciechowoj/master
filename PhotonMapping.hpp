@@ -21,9 +21,18 @@ private:
     };
 
     const size_t _numPhotons;
+    const float _numPhotonsInv;
+    float _totalPower;
     _Stage _stage = _Scatter;
-    vector<Photon> _scattered;
+    vector<Photon> _auxiliary;
+    size_t _numEmitted;
     PhotonMap _photons;
+
+    void _scatterPhotonsInteractive(double timeQuantum);
+    void _scatterPhotons(size_t begin, size_t end);
+    void _renderPhotons(size_t begin, size_t end);
+    void _buildPhotonMapInteractive(double timeQuantum);
+    void _gatherPhotonsInteractive(double timeQuantum);
 
     PhotonMapping(const PhotonMapping&) = delete;
     PhotonMapping& operator=(const PhotonMapping&) = delete;

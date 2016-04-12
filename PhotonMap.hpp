@@ -22,7 +22,7 @@ struct Photon {
 class PhotonMap {
 public:
     PhotonMap();
-    PhotonMap(const Scene& scene, size_t numPhotons);
+    PhotonMap(vector<Photon>&& photons);
 
     vec3 estimateRadiance(
     	const vec3& point,
