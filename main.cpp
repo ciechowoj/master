@@ -62,8 +62,7 @@ int main(int argc, char **argv) {
 
         GUI gui(scenePath);
 
-        // PhotonMapping technique(1000000, 100, 0.01f);
-
+        // PhotonMapping technique(1000000, 100, 0.05f);
         PathTracing technique;
         technique.setScene(scene);
         technique.setCamera(camera);

@@ -20,8 +20,8 @@ PiecewiseSampler::PiecewiseSampler(const float* weightsBegin, const float* weigh
 
     size_t numWeights = weightsEnd - weightsBegin;
 
-    auto lambda = [&](float x) { 
-        return weightsBegin[min(size_t(x * numWeights), numWeights - 1)]; 
+    auto lambda = [&](float x) {
+        return weightsBegin[min(size_t(x * numWeights), numWeights - 1)];
     };
 
     distribution = std::piecewise_constant_distribution<float>(
@@ -62,8 +62,8 @@ vec3 HemisphereCosineSampler::sample() {
     float x = r * cos(theta);
     float z = r * sin(theta);
     float y = sqrt(max(0.0f, 1.0f - x * x - z * z));
-    
-    return vec3(x, y, z);
+
+    return normalize(vec3(x, y, z));
 }
 
 }
@@ -112,14 +112,14 @@ void saveEXR(
     OutputFile file (path.c_str(), header);
 
     FrameBuffer framebuffer;
-            
+
     size_t size = data.size() * 3;
     vector<float> data_copy(size);
 
     for (size_t y = 0; y < height; ++y) {
         ::memcpy(
-            data_copy.data() + y * width * 3, 
-            data.data() + (height - y - 1) * width, 
+            data_copy.data() + y * width * 3,
+            data.data() + (height - y - 1) * width,
             width * sizeof(vec3));
     }
 
@@ -180,7 +180,7 @@ void renderPoints(
     size_t width,
     const vector<vec3>& points,
     const vec3& color,
-    const mat4& proj) 
+    const mat4& proj)
 {
     size_t height = image.size() / width;
     float f5width = 0.5f * float(width);
@@ -221,15 +221,15 @@ void renderPoints(
     size_t width,
     const vector<vec3>& points,
     const vec3& color,
-    const vec3& origin) 
+    const vec3& origin)
 {
     size_t height = image.size() / width;
     vec3 center = vec3(0.0f); // centroid(points);
 
     mat4 proj = perspective(
-        pi<float>() / 3.0f, 
-        float(width) / float(height), 
-        0.1f, 
+        pi<float>() / 3.0f,
+        float(width) / float(height),
+        0.1f,
         1000.0f);
 
     mat4 view = lookAt(origin, center, vec3(0, 1, 0));
@@ -255,15 +255,15 @@ void renderPoints(
     vec3 center = vec3(0.0f); // centroid(points);
 
     mat4 proj = perspective(
-        pi<float>() / 3.0f, 
-        float(width) / float(height), 
-        0.1f, 
+        pi<float>() / 3.0f,
+        float(width) / float(height),
+        0.1f,
         1000.0f);
 
-    mat4 view = 
-        translate(vec3(0.0f, 0.0f, -radius)) * 
-        rotate(-theta, vec3(1, 0, 0)) * 
-        rotate(phi, vec3(0, 1, 0)) * 
+    mat4 view =
+        translate(vec3(0.0f, 0.0f, -radius)) *
+        rotate(-theta, vec3(1, 0, 0)) *
+        rotate(phi, vec3(0, 1, 0)) *
         translate(-center);
 
     renderPoints(

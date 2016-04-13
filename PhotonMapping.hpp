@@ -24,7 +24,9 @@ private:
     const size_t _numPhotons;
     const float _numPhotonsInv;
     const size_t _numNearest;
+    static const size_t _maxNumNearest = 1000;
     const float _maxDistance;
+
     float _totalPower;
     _Stage _stage = _Scatter;
     vector<Photon> _auxiliary;

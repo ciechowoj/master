@@ -76,6 +76,10 @@ LightPoint Lights::sampleSurface(size_t id) const {
         toWorldMs[indices[id * 3 + 1]] * uvw.x +
         toWorldMs[indices[id * 3 + 2]] * uvw.y;
 
+    result.toWorldM[0] = normalize(result.toWorldM[0]);
+    result.toWorldM[1] = normalize(result.toWorldM[1]);
+    result.toWorldM[2] = normalize(result.toWorldM[2]);
+
     return result;
 }
 
@@ -101,7 +105,7 @@ LightSample Lights::sample(const vec3& position) const {
     vec3 uvw = faceSampler.sample();
 
     vec3 normal = lerpNormal(face, uvw);
-    vec3 radiance = exitances[face] * lightWeights[face];
+    vec3 radiance = exitances[face] * lightWeights[face] * one_over_pi<float>();
 
     LightSample sample;
     sample.position = lerpPosition(face, uvw);

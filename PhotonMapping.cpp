@@ -1,4 +1,4 @@
-#include <iostream>
+#include <runtime_assert>
 #include <GLFW/glfw3.h>
 #include <PhotonMapping.hpp>
 
@@ -11,7 +11,9 @@ PhotonMapping::PhotonMapping(
     : _numPhotons(numPhotons)
     , _numPhotonsInv(1.f / numPhotons)
     , _numNearest(numNearest)
-    , _maxDistance(maxDistance) { }
+    , _maxDistance(maxDistance) {
+    runtime_assert(numNearest < _maxNumNearest);
+}
 
 void PhotonMapping::hardReset() {
     softReset();
@@ -155,6 +157,8 @@ void PhotonMapping::_gatherPhotonsInteractive(double timeQuantum) {
 }
 
 vec3 PhotonMapping::_gather(Ray ray) {
+    Photon auxiliary[_maxNumNearest];
+
     auto isect = _scene->intersect(ray.origin, ray.direction);
 
     while (isect.isPresent() && !_scene->isMesh(isect)) {
@@ -166,28 +170,27 @@ vec3 PhotonMapping::_gather(Ray ray) {
         SurfacePoint point = _scene->querySurface(isect);
 
         size_t queried = _photons.query_k(
-            _auxiliary.data(),
+            auxiliary,
             isect.position,
-            _auxiliary.size(),
+            _numNearest,
             _maxDistance);
 
-        auto bsdf = _scene->queryBSDF(isect);
 
-        // return vec3(float(queried) / _numNearest);
-
-        if (queried > 2) {
+        if (queried > 8) {
+            auto bsdf = _scene->queryBSDF(isect);
             vec3 result = vec3(0.0f);
 
             float radius2 = 0.0;
 
             for (size_t i = 0; i < queried; ++i) {
-                result += _auxiliary[i].power;
-                radius2 = max(radius2, distance2(isect.position, _auxiliary[i].position));
+                vec3 incident = auxiliary[i].direction * point.toWorldM;
+                vec3 reflected = -normalize(ray.direction) * point.toWorldM;
+
+                result += auxiliary[i].power * bsdf.eval(incident, reflected);
+                radius2 = max(radius2, distance2(isect.position, auxiliary[i].position));
             }
 
-            // std::cout << "radius2: " << radius2 << std::endl;
-
-            return vec3(radius2 * 100.0f);
+            return result / (radius2 * pi<float>());
         }
         else {
             return vec3(0.0f);
