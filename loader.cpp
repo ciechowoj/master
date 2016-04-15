@@ -6,6 +6,8 @@
 #include <utility.hpp>
 #include <loader.hpp>
 
+#include <iostream>
+
 namespace haste {
 
 using std::move;
@@ -271,11 +273,11 @@ shared<Scene> loadScene(string path) {
         }
     }
 
-    Lights areaLights;
+    Lights lights;
 
     for (size_t i = 0; i < emissive.size(); ++i) {
         appendLights(
-            areaLights,
+            lights,
             scene,
             emissive[i]);
     }
@@ -292,7 +294,7 @@ shared<Scene> loadScene(string path) {
     shared<Scene> result = make_shared<Scene>(
         move(materials),
         move(meshes),
-        move(areaLights));
+        move(lights));
 
     return result;
 }

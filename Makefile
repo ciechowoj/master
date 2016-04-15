@@ -163,7 +163,7 @@ build/googletest/libgtest.a:
 build/embree/libembree.a:
 	mkdir -p build
 	mkdir -p build/embree
-	cd build/embree && cmake ../../submodules/embree -DENABLE_STATIC_LIB=ON
+	cd build/embree && cmake ../../submodules/embree -DENABLE_STATIC_LIB=ON -DENABLE_TUTORIALS=OFF
 	cd build/embree && make embree
 
 build/assimp/code/libassimp.a:
