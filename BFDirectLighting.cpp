@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sstream>
 #include <GLFW/glfw3.h>
 #include <BFDirectLighting.hpp>
@@ -51,7 +52,7 @@ vec3 BFDirectLighting::_trace(Ray ray) {
         isect = _scene->intersect(ray);
 
         if (_scene->isLight(isect)) {
-            radiance += _scene->queryRadiance(isect)
+            return radiance += _scene->queryRadiance(isect)
                 * sample.throughput
                 * dot(surface.normal(), sample.direction);
         }

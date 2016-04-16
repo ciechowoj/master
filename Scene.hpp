@@ -65,6 +65,14 @@ struct SurfacePoint {
         return toWorldM[1];
     }
 
+    const vec3& tangent() const {
+        return toWorldM[2];
+    }
+
+    const vec3& bitangent() const {
+        return toWorldM[0];
+    }
+
     vec3 toWorld(const vec3& v) const {
         return toWorldM * v;
     }

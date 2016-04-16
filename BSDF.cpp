@@ -1,3 +1,4 @@
+#include <iostream>
 #include <BSDF.hpp>
 #include <Scene.hpp>
 
@@ -32,8 +33,9 @@ vec3 BSDF::eval(
 
 BSDFSample BSDF::sample(const SurfacePoint& point, const vec3& reflected) const {
     BSDFSample sample;
-    sample.direction = point.toWorld(sampler.sample());
-    sample.throughput = query(point, sample.direction, reflected) * pi<float>();
+    vec3 direction = sampler.sample();
+    sample.direction = point.toWorld(direction);
+    sample.throughput = query(point, sample.direction, reflected) * pi<float>() * 2.0f;
     sample.specular = false;
 
     return sample;
