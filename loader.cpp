@@ -190,7 +190,6 @@ void appendLights(
     lights.vertices.resize(numVertices + scene->mMeshes[i]->mNumVertices);
 
     for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
-        lights.vertices.push_back(vec3(0));
         lights.vertices[numVertices + j].x = scene->mMeshes[i]->mVertices[j].x;
         lights.vertices[numVertices + j].y = scene->mMeshes[i]->mVertices[j].y;
         lights.vertices[numVertices + j].z = scene->mMeshes[i]->mVertices[j].z;
@@ -204,7 +203,7 @@ void appendLights(
         }
 
         for (size_t k = 0; k < 3; ++k) {
-            lights.indices[numIndices + j * 3 + k] = scene->mMeshes[i]->mFaces[j].mIndices[k];
+            lights.indices[numIndices + j * 3 + k] = scene->mMeshes[i]->mFaces[j].mIndices[k] + numVertices;
         }
     }
 
@@ -242,8 +241,7 @@ void appendLights(
 
     for (size_t j = 0; j < scene->mMeshes[i]->mNumFaces; ++j) {
         auto materialID = scene->mMeshes[i]->mMaterialIndex;
-        vec3 power = emissive(scene->mMaterials[materialID]);
-        lights.exitances[numFaces + j] = power / lights.faceArea(numFaces + j);
+        lights.exitances[numFaces + j] = emissive(scene->mMaterials[materialID]);
     }
 }
 

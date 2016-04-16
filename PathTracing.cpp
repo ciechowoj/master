@@ -39,19 +39,19 @@ vec3 pathtrace(
     const Scene& scene)
 {
     vec3 throughput = vec3(1.0f);
-    vec3 accum = vec3(0.0f);
+    vec3 radiance = vec3(0.0f);
     bool specular = 0;
     int bounce = 0;
 
-    while (true) {
+    while (bounce == 0) {
         auto isect = scene.intersect(ray.origin, ray.direction);
 
         while (scene.isLight(isect)) {
             if (bounce == 0 || specular) {
-                accum += throughput * scene.lights.eval(isect);
+                radiance += throughput * scene.lights.eval(isect);
             }
 
-            ray.origin = isect.position;
+            ray.origin = isect.position();
             isect = scene.intersect(ray.origin, ray.direction);
         }
 
@@ -68,9 +68,9 @@ vec3 pathtrace(
         mat3 lightToWorld = point.toWorldM;
         mat3 worldToLight = transpose(lightToWorld);
 
-        accum += throughput * sampleLight(
+        radiance += throughput * sampleLight(
             scene,
-            isect.position,
+            isect.position(),
             normal,
             -ray.direction,
             worldToLight,
@@ -84,7 +84,7 @@ vec3 pathtrace(
         throughput *= bsdfSample.throughput * dot(normal, bsdfSample.direction);
 
         ray.direction = bsdfSample.direction;
-        ray.origin = isect.position;
+        ray.origin = isect.position();
 
         float prob = min(0.5f, length(throughput));
 
@@ -98,7 +98,7 @@ vec3 pathtrace(
         ++bounce;
     }
 
-    return accum;
+    return radiance;
 }
 
 PathTracing::PathTracing() { }

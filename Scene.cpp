@@ -1,51 +1,10 @@
 #include <runtime_assert>
 #include <Scene.hpp>
+#include <Camera.hpp>
 #include <streamops.hpp>
 #include <cstring>
 
 namespace haste {
-
-size_t Lights::numLights() const {
-    return names.size();
-}
-
-size_t Lights::numFaces() const {
-    return indices.size() / 3;
-}
-
-float Lights::faceArea(size_t face) const {
-    vec3 u = vertices[indices[face * 3 + 1]] - vertices[indices[face * 3 + 0]];
-    vec3 v = vertices[indices[face * 3 + 2]] - vertices[indices[face * 3 + 0]];
-    return length(cross(u, v)) * 0.5f;
-}
-
-float Lights::facePower(size_t face) const {
-    return length(exitances[face]) * faceArea(face) * pi<float>();
-}
-
-vec3 Lights::lerpPosition(size_t face, vec3 uvw) const {
-    return vertices[indices[face * 3 + 0]] * uvw.z
-        + vertices[indices[face * 3 + 1]] * uvw.x
-        + vertices[indices[face * 3 + 2]] * uvw.y;
-}
-
-vec3 Lights::lerpNormal(size_t face, vec3 uvw) const {
-    return toWorldMs[indices[face * 3 + 0]][1] * uvw.z
-        + toWorldMs[indices[face * 3 + 1]][1] * uvw.x
-        + toWorldMs[indices[face * 3 + 2]][1] * uvw.y;
-}
-
-vec3 Lights::lerpNormal(const RayIsect& hit) const {
-    float w = 1.0f - hit.u - hit.v;
-
-    return toWorldMs[indices[hit.primID * 3 + 0]][1] * w
-        + toWorldMs[indices[hit.primID * 3 + 1]][1] * hit.u
-        + toWorldMs[indices[hit.primID * 3 + 2]][1] * hit.v;
-}
-
-vec3 Lights::eval(const RayIsect& isect) const {
-    return exitances[isect.primID];
-}
 
 Scene::Scene(
     Materials&& materials,
@@ -62,6 +21,8 @@ Scene::Scene(
 }
 
 unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
+    std::cout << "numMeshes: " << meshes.size() << std::endl;
+
     unsigned geomID = rtcNewTriangleMesh(
         rtcScene,
         RTC_GEOMETRY_STATIC,
@@ -92,6 +53,8 @@ unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
 }
 
 unsigned makeRTCMesh(RTCScene rtcScene, const Lights& lights) {
+    std::cout << "lights.indices.size(): " << lights.indices.size() << std::endl;
+
     unsigned geomID = rtcNewTriangleMesh(
         rtcScene,
         RTC_GEOMETRY_STATIC,
@@ -192,23 +155,36 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
     point.position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
 
     point.toWorldM[0] =
-        w * mesh.bitangents[mesh.indices[isect.primID * 3 + 0]] +
+        normalize(w * mesh.bitangents[mesh.indices[isect.primID * 3 + 0]] +
         isect.u * mesh.bitangents[mesh.indices[isect.primID * 3 + 1]] +
-        isect.v * mesh.bitangents[mesh.indices[isect.primID * 3 + 2]];
+        isect.v * mesh.bitangents[mesh.indices[isect.primID * 3 + 2]]);
 
     point.toWorldM[1] =
-        w * mesh.normals[mesh.indices[isect.primID * 3 + 0]] +
+        normalize(w * mesh.normals[mesh.indices[isect.primID * 3 + 0]] +
         isect.u * mesh.normals[mesh.indices[isect.primID * 3 + 1]] +
-        isect.v * mesh.normals[mesh.indices[isect.primID * 3 + 2]];
+        isect.v * mesh.normals[mesh.indices[isect.primID * 3 + 2]]);
 
     point.toWorldM[2] =
-        w * mesh.tangents[mesh.indices[isect.primID * 3 + 0]] +
+        normalize(w * mesh.tangents[mesh.indices[isect.primID * 3 + 0]] +
         isect.u * mesh.tangents[mesh.indices[isect.primID * 3 + 1]] +
-        isect.v * mesh.tangents[mesh.indices[isect.primID * 3 + 2]];
+        isect.v * mesh.tangents[mesh.indices[isect.primID * 3 + 2]]);
 
     point.materialID = mesh.materialID;
 
     return point;
+}
+
+vec3 Scene::queryRadiance(const RayIsect& isect) const {
+    runtime_assert(isect.geomID == meshes.size());
+    const vec3 normal = lights.lerpNormal(isect);
+    const vec3 exitance = lights.exitances[isect.primID];
+
+    if (dot(normal, isect.incident()) > 0.0f) {
+        return exitance * one_over_pi<float>();
+    }
+    else {
+        return vec3(0.0f);
+    }
 }
 
 RayIsect Scene::intersect(const vec3& origin, const vec3& direction) const {
@@ -224,11 +200,13 @@ RayIsect Scene::intersect(const vec3& origin, const vec3& direction) const {
     rtcRay.time = 0.f;
     rtcIntersect(rtcScene, rtcRay);
 
-    rtcRay.position = origin + direction * rtcRay.tfar;
-
     ++_numIntersectRays;
 
     return rtcRay;
+}
+
+RayIsect Scene::intersect(const Ray& ray) const {
+    return intersect(ray.origin, ray.direction);
 }
 
 float Scene::occluded(const vec3& origin, const vec3& target) const {

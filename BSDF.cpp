@@ -1,13 +1,14 @@
 #include <BSDF.hpp>
+#include <Scene.hpp>
 
 namespace haste {
 
 BSDFSample BSDF::sample(
     const vec3& direction) const
 {
-	BSDFSample sample;
+    BSDFSample sample;
     sample.direction = sampler.sample();
-    sample.throughput = eval(direction, sample.direction) / one_over_two_pi<float>();
+    sample.throughput = eval(direction, sample.direction);
     sample.specular = false;
     return sample;
 }
@@ -15,24 +16,41 @@ BSDFSample BSDF::sample(
 BSDFSample BSDF::sample(
         const mat3& lightToWorld,
         const mat3& worldToLight,
-        const vec3& direction) const 
+        const vec3& direction) const
 {
-	BSDFSample sample = this->sample(worldToLight * direction);
-	sample.direction = lightToWorld * sample.direction;
-	return sample;
+    BSDFSample sample = this->sample(worldToLight * direction);
+    sample.direction = lightToWorld * sample.direction;
+    return sample;
 }
 
 vec3 BSDF::eval(
     const vec3& incident,
     const vec3& reflected) const
 {
-	return diffuse;
+    return diffuse;
+}
+
+BSDFSample BSDF::sample(const SurfacePoint& point, const vec3& reflected) const {
+    BSDFSample sample;
+    sample.direction = point.toWorld(sampler.sample());
+    sample.throughput = query(point, sample.direction, reflected) * pi<float>();
+    sample.specular = false;
+
+    return sample;
+}
+
+vec3 BSDF::query(
+        const SurfacePoint& point,
+        const vec3& incident,
+        const vec3& reflected) const
+{
+    return diffuse;
 }
 
 BSDF BSDF::lambert(const vec3& diffuse) {
-	BSDF result;
-	result.diffuse = diffuse / pi<float>();
-	return result;
+    BSDF result;
+    result.diffuse = diffuse / pi<float>();
+    return result;
 }
 
 }

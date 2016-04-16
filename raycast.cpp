@@ -11,20 +11,20 @@ vec3 raycast(
 
     if (intersect.isPresent()) {
         if (scene.isMesh(intersect)) {
-            auto light = scene.lights.sample(intersect.position);
+            auto light = scene.lights.sample(intersect.position());
 
             auto& bsdf = scene.queryBSDF(intersect);
 
             vec3 normal = scene.lerpNormal(intersect);
             vec3 tangent = vec3(1, 0, 0); // dummy
 
-            vec3 incident = light.position - intersect.position;
+            vec3 incident = light.position - intersect.position();
             float distanceInv = 1.f / length(incident);
             incident *= distanceInv;
             vec3 reflected = -ray.direction;
 
 
-            float V = scene.occluded(intersect.position, light.position);
+            float V = scene.occluded(intersect.position(), light.position);
             float G = max(0.f, dot(incident, normal)) * distanceInv;
 
             vec3 binormal = normalize(cross(tangent, normal));

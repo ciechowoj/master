@@ -1,5 +1,6 @@
+#include <iostream>
 #include <runtime_assert>
-#include <Lights.hpp>
+#include <Scene.hpp>
 
 namespace haste {
 
@@ -21,6 +22,48 @@ namespace haste {
 //     *                            ****
 // v1 ************************************** v2
 //
+
+size_t Lights::numLights() const {
+    return names.size();
+}
+
+size_t Lights::numFaces() const {
+    return indices.size() / 3;
+}
+
+float Lights::faceArea(size_t face) const {
+    vec3 u = vertices[indices[face * 3 + 1]] - vertices[indices[face * 3 + 0]];
+    vec3 v = vertices[indices[face * 3 + 2]] - vertices[indices[face * 3 + 0]];
+    return length(cross(u, v)) * 0.5f;
+}
+
+float Lights::facePower(size_t face) const {
+    return length(exitances[face]) * faceArea(face) * pi<float>();
+}
+
+vec3 Lights::lerpPosition(size_t face, vec3 uvw) const {
+    return vertices[indices[face * 3 + 0]] * uvw.z
+        + vertices[indices[face * 3 + 1]] * uvw.x
+        + vertices[indices[face * 3 + 2]] * uvw.y;
+}
+
+vec3 Lights::lerpNormal(size_t face, vec3 uvw) const {
+    return normalize(toWorldMs[indices[face * 3 + 0]][1] * uvw.z
+        + toWorldMs[indices[face * 3 + 1]][1] * uvw.x
+        + toWorldMs[indices[face * 3 + 2]][1] * uvw.y);
+}
+
+vec3 Lights::lerpNormal(const RayIsect& hit) const {
+    float w = 1.0f - hit.u - hit.v;
+
+    return normalize(toWorldMs[indices[hit.primID * 3 + 0]][1] * w
+        + toWorldMs[indices[hit.primID * 3 + 1]][1] * hit.u
+        + toWorldMs[indices[hit.primID * 3 + 2]][1] * hit.v);
+}
+
+vec3 Lights::eval(const RayIsect& isect) const {
+    return exitances[isect.primID] * dot(isect.gnormal(), isect.incident());
+}
 
 float Lights::queryTotalPower() const {
     vec3 power = queryTotalPower3();
@@ -57,6 +100,7 @@ float Lights::queryAreaLightArea(size_t id) const {
 }
 
 size_t Lights::sampleLight() const {
+    runtime_assert(numFaces() != 0);
     auto sample = lightSampler.sample();
     return min(size_t(sample * numFaces()), numFaces() - 1);
 }
@@ -91,7 +135,7 @@ Photon Lights::emit() const {
     Photon result;
     result.position = point.position;
     result.direction = point.toWorldM * cosineSampler.sample();
-    result.power = queryAreaLightPower3(id);
+    result.power = exitances[id];
     float length1 = 1.f / (result.power.x + result.power.y + result.power.z);
     result.power = result.power * length1;
 
@@ -102,10 +146,15 @@ LightSample Lights::sample(const vec3& position) const {
     // below computations are probably incorrect (to be fixed)
 
     size_t face = sampleLight();
+
+    // std::cout << "face: " << face << " ";
+
     vec3 uvw = faceSampler.sample();
 
     vec3 normal = lerpNormal(face, uvw);
-    vec3 radiance = exitances[face] * lightWeights[face] * one_over_pi<float>();
+    vec3 radiance = exitances[face] * one_over_pi<float>();
+
+    // std::cout << "radiance: " << radiance << std::endl;
 
     LightSample sample;
     sample.position = lerpPosition(face, uvw);
@@ -119,8 +168,12 @@ void Lights::buildLightStructs() const {
     size_t numFaces = this->numFaces();
     lightWeights.resize(numFaces);
 
+    std::cout << "numFaces: " << numFaces << std::endl;
+
     float totalPower = queryTotalPower();
     float totalPowerInv = 1.0f / totalPower;
+
+    std::cout << "totalPower: " << totalPower << std::endl;
 
     for (size_t i = 0; i < numFaces; ++i) {
         float power = queryAreaLightPower(i);

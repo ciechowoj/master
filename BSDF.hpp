@@ -3,6 +3,8 @@
 
 namespace haste {
 
+struct SurfacePoint;
+
 struct BSDFSample {
     vec3 throughput;
     vec3 direction;
@@ -24,6 +26,15 @@ public:
         const vec3& reflected) const;
 
     static BSDF lambert(const vec3& diffuse);
+
+    BSDFSample sample(
+        const SurfacePoint& point,
+        const vec3& reflected) const;
+
+    vec3 query(
+        const SurfacePoint& point,
+        const vec3& incident,
+        const vec3& reflected) const;
 private:
     mutable HemisphereSampler sampler;
     vec3 diffuse;

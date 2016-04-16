@@ -180,7 +180,9 @@ double renderInteractive(
     };
 
     while (glfwGetTime() < start + budget) {
-        tbb::task_group group;
+        localRender(itr++);
+
+        /*tbb::task_group group;
 
         for (unsigned i = 0; i < tasks; ++i) {
             group.run([=] { localRender(itr + i); });
@@ -190,7 +192,7 @@ double renderInteractive(
 
         group.wait();
 
-        itr = (itr + tasks + 1) % numBlocks;
+        itr = (itr + tasks + 1) % numBlocks;*/
     }
 
     return double((itr + numBlocksRendered) % numBlocks) / numBlocks;

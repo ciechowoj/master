@@ -54,8 +54,9 @@ out vec4 color;
 
 void main()
 {
+    const float scale = 100.0 / 255.0;
     vec4 sample = texture2D(sampler, texcoord);
-    color = clamp(vec4(sample.rgb / sample.a, 1), 0, 1);
+    color = clamp(vec4(sample.rgb / sample.a, 1) * scale, 0, 1);
 }
     )"";
 

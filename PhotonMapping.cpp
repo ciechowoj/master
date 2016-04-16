@@ -92,7 +92,7 @@ void PhotonMapping::_scatterPhotons(size_t begin, size_t end) {
         Photon photon = _scene->lights.emit();
         photon.power *= scaleFactor;
 
-        for (size_t j = 0; ; ++j) {
+        for (size_t j = 0; j == 0; ++j) {
             RayIsect isect = _scene->intersect(
                 photon.position,
                 photon.direction);
@@ -101,7 +101,7 @@ void PhotonMapping::_scatterPhotons(size_t begin, size_t end) {
                 break;
             }
 
-            photon.position = isect.position;
+            photon.position = isect.position();
             photon.direction = -photon.direction;
 
             _auxiliary.push_back(photon);
@@ -158,11 +158,19 @@ void PhotonMapping::_gatherPhotonsInteractive(double timeQuantum) {
 
 vec3 PhotonMapping::_gather(Ray ray) {
     Photon auxiliary[_maxNumNearest];
+    vec3 radiance = vec3(0.0f);
 
     auto isect = _scene->intersect(ray.origin, ray.direction);
 
+    while (_scene->isLight(isect)) {
+        radiance += _scene->queryRadiance(isect);
+
+        ray.origin = isect.position();
+        isect = _scene->intersect(ray);
+    }
+
     while (isect.isPresent() && !_scene->isMesh(isect)) {
-        ray.origin = isect.position;
+        ray.origin = isect.position();
         isect = _scene->intersect(ray.origin, ray.direction);
     }
 
@@ -171,10 +179,9 @@ vec3 PhotonMapping::_gather(Ray ray) {
 
         size_t queried = _photons.query_k(
             auxiliary,
-            isect.position,
+            isect.position(),
             _numNearest,
             _maxDistance);
-
 
         if (queried > 8) {
             auto bsdf = _scene->queryBSDF(isect);
@@ -187,18 +194,14 @@ vec3 PhotonMapping::_gather(Ray ray) {
                 vec3 reflected = -normalize(ray.direction) * point.toWorldM;
 
                 result += auxiliary[i].power * bsdf.eval(incident, reflected);
-                radius2 = max(radius2, distance2(isect.position, auxiliary[i].position));
+                radius2 = max(radius2, distance2(isect.position(), auxiliary[i].position));
             }
 
-            return result / (radius2 * pi<float>());
-        }
-        else {
-            return vec3(0.0f);
+            radiance += result / (radius2 * pi<float>());
         }
     }
-    else {
-        return vec3(0.0f);
-    }
+
+    return radiance;
 }
 
 }

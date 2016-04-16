@@ -3,9 +3,9 @@
 
 namespace haste {
 
-class PathTracing : public Technique {
+class BFDirectLighting : public Technique {
 public:
-    PathTracing();
+    BFDirectLighting();
 
     void updateInteractive(double timeQuantum) override;
 
@@ -13,7 +13,9 @@ public:
     double stageProgress() const override;
 
 private:
-    double _progress = 0.0;
+    vec3 _trace(Ray ray);
+
+    double _progress;
 };
 
 }
