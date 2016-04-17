@@ -183,6 +183,15 @@ vec3 Scene::queryRadiance(const RayIsect& isect) const {
     }
 }
 
+LightSample Scene::sampleLight(
+        RandomEngine& engine,
+        const vec3& position) const
+{
+    LightSample sample = lights.sample(engine, position);
+    sample._radiance *= occluded(sample.position(), position);
+    return sample;
+}
+
 RayIsect Scene::intersect(const vec3& origin, const vec3& direction) const {
     RayIsect rtcRay;
     (*(vec3*)rtcRay.org) = origin;

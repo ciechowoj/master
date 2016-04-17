@@ -65,10 +65,22 @@ struct CosineHemisphereSample1 {
     const float densityInv() const { return 1.0f / _omega.y * pi<float>(); }
 };
 
-UniformSample1 sampleUniform1(RandomEngine& source);
-UniformSample2 sampleUniform2(RandomEngine& source);
-DiskSample1 sampleDisk1(RandomEngine& source);
-HemisphereSample1 sampleHemisphere1(RandomEngine& source);
-CosineHemisphereSample1 sampleCosineHemisphere1(RandomEngine& source);
+struct BarycentricSample1 {
+    vec2 _uv;
+
+    const float u() const { return _uv.x; }
+    const float v() const { return _uv.y; }
+    const float w() const { return 1.0f - _uv.x - _uv.y; }
+    const vec3 value() const { return vec3(u(), v(), w()); }
+    const float density() const { return 1.0f; }
+    const float densityInv() const { return 1.0f; }
+};
+
+UniformSample1 sampleUniform1(RandomEngine& engine);
+UniformSample2 sampleUniform2(RandomEngine& engine);
+DiskSample1 sampleDisk1(RandomEngine& engine);
+HemisphereSample1 sampleHemisphere1(RandomEngine& engine);
+CosineHemisphereSample1 sampleCosineHemisphere1(RandomEngine& engine);
+BarycentricSample1 sampleBarycentric1(RandomEngine& engine);
 
 }

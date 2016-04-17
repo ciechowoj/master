@@ -4,7 +4,7 @@
 
 namespace haste {
 
-vec3 sampleLight(
+/* vec3 sampleLight(
     const Scene& scene,
     const vec3& position,
     const vec3& normal,
@@ -14,8 +14,8 @@ vec3 sampleLight(
 {
     auto light = scene.lights.sample(position);
 
-    if (light.radiance != vec3(0.0f)) {
-        vec3 incident = light.position - position;
+    if (light.radiance() != vec3(0.0f)) {
+        vec3 incident = light.position() - position;
         float distance = length(incident);
         incident = normalize(incident);
         float sqDistanceInv = 1.f / (distance * distance);
@@ -24,27 +24,29 @@ vec3 sampleLight(
             worldToLight * incident,
             worldToLight * reflected);
 
-        float visible = scene.occluded(position, light.position);
+        float visible = scene.occluded(position, light.position());
         float geometry = max(0.f, dot(incident, normal)) * sqDistanceInv;
 
-        return throughput * light.radiance * visible * geometry;
+        return throughput * light.radiance() * visible * geometry;
     }
     else {
         return vec3(0.0f);
     }
-}
+}*/
 
 vec3 pathtrace(
-    RandomEngine& source,
+    RandomEngine& engine,
     Ray ray,
     const Scene& scene)
 {
+    const Scene* _scene = &scene;
+
     vec3 throughput = vec3(1.0f);
     vec3 radiance = vec3(0.0f);
     bool specular = 0;
     int bounce = 0;
 
-    while (bounce == 0) {
+    while (true) {
         auto isect = scene.intersect(ray.origin, ray.direction);
 
         while (scene.isLight(isect)) {
@@ -61,7 +63,6 @@ vec3 pathtrace(
         }
 
         auto& bsdf = scene.queryBSDF(isect);
-
         SurfacePoint point = scene.querySurface(isect);
 
         vec3 normal = point.toWorldM[1];
@@ -69,20 +70,25 @@ vec3 pathtrace(
         mat3 lightToWorld = point.toWorldM;
         mat3 worldToLight = transpose(lightToWorld);
 
-        radiance += throughput * sampleLight(
-            scene,
-            isect.position(),
-            normal,
-            -ray.direction,
-            worldToLight,
-            bsdf);
+        auto lightSample = _scene->sampleLight(engine, point.position);
+        auto localThroughput = bsdf.query(point, lightSample.omega(), -ray.direction);
+
+        auto cosineTheta = dot(normal, lightSample.omega());
+        if (cosineTheta > 0.0f) {
+            radiance +=
+                throughput *
+                localThroughput *
+                lightSample.radiance() *
+                cosineTheta *
+                lightSample.densityInv();
+        }
 
         auto bsdfSample = bsdf.sample(
-            source,
+            engine,
             point,
             -ray.direction);
 
-        throughput *= bsdfSample.throughput() * dot(normal, bsdfSample.omega());
+        throughput *= bsdfSample.throughput() * dot(normal, bsdfSample.omega()) * bsdfSample.densityInv();
 
         ray.direction = bsdfSample.omega();
         ray.origin = isect.position();

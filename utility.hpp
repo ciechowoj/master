@@ -37,21 +37,7 @@ public:
 private:
     UniformSampler uniform;
 };
-/*
-class HemisphereSampler {
-public:
-    vec3 sample();
-private:
-    UniformSampler uniform;
-};
 
-class HemisphereCosineSampler {
-public:
-    vec3 sample();
-private:
-    UniformSampler uniform;
-};
-*/
 void saveEXR(
     const string& path,
     const vector<vec3>& data,

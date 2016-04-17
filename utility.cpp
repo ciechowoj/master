@@ -46,26 +46,7 @@ vec3 BarycentricSampler::sample() {
         return vec3(1 - u, 1 - v, u + v - 1);
     }
 }
-/*
-vec3 HemisphereSampler::sample() {
-    float a = uniform.sample();
-    float b = uniform.sample() * pi<float>() * 2.0f;
-    float c = sqrt(1 - a * a);
 
-    return vec3(cos(b) * c, a, sin(b) * c);
-}
-
-vec3 HemisphereCosineSampler::sample() {
-    float r = sqrt(uniform.sample());
-    float theta = uniform.sample() * pi<float>() * 2.0f;
-
-    float x = r * cos(theta);
-    float z = r * sin(theta);
-    float y = sqrt(max(0.0f, 1.0f - x * x - z * z));
-
-    return normalize(vec3(x, y, z));
-}
-*/
 }
 
 #include <ImfOutputFile.h>

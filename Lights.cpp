@@ -152,11 +152,37 @@ LightSample Lights::sample(const vec3& position) const {
     vec3 radiance = exitances[face] * one_over_pi<float>();
 
     LightSample sample;
-    sample.position = lerpPosition(face, uvw);
-    sample.incident = normalize(sample.position - position);
-    sample.radiance = max(vec3(0.0f), radiance * dot(normal, -sample.incident));
+    sample._position = lerpPosition(face, uvw);
+    sample._omega = normalize(sample.position() - position);
+    sample._radiance = max(vec3(0.0f), radiance * dot(normal, -sample.omega()));
 
     return sample;
+}
+
+LightSample Lights::sample(
+    RandomEngine& engine,
+    const vec3& position) const
+{
+    size_t light = sampleLight();
+    auto barycentric = sampleBarycentric1(engine);
+
+    vec3 lightNormal = lerpNormal(light, barycentric.value());
+
+    LightSample result;
+    result._position = lerpPosition(light, barycentric.value());
+    result._omega = normalize(result._position - position);
+    float cosineTheta = dot(-result.omega(), lightNormal);
+    vec3 diff = position - result.position();
+    result._density = 1.0f / (lightWeights[light] * queryAreaLightArea(light) * cosineTheta) * dot(diff, diff);
+
+    if (cosineTheta > 0.0f) {
+        result._radiance = exitances[light] * one_over_pi<float>();
+    }
+    else {
+        result._radiance = vec3(0.0f);
+    }
+
+    return result;
 }
 
 void Lights::buildLightStructs() const {

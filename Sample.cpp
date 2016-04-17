@@ -44,16 +44,16 @@ const float DiskSample1::radius() const {
     return length(_point);
 }
 
-UniformSample1 sampleUniform1(RandomEngine& source) {
-    return { source.random1() };
+UniformSample1 sampleUniform1(RandomEngine& engine) {
+    return { engine.random1() };
 }
 
-UniformSample2 sampleUniform2(RandomEngine& source) {
-    return { source.random2() };
+UniformSample2 sampleUniform2(RandomEngine& engine) {
+    return { engine.random2() };
 }
 
-DiskSample1 sampleDisk1(RandomEngine& source) {
-    auto uniform = sampleUniform2(source);
+DiskSample1 sampleDisk1(RandomEngine& engine) {
+    auto uniform = sampleUniform2(engine);
     float sqRadius = sqrt(uniform.a());
     DiskSample1 result;
     result._point.x = cos(2.0f * pi<float>() * uniform.b()) * sqRadius;
@@ -61,22 +61,36 @@ DiskSample1 sampleDisk1(RandomEngine& source) {
     return result;
 }
 
-HemisphereSample1 sampleHemisphere1(RandomEngine& source) {
-    auto uniform = sampleUniform2(source);
+HemisphereSample1 sampleHemisphere1(RandomEngine& engine) {
+    auto uniform = sampleUniform2(engine);
     float a = uniform.a();
     float b = uniform.b() * pi<float>() * 2.0f;
     float c = sqrt(1 - a * a);
     return { vec3(cos(b) * c, a, sin(b) * c) };
 }
 
-CosineHemisphereSample1 sampleCosineHemisphere1(RandomEngine& source) {
-    auto uniform = sampleUniform2(source);
+CosineHemisphereSample1 sampleCosineHemisphere1(RandomEngine& engine) {
+    auto uniform = sampleUniform2(engine);
     float r = sqrt(uniform.a());
     float phi = uniform.b() * pi<float>() * 2.0f;
     float x = r * cos(phi);
     float z = r * sin(phi);
     float y = sqrt(max(0.0f, 1.0f - x * x - z * z));
     return { vec3(x, y, z) };
+}
+
+BarycentricSample1 sampleBarycentric1(RandomEngine& engine) {
+    auto uniform = sampleUniform2(engine);
+
+    const float u = uniform.a();
+    const float v = uniform.b();
+
+    if (u + v <= 1) {
+        return { vec2(u, v) };
+    }
+    else {
+        return { vec2(1 - u, 1 - v) };
+    }
 }
 
 }

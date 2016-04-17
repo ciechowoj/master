@@ -10,6 +10,8 @@
 #include <Lights.hpp>
 #include <Materials.hpp>
 
+#include <SurfacePoint.hpp>
+
 namespace haste {
 
 using namespace glm;
@@ -56,32 +58,6 @@ struct Mesh {
     vector<vec3> bitangents;
 };
 
-struct SurfacePoint {
-    vec3 position;
-    mat3 toWorldM;
-    size_t materialID;
-
-    const vec3& normal() const {
-        return toWorldM[1];
-    }
-
-    const vec3& tangent() const {
-        return toWorldM[2];
-    }
-
-    const vec3& bitangent() const {
-        return toWorldM[0];
-    }
-
-    const vec3 toWorld(const vec3& v) const {
-        return toWorldM * v;
-    }
-
-    const vec3 toSurface(const vec3& world) const {
-        return world * toWorldM;
-    }
-};
-
 struct LightSample2 {
     vec3 radiance;
     vec3 position;
@@ -114,8 +90,9 @@ public:
     vec3 queryRadiance(const RayIsect& isect) const;
     SurfacePoint querySurface(const RayIsect& isect) const;
 
-    LightSample2 sampleLight() const;
-
+    LightSample sampleLight(
+        RandomEngine& engine,
+        const vec3& position) const;
 
     RayIsect intersect(const vec3& origin, const vec3& direction) const;
     RayIsect intersect(const Ray& ray) const;
