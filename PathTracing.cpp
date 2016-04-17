@@ -4,36 +4,6 @@
 
 namespace haste {
 
-/* vec3 sampleLight(
-    const Scene& scene,
-    const vec3& position,
-    const vec3& normal,
-    const vec3& reflected,
-    const mat3& worldToLight,
-    const BSDF& bsdf)
-{
-    auto light = scene.lights.sample(position);
-
-    if (light.radiance() != vec3(0.0f)) {
-        vec3 incident = light.position() - position;
-        float distance = length(incident);
-        incident = normalize(incident);
-        float sqDistanceInv = 1.f / (distance * distance);
-
-        vec3 throughput = bsdf.query(
-            worldToLight * incident,
-            worldToLight * reflected);
-
-        float visible = scene.occluded(position, light.position());
-        float geometry = max(0.f, dot(incident, normal)) * sqDistanceInv;
-
-        return throughput * light.radiance() * visible * geometry;
-    }
-    else {
-        return vec3(0.0f);
-    }
-}*/
-
 vec3 pathtrace(
     RandomEngine& engine,
     Ray ray,
@@ -122,6 +92,7 @@ void PathTracing::updateInteractive(
         return pathtrace(source, ray, *_scene);
     });
 
+    _numSamples = size_t(image[width * height - 1].w);
     _renderTime += glfwGetTime() - startTime;
     _numRays += _scene->numRays() - startRays;
 }
