@@ -1,4 +1,3 @@
-#include <iostream>
 #include <runtime_assert>
 #include <Scene.hpp>
 
@@ -147,14 +146,10 @@ LightSample Lights::sample(const vec3& position) const {
 
     size_t face = sampleLight();
 
-    // std::cout << "face: " << face << " ";
-
     vec3 uvw = faceSampler.sample();
 
     vec3 normal = lerpNormal(face, uvw);
     vec3 radiance = exitances[face] * one_over_pi<float>();
-
-    // std::cout << "radiance: " << radiance << std::endl;
 
     LightSample sample;
     sample.position = lerpPosition(face, uvw);
@@ -168,12 +163,8 @@ void Lights::buildLightStructs() const {
     size_t numFaces = this->numFaces();
     lightWeights.resize(numFaces);
 
-    std::cout << "numFaces: " << numFaces << std::endl;
-
     float totalPower = queryTotalPower();
     float totalPowerInv = 1.0f / totalPower;
-
-    std::cout << "totalPower: " << totalPower << std::endl;
 
     for (size_t i = 0; i < numFaces; ++i) {
         float power = queryAreaLightPower(i);

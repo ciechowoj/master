@@ -70,12 +70,14 @@ void PhotonMapping::_scatterPhotonsInteractive(double timeQuantum) {
     const size_t batchSize = 1000;
     double startTime = glfwGetTime();
 
+    RandomEngine engine;
+
     while (_numEmitted < _numPhotons && glfwGetTime() - startTime < timeQuantum) {
         const size_t begin = _numEmitted;
         const size_t end = min(_numPhotons, begin + batchSize);
         const size_t stored = _auxiliary.size();
 
-        _scatterPhotons(begin, end);
+        _scatterPhotons(engine, begin, end);
         _renderPhotons(stored, _auxiliary.size());
         _numEmitted = end;
     }
@@ -85,14 +87,14 @@ void PhotonMapping::_scatterPhotonsInteractive(double timeQuantum) {
     }
 }
 
-void PhotonMapping::_scatterPhotons(size_t begin, size_t end) {
+void PhotonMapping::_scatterPhotons(RandomEngine& engine, size_t begin, size_t end) {
     const float scaleFactor = _totalPower * _numPhotonsInv;
 
     for (size_t i = begin; i < end; ++i) {
         Photon photon = _scene->lights.emit();
         photon.power *= scaleFactor;
 
-        for (size_t j = 0; j == 0; ++j) {
+        for (size_t j = 0; ; ++j) {
             RayIsect isect = _scene->intersect(
                 photon.position,
                 photon.direction);
@@ -104,13 +106,23 @@ void PhotonMapping::_scatterPhotons(size_t begin, size_t end) {
             photon.position = isect.position();
             photon.direction = -photon.direction;
 
-            _auxiliary.push_back(photon);
-
             SurfacePoint point = _scene->querySurface(isect);
+            auto sample = _scene->queryBSDF(isect).scatter(
+                engine,
+                point,
+                photon.direction);
 
-            /*if(!_scene->materials.scatter(photon, point)) {
+            if (!sample.specular()) {
+                _auxiliary.push_back(photon);
+            }
+
+            if (!sample.zero()) {
+                photon.power *= sample.throughput();
+                photon.direction = sample.omega();
+            }
+            else {
                 break;
-            }*/
+            }
         }
     }
 }

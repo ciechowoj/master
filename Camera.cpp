@@ -164,7 +164,7 @@ double renderInteractive(
     const int cols = (width + block - 1) / block;
     const int numBlocks = rows * cols;
 
-    const unsigned tasks = std::thread::hardware_concurrency() * 4 - 1;
+    const unsigned tasks = std::thread::hardware_concurrency() - 1;
 
     int itr = findLastBlock(imageData, pitch, block);
 
@@ -186,9 +186,9 @@ double renderInteractive(
     };
 
     while (glfwGetTime() < start + budget) {
-        localRender(itr++);
+        // localRender(itr++);
 
-        /*tbb::task_group group;
+        tbb::task_group group;
 
         for (unsigned i = 0; i < tasks; ++i) {
             group.run([=] { localRender(itr + i); });
@@ -198,7 +198,7 @@ double renderInteractive(
 
         group.wait();
 
-        itr = (itr + tasks + 1) % numBlocks;*/
+        itr = (itr + tasks + 1) % numBlocks;
     }
 
     return double((itr + numBlocksRendered) % numBlocks) / numBlocks;

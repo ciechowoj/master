@@ -21,8 +21,6 @@ Scene::Scene(
 }
 
 unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
-    std::cout << "numMeshes: " << meshes.size() << std::endl;
-
     unsigned geomID = rtcNewTriangleMesh(
         rtcScene,
         RTC_GEOMETRY_STATIC,
@@ -53,8 +51,6 @@ unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
 }
 
 unsigned makeRTCMesh(RTCScene rtcScene, const Lights& lights) {
-    std::cout << "lights.indices.size(): " << lights.indices.size() << std::endl;
-
     unsigned geomID = rtcNewTriangleMesh(
         rtcScene,
         RTC_GEOMETRY_STATIC,

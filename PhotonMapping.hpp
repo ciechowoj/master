@@ -35,7 +35,7 @@ private:
     double _progress = 0.0;
 
     void _scatterPhotonsInteractive(double timeQuantum);
-    void _scatterPhotons(size_t begin, size_t end);
+    void _scatterPhotons(RandomEngine& engine, size_t begin, size_t end);
     void _renderPhotons(size_t begin, size_t end);
     void _buildPhotonMapInteractive(double timeQuantum);
     void _gatherPhotonsInteractive(double timeQuantum);

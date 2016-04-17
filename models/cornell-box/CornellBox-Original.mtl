@@ -18,7 +18,6 @@ newmtl leftWall
   Ks 0 0 0
   Ke 0 0 0
 
-
 newmtl rightWall
   Ns 10.0000
   Ni 1.5000
@@ -27,7 +26,6 @@ newmtl rightWall
   Kd 0.14 0.45 0.091
   Ks 0 0 0
   Ke 0 0 0
-
 
 newmtl floor
   Ns 10.0000
@@ -38,7 +36,6 @@ newmtl floor
   Ks 0 0 0
   Ke 0 0 0
 
-
 newmtl ceiling
   Ns 10.0000
   Ni 1.0000
@@ -47,7 +44,6 @@ newmtl ceiling
   Kd 0.725 0.71 0.68
   Ks 0     0    0
   Ke 0     0    0
-
 
 newmtl backWall
   Ns 10.0000
@@ -58,7 +54,6 @@ newmtl backWall
   Ks 0 0 0
   Ke 0 0 0
 
-
 newmtl shortBox
   Ns 10.0000
   Ni 1.0000
@@ -67,7 +62,6 @@ newmtl shortBox
   Kd 0.725 0.71 0.68
   Ks 0 0 0
   Ke 0 0 0
-
 
 newmtl tallBox
   Ns 10.0000
@@ -85,4 +79,4 @@ newmtl light
   Ka 0.78 0.78 0.78 # White
   Kd 0.78 0.78 0.78
   Ks 0 0 0
-  Ke 34 24 8
+  Ke 670 480 160

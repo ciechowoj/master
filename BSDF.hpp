@@ -17,6 +17,7 @@ struct BSDFSample {
     const float density() const { return _density; }
     const float densityInv() const { return _densityInv; }
     const bool specular() const { return _specular; }
+    const bool zero() const;
 };
 
 class BSDF {
@@ -34,16 +35,16 @@ public:
         const vec3& b) const;
 
     virtual const BSDFSample sample(
-        RandomEngine& source,
+        RandomEngine& engine,
         const vec3& omega) const = 0;
 
     const BSDFSample sample(
-        RandomEngine& source,
+        RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omega) const;
 
     virtual BSDFSample scatter(
-        RandomEngine& source,
+        RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omega) const = 0;
 
@@ -60,11 +61,11 @@ public:
         const vec3& b) const override;
 
     const BSDFSample sample(
-        RandomEngine& source,
+        RandomEngine& engine,
         const vec3& omega) const override;
 
     BSDFSample scatter(
-        RandomEngine& source,
+        RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omega) const override;
 
