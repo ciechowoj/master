@@ -7,7 +7,11 @@ class BFDirectLighting : public Technique {
 public:
     BFDirectLighting();
 
-    void updateInteractive(double timeQuantum) override;
+    void updateInteractive(
+    	size_t width,
+        size_t height,
+        vec4* image,
+        double timeQuantum) override;
 
     string stageName() const override;
     double stageProgress() const override;

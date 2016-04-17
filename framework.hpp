@@ -24,4 +24,4 @@ void draw_fullscreen_quad(
     GLFWwindow* window,
     const std::vector<glm::vec4>& image);
 
-int loop(GLFWwindow* window, const std::function<void(int, int)>& loop);
+int loop(GLFWwindow* window, const std::function<void(int, int, void*)>& loop);

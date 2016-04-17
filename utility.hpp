@@ -40,13 +40,15 @@ private:
 
 void saveEXR(
     const string& path,
-    const vector<vec3>& data,
-    size_t pitch);
+    size_t width,
+    size_t height,
+    const vec3* data);
 
 void saveEXR(
     const string& path,
-    const vector<vec4>& data,
-    size_t pitch);
+    size_t width,
+    size_t height,
+    const vec4* data);
 
 string homePath();
 string baseName(string path);

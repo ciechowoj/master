@@ -62,28 +62,15 @@ namespace haste {
 
 void saveEXR(
     const string& path,
-    const vector<vec4>& data,
-    size_t pitch)
+    size_t widthll,
+    size_t heightll,
+    const vec3* data)
 {
-    auto data3 = vector<vec3>(data.size());
+    runtime_assert(widthll < INT_MAX);
+    runtime_assert(heightll < INT_MAX);
 
-    for (size_t i = 0; i < data.size(); ++i) {
-        data3[i] = data[i].xyz() / data[i].w;
-    }
-
-    saveEXR(path, data3, pitch);
-}
-
-void saveEXR(
-    const string& path,
-    const vector<vec3>& data,
-    size_t pitch)
-{
-    runtime_assert(pitch < INT_MAX);
-    runtime_assert(data.size() / pitch < INT_MAX);
-
-    int width = int(pitch);
-    int height = int(data.size() / width);
+    const int width = int(widthll);
+    const int height = int(heightll);
 
     Header header (width, height);
     header.channels().insert ("R", Channel (Imf::FLOAT));
@@ -94,13 +81,13 @@ void saveEXR(
 
     FrameBuffer framebuffer;
 
-    size_t size = data.size() * 3;
+    size_t size = width * height * 3;
     vector<float> data_copy(size);
 
     for (size_t y = 0; y < height; ++y) {
         ::memcpy(
             data_copy.data() + y * width * 3,
-            data.data() + (height - y - 1) * width,
+            data + (height - y - 1) * width,
             width * sizeof(vec3));
     }
 
@@ -114,6 +101,21 @@ void saveEXR(
 
     file.setFrameBuffer(framebuffer);
     file.writePixels(height);
+}
+
+void saveEXR(
+    const string& path,
+    size_t width,
+    size_t height,
+    const vec4* data)
+{
+    auto data3 = vector<vec3>(width * height);
+
+    for (size_t i = 0; i < data3.size(); ++i) {
+        data3[i] = data[i].xyz() / data[i].w;
+    }
+
+    saveEXR(path, width, height, data3.data());
 }
 
 }

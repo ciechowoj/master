@@ -38,26 +38,24 @@ Ray shoot(
 
 size_t render(
     RandomEngine& source,
-    vector<vec4>& imageData,
+    size_t width,
+    size_t height,
+    vec4* image,
     const ImageDesc& imageDesc,
     const Camera& camera,
     const std::function<vec3(RandomEngine& source, Ray ray)>& trace)
 {
     UniformSampler sampler;
 
-    const int width = imageDesc.pitch;
-    const int height = imageData.size() / width;
-
     const int xBegin = max(0, imageDesc.x);
-    const int xEnd = min(xBegin + imageDesc.w, width);
+    const int xEnd = min(xBegin + imageDesc.w, int(width));
 
     const int rXBegin = xEnd - 1;
     const int rXEnd = xBegin - 1;
 
     const int yBegin = max(0, imageDesc.y);
-    const int yEnd = min(yBegin + imageDesc.h, height);
+    const int yEnd = min(yBegin + imageDesc.h, int(height));
 
-    runtime_assert(width * height == imageData.size());
     runtime_assert(0 <= xBegin && xEnd <= width);
     runtime_assert(0 <= yBegin && yEnd <= height);
 
@@ -70,9 +68,9 @@ size_t render(
     for (int y = yBegin; y < yEnd; ++y) {
         for (int x = xBegin; x < xEnd; ++x) {
             Ray ray = shoot(source, camera, x, y, winv2, hinv2, aspect, znear);
-            vec3 old = imageData[y * width + x].xyz();
-            float count = imageData[y * width + x].w;
-            imageData[y * width + x] = vec4(old + trace(source, ray), count + 1.f);
+            vec3 old = image[y * width + x].xyz();
+            float count = image[y * width + x].w;
+            image[y * width + x] = vec4(old + trace(source, ray), count + 1.f);
         }
 
         ++y;
@@ -80,9 +78,9 @@ size_t render(
         if (y < yEnd) {
             for (int x = rXBegin; x > rXEnd; --x) {
                 Ray ray = shoot(source, camera, x, y, winv2, hinv2, aspect, znear);
-                vec3 old = imageData[y * width + x].xyz();
-                float count = imageData[y * width + x].w;
-                imageData[y * width + x] = vec4(old + trace(source, ray), count + 1.f);
+                vec3 old = image[y * width + x].xyz();
+                float count = image[y * width + x].w;
+                image[y * width + x] = vec4(old + trace(source, ray), count + 1.f);
             }
         }
     }
@@ -92,43 +90,45 @@ size_t render(
 
 size_t render(
     RandomEngine& source,
-    vector<vec4>& imageData,
-    size_t pitch,
+    size_t width,
+    size_t height,
+    vec4* image,
     const Camera& camera,
     const function<vec3(RandomEngine& source, Ray ray)>& trace)
 {
     ImageDesc imageDesc;
     imageDesc.x = 0;
     imageDesc.y = 0;
-    imageDesc.w = pitch;
-    imageDesc.h = imageData.size() / pitch;
-    imageDesc.pitch = pitch;
+    imageDesc.w = width;
+    imageDesc.h = height;
+    imageDesc.pitch = width;
 
     return render(
         source,
-        imageData,
+        width,
+        height,
+        image,
         imageDesc,
         camera,
         trace);
 }
 
 int findLastBlock(
-    const vector<vec4>& imageData,
-    size_t pitch,
+    size_t width,
+    size_t height,
+    vec4* image,
     size_t block)
 {
-    if (imageData.front().w == imageData.back().w) {
+    if (image[0].w == image[width * height - 1].w) {
         return 0;
     }
     else {
-        const int width = pitch;
-        const int height = imageData.size() / width;
         const int cols = (width + block - 1) / block;
         const int rows = (height + block - 1) / block;
 
         int a = 0;
         int b = cols * rows;
-        float q = imageData.back().a;
+        float q = image[width * height - 1].w;
 
         while (a != b) {
             int h = a + (b - a) / 2;
@@ -136,7 +136,7 @@ int findLastBlock(
             int x = h % cols * block;
             int y = h / cols * block;
 
-            if (imageData[y * width + x].w > q) {
+            if (image[y * width + x].w > q) {
                 a = h + 1;
             }
             else {
@@ -149,8 +149,9 @@ int findLastBlock(
 }
 
 double renderInteractive(
-    vector<vec4>& imageData,
-    size_t pitch,
+    size_t width,
+    size_t height,
+    vec4* image,
     const Camera& camera,
     const function<vec3(RandomEngine& source, Ray ray)>& trace)
 {
@@ -158,19 +159,17 @@ double renderInteractive(
     double start = glfwGetTime();
     const int block = 64;
 
-    const int width = pitch;
-    const int height = imageData.size() / pitch;
     const int rows = (height + block - 1) / block;
     const int cols = (width + block - 1) / block;
     const int numBlocks = rows * cols;
 
     const unsigned tasks = std::thread::hardware_concurrency() - 1;
 
-    int itr = findLastBlock(imageData, pitch, block);
+    int itr = findLastBlock(width, height, image, block);
 
     tbb::atomic<size_t> numBlocksRendered(0);
 
-    auto localRender = [=, &imageData, &numBlocksRendered](int index) {
+    auto localRender = [=, &image, &numBlocksRendered](int index) {
         RandomEngine source;
 
         ImageDesc imageDesc;
@@ -178,11 +177,11 @@ double renderInteractive(
         imageDesc.y = index / cols * block;
         imageDesc.w = block;
         imageDesc.h = block;
-        imageDesc.pitch = pitch;
+        imageDesc.pitch = width;
 
         ++numBlocksRendered;
 
-        render(source, imageData, imageDesc, camera, trace);
+        render(source, width, height, image, imageDesc, camera, trace);
     };
 
     while (glfwGetTime() < start + budget) {

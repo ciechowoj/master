@@ -41,8 +41,9 @@ size_t render(
     const function<vec3(RandomEngine& source, Ray ray)>& trace);
 
 double renderInteractive(
-    vector<vec4>& imageData,
-    size_t pitch,
+    size_t width,
+    size_t height,
+    vec4* image,
     const Camera& camera,
     const function<vec3(RandomEngine& source, Ray ray)>& trace);
 

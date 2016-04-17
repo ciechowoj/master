@@ -46,6 +46,8 @@ struct GUI {
     void update(
         const Technique& technique,
         size_t width,
+        size_t height,
+        vec4* image,
         float elapsed);
 };
 
@@ -65,29 +67,28 @@ int main(int argc, char **argv) {
 
         GUI gui(scenePath);
 
-        // PhotonMapping technique(1000000, 50, 0.1f);
-        PathTracing technique;
+        PhotonMapping technique(1000000, 50, 0.1f);
+        // PathTracing technique;
         // BFDirectLighting technique;
 
         technique.setScene(scene);
         technique.setCamera(camera);
 
-        loop(window, [&](int width, int height) {
-            technique.setImageSize(width, height);
-
+        loop(window, [&](int width, int height, void* image) {
             double start = glfwGetTime();
-            technique.updateInteractive(0.033);
-
-            draw_fullscreen_quad(window, technique.image());
+            technique.updateInteractive(width, height, (vec4*)image, 0.033);
 
             gui.update(
                 technique,
                 width,
+                height,
+                (vec4*)image,
                 float(glfwGetTime() - start));
 
             if (gui.view != camera->view || gui.fovy != camera->fovy) {
                 camera->view = gui.view;
                 camera->fovy = gui.fovy;
+                memset(image, 0, width * height * sizeof(vec4));
                 technique.softReset();
             }
         });
@@ -154,6 +155,8 @@ void GUI::updateCamera() {
 void GUI::update(
     const Technique& technique,
     size_t width,
+    size_t height,
+    vec4* image,
     float elapsed)
 {
     // bool show_test_window = true;
@@ -195,7 +198,7 @@ void GUI::update(
     ImGui::SameLine();
 
     if (ImGui::Button("Save EXR")) {
-        saveEXR(path, technique.image(), width);
+        saveEXR(path, width, height, image);
     }
 
     string fixed = fixedPath(path, scenePath, technique.numSamples());
@@ -205,7 +208,7 @@ void GUI::update(
     ImGui::PushID("save-exr");
 
     if (ImGui::Button("Save EXR")) {
-        saveEXR(fixed, technique.image(), width);
+        saveEXR(fixed, width, height, image);
     }
 
     ImGui::PopID();
@@ -215,10 +218,7 @@ void GUI::update(
         auto pos = ImGui::GetMousePos();
         std::stringstream stream;
 
-        auto& image = technique.image();
-        auto height = image.size() / width;
-
-        vec4 radiance = image[(height - pos.y - 1) * width + pos.x];
+        vec4 radiance = image[size_t((height - pos.y - 1) * width + pos.x)];
 
         stream << "[" << pos.x << ", " << pos.y << "]: " << radiance.xyz() / radiance.w << " W/(m*m*sr)";
 

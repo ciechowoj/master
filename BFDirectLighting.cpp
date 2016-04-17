@@ -6,11 +6,16 @@ namespace haste {
 
 BFDirectLighting::BFDirectLighting() { }
 
-void BFDirectLighting::updateInteractive(double timeQuantum) {
+void BFDirectLighting::updateInteractive(
+    size_t width,
+    size_t height,
+    vec4* image,
+    double timeQuantum)
+{
     double startTime = glfwGetTime();
     size_t startRays = _scene->numRays();
 
-    _progress = renderInteractive(_image, _width, *_camera, [&](RandomEngine& source, Ray ray) -> vec3 {
+    _progress = renderInteractive(width, height, image, *_camera, [&](RandomEngine& source, Ray ray) -> vec3 {
         return _trace(source, ray);
     });
 

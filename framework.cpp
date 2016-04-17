@@ -159,13 +159,6 @@ void draw_fullscreen_quad(
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, context->pixel_buffer_id);
     bind_fullscreen_texture(window);
 
-    void* pointer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
-
-    if (pointer) {
-        memcpy(pointer, image.data(), image.size() * sizeof(image[0]));
-        glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-    }
-
     glTexSubImage2D(
         GL_TEXTURE_2D, 0, 0, 0,
         context->texture_width,
@@ -269,7 +262,7 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
     return 0;
 }
 
-int loop(GLFWwindow* window, const std::function<void(int, int)>& loop) {
+int loop(GLFWwindow* window, const std::function<void(int, int, void*)>& loop) {
     while (!glfwWindowShouldClose(window)) {
         window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
         glViewport(0, 0, context->texture_width, context->texture_height);
@@ -279,7 +272,17 @@ int loop(GLFWwindow* window, const std::function<void(int, int)>& loop) {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        loop(context->texture_width, context->texture_height);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, context->pixel_buffer_id);
+        void* pointer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
+
+        if (pointer) {
+            loop(context->texture_width, context->texture_height, pointer);
+            glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+        }
+
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+        draw_fullscreen_quad(window, std::vector<glm::vec4>());
 
         ImGui::Render();
         glfwSwapBuffers(window);
