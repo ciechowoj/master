@@ -65,8 +65,8 @@ int main(int argc, char **argv) {
 
         GUI gui(scenePath);
 
-        PhotonMapping technique(1000000, 100, 0.1f);
-        // PathTracing technique;
+        // PhotonMapping technique(1000000, 50, 0.1f);
+        PathTracing technique;
         // BFDirectLighting technique;
 
         technique.setScene(scene);

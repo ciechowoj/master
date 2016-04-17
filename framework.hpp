@@ -15,12 +15,13 @@ struct window_context_t {
     GLuint sampler_location = 0;
     GLuint buffer_id = 0;
     GLuint varray_id = 0;
+    GLuint pixel_buffer_id = 0;
 };
 
 int run(int width, int height, const std::function<void(GLFWwindow* window)>& func);
 
 void draw_fullscreen_quad(
-    GLFWwindow* window, 
+    GLFWwindow* window,
     const std::vector<glm::vec4>& image);
 
 int loop(GLFWwindow* window, const std::function<void(int, int)>& loop);

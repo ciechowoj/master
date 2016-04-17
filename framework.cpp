@@ -155,7 +155,16 @@ void draw_fullscreen_quad(
     window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
     glUseProgram(context->program_id);
     glBindVertexArray(context->varray_id);
+
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, context->pixel_buffer_id);
     bind_fullscreen_texture(window);
+
+    void* pointer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+
+    if (pointer) {
+        memcpy(pointer, image.data(), image.size() * sizeof(image[0]));
+        glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    }
 
     glTexSubImage2D(
         GL_TEXTURE_2D, 0, 0, 0,
@@ -163,7 +172,9 @@ void draw_fullscreen_quad(
         context->texture_height,
         GL_RGBA,
         GL_FLOAT,
-        image.data());
+        0);
+
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     draw_fullscreen_quad(context->buffer_id);
 }
@@ -173,6 +184,7 @@ void window_resize(GLFWwindow* window, int width, int height) {
 
     if (!context->texture_created) {
         glGenTextures(1, &context->texture_id);
+        glGenBuffers(1, &context->pixel_buffer_id);
         context->texture_created = true;
     }
 
@@ -182,6 +194,16 @@ void window_resize(GLFWwindow* window, int width, int height) {
         glGenSamplers(1, &context->sampler_id);
         glSamplerParameteri(context->sampler_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glSamplerParameteri(context->sampler_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, context->pixel_buffer_id);
+
+        glBufferData(
+            GL_PIXEL_UNPACK_BUFFER,
+            width * height * sizeof(glm::vec4),
+            nullptr,
+            GL_STREAM_DRAW);
+
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
         context->texture_width = width;
         context->texture_height = height;
