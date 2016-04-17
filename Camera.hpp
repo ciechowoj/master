@@ -1,7 +1,7 @@
 #pragma once
 #include <functional>
 #include <vector>
-#include <glm>
+#include <Sample.hpp>
 
 namespace haste {
 
@@ -27,22 +27,24 @@ struct ImageDesc {
 };
 
 size_t render(
+    RandomEngine& source,
     vector<vec4>& imageData,
     const ImageDesc& imageDesc,
     const Camera& camera,
-    const function<vec3(Ray ray)>& trace);
+    const function<vec3(RandomEngine& source, Ray ray)>& trace);
 
 size_t render(
+    RandomEngine& source,
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,
-    const function<vec3(Ray ray)>& trace);
+    const function<vec3(RandomEngine& source, Ray ray)>& trace);
 
 double renderInteractive(
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,
-    const function<vec3(Ray ray)>& trace);
+    const function<vec3(RandomEngine& source, Ray ray)>& trace);
 
 size_t renderGammaBoard(
     vector<vec4>& imageData,

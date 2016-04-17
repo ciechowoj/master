@@ -37,7 +37,7 @@ public:
 private:
     UniformSampler uniform;
 };
-
+/*
 class HemisphereSampler {
 public:
     vec3 sample();
@@ -51,15 +51,15 @@ public:
 private:
     UniformSampler uniform;
 };
-
+*/
 void saveEXR(
-    const string& path, 
-    const vector<vec3>& data, 
+    const string& path,
+    const vector<vec3>& data,
     size_t pitch);
 
 void saveEXR(
-    const string& path, 
-    const vector<vec4>& data, 
+    const string& path,
+    const vector<vec4>& data,
     size_t pitch);
 
 string homePath();

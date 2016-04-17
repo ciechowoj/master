@@ -286,7 +286,7 @@ shared<Scene> loadScene(string path) {
         materials.names.push_back(name(scene->mMaterials[i]));
         materials.diffuses.push_back(diffuse(scene->mMaterials[i]));
         materials.speculars.push_back(specular(scene->mMaterials[i]));
-        materials.bsdfs.push_back(BSDF::lambert(materials.diffuses.back()));
+        materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(materials.diffuses.back())));
     }
 
     shared<Scene> result = make_shared<Scene>(

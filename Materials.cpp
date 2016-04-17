@@ -3,7 +3,7 @@
 #include <Scene.hpp>
 
 namespace haste {
-
+/*
 bool Materials::scatter(
     Photon& photon,
     const SurfacePoint& point) const
@@ -26,5 +26,5 @@ bool Materials::scatter(
         return false;
     }
 }
-
+*/
 }

@@ -1,12 +1,23 @@
 #pragma once
+#include <memory>
 #include <glm>
 #include <utility.hpp>
 #include <BSDF.hpp>
 
 namespace haste {
 
+template <class T> using unique = std::unique_ptr<T>;
+
+
+
 struct SurfacePoint;
 struct Photon;
+
+enum BSDFType {
+    BDSFType
+};
+
+using Material = size_t;
 
 class Materials {
 public:
@@ -14,13 +25,7 @@ public:
     vector<vec3> diffuses;
     vector<vec3> emissives;
     vector<vec3> speculars;
-    vector<BSDF> bsdfs;
-
-    bool scatter(
-        Photon& photon,
-        const SurfacePoint& point) const;
-
-
+    vector<unique<BSDF>> bsdfs;
 
     size_t numMaterials() const {
     	return names.size();
@@ -30,9 +35,7 @@ public:
     	return names[index];
     }
 
-private:
-	mutable UniformSampler uniformSampler;
-	mutable HemisphereCosineSampler cosineSampler;
+    const BSDF& queryBSDF(Material material) const;
 };
 
 }

@@ -7,7 +7,6 @@
 #include <xmmintrin.h>
 #include <pmmintrin.h>
 #include <loader.hpp>
-#include <raycast.hpp>
 #include <runtime_assert>
 
 #include <PathTracing.hpp>
@@ -66,9 +65,9 @@ int main(int argc, char **argv) {
 
         GUI gui(scenePath);
 
-        // PhotonMapping technique(10000000, 100, 1.0f);
+        PhotonMapping technique(10000000, 100, 1.0f);
         // PathTracing technique;
-        BFDirectLighting technique;
+        // BFDirectLighting technique;
 
         technique.setScene(scene);
         technique.setCamera(camera);

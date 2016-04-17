@@ -46,7 +46,7 @@ vec3 BarycentricSampler::sample() {
         return vec3(1 - u, 1 - v, u + v - 1);
     }
 }
-
+/*
 vec3 HemisphereSampler::sample() {
     float a = uniform.sample();
     float b = uniform.sample() * pi<float>() * 2.0f;
@@ -65,7 +65,7 @@ vec3 HemisphereCosineSampler::sample() {
 
     return normalize(vec3(x, y, z));
 }
-
+*/
 }
 
 #include <ImfOutputFile.h>

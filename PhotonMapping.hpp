@@ -39,7 +39,7 @@ private:
     void _renderPhotons(size_t begin, size_t end);
     void _buildPhotonMapInteractive(double timeQuantum);
     void _gatherPhotonsInteractive(double timeQuantum);
-    vec3 _gather(Ray ray);
+    vec3 _gather(RandomEngine& source, Ray ray);
 
     PhotonMapping(const PhotonMapping&) = delete;
     PhotonMapping& operator=(const PhotonMapping&) = delete;

@@ -20,7 +20,7 @@ vec3 sampleLight(
         incident = normalize(incident);
         float sqDistanceInv = 1.f / (distance * distance);
 
-        vec3 throughput = bsdf.eval(
+        vec3 throughput = bsdf.query(
             worldToLight * incident,
             worldToLight * reflected);
 
@@ -35,6 +35,7 @@ vec3 sampleLight(
 }
 
 vec3 pathtrace(
+    RandomEngine& source,
     Ray ray,
     const Scene& scene)
 {
@@ -77,13 +78,13 @@ vec3 pathtrace(
             bsdf);
 
         auto bsdfSample = bsdf.sample(
-            lightToWorld,
-            worldToLight,
+            source,
+            point,
             -ray.direction);
 
-        throughput *= bsdfSample.throughput * dot(normal, bsdfSample.direction);
+        throughput *= bsdfSample.throughput() * dot(normal, bsdfSample.omega());
 
-        ray.direction = bsdfSample.direction;
+        ray.direction = bsdfSample.omega();
         ray.origin = isect.position();
 
         float prob = min(0.5f, length(throughput));
@@ -107,8 +108,8 @@ void PathTracing::updateInteractive(double timeQuantum) {
     double startTime = glfwGetTime();
     size_t startRays = _scene->numRays();
 
-    _progress = renderInteractive(_image, _width, *_camera, [&](Ray ray) -> vec3 {
-        return pathtrace(ray, *_scene);
+    _progress = renderInteractive(_image, _width, *_camera, [&](RandomEngine& source, Ray ray) -> vec3 {
+        return pathtrace(source, ray, *_scene);
     });
 
     _renderTime += glfwGetTime() - startTime;

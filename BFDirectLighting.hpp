@@ -13,7 +13,7 @@ public:
     double stageProgress() const override;
 
 private:
-    vec3 _trace(Ray ray);
+    vec3 _trace(RandomEngine& source, Ray ray);
 
     double _progress;
 };

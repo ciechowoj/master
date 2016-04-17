@@ -17,7 +17,7 @@ mat4 Camera::proj(size_t width, size_t height) const {
 }
 
 Ray shoot(
-    UniformSampler& sampler,
+    RandomEngine& source,
     const Camera& camera,
     int x,
     int y,
@@ -26,8 +26,9 @@ Ray shoot(
     float aspect,
     float znear)
 {
-    float fx = ((float(x) + sampler.sample()) * winv2 - 1.f) * aspect;
-    float fy = (float(y) + sampler.sample()) * hinv2 - 1.f;
+    auto uniform = sampleUniform2(source);
+    float fx = ((float(x) + uniform.a()) * winv2 - 1.f) * aspect;
+    float fy = (float(y) + uniform.b()) * hinv2 - 1.f;
 
     return Ray {
         (camera.view * vec4(0.f, 0.f, 0.f, 1.f)).xyz(),
@@ -36,10 +37,11 @@ Ray shoot(
 }
 
 size_t render(
+    RandomEngine& source,
     vector<vec4>& imageData,
     const ImageDesc& imageDesc,
     const Camera& camera,
-    const std::function<vec3(Ray ray)>& trace)
+    const std::function<vec3(RandomEngine& source, Ray ray)>& trace)
 {
     UniformSampler sampler;
 
@@ -67,20 +69,20 @@ size_t render(
 
     for (int y = yBegin; y < yEnd; ++y) {
         for (int x = xBegin; x < xEnd; ++x) {
-            Ray ray = shoot(sampler, camera, x, y, winv2, hinv2, aspect, znear);
+            Ray ray = shoot(source, camera, x, y, winv2, hinv2, aspect, znear);
             vec3 old = imageData[y * width + x].xyz();
             float count = imageData[y * width + x].w;
-            imageData[y * width + x] = vec4(old + trace(ray), count + 1.f);
+            imageData[y * width + x] = vec4(old + trace(source, ray), count + 1.f);
         }
 
         ++y;
 
         if (y < yEnd) {
             for (int x = rXBegin; x > rXEnd; --x) {
-                Ray ray = shoot(sampler, camera, x, y, winv2, hinv2, aspect, znear);
+                Ray ray = shoot(source, camera, x, y, winv2, hinv2, aspect, znear);
                 vec3 old = imageData[y * width + x].xyz();
                 float count = imageData[y * width + x].w;
-                imageData[y * width + x] = vec4(old + trace(ray), count + 1.f);
+                imageData[y * width + x] = vec4(old + trace(source, ray), count + 1.f);
             }
         }
     }
@@ -89,10 +91,11 @@ size_t render(
 }
 
 size_t render(
+    RandomEngine& source,
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,
-    const function<vec3(Ray ray)>& trace)
+    const function<vec3(RandomEngine& source, Ray ray)>& trace)
 {
     ImageDesc imageDesc;
     imageDesc.x = 0;
@@ -102,6 +105,7 @@ size_t render(
     imageDesc.pitch = pitch;
 
     return render(
+        source,
         imageData,
         imageDesc,
         camera,
@@ -148,7 +152,7 @@ double renderInteractive(
     vector<vec4>& imageData,
     size_t pitch,
     const Camera& camera,
-    const function<vec3(Ray ray)>& trace)
+    const function<vec3(RandomEngine& source, Ray ray)>& trace)
 {
     const float budget = 0.010;
     double start = glfwGetTime();
@@ -167,6 +171,8 @@ double renderInteractive(
     tbb::atomic<size_t> numBlocksRendered(0);
 
     auto localRender = [=, &imageData, &numBlocksRendered](int index) {
+        RandomEngine source;
+
         ImageDesc imageDesc;
         imageDesc.x = index % cols * block;
         imageDesc.y = index / cols * block;
@@ -176,7 +182,7 @@ double renderInteractive(
 
         ++numBlocksRendered;
 
-        render(imageData, imageDesc, camera, trace);
+        render(source, imageData, imageDesc, camera, trace);
     };
 
     while (glfwGetTime() < start + budget) {

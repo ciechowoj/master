@@ -133,7 +133,7 @@ bool Scene::isLight(const RayIsect& isect) const {
 }
 
 const BSDF& Scene::queryBSDF(const RayIsect& hit) const {
-   return materials.bsdfs[meshes[hit.geomID].materialID];
+   return *materials.bsdfs[meshes[hit.geomID].materialID];
 }
 
 vec3 Scene::lerpNormal(const RayIsect& hit) const {

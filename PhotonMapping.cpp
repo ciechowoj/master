@@ -108,9 +108,9 @@ void PhotonMapping::_scatterPhotons(size_t begin, size_t end) {
 
             SurfacePoint point = _scene->querySurface(isect);
 
-            if(!_scene->materials.scatter(photon, point)) {
+            /*if(!_scene->materials.scatter(photon, point)) {
                 break;
-            }
+            }*/
         }
     }
 }
@@ -151,12 +151,12 @@ void PhotonMapping::_buildPhotonMapInteractive(double timeQuantum) {
 }
 
 void PhotonMapping::_gatherPhotonsInteractive(double timeQuantum) {
-    _progress = renderInteractive(_image, _width, *_camera, [&](Ray ray) -> vec3 {
-        return _gather(ray);
+    _progress = renderInteractive(_image, _width, *_camera, [&](RandomEngine& source, Ray ray) -> vec3 {
+        return _gather(source, ray);
     });
 }
 
-vec3 PhotonMapping::_gather(Ray ray) {
+vec3 PhotonMapping::_gather(RandomEngine& source, Ray ray) {
     Photon auxiliary[_maxNumNearest];
     vec3 radiance = vec3(0.0f);
 
@@ -184,7 +184,7 @@ vec3 PhotonMapping::_gather(Ray ray) {
             _maxDistance);
 
         if (queried > 8) {
-            auto bsdf = _scene->queryBSDF(isect);
+            auto& bsdf = _scene->queryBSDF(isect);
             vec3 result = vec3(0.0f);
 
             float radius2 = 0.0;
@@ -193,7 +193,7 @@ vec3 PhotonMapping::_gather(Ray ray) {
                 vec3 incident = auxiliary[i].direction * point.toWorldM;
                 vec3 reflected = -normalize(ray.direction) * point.toWorldM;
 
-                result += auxiliary[i].power * bsdf.eval(incident, reflected);
+                result += auxiliary[i].power * bsdf.query(incident, reflected);
                 radius2 = max(radius2, distance2(isect.position(), auxiliary[i].position));
             }
 

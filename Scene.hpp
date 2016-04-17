@@ -73,8 +73,12 @@ struct SurfacePoint {
         return toWorldM[0];
     }
 
-    vec3 toWorld(const vec3& v) const {
+    const vec3 toWorld(const vec3& v) const {
         return toWorldM * v;
+    }
+
+    const vec3 toSurface(const vec3& world) const {
+        return world * toWorldM;
     }
 };
 

@@ -134,7 +134,7 @@ Photon Lights::emit() const {
 
     Photon result;
     result.position = point.position;
-    result.direction = point.toWorldM * cosineSampler.sample();
+    result.direction = point.toWorldM * sampleCosineHemisphere1(source).omega();
     result.power = exitances[id];
     float length1 = 1.f / (result.power.x + result.power.y + result.power.z);
     result.power = result.power * length1;

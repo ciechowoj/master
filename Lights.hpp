@@ -67,9 +67,9 @@ public:
     vec3 eval(const RayIsect& isect) const;
 
 public:
+    mutable RandomEngine source;
     mutable PiecewiseSampler lightSampler;
     mutable BarycentricSampler faceSampler;
-    mutable HemisphereCosineSampler cosineSampler;
     mutable vector<float> lightWeights;
 
     void buildLightStructs() const;
