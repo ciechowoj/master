@@ -19,9 +19,9 @@ vec3 pathtrace(
     while (true) {
         auto isect = scene.intersect(ray.origin, ray.direction);
 
-        while (scene.isLight(isect)) {
+        while (isect.isLight()) {
             if (bounce == 0 || specular) {
-                radiance += throughput * scene.lights.eval(isect);
+                radiance += throughput * _scene->queryRadiance(isect);
             }
 
             ray.origin = isect.position();

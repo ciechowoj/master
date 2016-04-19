@@ -43,7 +43,7 @@ struct LightPoint {
     mat3 toWorldM;
 };
 
-class Lights {
+class AreaLights {
 public:
     vector<string> names;
     vector<size_t> offsets;
@@ -67,15 +67,18 @@ public:
     float queryAreaLightArea(size_t id) const;
 
 
+    const vec3 faceRadiance(size_t face) const;
+    const vec3 faceRadiance(const RayIsect& isect) const;
+
+
+
     size_t sampleLight() const;
     LightPoint sampleSurface(size_t id) const;
-    mat3 queryTransform(size_t id) const;
+
 
     Photon emit() const;
 
     LightSample sample(const vec3& position) const;
-
-    vec3 eval(const RayIsect& isect) const;
 
     LightSample sample(
         RandomEngine& engine,

@@ -22,37 +22,37 @@ namespace haste {
 // v1 ************************************** v2
 //
 
-size_t Lights::numLights() const {
+size_t AreaLights::numLights() const {
     return names.size();
 }
 
-size_t Lights::numFaces() const {
+size_t AreaLights::numFaces() const {
     return indices.size() / 3;
 }
 
-float Lights::faceArea(size_t face) const {
+float AreaLights::faceArea(size_t face) const {
     vec3 u = vertices[indices[face * 3 + 1]] - vertices[indices[face * 3 + 0]];
     vec3 v = vertices[indices[face * 3 + 2]] - vertices[indices[face * 3 + 0]];
     return length(cross(u, v)) * 0.5f;
 }
 
-float Lights::facePower(size_t face) const {
+float AreaLights::facePower(size_t face) const {
     return length(exitances[face]) * faceArea(face) * pi<float>();
 }
 
-vec3 Lights::lerpPosition(size_t face, vec3 uvw) const {
+vec3 AreaLights::lerpPosition(size_t face, vec3 uvw) const {
     return vertices[indices[face * 3 + 0]] * uvw.z
         + vertices[indices[face * 3 + 1]] * uvw.x
         + vertices[indices[face * 3 + 2]] * uvw.y;
 }
 
-vec3 Lights::lerpNormal(size_t face, vec3 uvw) const {
+vec3 AreaLights::lerpNormal(size_t face, vec3 uvw) const {
     return normalize(toWorldMs[indices[face * 3 + 0]][1] * uvw.z
         + toWorldMs[indices[face * 3 + 1]][1] * uvw.x
         + toWorldMs[indices[face * 3 + 2]][1] * uvw.y);
 }
 
-vec3 Lights::lerpNormal(const RayIsect& hit) const {
+vec3 AreaLights::lerpNormal(const RayIsect& hit) const {
     float w = 1.0f - hit.u - hit.v;
 
     return normalize(toWorldMs[indices[hit.primID * 3 + 0]][1] * w
@@ -60,16 +60,14 @@ vec3 Lights::lerpNormal(const RayIsect& hit) const {
         + toWorldMs[indices[hit.primID * 3 + 2]][1] * hit.v);
 }
 
-vec3 Lights::eval(const RayIsect& isect) const {
-    return exitances[isect.primID] * dot(isect.gnormal(), isect.incident());
-}
 
-float Lights::queryTotalPower() const {
+
+float AreaLights::queryTotalPower() const {
     vec3 power = queryTotalPower3();
     return power.x + power.y + power.z;
 }
 
-vec3 Lights::queryTotalPower3() const {
+vec3 AreaLights::queryTotalPower3() const {
     runtime_assert(indices.size() % 3 == 0);
 
     vec3 result(0.0f);
@@ -83,28 +81,28 @@ vec3 Lights::queryTotalPower3() const {
     return result;
 }
 
-float Lights::queryAreaLightPower(size_t id) const {
+float AreaLights::queryAreaLightPower(size_t id) const {
     vec3 power = queryAreaLightPower3(id);
     return power.x + power.y + power.z;
 }
 
-vec3 Lights::queryAreaLightPower3(size_t id) const {
+vec3 AreaLights::queryAreaLightPower3(size_t id) const {
     return exitances[id] * queryAreaLightArea(id);
 }
 
-float Lights::queryAreaLightArea(size_t id) const {
+float AreaLights::queryAreaLightArea(size_t id) const {
     vec3 u = vertices[indices[id * 3 + 1]] - vertices[indices[id * 3 + 0]];
     vec3 v = vertices[indices[id * 3 + 2]] - vertices[indices[id * 3 + 0]];
     return length(cross(u, v)) * 0.5f;
 }
 
-size_t Lights::sampleLight() const {
+size_t AreaLights::sampleLight() const {
     runtime_assert(numFaces() != 0);
     auto sample = lightSampler.sample();
     return min(size_t(sample * numFaces()), numFaces() - 1);
 }
 
-LightPoint Lights::sampleSurface(size_t id) const {
+LightPoint AreaLights::sampleSurface(size_t id) const {
     LightPoint result;
 
     vec3 uvw = faceSampler.sample();
@@ -126,7 +124,7 @@ LightPoint Lights::sampleSurface(size_t id) const {
     return result;
 }
 
-Photon Lights::emit() const {
+Photon AreaLights::emit() const {
     size_t id = sampleLight();
 
     LightPoint point = sampleSurface(id);
@@ -141,7 +139,7 @@ Photon Lights::emit() const {
     return result;
 }
 
-LightSample Lights::sample(const vec3& position) const {
+LightSample AreaLights::sample(const vec3& position) const {
     // below computations are probably incorrect (to be fixed)
 
     size_t face = sampleLight();
@@ -159,7 +157,7 @@ LightSample Lights::sample(const vec3& position) const {
     return sample;
 }
 
-LightSample Lights::sample(
+LightSample AreaLights::sample(
     RandomEngine& engine,
     const vec3& position) const
 {
@@ -189,7 +187,7 @@ LightSample Lights::sample(
     return result;
 }
 
-void Lights::buildLightStructs() const {
+void AreaLights::buildLightStructs() const {
     size_t numFaces = this->numFaces();
     lightWeights.resize(numFaces);
 

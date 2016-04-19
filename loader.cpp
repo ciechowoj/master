@@ -178,7 +178,7 @@ Mesh makeMesh(
 }
 
 void appendLights(
-    Lights& lights,
+    AreaLights& lights,
     const aiScene* scene,
     size_t i) {
 
@@ -271,7 +271,7 @@ shared<Scene> loadScene(string path) {
         }
     }
 
-    Lights lights;
+    AreaLights lights;
 
     for (size_t i = 0; i < emissive.size(); ++i) {
         appendLights(

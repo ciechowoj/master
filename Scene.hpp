@@ -3,11 +3,10 @@
 #include <vector>
 #include <atomic>
 
-#include <embree2/rtcore.h>
-#include <embree2/rtcore_ray.h>
+#include <RayIsect.hpp>
 
 #include <BSDF.hpp>
-#include <Lights.hpp>
+#include <AreaLights.hpp>
 #include <Materials.hpp>
 
 #include <SurfacePoint.hpp>
@@ -25,28 +24,6 @@ using std::size_t;
 using std::move;
 
 struct Ray;
-
-struct RayIsect : public RTCRay {
-private:
-    using cpvec3 = const vec3*;
-
-public:
-    bool isPresent() const;
-    bool isLight() const;
-    bool isGeometry() const;
-
-    vec3 gnormal() const {
-        return normalize(vec3(-Ng[0], -Ng[1], -Ng[2]));
-    }
-
-    vec3 position() const {
-        return *cpvec3(org) + *cpvec3(dir) * tfar;
-    }
-
-    const vec3 incident() const {
-        return -normalize(*cpvec3(dir));
-    }
-};
 
 struct Mesh {
     string name;
@@ -72,16 +49,13 @@ public:
     Scene(
         Materials&& materials,
         vector<Mesh>&& meshes,
-        Lights&& areaLights);
+        AreaLights&& areaLights);
 
     const vector<Mesh> meshes;
-    const Lights lights;
+    const AreaLights lights;
     const Materials materials;
 
     void buildAccelStructs(RTCDevice device);
-
-    bool isMesh(const RayIsect& hit) const;
-    bool isLight(const RayIsect& isect) const;
 
     const BSDF& queryBSDF(const RayIsect& hit) const;
     vec3 lightExitance(const RayIsect& hit) const;
@@ -132,9 +106,5 @@ private:
 
     mutable RTCScene rtcScene;
 };
-
-inline bool RayIsect::isPresent() const {
-    return geomID != RTC_INVALID_GEOMETRY_ID;
-}
 
 }

@@ -9,7 +9,7 @@ namespace haste {
 Scene::Scene(
     Materials&& materials,
     vector<Mesh>&& meshes,
-    Lights&& areaLights)
+    AreaLights&& areaLights)
     : materials(move(materials))
     , meshes(move(meshes))
     , lights(move(areaLights))
@@ -50,7 +50,7 @@ unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
     return geomID;
 }
 
-unsigned makeRTCMesh(RTCScene rtcScene, const Lights& lights) {
+unsigned makeRTCMesh(RTCScene rtcScene, const AreaLights& lights) {
     unsigned geomID = rtcNewTriangleMesh(
         rtcScene,
         RTC_GEOMETRY_STATIC,
@@ -94,20 +94,12 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
         throw std::runtime_error("Cannot create RTCScene.");
     }
 
+    unsigned geomID = makeRTCMesh(rtcScene, scene.lights);
+    runtime_assert(geomID == 0, "Area lights have to get 0 primID.");
+
     for (size_t i = 0; i < scene.meshes.size(); ++i) {
         unsigned geomID = makeRTCMesh(rtcScene, i, scene.meshes);
-
-        if (geomID != i) {
-            rtcDeleteScene(rtcScene);
-            throw std::runtime_error("Geometry ID doesn't correspond to mesh index.");
-        }
-    }
-
-    unsigned geomID = makeRTCMesh(rtcScene, scene.lights);
-
-    if (geomID != scene.meshes.size()) {
-        rtcDeleteScene(rtcScene);
-        throw std::runtime_error("Geometry ID doesn't correspond to mesh index.");
+        runtime_assert(geomID == i + 1, "Geometry ID doesn't correspond to mesh index.");
     }
 
     rtcCommit(rtcScene);
@@ -120,21 +112,16 @@ void Scene::buildAccelStructs(RTCDevice device) {
     }
 }
 
-bool Scene::isMesh(const RayIsect& hit) const {
-    return hit.geomID < meshes.size();
-}
-
-bool Scene::isLight(const RayIsect& isect) const {
-    return isect.geomID == meshes.size();
-}
-
 const BSDF& Scene::queryBSDF(const RayIsect& hit) const {
-   return *materials.bsdfs[meshes[hit.geomID].materialID];
+    runtime_assert(hit.meshId() < meshes.size());
+    return *materials.bsdfs[meshes[hit.meshId()].materialID];
 }
 
 vec3 Scene::lerpNormal(const RayIsect& hit) const {
+    runtime_assert(hit.meshId() < meshes.size());
+
     const float w = 1.f - hit.u - hit.v;
-    auto& mesh = meshes[hit.geomID];
+    auto& mesh = meshes[hit.meshId()];
 
     return w * mesh.normals[mesh.indices[hit.primID * 3 + 0]] +
          hit.u * mesh.normals[mesh.indices[hit.primID * 3 + 1]] +
@@ -142,10 +129,10 @@ vec3 Scene::lerpNormal(const RayIsect& hit) const {
 }
 
 SurfacePoint Scene::querySurface(const RayIsect& isect) const {
-    runtime_assert(isect.geomID < meshes.size());
+    runtime_assert(isect.meshId() < meshes.size());
 
     const float w = 1.f - isect.u - isect.v;
-    auto& mesh = meshes[isect.geomID];
+    auto& mesh = meshes[isect.meshId()];
 
     SurfacePoint point;
     point.position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
@@ -171,9 +158,9 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
 }
 
 vec3 Scene::queryRadiance(const RayIsect& isect) const {
-    runtime_assert(isect.geomID == meshes.size());
+    runtime_assert(isect.isLight());
     const vec3 normal = lights.lerpNormal(isect);
-    const vec3 exitance = lights.exitances[isect.primID];
+    const vec3 exitance = lights.exitances[isect.faceId()];
 
     if (dot(normal, isect.incident()) > 0.0f) {
         return exitance * one_over_pi<float>();
@@ -254,7 +241,7 @@ const DirectLightSample Scene::sampleDirectLightAngle(
 
 
 
- 
+
 
 
     return DirectLightSample();

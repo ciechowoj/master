@@ -38,7 +38,7 @@ vec3 BFDirectLighting::_trace(RandomEngine& source, Ray ray) {
 
     auto isect = _scene->intersect(ray);
 
-    while (_scene->isLight(isect)) {
+    while (isect.isLight()) {
         radiance += _scene->queryRadiance(isect);
 
         ray.origin = isect.position();
@@ -58,7 +58,7 @@ vec3 BFDirectLighting::_trace(RandomEngine& source, Ray ray) {
 
         isect = _scene->intersect(ray);
 
-        if (_scene->isLight(isect)) {
+        if (isect.isLight()) {
             return radiance += _scene->queryRadiance(isect)
                 * sample.throughput()
                 * dot(surface.normal(), sample.omega())

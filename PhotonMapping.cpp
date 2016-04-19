@@ -111,7 +111,7 @@ void PhotonMapping::_scatterPhotons(RandomEngine& engine, size_t begin, size_t e
                 photon.position,
                 photon.direction);
 
-            if (!isect.isPresent() || !_scene->isMesh(isect)) {
+            if (!isect.isPresent() || !isect.isMesh()) {
                 break;
             }
 
@@ -197,14 +197,14 @@ vec3 PhotonMapping::_gather(RandomEngine& source, Ray ray) {
 
     auto isect = _scene->intersect(ray.origin, ray.direction);
 
-    while (_scene->isLight(isect)) {
+    while (isect.isLight()) {
         radiance += _scene->queryRadiance(isect);
 
         ray.origin = isect.position();
         isect = _scene->intersect(ray);
     }
 
-    while (isect.isPresent() && !_scene->isMesh(isect)) {
+    while (isect.isPresent() && !isect.isMesh()) {
         ray.origin = isect.position();
         isect = _scene->intersect(ray.origin, ray.direction);
     }
