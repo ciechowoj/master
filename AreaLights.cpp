@@ -46,22 +46,6 @@ vec3 AreaLights::lerpPosition(size_t face, vec3 uvw) const {
         + vertices[indices[face * 3 + 2]] * uvw.y;
 }
 
-vec3 AreaLights::lerpNormal(size_t face, vec3 uvw) const {
-    return normalize(toWorldMs[indices[face * 3 + 0]][1] * uvw.z
-        + toWorldMs[indices[face * 3 + 1]][1] * uvw.x
-        + toWorldMs[indices[face * 3 + 2]][1] * uvw.y);
-}
-
-vec3 AreaLights::lerpNormal(const RayIsect& hit) const {
-    float w = 1.0f - hit.u - hit.v;
-
-    return normalize(toWorldMs[indices[hit.primID * 3 + 0]][1] * w
-        + toWorldMs[indices[hit.primID * 3 + 1]][1] * hit.u
-        + toWorldMs[indices[hit.primID * 3 + 2]][1] * hit.v);
-}
-
-
-
 float AreaLights::queryTotalPower() const {
     vec3 power = queryTotalPower3();
     return power.x + power.y + power.z;
@@ -96,9 +80,31 @@ float AreaLights::queryAreaLightArea(size_t id) const {
     return length(cross(u, v)) * 0.5f;
 }
 
-size_t AreaLights::sampleLight() const {
+const vec3& AreaLights::faceNormal(size_t faceId) const {
+    return toWorldMs[indices[faceId * 3 + 0]][1];
+}
+
+const vec3 AreaLights::faceRadiance(size_t faceId) const {
+    return exitances[faceId] * one_over_pi<float>();
+}
+
+const vec3 AreaLights::faceRadiance(const RayIsect& isect) const {
+    runtime_assert(isect.isLight());
+
+    const vec3 exitance = exitances[isect.faceId()];
+
+    if (dot(isect.normal(), isect.omega()) > 0.0f) {
+        return exitance * one_over_pi<float>();
+    }
+    else {
+        return vec3(0.0f);
+    }
+}
+
+size_t AreaLights::sampleFace() const {
     runtime_assert(numFaces() != 0);
     auto sample = lightSampler.sample();
+
     return min(size_t(sample * numFaces()), numFaces() - 1);
 }
 
@@ -125,7 +131,7 @@ LightPoint AreaLights::sampleSurface(size_t id) const {
 }
 
 Photon AreaLights::emit() const {
-    size_t id = sampleLight();
+    size_t id = sampleFace();
 
     LightPoint point = sampleSurface(id);
 
@@ -139,32 +145,14 @@ Photon AreaLights::emit() const {
     return result;
 }
 
-LightSample AreaLights::sample(const vec3& position) const {
-    // below computations are probably incorrect (to be fixed)
-
-    size_t face = sampleLight();
-
-    vec3 uvw = faceSampler.sample();
-
-    vec3 normal = lerpNormal(face, uvw);
-    vec3 radiance = exitances[face] * one_over_pi<float>();
-
-    LightSample sample;
-    sample._position = lerpPosition(face, uvw);
-    sample._omega = normalize(sample.position() - position);
-    sample._radiance = max(vec3(0.0f), radiance * dot(normal, -sample.omega()));
-
-    return sample;
-}
-
 LightSample AreaLights::sample(
     RandomEngine& engine,
     const vec3& position) const
 {
-    size_t light = sampleLight();
+    size_t light = sampleFace();
     auto barycentric = sampleBarycentric1(engine);
 
-    vec3 lightNormal = lerpNormal(light, barycentric.value());
+    vec3 lightNormal = faceNormal(light);
 
     LightSample result;
     result._position = lerpPosition(light, barycentric.value());
@@ -172,13 +160,13 @@ LightSample AreaLights::sample(
     float cosineTheta = dot(-result.omega(), lightNormal);
     vec3 diff = position - result.position();
 
-    const float numerator = dot(diff, diff);
-    const float denominator = lightWeights[light] * queryAreaLightArea(light) * cosineTheta;
+    const float numerator = 1; // dot(diff, diff);
+    const float denominator = lightWeights[light] * queryAreaLightArea(light) ;
 
     result._density = numerator / denominator;
 
     if (cosineTheta > 0.0f) {
-        result._radiance = exitances[light] * one_over_pi<float>();
+        result._radiance = exitances[light] * one_over_pi<float>() / dot(diff, diff) * cosineTheta;
     }
     else {
         result._radiance = vec3(0.0f);

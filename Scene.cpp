@@ -135,7 +135,7 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
     auto& mesh = meshes[isect.meshId()];
 
     SurfacePoint point;
-    point.position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
+    point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
 
     point.toWorldM[0] =
         normalize(w * mesh.bitangents[mesh.indices[isect.primID * 3 + 0]] +
@@ -158,16 +158,7 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
 }
 
 vec3 Scene::queryRadiance(const RayIsect& isect) const {
-    runtime_assert(isect.isLight());
-    const vec3 normal = lights.lerpNormal(isect);
-    const vec3 exitance = lights.exitances[isect.faceId()];
-
-    if (dot(normal, isect.incident()) > 0.0f) {
-        return exitance * one_over_pi<float>();
-    }
-    else {
-        return vec3(0.0f);
-    }
+    return lights.faceRadiance(isect);
 }
 
 LightSample Scene::sampleLight(
@@ -237,27 +228,64 @@ const DirectLightSample Scene::sampleDirectLightAngle(
     const vec3& omegaR,
     const BSDF& bsdf) const
 {
+    auto bsdfSample = bsdf.sample(engine, point, omegaR);
 
+    Ray ray = { point.position(), bsdfSample.omega() };
+    RayIsect isect = intersect(ray);
 
+    DirectLightSample result;
+    result._densityInv = bsdfSample.densityInv();
 
+    if (isect.isLight()) {
+        result._radiance =
+            lights.faceRadiance(isect) *
+            dot(bsdfSample.omega(), point.normal()) *
+            bsdfSample.throughput();
+    }
+    else {
+        result._radiance = vec3(0.0f);
+    }
 
-
-
-
-    return DirectLightSample();
+    return result;
 }
 
-/*
-const DirectLightSample sampleDirectLightArea(
+const DirectLightSample Scene::sampleDirectLightArea(
     RandomEngine& engine,
     const SurfacePoint& point,
     const vec3& omegaR,
-    const BSDF& bsdf) const;
+    const BSDF& bsdf) const
+{
+    LightSample lightSample = lights.sample(engine, point.position());
+    const float cosineTheta = dot(lightSample.omega(), point.normal());
+    const vec3 radiance =
+        lightSample.radiance() *
+        bsdf.query(point, omegaR, lightSample.omega()) *
+        occluded(lightSample.position(), point.position()) *
+        cosineTheta;
 
-const DirectLightSample sampleDirectLightMixed(
+    DirectLightSample result;
+    result._densityInv = lightSample.densityInv();
+    result._radiance = cosineTheta > 0.0 ? radiance : vec3(0.0f);
+    return result;
+}
+
+const DirectLightSample Scene::sampleDirectLightMixed(
     RandomEngine& engine,
     const SurfacePoint& point,
     const vec3& omegaR,
-    const BSDF& bsdf) const;
-*/
+    const BSDF& bsdf) const
+{
+    auto s0 = sampleDirectLightAngle(engine, point, omegaR, bsdf);
+    auto s1 = sampleDirectLightArea(engine, point, omegaR, bsdf);
+
+    auto p = s0.density() * s0.density() + s1.density() * s1.density();
+    auto w0 = s0.density() * s0.density() / p;
+    auto w1 = s1.density() * s1.density() / p;
+
+    DirectLightSample result;
+    result._densityInv = 1.0f;
+    result._radiance = (w0 * s0.radiance() * s0.densityInv() + w1 * s1.radiance() * s1.densityInv());
+    return result;
+}
+
 }

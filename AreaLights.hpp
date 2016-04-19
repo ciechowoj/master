@@ -1,5 +1,6 @@
 #pragma once
 #include <utility.hpp>
+#include <RayIsect.hpp>
 #include <SurfacePoint.hpp>
 
 namespace haste {
@@ -7,9 +8,6 @@ namespace haste {
 using std::vector;
 using std::string;
 using namespace glm;
-
-class Scene;
-struct RayIsect;
 
 struct Photon {
     vec3 position;
@@ -57,8 +55,6 @@ public:
     float faceArea(size_t face) const;
     float facePower(size_t face) const;
     vec3 lerpPosition(size_t face, vec3 uvw) const;
-    vec3 lerpNormal(size_t face, vec3 uvw) const;
-    vec3 lerpNormal(const RayIsect& hit) const;
 
     float queryTotalPower() const;
     vec3 queryTotalPower3() const;
@@ -66,19 +62,19 @@ public:
     vec3 queryAreaLightPower3(size_t id) const;
     float queryAreaLightArea(size_t id) const;
 
-
-    const vec3 faceRadiance(size_t face) const;
+    const vec3& faceNormal(size_t faceId) const;
+    const vec3 faceRadiance(size_t faceId) const;
     const vec3 faceRadiance(const RayIsect& isect) const;
 
+    size_t sampleFace() const;
 
 
-    size_t sampleLight() const;
+
     LightPoint sampleSurface(size_t id) const;
 
 
     Photon emit() const;
 
-    LightSample sample(const vec3& position) const;
 
     LightSample sample(
         RandomEngine& engine,
@@ -90,8 +86,6 @@ public:
     mutable vector<float> lightWeights;
 
     void buildLightStructs() const;
-
-    friend class Scene;
 };
 
 }

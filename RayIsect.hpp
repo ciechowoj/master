@@ -17,17 +17,9 @@ public:
     const size_t meshId() const { return geomID - 1; }
     const size_t faceId() const { return primID; }
 
-    vec3 gnormal() const {
-        return normalize(vec3(-Ng[0], -Ng[1], -Ng[2]));
-    }
-
-    vec3 position() const {
-        return *cpvec3(org) + *cpvec3(dir) * tfar;
-    }
-
-    const vec3 incident() const {
-        return -normalize(*cpvec3(dir));
-    }
+    const vec3 normal() const { return normalize(-(const vec3&)Ng); }
+    const vec3 omega() const { return normalize(-(const vec3&)dir); }
+    const vec3 position() const { return *cpvec3(org) + *cpvec3(dir) * tfar; }
 };
 
 }

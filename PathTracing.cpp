@@ -35,28 +35,20 @@ vec3 pathtrace(
         auto& bsdf = scene.queryBSDF(isect);
         SurfacePoint point = scene.querySurface(isect);
 
-        vec3 normal = point.toWorldM[1];
+        DirectLightSample lightSample = _scene->sampleDirectLightArea(
+            engine,
+            point,
+            -ray.direction,
+            bsdf);
 
-        auto lightSample = _scene->sampleLight(engine, point.position);
-        auto localThroughput = bsdf.query(point, lightSample.omega(), -ray.direction);
-
-        auto cosineTheta = dot(normal, lightSample.omega());
-
-        if (cosineTheta > 0.0f) {
-            radiance +=
-                throughput *
-                localThroughput *
-                lightSample.radiance() *
-                cosineTheta *
-                lightSample.densityInv();
-        }
+        radiance += lightSample.radiance() * lightSample.densityInv();
 
         auto bsdfSample = bsdf.sample(
             engine,
             point,
             -ray.direction);
 
-        throughput *= bsdfSample.throughput() * dot(normal, bsdfSample.omega()) * bsdfSample.densityInv();
+        throughput *= bsdfSample.throughput() * dot(point.normal(), bsdfSample.omega()) * bsdfSample.densityInv();
 
         ray.direction = bsdfSample.omega();
         ray.origin = isect.position();

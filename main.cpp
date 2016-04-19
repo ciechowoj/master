@@ -22,9 +22,9 @@ struct GUI {
     static const size_t pathSize = 255;
     char path[pathSize];
     float yaw = 0, pitch = -0.0;
-    vec3 position = vec3(0.0f, 0.0f, 40.0f);
-    // vec3 position = vec3(0, 0.0f, 5.0);
-    // vec3 position = vec3(0, 1.0f, 2.8);
+    // vec3 position = vec3(0.0f, 0.0f, 40.0f);
+    //vec3 position = vec3(0, 0.0f, 5.0);
+    vec3 position = vec3(0, 1.0f, 2.8);
     double tpp = 0.001;
     double tpf = 100;
     double mainStart = glfwGetTime();
@@ -59,8 +59,8 @@ int main(int argc, char **argv) {
         RTCDevice device = rtcNewDevice(NULL);
         runtime_assert(device != nullptr);
 
-        auto scenePath = "models/gi_test_scenes/emission.obj";
-        // auto scenePath = "models/cornell-box/CornellBox-Original.obj";
+        //auto scenePath = "models/gi_test_scenes/quads.obj";
+        auto scenePath = "models/cornell-box/CornellBox-Original.obj";
         auto scene = haste::loadScene(scenePath);
         auto camera = make_shared<Camera>();
         scene->buildAccelStructs(device);

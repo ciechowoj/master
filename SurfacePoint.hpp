@@ -3,9 +3,12 @@
 namespace haste {
 
 struct SurfacePoint {
-    vec3 position;
+    vec3 _position;
     mat3 toWorldM;
     size_t materialID;
+
+
+    const vec3& position() const { return _position; }
 
     const vec3& normal() const {
         return toWorldM[1];
