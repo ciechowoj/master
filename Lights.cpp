@@ -173,7 +173,11 @@ LightSample Lights::sample(
     result._omega = normalize(result._position - position);
     float cosineTheta = dot(-result.omega(), lightNormal);
     vec3 diff = position - result.position();
-    result._density = 1.0f / (lightWeights[light] * queryAreaLightArea(light) * cosineTheta) * dot(diff, diff);
+
+    const float numerator = dot(diff, diff);
+    const float denominator = lightWeights[light] * queryAreaLightArea(light) * cosineTheta;
+
+    result._density = numerator / denominator;
 
     if (cosineTheta > 0.0f) {
         result._radiance = exitances[light] * one_over_pi<float>();
@@ -203,38 +207,6 @@ void Lights::buildLightStructs() const {
 
     for (size_t i = 0; i < numFaces; ++i) {
         lightWeights[i] = 1.f / lightWeights[i];
-    }
-}
-
-void renderPhotons(
-    vector<vec4>& image,
-    size_t width,
-    const vector<Photon>& photons,
-    const mat4& proj)
-{
-    size_t height = image.size() / width;
-    float f5width = 0.5f * float(width);
-    float f5height = 0.5f * float(height);
-    int radius = 0;
-
-    for (size_t k = 0; k < photons.size(); ++k) {
-        vec4 h = proj * vec4(photons[k].position, 1.0);
-        vec3 v = h.xyz() / h.w;
-
-        if (-1.0f <= v.z && v.z <= +1.0f) {
-            int x = int((v.x + 1.0f) * f5width + 0.5f);
-            int y = int((v.y + 1.0f) * f5height + 0.5f);
-
-            for (int j = y - radius; j <= y + radius; ++j) {
-                for (int i = x - radius; i <= x + radius; ++i) {
-                    if (0 <= i && i < width && 0 <= j && j < height) {
-                        vec3 power = photons[k].power * float(photons.size()) * 0.1f;
-                        power = clamp(power, 0.0f, 1.0f);
-                        image[j * width + i] = vec4(image[j * width + i].xyz() + power, 1.0f);
-                    }
-                }
-            }
-        }
     }
 }
 

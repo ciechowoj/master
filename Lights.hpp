@@ -65,6 +65,8 @@ public:
     float queryAreaLightPower(size_t id) const;
     vec3 queryAreaLightPower3(size_t id) const;
     float queryAreaLightArea(size_t id) const;
+
+
     size_t sampleLight() const;
     LightPoint sampleSurface(size_t id) const;
     mat3 queryTransform(size_t id) const;
@@ -73,15 +75,11 @@ public:
 
     LightSample sample(const vec3& position) const;
 
+    vec3 eval(const RayIsect& isect) const;
+
     LightSample sample(
         RandomEngine& engine,
         const vec3& position) const;
-
-    vec3 eval(const RayIsect& isect) const;
-
-
-
-
 public:
     mutable RandomEngine source;
     mutable PiecewiseSampler lightSampler;
@@ -92,11 +90,5 @@ public:
 
     friend class Scene;
 };
-
-void renderPhotons(
-    vector<vec4>& image,
-    size_t width,
-    const vector<Photon>& photons,
-    const mat4& proj);
 
 }

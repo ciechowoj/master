@@ -58,14 +58,14 @@ struct Mesh {
     vector<vec3> bitangents;
 };
 
-struct LightSample2 {
-    vec3 radiance;
-    vec3 position;
-    vec3 incident;
-    float pdf;
-};
+struct DirectLightSample {
+    vec3 _radiance;
+    float _densityInv;
 
-class Scene;
+    const vec3& radiance() const { return _radiance; }
+    const float density() const { return 1.0f / _densityInv; }
+    const float densityInv() const { return _densityInv; }
+};
 
 class Scene {
 public:
@@ -103,6 +103,29 @@ public:
     size_t numRays() const;
 
     mutable UniformSampler sampler;
+
+
+
+    const DirectLightSample sampleDirectLightAngle(
+        RandomEngine& engine,
+        const SurfacePoint& point,
+        const vec3& omegaR,
+        const BSDF& bsdf) const;
+
+    const DirectLightSample sampleDirectLightArea(
+        RandomEngine& engine,
+        const SurfacePoint& point,
+        const vec3& omegaR,
+        const BSDF& bsdf) const;
+
+    const DirectLightSample sampleDirectLightMixed(
+        RandomEngine& engine,
+        const SurfacePoint& point,
+        const vec3& omegaR,
+        const BSDF& bsdf) const;
+
+
+
 private:
     mutable std::atomic<size_t> _numIntersectRays;
     mutable std::atomic<size_t> _numOccludedRays;

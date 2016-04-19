@@ -166,11 +166,13 @@ build/embree/libembree.a:
 	cd build/embree && cmake ../../submodules/embree -DENABLE_STATIC_LIB=ON -DENABLE_TUTORIALS=OFF
 	cd build/embree && make embree
 
-build/assimp/code/libassimp.a:
-	mkdir -p build
-	mkdir -p build/assimp
-	cd build/assimp && cmake ../../submodules/assimp -DBUILD_SHARED_LIBS=OFF
-	cd build/assimp && make
+include submodules/assimp.makefile
+
+# build/assimp/code/libassimp.a:
+# 	mkdir -p build
+# 	mkdir -p build/assimp
+# 	cd build/assimp && cmake ../../submodules/assimp -DBUILD_SHARED_LIBS=OFF
+# 	cd build/assimp && make
 
 run: all
 	./build/master/master.bin

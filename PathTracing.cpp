@@ -37,13 +37,11 @@ vec3 pathtrace(
 
         vec3 normal = point.toWorldM[1];
 
-        mat3 lightToWorld = point.toWorldM;
-        mat3 worldToLight = transpose(lightToWorld);
-
         auto lightSample = _scene->sampleLight(engine, point.position);
         auto localThroughput = bsdf.query(point, lightSample.omega(), -ray.direction);
 
         auto cosineTheta = dot(normal, lightSample.omega());
+
         if (cosineTheta > 0.0f) {
             radiance +=
                 throughput *

@@ -244,4 +244,33 @@ size_t Scene::numRays() const {
     return _numIntersectRays + _numOccludedRays;
 }
 
+const DirectLightSample Scene::sampleDirectLightAngle(
+    RandomEngine& engine,
+    const SurfacePoint& point,
+    const vec3& omegaR,
+    const BSDF& bsdf) const
+{
+
+
+
+
+ 
+
+
+    return DirectLightSample();
+}
+
+/*
+const DirectLightSample sampleDirectLightArea(
+    RandomEngine& engine,
+    const SurfacePoint& point,
+    const vec3& omegaR,
+    const BSDF& bsdf) const;
+
+const DirectLightSample sampleDirectLightMixed(
+    RandomEngine& engine,
+    const SurfacePoint& point,
+    const vec3& omegaR,
+    const BSDF& bsdf) const;
+*/
 }
