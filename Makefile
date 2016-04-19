@@ -1,4 +1,6 @@
 
+NUM_THREADS=-j4
+
 INCLUDE_DIRS = \
 	-I/usr/include/OpenEXR \
 	-Isubmodules/glfw/include \
@@ -68,13 +70,18 @@ TEST_POST = mv -f build/master/unit_tests/$*.Td build/master/unit_tests/$*.d
 
 LIB_DEPENDENCIES = \
 	build/glad/libglad.a \
-	build/glfw/src/libglfw3.a \
+	$(glfw.target) \
+	$(assimp.target) \
 	build/imgui/libimgui.a \
 	build/googletest/libgtest.a \
-	build/embree/libembree.a \
-	build/assimp/code/libassimp.a
+	build/embree/libembree.a
 
 all: master unittest
+
+include submodules/assimp.makefile
+include submodules/glfw.makefile
+
+.PHONY: all master unittest
 
 master: build/master/master.bin
 
@@ -113,11 +120,6 @@ build/master/%.d: ;
 -include $(MAIN_OBJECTS:build/master/%.o=build/master/%.d)
 -include build/master/main.d
 -include $(TEST_OBJECTS:build/master/unit_tests/%.o=build/master/unit_tests/%.d)
-
-build/glfw/src/libglfw3.a:
-	mkdir -p build
-	mkdir -p build/glfw
-	cd build/glfw && cmake ../../submodules/glfw/ && make
 
 build/glad/libglad.a: build/glad/loader/src/glad.c
 	cd build/glad && $(CC) -c loader/src/glad.c -o loader/src/glad.o -Iloader/include
@@ -158,21 +160,14 @@ build/googletest/libgtest.a:
 	mkdir -p build
 	mkdir -p build/googletest
 	cd build/googletest && cmake ../../submodules/googletest/googletest
-	cd build/googletest && make
+	cd build/googletest && make $(NUM_THREADS)
 
 build/embree/libembree.a:
 	mkdir -p build
 	mkdir -p build/embree
 	cd build/embree && cmake ../../submodules/embree -DENABLE_STATIC_LIB=ON -DENABLE_TUTORIALS=OFF
-	cd build/embree && make embree
+	cd build/embree && make embree $(NUM_THREADS)
 
-include submodules/assimp.makefile
-
-# build/assimp/code/libassimp.a:
-# 	mkdir -p build
-# 	mkdir -p build/assimp
-# 	cd build/assimp && cmake ../../submodules/assimp -DBUILD_SHARED_LIBS=OFF
-# 	cd build/assimp && make
 
 run: all
 	./build/master/master.bin

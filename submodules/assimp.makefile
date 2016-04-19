@@ -44,15 +44,13 @@ assimp.CMakeFlags = \
 	-DASSIMP_BUILD_X_IMPORTER=FALSE \
 	-DASSIMP_BUILD_GLTF_IMPORTER=FALSE
 
-.PHONY: assimp
-
-assimp: build/assimp/code/libassimp.a
+assimp.target=build/assimp/code/libassimp.a
 
 build/assimp/code/libassimp.a:
 	mkdir -p build
 	mkdir -p build/assimp
 	cd build/assimp && cmake ../../submodules/assimp $(assimp.CMakeFlags)
-	cd build/assimp && make
+	cd build/assimp && make $(NUM_THREADS)
 
 
 # 220s
