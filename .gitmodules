@@ -18,4 +18,4 @@
 	url = https://github.com/embree/embree.git
 [submodule "submodules/assimp"]
 	path = submodules/assimp
-	url = https://github.com/assimp/assimp.git
+	url = https://github.com/ciechowoj/assimp.git
