@@ -1,6 +1,5 @@
 #include <runtime_assert>
 #include <Scene.hpp>
-#include <Camera.hpp>
 #include <streamops.hpp>
 #include <cstring>
 
@@ -181,11 +180,11 @@ float Scene::occluded(const vec3& origin, const vec3& target) const {
     return rtcRay.geomID == 0 ? 0.f : 1.f;
 }
 
-size_t Scene::numIntersectRays() const {
+size_t Scene::numNormalRays() const {
     return _numIntersectRays;
 }
 
-size_t Scene::numOccludedRays() const {
+size_t Scene::numShadowRays() const {
     return _numOccludedRays;
 }
 

@@ -1,5 +1,7 @@
 #pragma once
-#include <Camera.hpp>
+#include <runtime_assert>
+#include <Prerequisites.hpp>
+#include <ImageView.hpp>
 #include <Scene.hpp>
 
 namespace haste {
@@ -9,34 +11,95 @@ public:
     Technique();
     virtual ~Technique();
 
-    void setCamera(const shared<const Camera>& camera);
-    void setScene(const shared<const Scene>& scene);
+    virtual void preprocess(
+        const shared<const Scene>& scene,
+        const function<void(string, float)>& progress,
+        size_t numThreads = 1);
 
-    virtual void softReset();
-    virtual void hardReset();
-    virtual void updateInteractive(
-        size_t width,
-        size_t height,
-        vec4* image,
-        double timeQuantum) = 0;
+    virtual void render(
+        ImageView& view,
+        RandomEngine& engine,
+        size_t cameraId,
+        size_t numThreads);
 
-    virtual string stageName() const = 0;
-    virtual double stageProgress() const;
-    size_t numRays() const;
-    double renderTime() const;
-    double raysPerSecond() const;
-    size_t numSamples() const;
+    virtual void render(
+        ImageView& view,
+        RandomEngine& engine,
+        size_t cameraId) = 0;
+
+    virtual string name() const = 0;
+
+    const size_t numNormalRays() const { return _numNormalRays; }
+    const size_t numShadowRays() const { return _numShadowRays; }
+    const size_t numSamples() const { return _numSamples; }
+
+    template <class F> static void for_each_ray(
+        ImageView& view,
+        RandomEngine& engine,
+        const Cameras& cameras,
+        size_t cameraId,
+        const F& func);
+
 protected:
-    shared<const Camera> _camera;
+    size_t _numNormalRays;
+    size_t _numShadowRays;
+    size_t _numSamples;
     shared<const Scene> _scene;
-
-    size_t _numRays = 0;
-    size_t _numSamples = 0;
-    double _renderTime = 0.0;
 
 private:
     Technique(const Technique&) = delete;
     Technique& operator=(const Technique&) = delete;
 };
+
+template <class F> inline void Technique::for_each_ray(
+    ImageView& view,
+    RandomEngine& engine,
+    const Cameras& cameras,
+    size_t cameraId,
+    const F& func)
+{
+    const int xBegin = int(view.xBegin());
+    const int xEnd = int(view.xEnd());
+    const int rXBegin = int(xEnd - 1);
+    const int rXEnd = int(xBegin - 1);
+    const int yBegin = int(view.yBegin());
+    const int yEnd = int(view.yEnd());
+
+    runtime_assert(0 <= xBegin && xEnd <= view.width());
+    runtime_assert(0 <= yBegin && yEnd <= view.height());
+
+    const float width = float(view.width());
+    const float height = float(view.height());
+    const float widthInv = 1.0f / width;
+    const float heightInv = 1.0f / height;
+    const float aspect = width / height;
+
+    auto shoot = [&](float x, float y) -> Ray {
+        return cameras.shoot(
+            cameraId,
+            engine,
+            widthInv,
+            heightInv,
+            aspect,
+            float(x),
+            float(y));
+    };
+
+    for (int y = yBegin; y < yEnd; ++y) {
+        for (int x = xBegin; x < xEnd; ++x) {
+            const Ray ray = shoot(float(x), float(y));
+            view.absAt(x, y) += vec4(func(engine, ray), 1.0f);
+        }
+
+        ++y;
+
+        if (y < yEnd) {
+            for (int x = rXBegin; x > rXEnd; --x) {
+                const Ray ray = shoot(float(x), float(y));
+                view.absAt(x, y) += vec4(func(engine, ray), 1.0f);
+            }
+        }
+    }
+}
 
 }

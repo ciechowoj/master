@@ -68,21 +68,17 @@ vec3 pathtrace(
     return radiance;
 }
 
-PathTracing::PathTracing() { }
+/*PathTracing::PathTracing() { }
 
-void PathTracing::updateInteractive(
-    size_t width,
-    size_t height,
-    vec4* image,
-    double timeQuantum) {
+void PathTracing::updateInteractive(ImageView& view) {
     double startTime = glfwGetTime();
     size_t startRays = _scene->numRays();
 
-    _progress = renderInteractive(width, height, image, *_camera, [&](RandomEngine& source, Ray ray) -> vec3 {
+    _progress = renderInteractive(view, _scene->cameras(), _activeCameraId, [&](RandomEngine& source, Ray ray) -> vec3 {
         return pathtrace(source, ray, *_scene);
     });
 
-    _numSamples = size_t(image[width * height - 1].w);
+    _numSamples = size_t(view.last().w);
     _renderTime += glfwGetTime() - startTime;
     _numRays += _scene->numRays() - startRays;
 }
@@ -96,5 +92,5 @@ string PathTracing::stageName() const {
 double PathTracing::stageProgress() const {
     return _progress;
 }
-
+*/
 }

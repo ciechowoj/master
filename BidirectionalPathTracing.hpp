@@ -7,14 +7,12 @@ class BidirectionalPathTracing : public Technique {
 public:
     BidirectionalPathTracing();
 
-    void updateInteractive(
-        size_t width,
-        size_t height,
-        vec4* image,
-        double timeQuantum) override;
+     void render(
+        ImageView& view,
+        RandomEngine& engine,
+        size_t cameraId) override;
 
-    string stageName() const override;
-    double stageProgress() const override;
+    string name() const override;
 
 private:
     vec3 _pathtrace(RandomEngine& engine, Ray ray);

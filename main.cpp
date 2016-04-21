@@ -11,7 +11,7 @@
 
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
-#include <BFDirectLighting.hpp>
+#include <DirectIllumination.hpp>
 
 using namespace std;
 using namespace haste;
@@ -59,25 +59,34 @@ int main(int argc, char **argv) {
         RTCDevice device = rtcNewDevice(NULL);
         runtime_assert(device != nullptr);
 
+        RandomEngine engine;
+
         //auto scenePath = "models/gi_test_scenes/quads.obj";
-        auto scenePath = "models/CornelBoxDiffuse.blend";
+        auto scenePath = "models/SingleAreaLight.blend";
         auto scene = haste::loadScene(scenePath);
 
-        auto camera = make_shared<Camera>();
         scene->buildAccelStructs(device);
+
+        std::cout << scene->cameras().numCameras() << std::endl;
+        std::cout << scene->cameras().position(0) << std::endl;
+        std::cout << scene->cameras().direction(0) << std::endl;
+        std::cout << scene->cameras().up(0) << std::endl;
+
+        std::cout << scene->lights.totalArea() << std::endl;
 
         GUI gui(scenePath);
 
         // PhotonMapping technique(1000000, 50, 0.5f);
         // PathTracing technique;
-        BFDirectLighting technique;
+        DirectIllumination technique;
 
-        technique.setScene(scene);
-        technique.setCamera(camera);
+        technique.preprocess(scene, [](string, float) {});
 
         loop(window, [&](int width, int height, void* image) {
             double start = glfwGetTime();
-            technique.updateInteractive(width, height, (vec4*)image, 0.033);
+            auto view = ImageView((vec4*)image, width, height);
+
+            technique.render(view, engine, 0);
 
             gui.update(
                 technique,
@@ -86,12 +95,12 @@ int main(int argc, char **argv) {
                 (vec4*)image,
                 float(glfwGetTime() - start));
 
-            if (gui.view != camera->view || gui.fovy != camera->fovy) {
+            /*if (gui.view != camera->view || gui.fovy != camera->fovy) {
                 camera->view = gui.view;
                 camera->fovy = gui.fovy;
                 memset(image, 0, width * height * sizeof(vec4));
                 technique.softReset();
-            }
+            }*/
         });
 
         rtcDeleteDevice(device);
@@ -168,8 +177,6 @@ void GUI::update(
 
     ImGui::Begin("Statistics");
 
-    ImGui::ProgressBar(technique.stageProgress(), ImVec2(-1,0), technique.stageName().c_str());
-
     if (timePerFrame == 0.0) {
         timePerFrame = elapsed;
     }
@@ -179,14 +186,6 @@ void GUI::update(
 
     float localTimePerFrame = float(timePerFrame);
     ImGui::InputFloat("ms/frame", &localTimePerFrame);
-
-    auto localRaysPerSecond = formatRaysPerSecond(technique.raysPerSecond());
-    ImGui::InputFloat(
-        localRaysPerSecond.second.c_str(),
-        &localRaysPerSecond.first);
-
-    float localRenderTime = float(technique.renderTime());
-    ImGui::InputFloat("render time [s]", &localRenderTime);
 
     float mainElapsed = float(glfwGetTime() - mainStart);
     ImGui::InputFloat("real time [s] ", &mainElapsed);

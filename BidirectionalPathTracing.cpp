@@ -4,22 +4,18 @@
 
 namespace haste {
 
-BidirectionalPathTracing::BidirectionalPathTracing() { }
+/*BidirectionalPathTracing::BidirectionalPathTracing() { }
 
-void BidirectionalPathTracing::updateInteractive(
-    size_t width,
-    size_t height,
-    vec4* image,
-    double timeQuantum)
+void BidirectionalPathTracing::updateInteractive(ImageView& view)
 {
     double startTime = glfwGetTime();
     size_t startRays = _scene->numRays();
 
-    _progress = renderInteractive(width, height, image, *_camera, [&](RandomEngine& engine, Ray ray) -> vec3 {
+    _progress = renderInteractive(view, _scene->cameras(), _activeCameraId, [&](RandomEngine& engine, Ray ray) -> vec3 {
         return _pathtrace(engine, ray);
     });
 
-    _numSamples = size_t(image[width * height - 1].w);
+    _numSamples = size_t(view.last().w);
     _renderTime += glfwGetTime() - startTime;
     _numRays += _scene->numRays() - startRays;
 }
@@ -36,6 +32,6 @@ double BidirectionalPathTracing::stageProgress() const {
 
 vec3 BidirectionalPathTracing::_pathtrace(RandomEngine& engine, Ray ray) {
     return vec3(0.0f, 1.0f, 0.0f);
-}
+}*/
 
 }

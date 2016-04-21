@@ -155,7 +155,6 @@ bool isEmissive(const aiScene* scene, size_t meshID) {
     return emissive(material) != vec3(0.0f);
 }
 
-
 AreaLights loadAreaLights(const aiScene* scene) {
     AreaLights result;
 
@@ -174,6 +173,24 @@ AreaLights loadAreaLights(const aiScene* scene) {
     }
 
     return result;
+}
+
+Cameras loadCameras(const aiScene* scene) {
+    Cameras cameras;
+
+    for (size_t i = 0; i < scene->mNumCameras; ++i) {
+        auto camera = scene->mCameras[i];
+        cameras.addCameraFovX(
+            toString(camera->mName),
+            toVec3(camera->mPosition),
+            normalize(toVec3(camera->mLookAt)),
+            normalize(toVec3(camera->mUp)),
+            camera->mHorizontalFOV,
+            camera->mClipPlaneNear,
+            camera->mClipPlaneNear);
+    }
+
+    return cameras;
 }
 
 Mesh aiMeshToMesh(const aiMesh* mesh) {
@@ -327,7 +344,7 @@ shared<Scene> loadScene(string path) {
     }
 
     shared<Scene> result = make_shared<Scene>(
-        Cameras(),
+        loadCameras(scene),
         move(materials),
         move(meshes),
         move(lights));

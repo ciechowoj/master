@@ -4,16 +4,12 @@
 
 namespace haste {
 
-class PhotonMapping : public Technique {
+/*class PhotonMapping : public Technique {
 public:
     PhotonMapping(size_t numPhotons, size_t numNearest, float maxDistance);
 
     void hardReset() override;
-    void updateInteractive(
-        size_t width,
-        size_t height,
-        vec4* image,
-        double timeQuantum) override;
+    void updateInteractive(ImageView& view) override;
 
     string stageName() const override;
     double stageProgress() const override;
@@ -38,11 +34,7 @@ private:
     KDTree3D<Photon> _photons;
     double _progress = 0.0;
 
-    void _scatterPhotonsInteractive(
-        size_t width,
-        size_t height,
-        vec4* image,
-        double timeQuantum);
+    void _scatterPhotonsInteractive(ImageView& view);
 
     void _scatterPhotons(
         RandomEngine& engine,
@@ -50,24 +42,17 @@ private:
         size_t end);
 
     void _renderPhotons(
-        size_t width,
-        size_t height,
-        vec4* image,
+        ImageView& view,
         size_t begin,
         size_t end);
 
-    void _buildPhotonMapInteractive(double timeQuantum);
-
-    void _gatherPhotonsInteractive(
-        size_t width,
-        size_t height,
-        vec4* image,
-        double timeQuantum);
+    void _buildPhotonMapInteractive();
+    void _gatherPhotonsInteractive(ImageView& view);
 
     vec3 _gather(RandomEngine& source, Ray ray);
 
     PhotonMapping(const PhotonMapping&) = delete;
     PhotonMapping& operator=(const PhotonMapping&) = delete;
 };
-
+*/
 }

@@ -157,7 +157,7 @@ const mat4 Cameras::_view(size_t cameraId) const {
     result[0] = vec4(x, 0.0f);
     result[1] = vec4(y, 0.0f);
     result[2] = vec4(z, 0.0f);
-    result[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    result[3] = vec4(position(cameraId), 1.0f);
 
     return result;
 }

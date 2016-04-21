@@ -5,7 +5,7 @@
 
 namespace haste {
 
-PhotonMapping::PhotonMapping(
+/*PhotonMapping::PhotonMapping(
     size_t numPhotons,
     size_t numNearest,
     float maxDistance)
@@ -22,28 +22,24 @@ void PhotonMapping::hardReset() {
     _totalPower = _scene->lights.totalPower();
 }
 
-void PhotonMapping::updateInteractive(
-    size_t width,
-    size_t height,
-    vec4* image,
-    double timeQuantum)
+void PhotonMapping::updateInteractive(ImageView& view)
 {
     double startTime = glfwGetTime();
     size_t startRays = _scene->numRays();
 
     switch (_stage) {
         case _Scatter:
-            _scatterPhotonsInteractive(width, height, image, timeQuantum);
+            _scatterPhotonsInteractive(view);
             break;
         case _Build:
-            _buildPhotonMapInteractive(timeQuantum);
+            _buildPhotonMapInteractive();
             break;
         case _BuildDone:
-            std::memset(image, 0, width * height * sizeof(vec4));
+            view.clear();
             _stage = _Gather;
             break;
         case _Gather:
-            _gatherPhotonsInteractive(width, height, image, timeQuantum);
+            _gatherPhotonsInteractive(view);
             break;
     }
 
@@ -69,11 +65,7 @@ double PhotonMapping::stageProgress() const {
     }
 }
 
-void PhotonMapping::_scatterPhotonsInteractive(
-    size_t width,
-    size_t height,
-    vec4* image,
-    double timeQuantum)
+void PhotonMapping::_scatterPhotonsInteractive(ImageView& view)
 {
     if (_auxiliary.empty()) {
         _numEmitted = 0;
@@ -84,13 +76,13 @@ void PhotonMapping::_scatterPhotonsInteractive(
 
     RandomEngine engine;
 
-    while (_numEmitted < _numPhotons && glfwGetTime() - startTime < timeQuantum) {
+    while (_numEmitted < _numPhotons && glfwGetTime() - startTime < 0.033f) {
         const size_t begin = _numEmitted;
         const size_t end = min(_numPhotons, begin + batchSize);
         const size_t stored = _auxiliary.size();
 
         _scatterPhotons(engine, begin, end);
-        _renderPhotons(width, height, image, stored, _auxiliary.size());
+        _renderPhotons(view, stored, _auxiliary.size());
         _numEmitted = end;
     }
 
@@ -140,15 +132,19 @@ void PhotonMapping::_scatterPhotons(RandomEngine& engine, size_t begin, size_t e
 }
 
 void PhotonMapping::_renderPhotons(
-    size_t width,
-    size_t height,
-    vec4* image,
+    ImageView& view,
     size_t begin,
     size_t end)
 {
+    size_t width = view.width();
+    size_t height = view.height();
     float f5width = 0.5f * float(width);
     float f5height = 0.5f * float(height);
-    mat4 proj = _camera->proj(width, height) * inverse(_camera->view);
+    auto& cameras = _scene->cameras();
+
+    mat4 viewMatrix = inverse(cameras.view(_activeCameraId));
+    mat4 proj = cameras.proj(_activeCameraId, float(width) / height) * viewMatrix;
+
     const float scaleFactor = 1.f / (_totalPower * _numPhotonsInv);
 
     for (size_t i = begin; i < end; ++i) {
@@ -162,9 +158,9 @@ void PhotonMapping::_renderPhotons(
 
             for (int j = y - 0; j <= y + 0; ++j) {
                 for (int i = x - 0; i <= x + 0; ++i) {
-                    if (0 <= i && i < width && 0 <= j && j < height) {
-                        image[j * width + i] += vec4(c, 1.0f);
-                        image[j * width + i].w = 1.0f;
+                    if (view.inWindow(i, j)) {
+                        view.absAt(i, j) += vec4(c, 1.0f);
+                        view.absAt(i, j).w = 1.0f;
                     }
                 }
             }
@@ -172,7 +168,7 @@ void PhotonMapping::_renderPhotons(
     }
 }
 
-void PhotonMapping::_buildPhotonMapInteractive(double timeQuantum) {
+void PhotonMapping::_buildPhotonMapInteractive() {
     _photons = KDTree3D<Photon>(std::move(_auxiliary));
     _auxiliary = vector<Photon>();
     _stage = _BuildDone;
@@ -180,13 +176,8 @@ void PhotonMapping::_buildPhotonMapInteractive(double timeQuantum) {
     _auxiliary.resize(_numNearest);
 }
 
-void PhotonMapping::_gatherPhotonsInteractive(
-    size_t width,
-    size_t height,
-    vec4* image,
-    double timeQuantum)
-{
-    _progress = renderInteractive(width, height, image, *_camera, [&](RandomEngine& source, Ray ray) -> vec3 {
+void PhotonMapping::_gatherPhotonsInteractive(ImageView& view) {
+    _progress = renderInteractive(view, _scene->cameras(), _activeCameraId, [&](RandomEngine& source, Ray ray) -> vec3 {
         return _gather(source, ray);
     });
 }
@@ -238,5 +229,5 @@ vec3 PhotonMapping::_gather(RandomEngine& source, Ray ray) {
 
     return radiance;
 }
-
+*/
 }

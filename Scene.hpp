@@ -55,6 +55,8 @@ public:
     const AreaLights lights;
     const Materials materials;
 
+    const Cameras& cameras() const { return _cameras; }
+
     void buildAccelStructs(RTCDevice device);
 
     const BSDF& queryBSDF(const RayIsect& hit) const;
@@ -72,13 +74,11 @@ public:
     RayIsect intersect(const Ray& ray) const;
     float occluded(const vec3& origin, const vec3& target) const;
 
-    size_t numIntersectRays() const;
-    size_t numOccludedRays() const;
+    size_t numNormalRays() const;
+    size_t numShadowRays() const;
     size_t numRays() const;
 
     mutable UniformSampler sampler;
-
-
 
     const DirectLightSample sampleDirectLightAngle(
         RandomEngine& engine,
