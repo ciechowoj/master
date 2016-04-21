@@ -60,8 +60,9 @@ int main(int argc, char **argv) {
         runtime_assert(device != nullptr);
 
         //auto scenePath = "models/gi_test_scenes/quads.obj";
-        auto scenePath = "models/cornell-box/CornellBox-Original.obj";
+        auto scenePath = "models/CornelBoxDiffuse.blend";
         auto scene = haste::loadScene(scenePath);
+        return 0;
         auto camera = make_shared<Camera>();
         scene->buildAccelStructs(device);
 

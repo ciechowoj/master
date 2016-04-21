@@ -12,6 +12,70 @@ namespace haste {
 
 using std::move;
 
+template <class Stream> Stream& operator<<(Stream& stream, const aiString& string) {
+    return stream << string.C_Str();
+}
+
+template <class Stream> Stream& operator<<(Stream& stream, const aiColor3D& color) {
+    return stream << "aiColor3D(" << color.r << ", " << color.g << ", " << color.b << ")";
+}
+
+template <class Stream> Stream& operator<<(Stream& stream, const aiVector3D& vector) {
+    return stream << "aiVector3D(" << vector.x << ", " << vector.y << ", " << vector.z << ")";
+}
+
+template <class Stream> Stream& operator<<(Stream& stream, aiLightSourceType type) {
+    switch (type) {
+        case aiLightSource_UNDEFINED: return stream << "aiLightSource_UNDEFINED";
+        case aiLightSource_DIRECTIONAL: return stream << "aiLightSource_DIRECTIONAL";
+        case aiLightSource_POINT: return stream << "aiLightSource_POINT";
+        case aiLightSource_SPOT: return stream << "aiLightSource_SPOT";
+        default: return stream << "undefined";
+    }
+}
+
+template <class Stream> Stream& operator<<(Stream& stream, const aiCamera& camera) {
+    return stream
+        << "aiCamera { "
+        << "mAspect = " << camera.mAspect << ", "
+        << "mClipPlaneFar = " << camera.mClipPlaneFar << ", "
+        << "mClipPlaneNear = " << camera.mClipPlaneNear << ", "
+        << "mHorizontalFOV = " << camera.mHorizontalFOV << ", "
+        << "mLookAt = " << camera.mLookAt << ", "
+        << "mName = " << camera.mName << ", "
+        << "mPosition = " << camera.mPosition << ", "
+        << "mUp = " << camera.mUp << " }";
+}
+
+template <class Stream> Stream& operator<<(Stream& stream, const aiLight& light) {
+    return stream
+        << "aiLight { "
+        << "mAngleInnerCone = " << light.mAngleInnerCone << ", "
+        << "mAngleOuterCone = " << light.mAngleOuterCone << ", "
+        << "mAttenuationConstant = " << light.mAttenuationConstant << ", "
+        << "mAttenuationLinear = " << light.mAttenuationLinear << ", "
+        << "mAttenuationQuadratic = " << light.mAttenuationQuadratic << ", "
+        << "mColorAmbient = " << light.mColorAmbient << ", "
+        << "mColorDiffuse = " << light.mColorDiffuse << ", "
+        << "mColorSpecular = " << light.mColorSpecular << ", "
+        << "mDirection = " << light.mDirection << ", "
+        << "mName = " << light.mName << ", "
+        << "mPosition = " << light.mPosition << ", "
+        << "mType = " << light.mType << " }";
+}
+
+template <class Stream> Stream& operator<<(Stream& stream, const aiNode& node) {
+    return stream
+        << "aiNode { mChildren = {...}, mMeshes = {...}, "
+        << "mName = " << node.mName << ", "
+        << "mNumChildren = " << node.mNumChildren << ", "
+        << "mNumMeshes = " << node.mNumMeshes << ", "
+        << "mParent = "
+        << (node.mParent ? (const char*)"{ }" : (const char*)"nullptr") << ", "
+        << "mTransformation = { } }";
+}
+
+
 std::string dirname(const std::string& path) {
     auto index = path.find_last_of("/\\");
 
@@ -251,9 +315,25 @@ shared<Scene> loadScene(string path) {
     auto flags =
         aiProcess_Triangulate |
         aiProcess_GenNormals |
-        aiProcess_JoinIdenticalVertices;
+        aiProcess_JoinIdenticalVertices |
+        aiProcess_PreTransformVertices;
 
     const aiScene* scene = importer.ReadFile(path, flags);
+
+    using namespace std;
+
+    std::cout << path << std::endl;
+    std::cout << "mNumLights: " << scene->mNumLights << std::endl;
+    std::cout << "mNumCameras: " << scene->mNumCameras << std::endl;
+    std::cout << "mNumNodes: " << scene->mRootNode->mNumChildren << std::endl;
+
+    for (size_t i = 0; i < scene->mNumLights; ++i) {
+        std::cout << *scene->mLights[i] << std::endl;
+    }
+
+    for (size_t i = 0; i < scene->mNumCameras; ++i) {
+        std::cout << *scene->mCameras[i] << std::endl;
+    }
 
     if (!scene) {
         throw std::runtime_error("Cannot load \"" + path + "\" scene.");
