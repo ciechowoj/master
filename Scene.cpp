@@ -7,10 +7,12 @@
 namespace haste {
 
 Scene::Scene(
+    Cameras&& cameras,
     Materials&& materials,
     vector<Mesh>&& meshes,
     AreaLights&& areaLights)
-    : materials(move(materials))
+    : _cameras(cameras)
+    , materials(move(materials))
     , meshes(move(meshes))
     , lights(move(areaLights))
 {
@@ -50,36 +52,6 @@ unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
     return geomID;
 }
 
-unsigned makeRTCMesh(RTCScene rtcScene, const AreaLights& lights) {
-    unsigned geomID = rtcNewTriangleMesh(
-        rtcScene,
-        RTC_GEOMETRY_STATIC,
-        lights.indices.size() / 3,
-        lights.vertices.size(),
-        1);
-
-    vec4* vbuffer = (vec4*) rtcMapBuffer(rtcScene, geomID, RTC_VERTEX_BUFFER);
-
-    for (size_t j = 0; j < lights.vertices.size(); ++j) {
-        vbuffer[j].x = lights.vertices[j].x;
-        vbuffer[j].y = lights.vertices[j].y;
-        vbuffer[j].z = lights.vertices[j].z;
-        vbuffer[j].w = 1;
-    }
-
-    rtcUnmapBuffer(rtcScene, geomID, RTC_VERTEX_BUFFER);
-
-    int* triangles = (int*) rtcMapBuffer(rtcScene, geomID, RTC_INDEX_BUFFER);
-    std::memcpy(
-        triangles,
-        lights.indices.data(),
-        lights.indices.size() * sizeof(int));
-
-    rtcUnmapBuffer(rtcScene, geomID, RTC_INDEX_BUFFER);
-
-    return geomID;
-}
-
 void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
     if (rtcScene) {
         rtcDeleteScene(rtcScene);
@@ -94,7 +66,7 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
         throw std::runtime_error("Cannot create RTCScene.");
     }
 
-    unsigned geomID = makeRTCMesh(rtcScene, scene.lights);
+    unsigned geomID = newMesh(rtcScene, scene.lights);
     runtime_assert(geomID == 0, "Area lights have to get 0 primID.");
 
     for (size_t i = 0; i < scene.meshes.size(); ++i) {
@@ -108,7 +80,6 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
 void Scene::buildAccelStructs(RTCDevice device) {
     if (rtcScene == nullptr) {
         updateRTCScene(rtcScene, device, *this);
-        lights.buildLightStructs();
     }
 }
 
@@ -158,7 +129,7 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
 }
 
 vec3 Scene::queryRadiance(const RayIsect& isect) const {
-    return lights.faceRadiance(isect);
+    return lights.lightRadiance(isect.primId());
 }
 
 LightSample Scene::sampleLight(
@@ -238,7 +209,7 @@ const DirectLightSample Scene::sampleDirectLightAngle(
 
     if (isect.isLight()) {
         result._radiance =
-            lights.faceRadiance(isect) *
+            lights.lightRadiance(isect.primId()) *
             dot(bsdfSample.omega(), point.normal()) *
             bsdfSample.throughput();
     }

@@ -173,7 +173,7 @@ run: all
 	./build/master/master.bin
 
 test: all
-	./build/master/unittest.bin --gtest_filter=KDTree3D.*
+	./build/master/unittest.bin --gtest_filter=CamerasTest.*
 
 clean:
 	rm -rf build/master	

@@ -6,27 +6,56 @@
 
 namespace glm {
 
-void PrintTo(const glm::vec3& value, ::std::ostream* stream) {
-	*stream << "[" << value[0] << ", " << value[1] << ", " << value[2] << "]";
+inline void PrintTo(const glm::vec3& value, ::std::ostream* stream) {
+    *stream << "[" << value[0] << ", " << value[1] << ", " << value[2] << "]";
 }
 
 }
 
 namespace std {
 
-void PrintTo(const std::vector<glm::vec3>& value, ::std::ostream* stream) {
-	*stream << "[";
+inline void PrintTo(const std::vector<glm::vec3>& value, ::std::ostream* stream) {
+    *stream << "[";
 
-	if (!value.empty()) {
-		*stream << ::testing::PrintToString(value[0]);
+    if (!value.empty()) {
+        *stream << ::testing::PrintToString(value[0]);
 
-		for (size_t i = 1; i < value.size(); ++i) {
-			*stream << ", " << ::testing::PrintToString(value[i]);
-		}
-	}
+        for (size_t i = 1; i < value.size(); ++i) {
+            *stream << ", " << ::testing::PrintToString(value[i]);
+        }
+    }
 
-	*stream << "]";
+    *stream << "]";
 }
 
 }
 
+namespace testing {
+
+inline ::testing::AssertionResult ExpectVec3Eq(
+    const char* expected_expr,
+    const char* actual_expr,
+    const char* epsilon_expr,
+    glm::vec3 expected,
+    glm::vec3 actual,
+    float epsilon)
+{
+    if (glm::epsilonEqual(expected, actual, epsilon) == glm::bvec3(true)) {
+        return ::testing::AssertionSuccess();
+    }
+    else {
+        auto result = ::testing::AssertionFailure();
+        result
+            << "Expected "
+            << ::testing::PrintToString(expected)
+            << "\nActual "
+            << ::testing::PrintToString(actual);
+
+        return result;
+    }
+}
+
+}
+
+#define EXPECT_VEC3_EQ(expected, actual, epsilon) \
+    EXPECT_PRED_FORMAT3(::testing::ExpectVec3Eq, expected, actual, epsilon)

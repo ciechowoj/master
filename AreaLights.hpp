@@ -1,13 +1,11 @@
 #pragma once
+#include <Prerequisites.hpp>
+#include <Geometry.hpp>
 #include <utility.hpp>
 #include <RayIsect.hpp>
 #include <SurfacePoint.hpp>
 
 namespace haste {
-
-using std::vector;
-using std::string;
-using namespace glm;
 
 struct Photon {
     vec3 position;
@@ -41,51 +39,55 @@ struct LightPoint {
     mat3 toWorldM;
 };
 
-class AreaLights {
+class AreaLights : public Geometry {
 public:
-    vector<string> names;
-    vector<size_t> offsets;
-    vector<int> indices;
-    vector<vec3> exitances;
-    vector<vec3> vertices;
-    vector<mat3> toWorldMs;
+    const size_t addLight(
+        const string& name,
+        const vec3& position,
+        const vec3& direction,
+        const vec3& up,
+        const vec3& exitance,
+        const vec2& size);
 
-    size_t numLights() const;
-    size_t numFaces() const;
-    float faceArea(size_t face) const;
-    float facePower(size_t face) const;
-    vec3 lerpPosition(size_t face, vec3 uvw) const;
+    const size_t numLights() const;
+    const string& name(size_t lightId) const;
+    const float lightArea(size_t lightId) const;
+    const float lightPower(size_t lightId) const;
+    const vec3 lightRadiance(size_t lightId) const;
+    const float totalArea() const;
+    const float totalPower() const;
 
-    float queryTotalPower() const;
-    vec3 queryTotalPower3() const;
-    float queryAreaLightPower(size_t id) const;
-    vec3 queryAreaLightPower3(size_t id) const;
-    float queryAreaLightArea(size_t id) const;
+    const vec3 toWorld(size_t lightId, const vec3& omega) const;
 
-    const vec3& faceNormal(size_t faceId) const;
-    const vec3 faceRadiance(size_t faceId) const;
-    const vec3 faceRadiance(const RayIsect& isect) const;
-
-    size_t sampleFace() const;
-
-
-
-    LightPoint sampleSurface(size_t id) const;
-
-
-    Photon emit() const;
-
+    Photon emit(RandomEngine& engine) const;
 
     LightSample sample(
         RandomEngine& engine,
         const vec3& position) const;
-public:
-    mutable RandomEngine source;
-    mutable PiecewiseSampler lightSampler;
-    mutable BarycentricSampler faceSampler;
-    mutable vector<float> lightWeights;
 
-    void buildLightStructs() const;
+    const bool usesQuads() const override;
+    const size_t numQuads() const override;
+    void updateBuffers(int* indices, vec4* vertices) const override;
+public:
+    mutable PiecewiseSampler lightSampler;
+
+    struct Shape {
+        vec3 position;
+        vec3 direction;
+        vec3 up;
+    };
+
+    vector<string> _names;
+    vector<Shape> _shapes;
+    vector<vec2> _sizes;
+    vector<vec3> _exitances;
+    vector<float> _weights;
+    float _totalPower;
+    float _totalArea;
+
+    void _updateSampler();
+    const size_t _sampleLight(RandomEngine& engine) const;
+    const vec3 _samplePosition(size_t lightId, RandomEngine& engine) const;
 };
 
 }

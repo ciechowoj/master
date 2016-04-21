@@ -2,17 +2,13 @@
 #include <functional>
 #include <vector>
 #include <Sample.hpp>
+#include <Cameras.hpp>
 
 namespace haste {
 
 using std::vector;
 using std::function;
 using namespace glm;
-
-struct Ray {
-    vec3 origin;
-    vec3 direction;
-};
 
 struct Camera {
     mat4 view;

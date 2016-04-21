@@ -1,3 +1,4 @@
+#include <iostream>
 #include <runtime_assert>
 #include <Scene.hpp>
 
@@ -22,72 +23,203 @@ namespace haste {
 // v1 ************************************** v2
 //
 
-size_t AreaLights::numLights() const {
-    return names.size();
+const size_t AreaLights::addLight(
+    const string& name,
+    const vec3& position,
+    const vec3& direction,
+    const vec3& up,
+    const vec3& exitance,
+    const vec2& size)
+{
+    size_t lightId = _names.size();
+
+    _names.push_back(name);
+
+    Shape shape;
+    shape.position = position;
+    shape.direction = direction;
+    shape.up = up;
+
+    _shapes.push_back(shape);
+    _sizes.push_back(size);
+    _exitances.push_back(exitance);
+
+    _totalPower += lightPower(lightId);
+    _totalArea += lightArea(lightId);
+
+    _updateSampler();
+
+    return lightId;
 }
 
-size_t AreaLights::numFaces() const {
-    return indices.size() / 3;
+const size_t AreaLights::numLights() const {
+    return _names.size();
 }
 
-float AreaLights::faceArea(size_t face) const {
-    vec3 u = vertices[indices[face * 3 + 1]] - vertices[indices[face * 3 + 0]];
-    vec3 v = vertices[indices[face * 3 + 2]] - vertices[indices[face * 3 + 0]];
-    return length(cross(u, v)) * 0.5f;
+const string& AreaLights::name(size_t lightId) const {
+    runtime_assert(lightId < _names.size());
+    return _names[lightId];
 }
 
-float AreaLights::facePower(size_t face) const {
-    return length(exitances[face]) * faceArea(face) * pi<float>();
+const float AreaLights::lightArea(size_t lightId) const {
+    runtime_assert(lightId < _names.size());
+    return _sizes[lightId].x * _sizes[lightId].y;
 }
 
-vec3 AreaLights::lerpPosition(size_t face, vec3 uvw) const {
-    return vertices[indices[face * 3 + 0]] * uvw.z
-        + vertices[indices[face * 3 + 1]] * uvw.x
-        + vertices[indices[face * 3 + 2]] * uvw.y;
+const float AreaLights::lightPower(size_t lightId) const {
+    runtime_assert(lightId < _names.size());
+    auto exitance = _exitances[lightId];
+    return lightArea(lightId) * (exitance.x + exitance.y + exitance.z);
 }
 
-float AreaLights::queryTotalPower() const {
-    vec3 power = queryTotalPower3();
-    return power.x + power.y + power.z;
+const vec3 AreaLights::lightRadiance(size_t lightId) const {
+    runtime_assert(lightId < _names.size());
+    return  _exitances[lightId] * one_over_two_pi<float>();
 }
 
-vec3 AreaLights::queryTotalPower3() const {
-    runtime_assert(indices.size() % 3 == 0);
+const float AreaLights::totalArea() const {
+    return _totalArea;
+}
 
-    vec3 result(0.0f);
+const float AreaLights::totalPower() const {
+    return _totalPower;
+}
 
-    size_t numFaces = this->numFaces();
+const vec3 AreaLights::toWorld(size_t lightId, const vec3& omega) const {
+    const vec3 up = _shapes[lightId].up;
+    const vec3 left = normalize(cross(up, _shapes[lightId].direction));
 
-    for (size_t i = 0; i < numFaces; ++i) {
-        result += queryAreaLightPower3(i);
+    return vec3(
+        dot(left, omega),
+        dot(_shapes[lightId].direction, omega),
+        dot(-up, omega));
+}
+
+Photon AreaLights::emit(RandomEngine& engine) const {
+    size_t lightId = _sampleLight(engine);
+    vec3 position = _samplePosition(lightId, engine);
+
+    Photon result;
+    result.position = position;
+    result.direction = toWorld(lightId, sampleCosineHemisphere1(engine).omega());
+    result.power = _exitances[lightId];
+    float length1 = 1.f / (result.power.x + result.power.y + result.power.z);
+    result.power = result.power * length1;
+
+    return result;
+}
+
+LightSample AreaLights::sample(
+    RandomEngine& engine,
+    const vec3& position) const
+{
+    size_t lightId = _sampleLight(engine);
+
+    LightSample result;
+    result._position = _samplePosition(lightId, engine);
+    result._omega = normalize(result._position - position);
+    float cosineTheta = dot(-result.omega(), _shapes[lightId].direction);
+    vec3 diff = position - result.position();
+
+    const float numerator = 1; // dot(diff, diff);
+    const float denominator = _weights[lightId] * lightArea(lightId) ;
+
+    result._density = numerator / denominator;
+
+    if (cosineTheta > 0.0f) {
+        result._radiance = lightRadiance(lightId) / dot(diff, diff) * cosineTheta;
+    }
+    else {
+        result._radiance = vec3(0.0f);
     }
 
     return result;
 }
 
-float AreaLights::queryAreaLightPower(size_t id) const {
-    vec3 power = queryAreaLightPower3(id);
-    return power.x + power.y + power.z;
+const bool AreaLights::usesQuads() const {
+    return true;
 }
 
-vec3 AreaLights::queryAreaLightPower3(size_t id) const {
-    return exitances[id] * queryAreaLightArea(id);
+const size_t AreaLights::numQuads() const {
+    return numLights();
 }
 
-float AreaLights::queryAreaLightArea(size_t id) const {
-    vec3 u = vertices[indices[id * 3 + 1]] - vertices[indices[id * 3 + 0]];
-    vec3 v = vertices[indices[id * 3 + 2]] - vertices[indices[id * 3 + 0]];
-    return length(cross(u, v)) * 0.5f;
+void AreaLights::updateBuffers(int* indices, vec4* vertices) const {
+    const int numIndices = int(this->numIndices());
+
+    for (int i = 0; i < numIndices; ++i) {
+        indices[i] = i;
+    }
+
+    const size_t numQuads = this->numLights();
+
+    for (size_t i = 0; i < numQuads; ++i) {
+        const vec3 up = _shapes[i].up * 0.5f;
+        const vec3 left = normalize(cross(up, _shapes[i].direction)) * 0.5f;
+        const vec3 position = _shapes[i].position;
+
+        std::cout << position << std::endl;
+
+        vertices[i * 4 + 0] =
+            vec4(position - _sizes[i].x * left - _sizes[i].y * up, 1.0f);
+        vertices[i * 4 + 1] =
+            vec4(position + _sizes[i].x * left - _sizes[i].y * up, 1.0f);
+        vertices[i * 4 + 2] =
+            vec4(position + _sizes[i].x * left + _sizes[i].y * up, 1.0f);
+        vertices[i * 4 + 3] =
+            vec4(position - _sizes[i].x * left + _sizes[i].y * up, 1.0f);
+
+        std::cout << vertices[i * 4 + 0] << std::endl;
+        std::cout << vertices[i * 4 + 1] << std::endl;
+        std::cout << vertices[i * 4 + 2] << std::endl;
+        std::cout << vertices[i * 4 + 3] << std::endl;
+
+        std::cout << "up: " << up << std::endl;
+        std::cout << "direction: " << _shapes[i].direction << std::endl;
+        std::cout << "left: " << left << std::endl;
+        std::cout << "size: " << _sizes[i] << std::endl;
+    }
 }
 
-const vec3& AreaLights::faceNormal(size_t faceId) const {
-    return toWorldMs[indices[faceId * 3 + 0]][1];
+void AreaLights::_updateSampler() {
+    const float totalPower = this->totalPower();
+    const float totalPowerInv = 1.0f / totalPower;
+    const size_t numLights = this->numLights();
+
+    _weights.resize(numLights);
+
+    for (size_t i = 0; i < numLights; ++i) {
+        const float power = lightPower(i);
+        _weights[i] = power * totalPowerInv;
+    }
+
+    lightSampler = PiecewiseSampler(
+        _weights.data(),
+        _weights.data() + _weights.size());
+
+    for (size_t i = 0; i < numLights; ++i) {
+        _weights[i] = 1.f / _weights[i];
+    }
 }
 
-const vec3 AreaLights::faceRadiance(size_t faceId) const {
-    return exitances[faceId] * one_over_pi<float>();
+const size_t AreaLights::_sampleLight(RandomEngine& engine) const {
+    runtime_assert(numLights() != 0);
+
+    auto sample = lightSampler.sample();
+    return min(size_t(sample * numLights()), numLights() - 1);
 }
 
+const vec3 AreaLights::_samplePosition(size_t lightId, RandomEngine& engine) const {
+    auto uniform =
+        (sampleUniform2(engine).value() - vec2(0.5f)) * _sizes[lightId];
+
+    const vec3 up = _shapes[lightId].up;
+    const vec3 left = normalize(cross(up, _shapes[lightId].direction));
+
+    return _shapes[lightId].position + uniform.x * left + uniform.y * up;
+}
+
+/*
 const vec3 AreaLights::faceRadiance(const RayIsect& isect) const {
     runtime_assert(isect.isLight());
 
@@ -130,50 +262,9 @@ LightPoint AreaLights::sampleSurface(size_t id) const {
     return result;
 }
 
-Photon AreaLights::emit() const {
-    size_t id = sampleFace();
 
-    LightPoint point = sampleSurface(id);
 
-    Photon result;
-    result.position = point.position;
-    result.direction = point.toWorldM * sampleCosineHemisphere1(source).omega();
-    result.power = exitances[id];
-    float length1 = 1.f / (result.power.x + result.power.y + result.power.z);
-    result.power = result.power * length1;
 
-    return result;
-}
-
-LightSample AreaLights::sample(
-    RandomEngine& engine,
-    const vec3& position) const
-{
-    size_t light = sampleFace();
-    auto barycentric = sampleBarycentric1(engine);
-
-    vec3 lightNormal = faceNormal(light);
-
-    LightSample result;
-    result._position = lerpPosition(light, barycentric.value());
-    result._omega = normalize(result._position - position);
-    float cosineTheta = dot(-result.omega(), lightNormal);
-    vec3 diff = position - result.position();
-
-    const float numerator = 1; // dot(diff, diff);
-    const float denominator = lightWeights[light] * queryAreaLightArea(light) ;
-
-    result._density = numerator / denominator;
-
-    if (cosineTheta > 0.0f) {
-        result._radiance = exitances[light] * one_over_pi<float>() / dot(diff, diff) * cosineTheta;
-    }
-    else {
-        result._radiance = vec3(0.0f);
-    }
-
-    return result;
-}
 
 void AreaLights::buildLightStructs() const {
     size_t numFaces = this->numFaces();
@@ -195,5 +286,5 @@ void AreaLights::buildLightStructs() const {
         lightWeights[i] = 1.f / lightWeights[i];
     }
 }
-
+*/
 }

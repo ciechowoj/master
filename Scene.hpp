@@ -1,13 +1,11 @@
 #pragma once
-#include <memory>
-#include <vector>
-#include <atomic>
-
+#include <Prerequisites.hpp>
 #include <RayIsect.hpp>
 
 #include <BSDF.hpp>
 #include <AreaLights.hpp>
 #include <Materials.hpp>
+#include <Cameras.hpp>
 
 #include <SurfacePoint.hpp>
 
@@ -47,10 +45,12 @@ struct DirectLightSample {
 class Scene {
 public:
     Scene(
+        Cameras&& cameras,
         Materials&& materials,
         vector<Mesh>&& meshes,
         AreaLights&& areaLights);
 
+    Cameras _cameras;
     const vector<Mesh> meshes;
     const AreaLights lights;
     const Materials materials;

@@ -19,7 +19,7 @@ PhotonMapping::PhotonMapping(
 void PhotonMapping::hardReset() {
     softReset();
     _stage = _Scatter;
-    _totalPower = _scene->lights.queryTotalPower();
+    _totalPower = _scene->lights.totalPower();
 }
 
 void PhotonMapping::updateInteractive(
@@ -103,7 +103,7 @@ void PhotonMapping::_scatterPhotons(RandomEngine& engine, size_t begin, size_t e
     const float scaleFactor = _totalPower * _numPhotonsInv;
 
     for (size_t i = begin; i < end; ++i) {
-        Photon photon = _scene->lights.emit();
+        Photon photon = _scene->lights.emit(engine);
         photon.power *= scaleFactor;
 
         for (size_t j = 0; ; ++j) {

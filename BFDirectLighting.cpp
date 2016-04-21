@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sstream>
 #include <GLFW/glfw3.h>
 #include <BFDirectLighting.hpp>
@@ -63,6 +64,9 @@ vec3 BFDirectLighting::_trace(RandomEngine& source, Ray ray) {
                 * sample.throughput()
                 * dot(surface.normal(), sample.omega())
                 * sample.densityInv();
+        }
+        else {
+            return vec3(0.0f);
         }
     }
 

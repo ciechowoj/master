@@ -6,8 +6,6 @@
 #include <utility.hpp>
 #include <loader.hpp>
 
-#include <iostream>
-
 namespace haste {
 
 using std::move;
@@ -20,6 +18,19 @@ template <class Stream> Stream& operator<<(Stream& stream, const aiColor3D& colo
     return stream << "aiColor3D(" << color.r << ", " << color.g << ", " << color.b << ")";
 }
 
+template <class Stream> Stream& operator<<(Stream& stream, const aiVector2D& vector) {
+    return stream << "aiVector2D(" << vector.x << ", " << vector.y << ")";
+}
+
+template <class Stream> Stream& operator<<(Stream& stream, const aiMatrix4x4& matrix) {
+    return stream
+        << "aiMatrix4x4("
+        << "[" << matrix.a1 << ", " << matrix.a2 << ", " << matrix.a3 << ", " << matrix.a4 << "], "
+        << "[" << matrix.b1 << ", " << matrix.b2 << ", " << matrix.b3 << ", " << matrix.b4 << "], "
+        << "[" << matrix.c1 << ", " << matrix.c2 << ", " << matrix.c3 << ", " << matrix.c4 << "], "
+        << "[" << matrix.d1 << ", " << matrix.d2 << ", " << matrix.d3 << ", " << matrix.d4 << "])";
+}
+
 template <class Stream> Stream& operator<<(Stream& stream, const aiVector3D& vector) {
     return stream << "aiVector3D(" << vector.x << ", " << vector.y << ", " << vector.z << ")";
 }
@@ -30,6 +41,7 @@ template <class Stream> Stream& operator<<(Stream& stream, aiLightSourceType typ
         case aiLightSource_DIRECTIONAL: return stream << "aiLightSource_DIRECTIONAL";
         case aiLightSource_POINT: return stream << "aiLightSource_POINT";
         case aiLightSource_SPOT: return stream << "aiLightSource_SPOT";
+        case aiLightSource_AREA: return stream << "aiLightSource_AREA";
         default: return stream << "undefined";
     }
 }
@@ -66,13 +78,13 @@ template <class Stream> Stream& operator<<(Stream& stream, const aiLight& light)
 
 template <class Stream> Stream& operator<<(Stream& stream, const aiNode& node) {
     return stream
-        << "aiNode { mChildren = {...}, mMeshes = {...}, "
+        << "aiNode { mChildren, mMeshes, "
         << "mName = " << node.mName << ", "
         << "mNumChildren = " << node.mNumChildren << ", "
         << "mNumMeshes = " << node.mNumMeshes << ", "
-        << "mParent = "
-        << (node.mParent ? (const char*)"{ }" : (const char*)"nullptr") << ", "
-        << "mTransformation = { } }";
+        << "mParent"
+        << (node.mParent ? (const char*)"" : (const char*)" = nullptr") << ", "
+        << "mTransformation }";
 }
 
 
@@ -121,14 +133,47 @@ vec3 specular(const aiMaterial* material) {
     return vec3(result.r, result.g, result.b);
 }
 
+string toString(const aiString& s) {
+    return s.C_Str();
+}
+
+vec2 toVec2(const aiVector2D& v) {
+    return vec2(v.x, v.y);
+}
+
 vec3 toVec3(const aiVector3D& v) {
     return vec3(v.x, v.y, v.z);
+}
+
+vec3 toVec3(const aiColor3D& v) {
+    return vec3(v.r, v.g, v.b);
 }
 
 bool isEmissive(const aiScene* scene, size_t meshID) {
     size_t materialID = scene->mMeshes[meshID]->mMaterialIndex;
     auto material = scene->mMaterials[materialID];
     return emissive(material) != vec3(0.0f);
+}
+
+
+AreaLights loadAreaLights(const aiScene* scene) {
+    AreaLights result;
+
+    for (size_t i = 0; i < scene->mNumLights; ++i) {
+        if (scene->mLights[i]->mType == aiLightSource_AREA) {
+            auto light = scene->mLights[i];
+
+            result.addLight(
+                toString(light->mName),
+                toVec3(light->mPosition),
+                normalize(toVec3(light->mDirection)),
+                normalize(toVec3(light->mUp)),
+                toVec3(light->mColorDiffuse),
+                toVec2(light->mSize));
+        }
+    }
+
+    return result;
 }
 
 Mesh aiMeshToMesh(const aiMesh* mesh) {
@@ -241,74 +286,6 @@ Mesh makeMesh(
     return result;
 }
 
-void appendLights(
-    AreaLights& lights,
-    const aiScene* scene,
-    size_t i) {
-
-    lights.names.push_back(scene->mMeshes[i]->mName.C_Str());
-    size_t numIndices = lights.indices.size();
-    lights.offsets.push_back(numIndices);
-
-    size_t numVertices = lights.vertices.size();
-    lights.vertices.resize(numVertices + scene->mMeshes[i]->mNumVertices);
-
-    for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
-        lights.vertices[numVertices + j].x = scene->mMeshes[i]->mVertices[j].x;
-        lights.vertices[numVertices + j].y = scene->mMeshes[i]->mVertices[j].y;
-        lights.vertices[numVertices + j].z = scene->mMeshes[i]->mVertices[j].z;
-    }
-
-    lights.indices.resize(numIndices + scene->mMeshes[i]->mNumFaces * 3);
-
-    for (size_t j = 0; j < scene->mMeshes[i]->mNumFaces; ++j) {
-        if (scene->mMeshes[i]->mFaces[j].mNumIndices != 3) {
-            throw std::runtime_error("Loaded scene contains non triangle faces.");
-        }
-
-        for (size_t k = 0; k < 3; ++k) {
-            lights.indices[numIndices + j * 3 + k] = scene->mMeshes[i]->mFaces[j].mIndices[k] + numVertices;
-        }
-    }
-
-    if (scene->mMeshes[i]->mNormals == nullptr) {
-        throw std::runtime_error("Normal vectors are not present.");
-    }
-
-    lights.toWorldMs.resize(lights.vertices.size());
-
-    if (scene->mMeshes[i]->mTangents != nullptr &&
-        scene->mMeshes[i]->mBitangents != nullptr) {
-        for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
-            size_t k = numVertices + j;
-            lights.toWorldMs[k][0] = toVec3(scene->mMeshes[i]->mBitangents[j]);
-            lights.toWorldMs[k][1] = toVec3(scene->mMeshes[i]->mNormals[j]);
-            lights.toWorldMs[k][2] = toVec3(scene->mMeshes[i]->mTangents[j]);
-        }
-    }
-    else {
-        for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
-            size_t k = numVertices + j;
-            vec3 normal = toVec3(scene->mMeshes[i]->mNormals[j]);
-            vec3 tangent = lights.vertices[k + 1] - lights.vertices[k + 0];
-            tangent = tangent - dot(normal, tangent) * normal;
-            vec3 bitangent = cross(normal, tangent);
-
-            lights.toWorldMs[k][0] = normalize(bitangent);
-            lights.toWorldMs[k][1] = normal;
-            lights.toWorldMs[k][2] = normalize(tangent);
-        }
-    }
-
-    size_t numFaces = numIndices / 3;
-    lights.exitances.resize(lights.indices.size() / 3);
-
-    for (size_t j = 0; j < scene->mMeshes[i]->mNumFaces; ++j) {
-        auto materialID = scene->mMeshes[i]->mMaterialIndex;
-        lights.exitances[numFaces + j] = emissive(scene->mMaterials[materialID]);
-    }
-}
-
 shared<Scene> loadScene(string path) {
     Assimp::Importer importer;
 
@@ -321,19 +298,6 @@ shared<Scene> loadScene(string path) {
     const aiScene* scene = importer.ReadFile(path, flags);
 
     using namespace std;
-
-    std::cout << path << std::endl;
-    std::cout << "mNumLights: " << scene->mNumLights << std::endl;
-    std::cout << "mNumCameras: " << scene->mNumCameras << std::endl;
-    std::cout << "mNumNodes: " << scene->mRootNode->mNumChildren << std::endl;
-
-    for (size_t i = 0; i < scene->mNumLights; ++i) {
-        std::cout << *scene->mLights[i] << std::endl;
-    }
-
-    for (size_t i = 0; i < scene->mNumCameras; ++i) {
-        std::cout << *scene->mCameras[i] << std::endl;
-    }
 
     if (!scene) {
         throw std::runtime_error("Cannot load \"" + path + "\" scene.");
@@ -351,14 +315,7 @@ shared<Scene> loadScene(string path) {
         }
     }
 
-    AreaLights lights;
-
-    for (size_t i = 0; i < emissive.size(); ++i) {
-        appendLights(
-            lights,
-            scene,
-            emissive[i]);
-    }
+    AreaLights lights = loadAreaLights(scene);
 
     Materials materials;
 
@@ -370,6 +327,7 @@ shared<Scene> loadScene(string path) {
     }
 
     shared<Scene> result = make_shared<Scene>(
+        Cameras(),
         move(materials),
         move(meshes),
         move(lights));
