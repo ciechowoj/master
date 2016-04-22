@@ -9,12 +9,6 @@
 #include <loader.hpp>
 #include <runtime_assert>
 
-#include <mutex>
-#include <condition_variable>
-#include <thread>
-#include <cstring>
-#include <chrono>
-
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
 #include <DirectIllumination.hpp>
