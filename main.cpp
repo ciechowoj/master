@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
     _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 
-    return run(1000, 800, [](GLFWwindow* window) {
+    return run(1000, 739, [](GLFWwindow* window) {
         RTCDevice device = rtcNewDevice(NULL);
         runtime_assert(device != nullptr);
 
@@ -67,20 +67,13 @@ int main(int argc, char **argv) {
 
         scene->buildAccelStructs(device);
 
-        std::cout << scene->cameras().numCameras() << std::endl;
-        std::cout << scene->cameras().position(0) << std::endl;
-        std::cout << scene->cameras().direction(0) << std::endl;
-        std::cout << scene->cameras().up(0) << std::endl;
-
-        std::cout << scene->lights.totalArea() << std::endl;
-
         GUI gui(scenePath);
 
-        // PhotonMapping technique(1000000, 50, 0.5f);
+        // PhotonMapping technique(1000000, 200, 0.2f);
         PathTracing technique;
         // DirectIllumination technique;
 
-        technique.preprocess(scene, [](string, float) {});
+        technique.preprocess(scene, engine, [](string, float) {});
 
         loop(window, [&](int width, int height, void* image) {
             double start = glfwGetTime();

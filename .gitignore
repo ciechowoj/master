@@ -33,3 +33,5 @@
 build/*
 *.ini
 dna.txt
+*.blend1
+*.blend2

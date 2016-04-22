@@ -1,4 +1,3 @@
-#include <iostream>
 #include <sstream>
 #include <GLFW/glfw3.h>
 #include <DirectIllumination.hpp>

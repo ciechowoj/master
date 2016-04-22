@@ -1,4 +1,3 @@
-#include <iostream>
 #include <runtime_assert>
 #include <RayIsect.hpp>
 

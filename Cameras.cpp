@@ -26,9 +26,9 @@ size_t Cameras::addCameraFovX(
     _descs.push_back(desc);
     _views.push_back(_view(_names.size() - 1));
 
-    float focal = tan(fovx * 0.5f);
+    float focalInv = tan(fovx * 0.5f);
 
-    _focalInvs.push_back(1.0f / focal);
+    _focals.push_back(1.0f / focalInv);
 
     return _names.size() - 1;
 }
@@ -81,7 +81,7 @@ const float Cameras::fovx(size_t cameraId, float aspect) const {
     runtime_assert(cameraId < _names.size());
 
     float xfovx = _descs[cameraId].fovx;
-    float yfovx = 2.0f * atan(0.5f * _focalInvs[cameraId] * aspect);
+    float yfovx = 2.0f * atan(0.5f * _focals[cameraId] * aspect);
 
     return isnan(_descs[cameraId].fovx) ? yfovx : xfovx;
 }
@@ -90,7 +90,7 @@ const float Cameras::fovy(size_t cameraId, float aspect) const {
     runtime_assert(cameraId < _names.size());
 
     float yfovy = _descs[cameraId].fovy;
-    float xfovy = 2.0f * atan(_focalInvs[cameraId] / aspect);
+    float xfovy = 2.0f * atan2(1.0f / aspect, _focals[cameraId]);
 
     return isnan(_descs[cameraId].fovx) ? yfovy : xfovy;
 }
@@ -120,10 +120,10 @@ const Ray Cameras::shoot(
     float sx = (x + uniform.x) * widthInv * 2.0f - 1.f;
     float sy = (y + uniform.y) * heightInv * 2.0f - 1.f;
 
-    float focalInv = _focalInvs[cameraId];
+    float focal = _focals[cameraId];
     const mat4& view = this->view(cameraId);
 
-    vec3 direction = normalize(vec3(sx * aspect, sy, -focalInv));
+    vec3 direction = normalize(vec3(sx * aspect, sy, -focal));
 
     return { view[3].xyz(), view * vec4(direction, 0.0f) };
 }

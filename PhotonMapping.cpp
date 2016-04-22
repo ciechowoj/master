@@ -5,7 +5,7 @@
 
 namespace haste {
 
-/*PhotonMapping::PhotonMapping(
+PhotonMapping::PhotonMapping(
     size_t numPhotons,
     size_t numNearest,
     float maxDistance)
@@ -16,57 +16,16 @@ namespace haste {
     runtime_assert(numNearest < _maxNumNearest);
 }
 
-void PhotonMapping::hardReset() {
-    softReset();
-    _stage = _Scatter;
+void PhotonMapping::preprocess(
+    const shared<const Scene>& scene,
+    RandomEngine& engine,
+    const function<void(string, float)>& progress,
+    size_t numThreads)
+{
+    Technique::preprocess(scene, engine, progress, numThreads);
+
     _totalPower = _scene->lights.totalPower();
-}
 
-void PhotonMapping::updateInteractive(ImageView& view)
-{
-    double startTime = glfwGetTime();
-    size_t startRays = _scene->numRays();
-
-    switch (_stage) {
-        case _Scatter:
-            _scatterPhotonsInteractive(view);
-            break;
-        case _Build:
-            _buildPhotonMapInteractive();
-            break;
-        case _BuildDone:
-            view.clear();
-            _stage = _Gather;
-            break;
-        case _Gather:
-            _gatherPhotonsInteractive(view);
-            break;
-    }
-
-    _renderTime += glfwGetTime() - startTime;
-    _numRays += _scene->numRays() - startRays;
-}
-
-string PhotonMapping::stageName() const {
-    switch(_stage) {
-        case _Scatter: return "Scattering photons";
-        case _Build:
-        case _BuildDone: return "Building photon map";
-        case _Gather: return "Gathering photons";
-    }
-}
-
-double PhotonMapping::stageProgress() const {
-    switch(_stage) {
-        case _Scatter: return double(_numEmitted) / _numPhotons;
-        case _Build: return 0.0;
-        case _BuildDone: return 1.0;
-        case _Gather: return _progress;
-    }
-}
-
-void PhotonMapping::_scatterPhotonsInteractive(ImageView& view)
-{
     if (_auxiliary.empty()) {
         _numEmitted = 0;
     }
@@ -74,21 +33,79 @@ void PhotonMapping::_scatterPhotonsInteractive(ImageView& view)
     const size_t batchSize = 1000;
     double startTime = glfwGetTime();
 
-    RandomEngine engine;
-
-    while (_numEmitted < _numPhotons && glfwGetTime() - startTime < 0.033f) {
+    while (_numEmitted < _numPhotons) {
         const size_t begin = _numEmitted;
         const size_t end = min(_numPhotons, begin + batchSize);
         const size_t stored = _auxiliary.size();
 
         _scatterPhotons(engine, begin, end);
-        _renderPhotons(view, stored, _auxiliary.size());
         _numEmitted = end;
+
+        double time = glfwGetTime();
+        if (time - startTime < 0.033f) {
+            progress("Scattering photons", float(_numEmitted) / float(_numPhotons));
+            startTime = time;
+        }
     }
 
-    if (_numEmitted == _numPhotons) {
-        _stage = _Build;
+    progress("Building photon map", 0.0f);
+    _buildPhotonMap();
+    progress("Building photon map", 1.0f);
+
+}
+
+void PhotonMapping::render(
+    ImageView& view,
+    RandomEngine& engine,
+    size_t cameraId)
+{
+    auto trace = [&](RandomEngine& engine, Ray ray) -> vec3 {
+        return _gather(engine, ray);
+    };
+
+    for_each_ray(view, engine, _scene->cameras(), cameraId, trace);
+}
+
+void PhotonMapping::_renderPhotons(
+    ImageView& view,
+    size_t cameraId,
+    size_t begin,
+    size_t end)
+{
+    size_t width = view.width();
+    size_t height = view.height();
+    float f5width = 0.5f * float(width);
+    float f5height = 0.5f * float(height);
+    auto& cameras = _scene->cameras();
+
+    mat4 viewMatrix = inverse(cameras.view(cameraId));
+    mat4 proj = cameras.proj(cameraId, float(width) / height) * viewMatrix;
+
+    const float scaleFactor = 1.f / (_totalPower * _numPhotonsInv);
+
+    for (size_t i = begin; i < end; ++i) {
+        vec4 h = proj * vec4(_auxiliary[i].position, 1.0);
+        vec3 c = _auxiliary[i].power * scaleFactor;
+        vec3 v = h.xyz() / h.w;
+
+        if (-1.0f <= v.z && v.z <= +1.0f) {
+            int x = int((v.x + 1.0f) * f5width + 0.5f);
+            int y = int((v.y + 1.0f) * f5height + 0.5f);
+
+            for (int j = y - 0; j <= y + 0; ++j) {
+                for (int i = x - 0; i <= x + 0; ++i) {
+                    if (view.inWindow(i, j)) {
+                        view.absAt(i, j) += vec4(c, 1.0f);
+                        view.absAt(i, j).w = 1.0f;
+                    }
+                }
+            }
+        }
     }
+}
+
+string PhotonMapping::name() const {
+    return "Photon Mapping";
 }
 
 void PhotonMapping::_scatterPhotons(RandomEngine& engine, size_t begin, size_t end) {
@@ -131,55 +148,9 @@ void PhotonMapping::_scatterPhotons(RandomEngine& engine, size_t begin, size_t e
     }
 }
 
-void PhotonMapping::_renderPhotons(
-    ImageView& view,
-    size_t begin,
-    size_t end)
-{
-    size_t width = view.width();
-    size_t height = view.height();
-    float f5width = 0.5f * float(width);
-    float f5height = 0.5f * float(height);
-    auto& cameras = _scene->cameras();
-
-    mat4 viewMatrix = inverse(cameras.view(_activeCameraId));
-    mat4 proj = cameras.proj(_activeCameraId, float(width) / height) * viewMatrix;
-
-    const float scaleFactor = 1.f / (_totalPower * _numPhotonsInv);
-
-    for (size_t i = begin; i < end; ++i) {
-        vec4 h = proj * vec4(_auxiliary[i].position, 1.0);
-        vec3 c = _auxiliary[i].power * scaleFactor;
-        vec3 v = h.xyz() / h.w;
-
-        if (-1.0f <= v.z && v.z <= +1.0f) {
-            int x = int((v.x + 1.0f) * f5width + 0.5f);
-            int y = int((v.y + 1.0f) * f5height + 0.5f);
-
-            for (int j = y - 0; j <= y + 0; ++j) {
-                for (int i = x - 0; i <= x + 0; ++i) {
-                    if (view.inWindow(i, j)) {
-                        view.absAt(i, j) += vec4(c, 1.0f);
-                        view.absAt(i, j).w = 1.0f;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void PhotonMapping::_buildPhotonMapInteractive() {
+void PhotonMapping::_buildPhotonMap() {
     _photons = KDTree3D<Photon>(std::move(_auxiliary));
     _auxiliary = vector<Photon>();
-    _stage = _BuildDone;
-    softReset();
-    _auxiliary.resize(_numNearest);
-}
-
-void PhotonMapping::_gatherPhotonsInteractive(ImageView& view) {
-    _progress = renderInteractive(view, _scene->cameras(), _activeCameraId, [&](RandomEngine& source, Ray ray) -> vec3 {
-        return _gather(source, ray);
-    });
 }
 
 vec3 PhotonMapping::_gather(RandomEngine& source, Ray ray) {
@@ -229,5 +200,5 @@ vec3 PhotonMapping::_gather(RandomEngine& source, Ray ray) {
 
     return radiance;
 }
-*/
+
 }

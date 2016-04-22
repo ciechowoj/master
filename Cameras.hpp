@@ -68,7 +68,7 @@ private:
     vector<string> _names;
     vector<Desc> _descs;
     vector<mat4> _views;
-    vector<float> _focalInvs;
+    vector<float> _focals;
 
     const mat4 _view(size_t cameraId) const;
 };

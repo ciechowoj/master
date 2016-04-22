@@ -8,9 +8,9 @@ Technique::Technique() { }
 
 Technique::~Technique() { }
 
-
 void Technique::preprocess(
     const shared<const Scene>& scene,
+    RandomEngine& engine,
     const function<void(string, float)>& progress,
     size_t numThreads)
 {

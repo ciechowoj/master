@@ -196,6 +196,13 @@ void window_resize(GLFWwindow* window, int width, int height) {
             nullptr,
             GL_STREAM_DRAW);
 
+        void* pointer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
+
+        if (pointer) {
+            ::memset(pointer, 0, width * height * sizeof(glm::vec4));
+            glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+        }
+
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
         context->texture_width = width;

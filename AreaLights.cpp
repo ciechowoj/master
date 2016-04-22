@@ -1,4 +1,3 @@
-#include <iostream>
 #include <runtime_assert>
 #include <Scene.hpp>
 
@@ -74,7 +73,7 @@ const float AreaLights::lightPower(size_t lightId) const {
 
 const vec3 AreaLights::lightRadiance(size_t lightId) const {
     runtime_assert(lightId < _names.size());
-    return  _exitances[lightId] * one_over_two_pi<float>();
+    return  _exitances[lightId] * one_over_pi<float>();
 }
 
 const float AreaLights::totalArea() const {
@@ -89,10 +88,12 @@ const vec3 AreaLights::toWorld(size_t lightId, const vec3& omega) const {
     const vec3 up = _shapes[lightId].up;
     const vec3 left = normalize(cross(up, _shapes[lightId].direction));
 
-    return vec3(
-        dot(left, omega),
-        dot(_shapes[lightId].direction, omega),
-        dot(-up, omega));
+    mat3 matrix;
+    matrix[0] = left;
+    matrix[1] = _shapes[lightId].direction;
+    matrix[2] = up;
+
+    return matrix * omega;
 }
 
 Photon AreaLights::emit(RandomEngine& engine) const {
@@ -158,8 +159,6 @@ void AreaLights::updateBuffers(int* indices, vec4* vertices) const {
         const vec3 left = normalize(cross(up, _shapes[i].direction)) * 0.5f;
         const vec3 position = _shapes[i].position;
 
-        std::cout << position << std::endl;
-
         vertices[i * 4 + 0] =
             vec4(position - _sizes[i].x * left - _sizes[i].y * up, 1.0f);
         vertices[i * 4 + 1] =
@@ -168,16 +167,6 @@ void AreaLights::updateBuffers(int* indices, vec4* vertices) const {
             vec4(position + _sizes[i].x * left + _sizes[i].y * up, 1.0f);
         vertices[i * 4 + 3] =
             vec4(position - _sizes[i].x * left + _sizes[i].y * up, 1.0f);
-
-        std::cout << vertices[i * 4 + 0] << std::endl;
-        std::cout << vertices[i * 4 + 1] << std::endl;
-        std::cout << vertices[i * 4 + 2] << std::endl;
-        std::cout << vertices[i * 4 + 3] << std::endl;
-
-        std::cout << "up: " << up << std::endl;
-        std::cout << "direction: " << _shapes[i].direction << std::endl;
-        std::cout << "left: " << left << std::endl;
-        std::cout << "size: " << _sizes[i] << std::endl;
     }
 }
 
@@ -219,72 +208,4 @@ const vec3 AreaLights::_samplePosition(size_t lightId, RandomEngine& engine) con
     return _shapes[lightId].position + uniform.x * left + uniform.y * up;
 }
 
-/*
-const vec3 AreaLights::faceRadiance(const RayIsect& isect) const {
-    runtime_assert(isect.isLight());
-
-    const vec3 exitance = exitances[isect.faceId()];
-
-    if (dot(isect.normal(), isect.omega()) > 0.0f) {
-        return exitance * one_over_pi<float>();
-    }
-    else {
-        return vec3(0.0f);
-    }
-}
-
-size_t AreaLights::sampleFace() const {
-    runtime_assert(numFaces() != 0);
-    auto sample = lightSampler.sample();
-
-    return min(size_t(sample * numFaces()), numFaces() - 1);
-}
-
-LightPoint AreaLights::sampleSurface(size_t id) const {
-    LightPoint result;
-
-    vec3 uvw = faceSampler.sample();
-
-    result.position =
-        vertices[indices[id * 3 + 0]] * uvw.z +
-        vertices[indices[id * 3 + 1]] * uvw.x +
-        vertices[indices[id * 3 + 2]] * uvw.y;
-
-    result.toWorldM =
-        toWorldMs[indices[id * 3 + 0]] * uvw.z +
-        toWorldMs[indices[id * 3 + 1]] * uvw.x +
-        toWorldMs[indices[id * 3 + 2]] * uvw.y;
-
-    result.toWorldM[0] = normalize(result.toWorldM[0]);
-    result.toWorldM[1] = normalize(result.toWorldM[1]);
-    result.toWorldM[2] = normalize(result.toWorldM[2]);
-
-    return result;
-}
-
-
-
-
-
-void AreaLights::buildLightStructs() const {
-    size_t numFaces = this->numFaces();
-    lightWeights.resize(numFaces);
-
-    float totalPower = queryTotalPower();
-    float totalPowerInv = 1.0f / totalPower;
-
-    for (size_t i = 0; i < numFaces; ++i) {
-        float power = queryAreaLightPower(i);
-        lightWeights[i] = power * totalPowerInv;
-    }
-
-    lightSampler = PiecewiseSampler(
-        lightWeights.data(),
-        lightWeights.data() + lightWeights.size());
-
-    for (size_t i = 0; i < numFaces; ++i) {
-        lightWeights[i] = 1.f / lightWeights[i];
-    }
-}
-*/
 }
