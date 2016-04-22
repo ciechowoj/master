@@ -25,3 +25,16 @@ void draw_fullscreen_quad(
     const std::vector<glm::vec4>& image);
 
 int loop(GLFWwindow* window, const std::function<void(int, int, void*)>& loop);
+
+class Framework {
+public:
+    virtual ~Framework();
+
+    virtual void render(size_t width, size_t height, glm::vec4* data) = 0;
+    virtual void updateUI(size_t width, size_t height, const glm::vec4* data) = 0;
+    virtual void updateScene() = 0;
+
+    void run(GLFWwindow* window);
+};
+
+

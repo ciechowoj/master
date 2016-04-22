@@ -8,6 +8,13 @@
 #include <imgui_impl_glfw_gl3.h>
 #include <framework.hpp>
 
+#include <mutex>
+#include <condition_variable>
+#include <thread>
+#include <cstring>
+#include <chrono>
+#include <atomic>
+
 GLFWwindow* create_window(int x, int y) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -297,3 +304,61 @@ int loop(GLFWwindow* window, const std::function<void(int, int, void*)>& loop) {
     }
 }
 
+Framework::~Framework() { }
+
+void Framework::run(GLFWwindow* window) {
+    std::vector<glm::vec4> buffer;
+    std::atomic<size_t> bufferWidth, bufferHeight;
+    std::atomic<bool> trigger, done, quit;
+    std::mutex workerMutex;
+    std::condition_variable workerCondition;
+
+    trigger = false;
+    done = true;
+    quit = false;
+
+    auto worker = std::thread([&]() {
+        while (!quit) {
+            while (!trigger) {
+                std::unique_lock<std::mutex> lock(workerMutex);
+                workerCondition.wait(lock);
+            }
+
+            if (!quit) {
+                trigger = false;
+                render(bufferWidth, bufferHeight, buffer.data());
+                done = true;
+            }
+        }
+    });
+
+    loop(window, [&](int width, int height, void* image) {
+        double start = glfwGetTime();
+
+        if (done) {
+            if (bufferWidth == width && bufferHeight == height) {
+                const size_t size = width * height * sizeof(glm::vec4);
+                std::memcpy(image, buffer.data(), size);
+            }
+            else {
+                buffer.resize(width * height);
+                std::memset(buffer.data(), 0, buffer.size() * sizeof(glm::vec4));
+                bufferWidth = width;
+                bufferHeight = height;
+            }
+
+            trigger = true;
+            updateScene();
+            done = false;
+            workerCondition.notify_all();
+        }
+
+        updateUI(width, height, (glm::vec4*)image);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    });
+
+    quit = true;
+    workerCondition.notify_all();
+    worker.join();
+}

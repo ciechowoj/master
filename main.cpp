@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+#include <sstream>
 #include <framework.hpp>
 #include <imgui_ex.h>
 #include <streamops.hpp>
@@ -9,6 +9,12 @@
 #include <loader.hpp>
 #include <runtime_assert>
 
+#include <mutex>
+#include <condition_variable>
+#include <thread>
+#include <cstring>
+#include <chrono>
+
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
 #include <DirectIllumination.hpp>
@@ -17,6 +23,9 @@ using namespace std;
 using namespace haste;
 
 string fixedPath(string base, string scene, int samples);
+
+
+
 
 struct GUI {
     static const size_t pathSize = 255;
@@ -47,8 +56,34 @@ struct GUI {
         const Technique& technique,
         size_t width,
         size_t height,
-        vec4* image,
+        const vec4* image,
         float elapsed);
+};
+
+
+class Application : public Framework {
+public:
+    RandomEngine engine;
+    Technique* technique;
+    GUI* gui;
+
+    virtual void render(size_t width, size_t height, glm::vec4* data) {
+        auto view = ImageView(data, width, height);
+        technique->render(view, engine, 0);
+    }
+
+    virtual void updateUI(size_t width, size_t height, const glm::vec4* data) {
+        gui->update(
+            *technique,
+            width,
+            height,
+            data,
+            0.0f);
+    }
+
+    virtual void updateScene() {
+
+    }
 };
 
 int main(int argc, char **argv) {
@@ -59,8 +94,6 @@ int main(int argc, char **argv) {
         RTCDevice device = rtcNewDevice(NULL);
         runtime_assert(device != nullptr);
 
-        RandomEngine engine;
-
         //auto scenePath = "models/gi_test_scenes/quads.obj";
         auto scenePath = "models/SingleAreaLight.blend";
         auto scene = haste::loadScene(scenePath);
@@ -69,32 +102,19 @@ int main(int argc, char **argv) {
 
         GUI gui(scenePath);
 
+        RandomEngine engine;
+
         // PhotonMapping technique(1000000, 200, 0.2f);
         PathTracing technique;
         // DirectIllumination technique;
 
         technique.preprocess(scene, engine, [](string, float) {});
 
-        loop(window, [&](int width, int height, void* image) {
-            double start = glfwGetTime();
-            auto view = ImageView((vec4*)image, width, height);
+        Application application;
+        application.technique = &technique;
+        application.gui = &gui;
 
-            technique.render(view, engine, 0);
-
-            gui.update(
-                technique,
-                width,
-                height,
-                (vec4*)image,
-                float(glfwGetTime() - start));
-
-            /*if (gui.view != camera->view || gui.fovy != camera->fovy) {
-                camera->view = gui.view;
-                camera->fovy = gui.fovy;
-                memset(image, 0, width * height * sizeof(vec4));
-                technique.softReset();
-            }*/
-        });
+        application.run(window);
 
         rtcDeleteDevice(device);
     });
@@ -159,7 +179,7 @@ void GUI::update(
     const Technique& technique,
     size_t width,
     size_t height,
-    vec4* image,
+    const vec4* image,
     float elapsed)
 {
     // bool show_test_window = true;

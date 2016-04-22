@@ -36,6 +36,7 @@ struct ImageView {
     const vec4& relAt(size_t x, size_t y) const;
     const vec4& absAt(size_t x, size_t y) const;
     const vec4& last() const;
+    vec4* data() { return _data; }
     void clear();
 };
 
