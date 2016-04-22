@@ -77,8 +77,8 @@ int main(int argc, char **argv) {
         GUI gui(scenePath);
 
         // PhotonMapping technique(1000000, 50, 0.5f);
-        // PathTracing technique;
-        DirectIllumination technique;
+        PathTracing technique;
+        // DirectIllumination technique;
 
         technique.preprocess(scene, [](string, float) {});
 

@@ -12,7 +12,7 @@ public:
         RandomEngine& engine,
         size_t cameraId) override;
 
-    vec3 trace(RandomEngine& source, Ray ray);
+    vec3 trace(RandomEngine& engine, Ray ray);
 
     string name() const override;
 };

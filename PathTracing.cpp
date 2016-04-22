@@ -4,20 +4,28 @@
 
 namespace haste {
 
-vec3 pathtrace(
-    RandomEngine& engine,
-    Ray ray,
-    const Scene& scene)
-{
-    const Scene* _scene = &scene;
+PathTracing::PathTracing() { }
 
+void PathTracing::render(
+    ImageView& view,
+    RandomEngine& engine,
+    size_t cameraId)
+{
+    auto trace = [&](RandomEngine& engine, Ray ray) -> vec3 {
+        return this->trace(engine, ray);
+    };
+
+    for_each_ray(view, engine, _scene->cameras(), cameraId, trace);
+}
+
+vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
     vec3 throughput = vec3(1.0f);
     vec3 radiance = vec3(0.0f);
     bool specular = 0;
     int bounce = 0;
 
     while (true) {
-        auto isect = scene.intersect(ray.origin, ray.direction);
+        auto isect = _scene->intersect(ray.origin, ray.direction);
 
         while (isect.isLight()) {
             if (bounce == 0 || specular) {
@@ -25,15 +33,15 @@ vec3 pathtrace(
             }
 
             ray.origin = isect.position();
-            isect = scene.intersect(ray.origin, ray.direction);
+            isect = _scene->intersect(ray.origin, ray.direction);
         }
 
         if (!isect.isPresent()) {
             break;
         }
 
-        auto& bsdf = scene.queryBSDF(isect);
-        SurfacePoint point = scene.querySurface(isect);
+        auto& bsdf = _scene->queryBSDF(isect);
+        SurfacePoint point = _scene->querySurface(isect);
 
         DirectLightSample lightSample = _scene->sampleDirectLightArea(
             engine,
@@ -55,7 +63,7 @@ vec3 pathtrace(
 
         float prob = min(0.5f, length(throughput));
 
-        if (prob < scene.sampler.sample()) {
+        if (prob < _scene->sampler.sample()) {
             break;
         }
         else {
@@ -68,29 +76,8 @@ vec3 pathtrace(
     return radiance;
 }
 
-/*PathTracing::PathTracing() { }
-
-void PathTracing::updateInteractive(ImageView& view) {
-    double startTime = glfwGetTime();
-    size_t startRays = _scene->numRays();
-
-    _progress = renderInteractive(view, _scene->cameras(), _activeCameraId, [&](RandomEngine& source, Ray ray) -> vec3 {
-        return pathtrace(source, ray, *_scene);
-    });
-
-    _numSamples = size_t(view.last().w);
-    _renderTime += glfwGetTime() - startTime;
-    _numRays += _scene->numRays() - startRays;
+string PathTracing::name() const {
+    return "Path Tracing";
 }
 
-string PathTracing::stageName() const {
-    std::stringstream stream;
-    stream << "Tracing paths (" << numSamples() << " samples)";
-    return stream.str();
-}
-
-double PathTracing::stageProgress() const {
-    return _progress;
-}
-*/
 }

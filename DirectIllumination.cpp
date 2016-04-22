@@ -23,7 +23,7 @@ string DirectIllumination::name() const {
     return "Direct Illumination";
 }
 
-vec3 DirectIllumination::trace(RandomEngine& source, Ray ray) {
+vec3 DirectIllumination::trace(RandomEngine& engine, Ray ray) {
     vec3 radiance = vec3(0.0f);
 
     auto isect = _scene->intersect(ray);
@@ -39,7 +39,7 @@ vec3 DirectIllumination::trace(RandomEngine& source, Ray ray) {
         auto reflected = -ray.direction;
         auto surface = _scene->querySurface(isect);
         auto sample = _scene->queryBSDF(isect).sample(
-            source,
+            engine,
             surface,
             reflected);
 

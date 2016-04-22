@@ -3,17 +3,18 @@
 
 namespace haste {
 
-/*class PathTracing : public Technique {
+class PathTracing : public Technique {
 public:
     PathTracing();
 
-    void updateInteractive(ImageView& view) override;
+    void render(
+        ImageView& view,
+        RandomEngine& engine,
+        size_t cameraId) override;
 
-    string stageName() const override;
-    double stageProgress() const override;
+    vec3 trace(RandomEngine& engine, Ray ray);
 
-private:
-    double _progress = 0.0;
-};*/
+    string name() const override;
+};
 
 }
