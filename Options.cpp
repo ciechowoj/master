@@ -36,7 +36,7 @@ R"(Master's project.
 
 bool startsWith(const string& a, const string& b);
 
-map<string, string> extractOptions(int argc, char **argv) {
+map<string, string> extractOptions(int argc, char const* const* argv) {
     map<string, string> result;
 
     for (int i = 1; i < argc; ++i) {
@@ -59,14 +59,49 @@ map<string, string> extractOptions(int argc, char **argv) {
 }
 
 bool isUnsigned(const string& s) {
-    return false;
+    if (!s.empty()) {
+        for (size_t i = 0; i < s.size(); ++i) {
+            if (!std::isdigit(s[i])) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 bool isReal(const string& s) {
-    return false;
+    if (!s.empty()) {
+        size_t i = 0;
+
+        while (std::isdigit(s[i])) {
+            ++i;
+        }
+
+        if (i == s.size()) {
+            return true;
+        }
+
+        if (s[i] == '.') {
+            ++i;
+        }
+        else {
+            return false;
+        }
+
+        while (i < s.size()) {
+            if (!std::isdigit(s[i])) {
+                return false;
+            }
+
+            ++i;
+        }
+    }
+
+    return true;
 }
 
-Options parseArgs(int argc, char **argv) {
+Options parseArgs(int argc, char const* const* argv) {
     auto dict = extractOptions(argc, argv);
     Options options;
 
@@ -155,7 +190,7 @@ Options parseArgs(int argc, char **argv) {
                 return options;
             }
             else {
-                options.maxGather = atof(dict["--max-radius"].c_str());
+                options.maxRadius = atof(dict["--max-radius"].c_str());
                 dict.erase("--max-radius");
             }
         }
@@ -235,13 +270,13 @@ Options parseArgs(int argc, char **argv) {
                 options.displayMessage = "Output cannot be specified twice.";
                 return options;
             }
-            else if (dict["output"].empty()) {
+            else if (dict["--output"].empty()) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --output.";
                 return options;
             }
             else {
-                options.output = dict["output"];
+                options.output = dict["--output"];
                 dict.erase("--output");
             }
         }

@@ -1,9 +1,11 @@
 #pragma once
 #include <string>
+#include <initializer_list>
 
 namespace haste {
 
 using std::string;
+using std::initializer_list;
 
 struct Options {
     enum Technique { PT, PM };
@@ -26,6 +28,12 @@ struct Options {
     string displayMessage;
 };
 
-Options parseArgs(int argc, char **argv);
+Options parseArgs(int argc, char const* const* argv);
+
+template <class... T> Options parseArgs2(const T&... argv) {
+	char const* const table[] = { argv... };
+	return parseArgs(sizeof...(T), table);
+}
+
 
 }

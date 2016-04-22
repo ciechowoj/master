@@ -168,12 +168,11 @@ build/embree/libembree.a:
 	cd build/embree && cmake ../../submodules/embree -DENABLE_STATIC_LIB=ON -DENABLE_TUTORIALS=OFF
 	cd build/embree && make embree $(NUM_THREADS)
 
-
 run: all
 	./build/master/master.bin
 
 test: all
-	./build/master/unittest.bin --gtest_filter=CamerasTest.*
+	./build/master/unittest.bin
 
 clean:
 	rm -rf build/master	
