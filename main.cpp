@@ -18,9 +18,6 @@ using namespace haste;
 
 string fixedPath(string base, string scene, int samples);
 
-
-
-
 struct GUI {
     static const size_t pathSize = 255;
     char path[pathSize];
