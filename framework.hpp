@@ -34,7 +34,14 @@ public:
     virtual void updateUI(size_t width, size_t height, const glm::vec4* data) = 0;
     virtual void updateScene() = 0;
 
-    void run(GLFWwindow* window);
+    int run(size_t width, size_t height);
+    int runBatch(size_t width, size_t height);
+    void quit();
+    bool batch() const;
+
+private:
+    GLFWwindow* _window = nullptr;
+    bool _quit = false;
 };
 
 

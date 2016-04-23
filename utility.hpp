@@ -52,6 +52,7 @@ void saveEXR(
 
 string homePath();
 string baseName(string path);
+string fixedPath(string base, string scene, int samples);
 pair<string, string> splitext(string path);
 
 void renderPoints(

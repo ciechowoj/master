@@ -147,6 +147,29 @@ string baseName(string path) {
     }
 }
 
+string fixedPath(string base, string scene, int samples) {
+    string ext;
+    tie(base, ext) = splitext(base);
+
+    if (ext.empty()) {
+        ext = ".exr";
+    }
+
+    string sceneBase, sceneExt;
+    tie(sceneBase, sceneExt) = splitext(scene);
+
+    stringstream result;
+
+    if (!base.empty() && base[base.size() - 1] != '/') {
+        result << base << "." << baseName(sceneBase) << "." << samples << ext;
+    }
+    else {
+        result << base << baseName(sceneBase) << "." << samples << ext;
+    }
+
+    return result.str();
+}
+
 pair<string, string> splitext(string path) {
     size_t index = path.find_last_of(".");
 

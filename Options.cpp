@@ -34,7 +34,7 @@ R"(
       --num-minutes=<n>     Terminate after n minutes.
       --num-jobs=<n>        Use n threads. [default: 1]
       --snapshot=<n>        Save output every n samples (adds number of samples to output file).
-      --output=<path>       Output file. <input>.<samples>.exr if not specified.
+      --output=<path>       Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
       --camera=<id>         Use camera with given id. [default: 0]
       --resolution=<WxH>    Resolution of output image. [default: 800x600]
 
@@ -420,6 +420,14 @@ shared<Technique> makeTechnique(const Options& options) {
 
 shared<Scene> loadScene(const Options& options) {
     return loadScene(options.input);
+}
+
+string techniqueString(const Options& options) {
+    switch (options.technique) {
+        case Options::PT: return "PT";
+        case Options::PM: return "PM";
+        default: return "UNKNOWN";
+    }
 }
 
 }

@@ -259,6 +259,8 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
 
     context->buffer_id = create_fullscreen_quad();
 
+    auto& io = ImGui::GetIO();
+    io.IniFilename = nullptr;
     ImGui_ImplGlfwGL3_Init(window, true);
 
     func(window);
@@ -306,60 +308,108 @@ int loop(GLFWwindow* window, const std::function<void(int, int, void*)>& loop) {
 
 Framework::~Framework() { }
 
-void Framework::run(GLFWwindow* window) {
+int Framework::run(size_t width, size_t height) {
+    return ::run(width, height, [=](GLFWwindow* window) {
+        _window = window;
+
+        std::vector<glm::vec4> buffer;
+        std::atomic<size_t> bufferWidth, bufferHeight;
+        std::atomic<bool> trigger, done, quit;
+        std::mutex workerMutex;
+        std::condition_variable workerCondition;
+        std::condition_variable quitCondition;
+
+        trigger = false;
+        done = true;
+        quit = false;
+
+        auto worker = std::thread([&]() {
+            while (!quit) {
+                while (!trigger) {
+                    std::unique_lock<std::mutex> lock(workerMutex);
+                    workerCondition.wait(lock);
+                }
+
+                if (!quit) {
+                    trigger = false;
+                    render(bufferWidth, bufferHeight, buffer.data());
+                    done = true;
+                }
+            }
+
+            quitCondition.notify_all();
+        });
+
+        loop(window, [&](int width, int height, void* image) {
+            double start = glfwGetTime();
+
+            if (done) {
+                if (bufferWidth == width && bufferHeight == height) {
+                    const size_t size = width * height * sizeof(glm::vec4);
+                    std::memcpy(image, buffer.data(), size);
+                }
+                else {
+                    buffer.resize(width * height);
+                    std::memset(buffer.data(), 0, buffer.size() * sizeof(glm::vec4));
+                    bufferWidth = width;
+                    bufferHeight = height;
+                }
+
+                trigger = true;
+                updateScene();
+                done = false;
+                workerCondition.notify_all();
+            }
+
+            updateUI(width, height, (glm::vec4*)image);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        });
+
+        quit = true;
+        trigger = true;
+        workerCondition.notify_all();
+
+        std::unique_lock<std::mutex> lock(workerMutex);
+        if (quitCondition.wait_for(lock, std::chrono::seconds(2)) != std::cv_status::timeout) {
+            worker.join();
+        }
+    });
+
+    _window = nullptr;
+
+    return 0;
+}
+
+int Framework::runBatch(size_t width, size_t height) {
+    if (!glfwInit()) {
+        std::cerr << "Cannot initialize glfw." << std::endl;
+        return -1;
+    }
+
     std::vector<glm::vec4> buffer;
-    std::atomic<size_t> bufferWidth, bufferHeight;
-    std::atomic<bool> trigger, done, quit;
-    std::mutex workerMutex;
-    std::condition_variable workerCondition;
+    buffer.resize(width * height);
+    std::memset(buffer.data(), 0, buffer.size() * sizeof(glm::vec4));
 
-    trigger = false;
-    done = true;
-    quit = false;
+    while (!_quit) {
+        updateScene();
+        render(width, height, buffer.data());
+    }
 
-    auto worker = std::thread([&]() {
-        while (!quit) {
-            while (!trigger) {
-                std::unique_lock<std::mutex> lock(workerMutex);
-                workerCondition.wait(lock);
-            }
+    glfwTerminate();
 
-            if (!quit) {
-                trigger = false;
-                render(bufferWidth, bufferHeight, buffer.data());
-                done = true;
-            }
-        }
-    });
+    return 0;
+}
 
-    loop(window, [&](int width, int height, void* image) {
-        double start = glfwGetTime();
+void Framework::quit() {
+    if (_window) {
+        glfwSetWindowShouldClose(_window, GLFW_TRUE);
+    }
+    else {
+        _quit = true;
+    }
+}
 
-        if (done) {
-            if (bufferWidth == width && bufferHeight == height) {
-                const size_t size = width * height * sizeof(glm::vec4);
-                std::memcpy(image, buffer.data(), size);
-            }
-            else {
-                buffer.resize(width * height);
-                std::memset(buffer.data(), 0, buffer.size() * sizeof(glm::vec4));
-                bufferWidth = width;
-                bufferHeight = height;
-            }
-
-            trigger = true;
-            updateScene();
-            done = false;
-            workerCondition.notify_all();
-        }
-
-        updateUI(width, height, (glm::vec4*)image);
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    });
-
-    quit = true;
-    trigger = true;
-    workerCondition.notify_all();
-    // worker.join();
+bool Framework::batch() const {
+    return _window != nullptr;
 }
