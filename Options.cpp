@@ -1,6 +1,11 @@
+#include <iostream>
 #include <map>
 #include <cstring>
 #include <Options.hpp>
+#include <loader.hpp>
+
+#include <PathTracing.hpp>
+#include <PhotonMapping.hpp>
 
 namespace haste {
 
@@ -9,8 +14,7 @@ using std::strstr;
 using std::make_pair;
 
 static const char help[] =
-R"(Master's project.
-
+R"(
     Usage:
       master <input> [<output>] [options]
       master (-h | --help)
@@ -32,6 +36,8 @@ R"(Master's project.
       --snapshot=<n>        Save output every n samples (adds number of samples to output file).
       --output=<path>       Output file. <input>.<samples>.exr if not specified.
       --camera=<id>         Use camera with given id. [default: 0]
+      --resolution=<WxH>    Resolution of output image. [default: 800x600]
+
 )";
 
 bool startsWith(const string& a, const string& b);
@@ -53,6 +59,9 @@ map<string, string> extractOptions(int argc, char const* const* argv) {
         else if(strcmp(argv[i], "-h") == 0) {
             result.insert(make_pair<string, string>("--help", ""));
         }
+        else if (i != 1 && i != 2) {
+            result.insert(make_pair<string, string>(argv[i], ""));
+        }
     }
 
     return result;
@@ -65,6 +74,9 @@ bool isUnsigned(const string& s) {
                 return false;
             }
         }
+    }
+    else {
+        return false;
     }
 
     return true;
@@ -86,6 +98,43 @@ bool isReal(const string& s) {
             ++i;
         }
         else {
+            return false;
+        }
+
+        while (i < s.size()) {
+            if (!std::isdigit(s[i])) {
+                return false;
+            }
+
+            ++i;
+        }
+    }
+    else {
+        return false;
+    }
+
+    return true;
+}
+
+bool isResolution(const string& s) {
+    if (s.empty()) {
+        return false;
+    }
+    else {
+        size_t i = 0;
+
+        while (std::isdigit(s[i])) {
+            ++i;
+        }
+
+        if (s[i] != 'x') {
+            return false;
+        }
+        else {
+            ++i;
+        }
+
+        if (i == s.size()) {
             return false;
         }
 
@@ -128,6 +177,11 @@ Options parseArgs(int argc, char const* const* argv) {
 
         if (argc >= 3 && strstr(argv[2], "-") != argv[2]) {
             options.output = argv[2];
+        }
+        else if (argc >= 3 && strcmp(argv[2], "-") == 0) {
+            options.displayHelp = true;
+            options.displayMessage = "- cannot be output file.";
+            return options;
         }
 
         if (dict.count("--PT") && dict.count("--PM")) {
@@ -293,6 +347,21 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
+        if (dict.count("--resolution")) {
+            if (!isResolution(dict["--resolution"])) {
+                options.displayHelp = true;
+                options.displayMessage = "Invalid value for --resolution.";
+                return options;
+            }
+            else {
+                const char* w = dict["--resolution"].c_str();
+                options.width = atoi(w);
+                const char* h = strstr(w, "x") + 1;
+                options.height = atoi(h);
+                dict.erase("--resolution");
+            }
+        }
+
         if (dict.empty()) {
             return options;
         }
@@ -302,6 +371,55 @@ Options parseArgs(int argc, char const* const* argv) {
             return options;
         }
     }
+}
+
+pair<bool, int> displayHelpIfNecessary(
+    const Options& options,
+    const char* version)
+{
+    if (options.displayHelp) {
+
+        if (options.displayMessage.empty()) {
+            std::cout << "Master's project.\n";
+            std::cout << help;
+            return std::make_pair(true, 0);
+        }
+        else {
+            std::cout << options.displayMessage << std::endl;
+            std::cout << help;
+            return std::make_pair(true, 1);
+        }
+
+    }
+    else if (options.displayVersion) {
+        if (version) {
+            std::cout << version << std::endl;
+            return std::make_pair(true, 0);
+        }
+        else {
+            std::cout << "0.0.0" << std::endl;
+            return std::make_pair(true, 1);
+        }
+    }
+
+    return std::make_pair(false, 0);
+}
+
+shared<Technique> makeTechnique(const Options& options) {
+    switch (options.technique) {
+        case Options::PT:
+            return std::make_shared<PathTracing>();
+
+        case Options::PM:
+            return std::make_shared<PhotonMapping>(
+                options.numPhotons,
+                options.maxGather,
+                options.maxRadius);
+    }
+}
+
+shared<Scene> loadScene(const Options& options) {
+    return loadScene(options.input);
 }
 
 }

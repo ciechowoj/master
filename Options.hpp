@@ -1,11 +1,14 @@
 #pragma once
-#include <string>
 #include <initializer_list>
+#include <memory>
+#include <string>
 
 namespace haste {
 
-using std::string;
 using std::initializer_list;
+using std::pair;
+using std::string;
+template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
     enum Technique { PT, PM };
@@ -22,6 +25,8 @@ struct Options {
     size_t numJobs = 1;
     size_t snapshot = 0;
     size_t cameraId = 0;
+    size_t width = 800;
+    size_t height = 600;
 
     bool displayHelp = false;
     bool displayVersion = false;
@@ -29,11 +34,14 @@ struct Options {
 };
 
 Options parseArgs(int argc, char const* const* argv);
+pair<bool, int> displayHelpIfNecessary(
+    const Options& options,
+    const char* version = nullptr);
 
-template <class... T> Options parseArgs2(const T&... argv) {
-	char const* const table[] = { argv... };
-	return parseArgs(sizeof...(T), table);
-}
+class Technique;
+class Scene;
 
+shared<Technique> makeTechnique(const Options& options);
+shared<Scene> loadScene(const Options& options);
 
 }

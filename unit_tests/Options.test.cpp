@@ -5,6 +5,11 @@
 using namespace glm;
 using namespace haste;
 
+template <class... T> Options parseArgs2(const T&... argv) {
+    char const* const table[] = { argv... };
+    return parseArgs(sizeof...(T), table);
+}
+
 TEST(OptionsTest, basic_tests) {
     Options options = parseArgs2("", "--help", "--version");
     ASSERT_TRUE(options.displayHelp);
@@ -67,4 +72,13 @@ TEST(OptionsTest, basic_tests) {
 
     EXPECT_TRUE(x5.displayHelp);
     EXPECT_FALSE(x5.displayMessage.empty());
+
+    Options x6 = parseArgs2(
+        "",
+        "foo",
+        "--resolution=100x200");
+
+    EXPECT_FALSE(x6.displayHelp);
+    EXPECT_EQ(100, x6.width);
+    EXPECT_EQ(200, x6.height);
 }

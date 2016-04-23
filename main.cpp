@@ -13,6 +13,8 @@
 #include <PhotonMapping.hpp>
 #include <DirectIllumination.hpp>
 
+#include <Options.hpp>
+
 using namespace std;
 using namespace haste;
 
@@ -55,12 +57,20 @@ struct GUI {
 class Application : public Framework {
 public:
     RandomEngine engine;
-    Technique* technique;
+    shared<Technique> technique;
+    shared<Scene> scene;
+    bool preprocessed = false;
     GUI* gui;
 
     virtual void render(size_t width, size_t height, glm::vec4* data) {
-        auto view = ImageView(data, width, height);
-        technique->render(view, engine, 0);
+        if (preprocessed) {
+            auto view = ImageView(data, width, height);
+            technique->render(view, engine, 0);
+        }
+        else {
+            technique->preprocess(scene, engine, [](string, float) {});
+            preprocessed = true;
+        }
     }
 
     virtual void updateUI(size_t width, size_t height, const glm::vec4* data) {
@@ -81,28 +91,29 @@ int main(int argc, char **argv) {
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
     _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 
-    return run(1000, 739, [](GLFWwindow* window) {
+    Options options = parseArgs(argc, argv);
+    auto status = displayHelpIfNecessary(options, "0.0.1");
+
+    if (status.first) {
+        return status.second;
+    }
+
+    return run(options.width, options.height, [=](GLFWwindow* window) {
         RTCDevice device = rtcNewDevice(NULL);
         runtime_assert(device != nullptr);
 
-        //auto scenePath = "models/gi_test_scenes/quads.obj";
-        auto scenePath = "models/SingleAreaLight.blend";
-        auto scene = haste::loadScene(scenePath);
-
+        auto scene = loadScene(options);
         scene->buildAccelStructs(device);
 
-        GUI gui(scenePath);
+        auto technique = makeTechnique(options);
+
+        GUI gui(options.input);
 
         RandomEngine engine;
 
-        // PhotonMapping technique(1000000, 200, 0.2f);
-        PathTracing technique;
-        // DirectIllumination technique;
-
-        technique.preprocess(scene, engine, [](string, float) {});
-
         Application application;
-        application.technique = &technique;
+        application.technique = technique;
+        application.scene = scene;
         application.gui = &gui;
 
         application.run(window);

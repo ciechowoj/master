@@ -361,5 +361,5 @@ void Framework::run(GLFWwindow* window) {
     quit = true;
     trigger = true;
     workerCondition.notify_all();
-    worker.join();
+    // worker.join();
 }

@@ -25,10 +25,10 @@ LIBRARY_DIRS = \
 	-Lbuild/assimp/code
 
 CC = gcc
-CCFLAGS = -march=native -O2 -ffast-math -g -w -Wall $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CCFLAGS = -march=native -O2 -ffast-math -w -Wall $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 CXX = g++
-CXXFLAGS = -march=native -O2 -ffast-math -g -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CXXFLAGS = -march=native -O2 -ffast-math -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \
@@ -92,14 +92,14 @@ build/master/master.bin: \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	build/master/main.o
-	$(CXX) $(MAIN_OBJECTS) build/master/main.o $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/master.bin
+	$(CXX) $(MAIN_OBJECTS) build/master/main.o $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/master.bin
 
 build/master/unittest.bin: \
 	$(LIB_DEPENDENCIES) \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	$(TEST_OBJECTS)
-	$(CXX) $(MAIN_OBJECTS) $(TEST_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -pg -o build/master/unittest.bin
+	$(CXX) $(MAIN_OBJECTS) $(TEST_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/unittest.bin
 
 build/master/%.o: %.cpp build/master/%.d build/master/sentinel
 	$(CXX) -c $(MAIN_DEPENDENCY_FLAGS) $(CXXFLAGS) $< -o $@
