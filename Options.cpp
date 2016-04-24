@@ -34,7 +34,7 @@ R"(
       --num-samples=<n>     Terminate after n samples.
       --num-seconds=<n>     Terminate after n seconds.
       --num-minutes=<n>     Terminate after n minutes.
-      --num-jobs=<n>        Use n threads. [default: 1]
+      --parallel            Use multithreading.
       --snapshot=<n>        Save output every n samples (adds number of samples to output file).
       --output=<path>       Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
       --camera=<id>         Use camera with given id. [default: 0]
@@ -303,16 +303,9 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
-        if (dict.count("--num-jobs")) {
-            if (!isUnsigned(dict["--num-jobs"])) {
-                options.displayHelp = true;
-                options.displayMessage = "Invalid value for --num-jobs.";
-                return options;
-            }
-            else {
-                options.numJobs = atoi(dict["--num-jobs"].c_str());
-                dict.erase("--num-jobs");
-            }
+        if (dict.count("--parallel")) {
+            options.parallel = true;
+            dict.erase("--parallel");
         }
 
         if (dict.count("--snapshot")) {

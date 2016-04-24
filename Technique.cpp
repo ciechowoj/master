@@ -2,6 +2,9 @@
 #include <GLFW/glfw3.h>
 #include <Technique.hpp>
 
+#include <tbb/parallel_for.h>
+#include <tbb/blocked_range.h>
+
 namespace haste {
 
 Technique::Technique() { }
@@ -12,7 +15,7 @@ void Technique::preprocess(
     const shared<const Scene>& scene,
     RandomEngine& engine,
     const function<void(string, float)>& progress,
-    size_t numThreads)
+    bool parallel)
 {
     _numNormalRays = 0;
     _numShadowRays = 0;
@@ -24,12 +27,33 @@ void Technique::render(
     ImageView& view,
     RandomEngine& engine,
     size_t cameraId,
-    size_t numThreads)
+    bool parallel)
 {
     size_t numNormalRays = _scene->numNormalRays();
     size_t numShadowRays = _scene->numShadowRays();
 
-    render(view, engine, cameraId);
+    if (parallel) {
+        static const size_t batch = 64;
+        auto range = tbb::blocked_range<size_t>(0, (view.yWindow() + batch - 1) / batch);
+
+        parallel_for(range, [&](const tbb::blocked_range<size_t>& range) {
+            RandomEngine engine;
+
+            ImageView subview = view;
+
+            size_t yBegin = view._yOffset + batch * range.begin();
+            size_t yEnd = yBegin + (range.end() - range.begin()) * batch;
+            yEnd = min(yEnd, view.yEnd());
+
+            subview._yOffset = yBegin;
+            subview._yWindow = yEnd - yBegin;
+
+            render(subview, engine, cameraId);
+        });
+    }
+    else {
+        render(view, engine, cameraId);
+    }
 
     _numNormalRays += _scene->numNormalRays() - numNormalRays;
     _numShadowRays += _scene->numShadowRays() - numShadowRays;

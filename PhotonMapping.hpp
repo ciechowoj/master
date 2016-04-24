@@ -12,7 +12,7 @@ public:
         const shared<const Scene>& scene,
         RandomEngine& engine,
         const function<void(string, float)>& progress,
-        size_t numThreads = 1) override;
+        bool parallel) override;
 
     void render(
         ImageView& view,

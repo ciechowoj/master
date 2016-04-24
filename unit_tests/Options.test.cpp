@@ -47,7 +47,7 @@ TEST(OptionsTest, basic_tests) {
         "--batch",
         "--num-samples=31415",
         "--num-minutes=60",
-        "--num-jobs=3",
+        "--parallel",
         "--snapshot=100",
         "--camera=1");
 
@@ -61,7 +61,7 @@ TEST(OptionsTest, basic_tests) {
     EXPECT_TRUE(x4.batch);
     EXPECT_EQ(31415, x4.numSamples);
     EXPECT_EQ(3600.0, x4.numSeconds);
-    EXPECT_EQ(3, x4.numJobs);
+    EXPECT_TRUE(x4.parallel);
     EXPECT_EQ(100, x4.snapshot);
     EXPECT_EQ(1, x4.cameraId);
 

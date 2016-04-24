@@ -20,9 +20,9 @@ void PhotonMapping::preprocess(
     const shared<const Scene>& scene,
     RandomEngine& engine,
     const function<void(string, float)>& progress,
-    size_t numThreads)
+    bool parallel)
 {
-    Technique::preprocess(scene, engine, progress, numThreads);
+    Technique::preprocess(scene, engine, progress, parallel);
 
     _totalPower = _scene->lights.totalPower();
 

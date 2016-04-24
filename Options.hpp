@@ -22,7 +22,7 @@ struct Options {
     bool batch = false;
     size_t numSamples = 0;
     double numSeconds = 0.0;
-    size_t numJobs = 1;
+    bool parallel = false;
     size_t snapshot = 0;
     size_t cameraId = 0;
     size_t width = 800;

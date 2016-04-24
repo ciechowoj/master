@@ -15,13 +15,13 @@ public:
         const shared<const Scene>& scene,
         RandomEngine& engine,
         const function<void(string, float)>& progress,
-        size_t numThreads = 1);
+        bool parallel = false);
 
     virtual void render(
         ImageView& view,
         RandomEngine& engine,
         size_t cameraId,
-        size_t numThreads);
+        bool parallel);
 
     virtual void render(
         ImageView& view,

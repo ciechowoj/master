@@ -15,7 +15,7 @@ public:
     virtual void render(size_t width, size_t height, glm::vec4* data) {
         if (_preprocessed) {
             auto view = ImageView(data, width, height);
-            _technique->render(view, _engine, _options.cameraId, _options.numJobs);
+            _technique->render(view, _engine, _options.cameraId, _options.parallel);
 
             double elapsed = glfwGetTime() - _startTime;
             _saveIfRequired(view, elapsed);

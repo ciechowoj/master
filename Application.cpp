@@ -17,10 +17,6 @@ Application::Application(const Options& options) {
     _ui = make_shared<UserInterface>(options.input);
 
     _startTime = glfwGetTime();
-
-    if (_options.numJobs != 1) {
-        std::cerr << "Multiple threads aren't implemented yet (--num-jobs)." << std::endl;
-    }
 }
 
 Application::~Application() {
