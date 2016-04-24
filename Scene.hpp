@@ -80,6 +80,9 @@ public:
 
     mutable UniformSampler sampler;
 
+    const LightSample sampleLight(
+        RandomEngine& engine) const;
+
     const DirectLightSample sampleDirectLightAngle(
         RandomEngine& engine,
         const SurfacePoint& point,
@@ -97,8 +100,6 @@ public:
         const SurfacePoint& point,
         const vec3& omegaR,
         const BSDF& bsdf) const;
-
-
 
 private:
     mutable std::atomic<size_t> _numIntersectRays;

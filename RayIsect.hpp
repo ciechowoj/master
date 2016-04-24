@@ -12,7 +12,7 @@ private:
 public:
     const bool isPresent() const { return geomID != RTC_INVALID_GEOMETRY_ID; }
     const bool isLight() const { return geomID == 0; }
-    const bool isMesh() const { return geomID > 0; }
+    const bool isMesh() const { return geomID > 0 && isPresent(); }
 
     const size_t meshId() const { return geomID - 1; }
     const size_t faceId() const { return primID; }

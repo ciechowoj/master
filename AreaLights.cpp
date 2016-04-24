@@ -111,6 +111,22 @@ Photon AreaLights::emit(RandomEngine& engine) const {
 }
 
 LightSample AreaLights::sample(
+    RandomEngine& engine) const
+{
+    size_t lightId = _sampleLight(engine);
+
+    LightSample result;
+    result._position = _samplePosition(lightId, engine);
+    result._omega = toWorld(lightId, sampleCosineHemisphere1(engine).omega());
+    result._radiance = lightRadiance(lightId);
+    result._areaDensity = _weights[lightId] / lightArea(lightId);
+    result._omegaDensity = one_over_pi<float>();
+
+    return result;
+}
+
+
+LightSample AreaLights::sample(
     RandomEngine& engine,
     const vec3& position) const
 {
@@ -122,10 +138,11 @@ LightSample AreaLights::sample(
     float cosineTheta = dot(-result.omega(), _shapes[lightId].direction);
     vec3 diff = position - result.position();
 
-    const float numerator = 1; // dot(diff, diff);
-    const float denominator = _weights[lightId] * lightArea(lightId) ;
+    const float numerator = _weights[lightId]; // dot(diff, diff);
+    const float denominator = lightArea(lightId) ;
 
-    result._density = numerator / denominator;
+    result._areaDensity = numerator / denominator;
+    result._omegaDensity = 1.0f;
 
     if (cosineTheta > 0.0f) {
         result._radiance = lightRadiance(lightId) / dot(diff, diff) * cosineTheta;
@@ -186,9 +203,9 @@ void AreaLights::_updateSampler() {
         _weights.data(),
         _weights.data() + _weights.size());
 
-    for (size_t i = 0; i < numLights; ++i) {
+    /*for (size_t i = 0; i < numLights; ++i) {
         _weights[i] = 1.f / _weights[i];
-    }
+    }*/
 }
 
 const size_t AreaLights::_sampleLight(RandomEngine& engine) const {
