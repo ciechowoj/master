@@ -11,7 +11,7 @@ using std::string;
 template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
-    enum Technique { PT, PM };
+    enum Technique { BDPT, PT, PM };
 
     string input;
     string output;

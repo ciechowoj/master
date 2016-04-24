@@ -4,34 +4,52 @@
 
 namespace haste {
 
-/*BidirectionalPathTracing::BidirectionalPathTracing() { }
+BidirectionalPathTracing::BidirectionalPathTracing() { }
 
-void BidirectionalPathTracing::updateInteractive(ImageView& view)
+void BidirectionalPathTracing::render(
+   ImageView& view,
+   RandomEngine& engine,
+   size_t cameraId)
 {
-    double startTime = glfwGetTime();
-    size_t startRays = _scene->numRays();
+    auto trace = [&](RandomEngine& engine, Ray ray) -> vec3 {
+        return this->trace(engine, ray);
+    };
 
-    _progress = renderInteractive(view, _scene->cameras(), _activeCameraId, [&](RandomEngine& engine, Ray ray) -> vec3 {
-        return _pathtrace(engine, ray);
-    });
-
-    _numSamples = size_t(view.last().w);
-    _renderTime += glfwGetTime() - startTime;
-    _numRays += _scene->numRays() - startRays;
+    for_each_ray(view, engine, _scene->cameras(), cameraId, trace);
 }
 
-string BidirectionalPathTracing::stageName() const {
-    std::stringstream stream;
-    stream << "Bidirectional path tracing (" << numSamples() << " samples)";
-    return stream.str();
+vec3 BidirectionalPathTracing::trace(RandomEngine& engine, Ray ray) {
+    Vertex lightSubpath[_maxSubpathLength];
+    Vertex eyeSubpath[_maxSubpathLength];
+
+    size_t lightSubpathSize = 0;
+    size_t eyeSubpathSize = 0;
+
+    lightSubpathSize = traceLightSubpath(lightSubpath);
+    eyeSubpathSize = traceEyeSubpath(eyeSubpath, ray);
+
+
+
+
+
+
+    return vec3(1.0f, 0.0f, 1.0f);
 }
 
-double BidirectionalPathTracing::stageProgress() const {
-    return _progress;
+size_t BidirectionalPathTracing::traceLightSubpath(Vertex* subpath) {
+
+
+
+
+    return 0;
 }
 
-vec3 BidirectionalPathTracing::_pathtrace(RandomEngine& engine, Ray ray) {
-    return vec3(0.0f, 1.0f, 0.0f);
-}*/
+size_t BidirectionalPathTracing::traceEyeSubpath(Vertex* subpath, Ray ray) {
+    return 0;
+}
+
+string BidirectionalPathTracing::name() const {
+    return "Bidirectional Path Tracing";
+}
 
 }

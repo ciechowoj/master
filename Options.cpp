@@ -4,6 +4,7 @@
 #include <Options.hpp>
 #include <loader.hpp>
 
+#include <BidirectionalPathTracing.hpp>
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
 
@@ -23,6 +24,7 @@ R"(
     Options:
       -h --help             Show this screen.
       --version             Show version.
+      --BDPT                Use bidirectional path tracing (not implemented - wip).
       --PT                  Use path tracing for rendering (this is default one).
       --PM                  Use photon mapping for rendering.
       --num-photons=<n>     Use n photons. [default: 1 000 000]
@@ -184,10 +186,17 @@ Options parseArgs(int argc, char const* const* argv) {
             return options;
         }
 
-        if (dict.count("--PT") && dict.count("--PM")) {
+        size_t numTechniqes =
+            dict.count("--BDPT") + dict.count("--PT") + dict.count("--PM");
+
+        if (numTechniqes > 1) {
             options.displayHelp = true;
             options.displayMessage = "Only one technique can be specified.";
             return options;
+        }
+        else if (dict.count("--BDPT")) {
+            options.technique = Options::BDPT;
+            dict.erase("--BDPT");
         }
         else if (dict.count("--PT")) {
             options.technique = Options::PT;
@@ -407,6 +416,9 @@ pair<bool, int> displayHelpIfNecessary(
 
 shared<Technique> makeTechnique(const Options& options) {
     switch (options.technique) {
+        case Options::BDPT:
+            return std::make_shared<BidirectionalPathTracing>();
+
         case Options::PT:
             return std::make_shared<PathTracing>();
 
@@ -424,6 +436,7 @@ shared<Scene> loadScene(const Options& options) {
 
 string techniqueString(const Options& options) {
     switch (options.technique) {
+        case Options::BDPT: return "BDPT";
         case Options::PT: return "PT";
         case Options::PM: return "PM";
         default: return "UNKNOWN";

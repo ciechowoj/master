@@ -169,7 +169,7 @@ build/embree/libembree.a:
 	cd build/embree && make embree $(NUM_THREADS)
 
 run: all
-	./build/master/master.bin
+	./build/master/master.bin models/CornellBoxDiffuse.blend --BDPT
 
 test: all
 	./build/master/unittest.bin
