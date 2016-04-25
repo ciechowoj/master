@@ -24,7 +24,7 @@ R"(
     Options:
       -h --help             Show this screen.
       --version             Show version.
-      --BDPT                Use bidirectional path tracing (not implemented - wip).
+      --BDPT                Use bidirectional path tracing (with beta = 1).
       --PT                  Use path tracing for rendering (this is default one).
       --PM                  Use photon mapping for rendering.
       --num-photons=<n>     Use n photons. [default: 1 000 000]
