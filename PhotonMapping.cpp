@@ -190,7 +190,7 @@ vec3 PhotonMapping::_gather(RandomEngine& source, Ray ray) {
                 vec3 incident = auxiliary[i].direction * point.toWorldM;
                 vec3 reflected = -normalize(ray.direction) * point.toWorldM;
 
-                result += auxiliary[i].power * bsdf.query(incident, reflected);
+                result += auxiliary[i].power * bsdf.query(incident, reflected, point.gnormal());
                 radius2 = max(radius2, distance2(isect.position(), auxiliary[i].position));
             }
 

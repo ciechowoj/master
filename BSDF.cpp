@@ -14,9 +14,10 @@ BSDF::~BSDF() { }
 const vec3 BSDF::query(
     const SurfacePoint& point,
     const vec3& a,
-    const vec3& b) const
+    const vec3& b,
+    const vec3& n) const
 {
-    return query(point.toSurface(a), point.toSurface(b));
+    return query(point.toSurface(a), point.toSurface(b), point.toSurface(n));
 }
 
 const BSDFSample BSDF::sample(
@@ -35,9 +36,12 @@ DiffuseBSDF::DiffuseBSDF(const vec3& diffuse)
 
 const vec3 DiffuseBSDF::query(
     const vec3& a,
-    const vec3& b) const
+    const vec3& b,
+    const vec3& n) const
 {
-    return _diffuse * one_over_pi<float>();
+    return dot(a, n) > 0.0f && dot(b, n) > 0.0f
+        ? _diffuse * one_over_pi<float>()
+        : vec3(0.0f);
 }
 
 const BSDFSample DiffuseBSDF::sample(

@@ -259,50 +259,6 @@ Mesh aiMeshToMesh(const aiMesh* mesh) {
     return result;
 }
 
-Mesh makeMesh(
-    const aiScene* scene,
-    size_t i) {
-
-    auto mesh = scene->mMeshes[i];
-
-    vector<vec3> vertices;
-
-    for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
-        vertices.push_back(vec3(0));
-        vertices[j] = toVec3(scene->mMeshes[i]->mVertices[j]);
-    }
-
-    vector<int> indices(scene->mMeshes[i]->mNumFaces * 3);
-
-    for (size_t j = 0; j < scene->mMeshes[i]->mNumFaces; ++j) {
-        if (scene->mMeshes[i]->mFaces[j].mNumIndices != 3) {
-            throw std::runtime_error("Loaded scene contains non triangle faces.");
-        }
-
-        for (size_t k = 0; k < 3; ++k) {
-            indices[j * 3 + k] = scene->mMeshes[i]->mFaces[j].mIndices[k];
-        }
-    }
-
-    if (scene->mMeshes[i]->mNormals == nullptr) {
-        throw std::runtime_error("Normal vectors are not present.");
-    }
-
-    vector<vec3> normals(scene->mMeshes[i]->mNumVertices);
-
-    for (size_t j = 0; j < scene->mMeshes[i]->mNumVertices; ++j) {
-        normals[j] = toVec3(scene->mMeshes[i]->mNormals[j]);
-    }
-
-    Mesh result;
-    result.materialID = scene->mMeshes[i]->mMaterialIndex;
-    result.name = scene->mMeshes[i]->mName.C_Str();
-    result.indices = std::move(indices);
-    result.normals = std::move(normals);
-    result.vertices = std::move(vertices);
-    return result;
-}
-
 shared<Scene> loadScene(string path) {
     Assimp::Importer importer;
 

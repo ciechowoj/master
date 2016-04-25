@@ -71,6 +71,11 @@ const float AreaLights::lightPower(size_t lightId) const {
     return lightArea(lightId) * (exitance.x + exitance.y + exitance.z);
 }
 
+const vec3 AreaLights::lightNormal(size_t lightId) const {
+    runtime_assert(lightId < _names.size());
+    return _shapes[lightId].direction;
+}
+
 const vec3 AreaLights::lightRadiance(size_t lightId) const {
     runtime_assert(lightId < _names.size());
     return  _exitances[lightId] * one_over_pi<float>();
@@ -114,13 +119,15 @@ LightSample AreaLights::sample(
     RandomEngine& engine) const
 {
     size_t lightId = _sampleLight(engine);
+    auto sample = sampleCosineHemisphere1(engine);
 
     LightSample result;
     result._position = _samplePosition(lightId, engine);
-    result._omega = toWorld(lightId, sampleCosineHemisphere1(engine).omega());
+    result._normal = lightNormal(lightId);
+    result._omega = toWorld(lightId, sample.omega());
     result._radiance = lightRadiance(lightId);
     result._areaDensity = _weights[lightId] / lightArea(lightId);
-    result._omegaDensity = one_over_pi<float>();
+    result._omegaDensity = sample.density();
 
     return result;
 }
@@ -138,10 +145,7 @@ LightSample AreaLights::sample(
     float cosineTheta = dot(-result.omega(), _shapes[lightId].direction);
     vec3 diff = position - result.position();
 
-    const float numerator = _weights[lightId]; // dot(diff, diff);
-    const float denominator = lightArea(lightId) ;
-
-    result._areaDensity = numerator / denominator;
+    result._areaDensity = _weights[lightId] / lightArea(lightId);
     result._omegaDensity = 1.0f;
 
     if (cosineTheta > 0.0f) {

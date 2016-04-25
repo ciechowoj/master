@@ -23,23 +23,20 @@ struct Photon {
 
 struct LightSample {
     vec3 _position;
+    vec3 _normal;
     vec3 _radiance;
     vec3 _omega;
     float _areaDensity;
     float _omegaDensity;
 
     const vec3& position() const { return _position; }
+    const vec3& normal() const { return _normal; }
     const vec3& radiance() const { return _radiance; }
     const vec3& omega() const { return _omega; }
     const float density() const { return _areaDensity * _omegaDensity; }
     const float densityInv() const { return 1.0f / density(); }
     const float areaDensity() const { return _areaDensity; };
     const float omegaDensity() const { return _omegaDensity; };
-};
-
-struct LightPoint {
-    vec3 position;
-    mat3 toWorldM;
 };
 
 class AreaLights : public Geometry {
@@ -56,6 +53,7 @@ public:
     const string& name(size_t lightId) const;
     const float lightArea(size_t lightId) const;
     const float lightPower(size_t lightId) const;
+    const vec3 lightNormal(size_t lightId) const;
     const vec3 lightRadiance(size_t lightId) const;
     const float totalArea() const;
     const float totalPower() const;

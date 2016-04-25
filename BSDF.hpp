@@ -27,12 +27,14 @@ public:
 
     virtual const vec3 query(
         const vec3& a,
-        const vec3& b) const = 0;
+        const vec3& b,
+        const vec3& n) const = 0;
 
     const vec3 query(
         const SurfacePoint& point,
         const vec3& a,
-        const vec3& b) const;
+        const vec3& b,
+        const vec3& n) const;
 
     virtual const BSDFSample sample(
         RandomEngine& engine,
@@ -58,7 +60,8 @@ public:
 
     const vec3 query(
         const vec3& a,
-        const vec3& b) const override;
+        const vec3& b,
+        const vec3& n) const override;
 
     const BSDFSample sample(
         RandomEngine& engine,

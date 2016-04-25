@@ -49,7 +49,7 @@ vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
             -ray.direction,
             bsdf);
 
-        radiance += lightSample.radiance() * lightSample.densityInv();
+        radiance += lightSample.radiance() * lightSample.densityInv() * throughput;
 
         auto bsdfSample = bsdf.sample(
             engine,

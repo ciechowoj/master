@@ -4,6 +4,7 @@ namespace haste {
 
 struct SurfacePoint {
     vec3 _position;
+    vec3 _gnormal;
     mat3 toWorldM;
     size_t materialID;
 
@@ -12,6 +13,10 @@ struct SurfacePoint {
 
     const vec3& normal() const {
         return toWorldM[1];
+    }
+
+    const vec3& gnormal() const {
+        return _gnormal;
     }
 
     const vec3& tangent() const {

@@ -107,6 +107,8 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
     SurfacePoint point;
     point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
 
+    point._gnormal = isect.normal();
+
     point.toWorldM[0] =
         normalize(w * mesh.bitangents[mesh.indices[isect.primID * 3 + 0]] +
         isect.u * mesh.bitangents[mesh.indices[isect.primID * 3 + 1]] +
@@ -235,7 +237,7 @@ const DirectLightSample Scene::sampleDirectLightArea(
     const float cosineTheta = dot(lightSample.omega(), point.normal());
     const vec3 radiance =
         lightSample.radiance() *
-        bsdf.query(point, omegaR, lightSample.omega()) *
+        bsdf.query(point, omegaR, lightSample.omega(), point.gnormal()) *
         occluded(lightSample.position(), point.position()) *
         cosineTheta;
 

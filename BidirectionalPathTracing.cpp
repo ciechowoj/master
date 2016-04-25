@@ -25,25 +25,23 @@ vec3 BidirectionalPathTracing::trace(RandomEngine& engine, Ray ray) {
 
     size_t lightSubpathSize = 0;
     size_t eyeSubpathSize = 0;
-
-    lightSubpathSize = traceLightSubpath(engine, lightSubpath);
-    eyeSubpathSize = traceEyeSubpath(engine, eyeSubpath, ray);
-
-    if (eyeSubpathSize == 1 || lightSubpathSize == 1) {
-        return vec3(0.0f);
-    }
-
     vec3 color = vec3(0.0f);
 
-    for (size_t i = 1; i < eyeSubpathSize; ++ i) {
+    lightSubpathSize = traceLightSubpath(engine, lightSubpath);
+    std::tie(eyeSubpathSize, color) = traceEyeSubpath(engine, eyeSubpath, ray);
+
+
+    for (size_t i = 1; i < eyeSubpathSize; ++i) {
         auto& eye = eyeSubpath[i];
         auto& light = lightSubpath[0];
         auto omega = normalize(light.position() - eye.position());
 
-        vec3 throughput = eye.bsdf()->query(eye.point(), eye.omega(), omega);
+        float geometry =
+            dot(light.normal(), -omega) * dot(eye.normal(), omega)
+            / distance2(light.position(), eye.position());
 
+        vec3 throughput = eye.bsdf()->query(eye.point(), omega, eye.normal(), eye.gnormal());
         float visibility = _scene->occluded(light.position(), eye.position());
-        float geometry = 1.0f / distance2(light.position(), eye.position());
         float density = light.density() * eye.density();
 
         color +=
@@ -60,11 +58,14 @@ vec3 BidirectionalPathTracing::trace(RandomEngine& engine, Ray ray) {
             auto omega = normalize(light.position() - eye.position());
 
             vec3 throughput =
-                light.bsdf()->query(light.point(), light.omega(), -omega) *
-                eye.bsdf()->query(eye.point(), eye.omega(), omega);
+                light.bsdf()->query(light.point(), light.omega(), -omega, light.gnormal()) *
+                eye.bsdf()->query(eye.point(), eye.omega(), omega, eye.gnormal());
+
+            float geometry =
+                dot(light.normal(), -omega) * dot(eye.normal(), omega)
+                / distance2(light.position(), eye.position());
 
             float visibility = _scene->occluded(light.position(), eye.position());
-            float geometry = 1.0f / distance2(light.position(), eye.position());
             float density = light.density() * eye.density();
 
             color +=
@@ -73,11 +74,11 @@ vec3 BidirectionalPathTracing::trace(RandomEngine& engine, Ray ray) {
                 visibility *
                 throughput *
                 geometry /
-                density;
+                (density * float(i + j));
         }
     }
 
-    return color / float(lightSubpathSize * (eyeSubpathSize - 1));
+    return color; // / float(lightSubpathSize);
 }
 
 size_t BidirectionalPathTracing::traceLightSubpath(RandomEngine& engine, Vertex* subpath) {
@@ -85,7 +86,7 @@ size_t BidirectionalPathTracing::traceLightSubpath(RandomEngine& engine, Vertex*
 
     vec3 omega = lightSample.omega();
     subpath[0]._point._position = lightSample.position();
-    subpath[0]._point.toWorldM[1] = vec3(0.0f, 0.0f, -1.0f);
+    subpath[0]._point.toWorldM[1] = lightSample.normal();
     subpath[0]._throughput = lightSample.radiance();
     subpath[0]._density = lightSample.areaDensity();
 
@@ -98,8 +99,17 @@ size_t BidirectionalPathTracing::traceLightSubpath(RandomEngine& engine, Vertex*
     if (isect.isPresent()) {
         subpath[1]._point = _scene->querySurface(isect);
         subpath[1]._omega = -omega;
-        subpath[1]._throughput = lightSample.radiance();
-        subpath[1]._density = lightSample.density();
+        subpath[1]._throughput =
+            lightSample.radiance() *
+            dot(subpath[0].normal(), omega) *
+            dot(subpath[1].normal(), -omega) /
+            distance2(subpath[0].position(), subpath[1].position());
+
+        subpath[1]._density =
+            lightSample.density() *
+            dot(subpath[1].normal(), -omega) /
+            distance2(subpath[0].position(), subpath[1].position());
+
         subpath[1]._bsdf = &_scene->queryBSDF(isect);
 
         return traceSubpath(engine, subpath, omega);
@@ -109,16 +119,17 @@ size_t BidirectionalPathTracing::traceLightSubpath(RandomEngine& engine, Vertex*
     }
 }
 
-size_t BidirectionalPathTracing::traceEyeSubpath(RandomEngine& engine, Vertex* subpath, Ray ray) {
+pair<size_t, vec3> BidirectionalPathTracing::traceEyeSubpath(RandomEngine& engine, Vertex* subpath, Ray ray) {
     subpath[0]._point._position = ray.origin;
     subpath[0]._throughput = vec3(1.0f);
     subpath[0]._density = 1;
 
+    vec3 extra = vec3(0.0f);
+
     auto isect = _scene->intersect(ray.origin, ray.direction);
 
     while (isect.isLight()) {
-        // add radiance
-
+        extra += _scene->queryRadiance(isect);
         isect = _scene->intersect(isect.position(), ray.direction);
     }
 
@@ -129,10 +140,10 @@ size_t BidirectionalPathTracing::traceEyeSubpath(RandomEngine& engine, Vertex* s
         subpath[1]._density = subpath[0]._density;
         subpath[1]._bsdf = &_scene->queryBSDF(isect);
 
-        return traceSubpath(engine, subpath, ray.direction);
+        return std::make_pair(traceSubpath(engine, subpath, ray.direction), extra);
     }
     else {
-        return 1;
+        return std::make_pair(size_t(1), extra);
     }
 }
 
@@ -161,9 +172,8 @@ size_t BidirectionalPathTracing::traceSubpath(
             }
 
             if (isect.isPresent()) {
-                float geometry =
-                    distance2(subpath[size - 1].position(), isect.position()) *
-                    dot(-sample.omega(), isect.normal());
+                float geometry = dot(-sample.omega(), isect.normal()) /
+                    distance2(subpath[size - 1].position(), isect.position());
 
                 subpath[size]._point = _scene->querySurface(isect);
 
