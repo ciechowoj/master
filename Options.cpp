@@ -7,6 +7,7 @@
 #include <BidirectionalPathTracing.hpp>
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
+#include <VertexMerging.hpp>
 
 namespace haste {
 
@@ -24,9 +25,10 @@ R"(
     Options:
       -h --help             Show this screen.
       --version             Show version.
-      --BDPT                Use bidirectional path tracing (with beta = 1).
+      --BDPT                Use bidirectional path tracing (with beta = 1, no MIS).
       --PT                  Use path tracing for rendering (this is default one).
       --PM                  Use photon mapping for rendering.
+      --VCM                 Use vertex connection and merging (not implemented/wip).
       --num-photons=<n>     Use n photons. [default: 1 000 000]
       --max-gather=<n>      Use n as maximal number of gathered photons. [default: 100]
       --max-radius=<n>      Use n as maximum gather radius. [default: 0.1]
@@ -187,7 +189,10 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         size_t numTechniqes =
-            dict.count("--BDPT") + dict.count("--PT") + dict.count("--PM");
+            dict.count("--BDPT") +
+            dict.count("--PT") +
+            dict.count("--PM") +
+            dict.count("--VCM");
 
         if (numTechniqes > 1) {
             options.displayHelp = true;
@@ -205,6 +210,10 @@ Options parseArgs(int argc, char const* const* argv) {
         else if (dict.count("--PM")) {
             options.technique = Options::PM;
             dict.erase("--PM");
+        }
+        else if (dict.count("--VCM")) {
+            options.technique = Options::VCM;
+            dict.erase("--VCM");
         }
 
         if (dict.count("--num-photons")) {
@@ -420,6 +429,9 @@ shared<Technique> makeTechnique(const Options& options) {
                 options.numPhotons,
                 options.maxGather,
                 options.maxRadius);
+
+        case Options::VCM:
+            return std::make_shared<VertexMerging>();
     }
 }
 
@@ -432,6 +444,7 @@ string techniqueString(const Options& options) {
         case Options::BDPT: return "BDPT";
         case Options::PT: return "PT";
         case Options::PM: return "PM";
+        case Options::VCM: return "VCM";
         default: return "UNKNOWN";
     }
 }

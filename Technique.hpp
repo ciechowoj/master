@@ -89,7 +89,9 @@ template <class F> inline void Technique::for_each_ray(
     for (int y = yBegin; y < yEnd; ++y) {
         for (int x = xBegin; x < xEnd; ++x) {
             const Ray ray = shoot(float(x), float(y));
-            view.absAt(x, y) += vec4(func(engine, ray), 1.0f);
+            vec3 radiance = func(engine, ray);
+            float cumulative = radiance.x + radiance.y + radiance.z;
+            view.absAt(x, y) += isnan(cumulative) ? vec4(0.0f) : vec4(radiance, 1.0f);
         }
 
         ++y;
@@ -97,7 +99,9 @@ template <class F> inline void Technique::for_each_ray(
         if (y < yEnd) {
             for (int x = rXBegin; x > rXEnd; --x) {
                 const Ray ray = shoot(float(x), float(y));
-                view.absAt(x, y) += vec4(func(engine, ray), 1.0f);
+                vec3 radiance = func(engine, ray);
+                float cumulative = radiance.x + radiance.y + radiance.z;
+                view.absAt(x, y) += isnan(cumulative) ? vec4(0.0f) : vec4(radiance, 1.0f);
             }
         }
     }
