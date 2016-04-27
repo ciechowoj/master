@@ -281,3 +281,15 @@ void renderPoints(
 }
 
 }
+
+#include <sys/stat.h>
+
+namespace haste {
+
+size_t getmtime(const string& path) {
+    struct stat buf;
+    stat(path.c_str(), &buf);
+    return buf.st_mtime;
+}
+
+}

@@ -36,9 +36,7 @@ public:
             0.0f);
     }
 
-    virtual void updateScene() {
-
-    }
+    bool updateScene() override;
 
 private:
     void _saveIfRequired(const ImageView& view, double elapsed);
@@ -53,6 +51,7 @@ private:
     bool _preprocessed = false;
     shared<UserInterface> _ui;
     double _startTime;
+    size_t _modificationTime;
 };
 
 

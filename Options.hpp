@@ -23,6 +23,7 @@ struct Options {
     size_t numSamples = 0;
     double numSeconds = 0.0;
     bool parallel = false;
+    bool reload = true;
     size_t snapshot = 0;
     size_t cameraId = 0;
     size_t width = 800;

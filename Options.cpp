@@ -33,6 +33,7 @@ R"(
       --max-gather=<n>      Use n as maximal number of gathered photons. [default: 100]
       --max-radius=<n>      Use n as maximum gather radius. [default: 0.1]
       --batch               Run in batch mode (interactive otherwise).
+      --no-reload           Disable autoreload (input file is reloaded on modification in interactive mode).
       --num-samples=<n>     Terminate after n samples.
       --num-seconds=<n>     Terminate after n seconds.
       --num-minutes=<n>     Terminate after n minutes.
@@ -270,6 +271,11 @@ Options parseArgs(int argc, char const* const* argv) {
         if (dict.count("--batch")) {
             options.batch = true;
             dict.erase("--batch");
+        }
+
+        if (dict.count("--no-reload")) {
+            options.reload = false;
+            dict.erase("--no-reload");
         }
 
         if (dict.count("--num-samples")) {

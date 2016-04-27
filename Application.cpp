@@ -10,17 +10,37 @@ Application::Application(const Options& options) {
     _device = rtcNewDevice(NULL);
     runtime_assert(_device != nullptr);
 
-    _scene = loadScene(options);
-    _scene->buildAccelStructs(_device);
-
     _technique = makeTechnique(options);
     _ui = make_shared<UserInterface>(options.input);
+
+    _modificationTime = 0;
+
+    bool reload = _options.reload;
+    _options.reload = true;
+    updateScene();
+    _options.reload = reload;
 
     _startTime = glfwGetTime();
 }
 
 Application::~Application() {
     rtcDeleteDevice(_device);
+}
+
+bool Application::updateScene() {
+    if (_options.reload) {
+        auto modificationTime = getmtime(_options.input);
+
+        if (_modificationTime < modificationTime) {
+            _scene = loadScene(_options);
+            _scene->buildAccelStructs(_device);
+            _preprocessed = false;
+            _modificationTime = modificationTime;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void Application::_saveIfRequired(const ImageView& view, double elapsed) {

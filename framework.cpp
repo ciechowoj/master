@@ -308,6 +308,10 @@ int loop(GLFWwindow* window, const std::function<void(int, int, void*)>& loop) {
 
 Framework::~Framework() { }
 
+bool Framework::updateScene() {
+    return false;
+}
+
 int Framework::run(size_t width, size_t height) {
     return ::run(width, height, [=](GLFWwindow* window) {
         _window = window;
@@ -356,7 +360,11 @@ int Framework::run(size_t width, size_t height) {
                 }
 
                 trigger = true;
-                updateScene();
+                if (updateScene()) {
+                    std::memset(image, 0, width * height * sizeof(glm::vec4));
+                    std::memset(buffer.data(), 0, buffer.size() * sizeof(buffer[0]));
+                }
+
                 done = false;
                 workerCondition.notify_all();
             }

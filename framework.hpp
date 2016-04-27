@@ -32,7 +32,7 @@ public:
 
     virtual void render(size_t width, size_t height, glm::vec4* data) = 0;
     virtual void updateUI(size_t width, size_t height, const glm::vec4* data) = 0;
-    virtual void updateScene() = 0;
+    virtual bool updateScene();
 
     int run(size_t width, size_t height);
     int runBatch(size_t width, size_t height);
