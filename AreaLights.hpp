@@ -32,7 +32,7 @@ struct LightSample {
     const vec3& position() const { return _position; }
     const vec3& normal() const { return _normal; }
     const vec3& radiance() const { return _radiance; }
-    const vec3& omega() const { return _omega; }
+    const vec3& omega() const { return _omega; } // outgouing from light
     const float density() const { return _areaDensity * _omegaDensity; }
     const float densityInv() const { return 1.0f / density(); }
     const float areaDensity() const { return _areaDensity; };

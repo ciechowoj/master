@@ -200,7 +200,7 @@ const LightSample Scene::sampleLight(
     return lights.sample(engine);
 }
 
-const DirectLightSample Scene::sampleDirectLightAngle(
+const vec3 Scene::sampleDirectLightAngle(
     RandomEngine& engine,
     const SurfacePoint& point,
     const vec3& omegaR,
@@ -211,59 +211,82 @@ const DirectLightSample Scene::sampleDirectLightAngle(
     Ray ray = { point.position(), bsdfSample.omega() };
     RayIsect isect = intersect(ray);
 
-    DirectLightSample result;
-    result._densityInv = bsdfSample.densityInv();
+    vec3 radiance = vec3(0.0f);
 
-    if (isect.isLight()) {
-        result._radiance =
+    while (isect.isLight()) {
+        radiance +=
             lights.lightRadiance(isect.primId()) *
+            bsdfSample.throughput() *
             dot(bsdfSample.omega(), point.normal()) *
-            bsdfSample.throughput();
-    }
-    else {
-        result._radiance = vec3(0.0f);
+            bsdfSample.densityInv() *
+            (dot(-bsdfSample.omega(), lights.lightNormal(isect.primId())) < 0.0f ? 1.0f : 0.0f);
+
+        ray.origin = isect.position();
+        isect = intersect(ray);
     }
 
-    return result;
+    return radiance;
 }
 
-const DirectLightSample Scene::sampleDirectLightArea(
+const vec3 Scene::sampleDirectLightArea(
     RandomEngine& engine,
     const SurfacePoint& point,
     const vec3& omegaR,
     const BSDF& bsdf) const
 {
     LightSample lightSample = lights.sample(engine, point.position());
-    const float cosineTheta = dot(lightSample.omega(), point.normal());
+    const float cosineTheta = dot(-lightSample.omega(), point.normal());
+
     const vec3 radiance =
         lightSample.radiance() *
-        bsdf.query(point, omegaR, lightSample.omega(), point.gnormal()) *
+        bsdf.query(point, omegaR, -lightSample.omega(), point.gnormal()) *
+        cosineTheta *
         occluded(lightSample.position(), point.position()) *
-        cosineTheta;
+        lightSample.densityInv();
 
-    DirectLightSample result;
-    result._densityInv = lightSample.densityInv();
-    result._radiance = cosineTheta > 0.0 ? radiance : vec3(0.0f);
-    return result;
+    return cosineTheta > 0.0f ? radiance : vec3(0.0f);
 }
 
-const DirectLightSample Scene::sampleDirectLightMixed(
+const vec3 Scene::sampleDirectLightMixed(
     RandomEngine& engine,
     const SurfacePoint& point,
     const vec3& omegaR,
     const BSDF& bsdf) const
 {
-    auto s0 = sampleDirectLightAngle(engine, point, omegaR, bsdf);
-    auto s1 = sampleDirectLightArea(engine, point, omegaR, bsdf);
+    auto bsdfSample = bsdf.sample(engine, point, omegaR);
 
-    auto p = s0.density() * s0.density() + s1.density() * s1.density();
-    auto w0 = s0.density() * s0.density() / p;
-    auto w1 = s1.density() * s1.density() / p;
+    Ray ray = { point.position(), bsdfSample.omega() };
+    RayIsect isect = intersect(ray);
 
-    DirectLightSample result;
-    result._densityInv = 1.0f;
-    result._radiance = (w0 * s0.radiance() * s0.densityInv() + w1 * s1.radiance() * s1.densityInv());
-    return result;
+    vec3 bsdfRadiance = vec3(0.0f);
+
+    while (isect.isLight()) {
+        bsdfRadiance +=
+            lights.lightRadiance(isect.primId()) *
+            bsdfSample.throughput() *
+            dot(bsdfSample.omega(), point.normal()) *
+            bsdfSample.densityInv();
+
+        ray.origin = isect.position();
+        isect = intersect(ray);
+    }
+
+    LightSample lightSample = lights.sample(engine, point.position());
+    const float cosineTheta = dot(-lightSample.omega(), point.normal());
+
+    const vec3 lightRadiance =
+        lightSample.radiance() *
+        bsdf.query(point, omegaR, -lightSample.omega(), point.gnormal()) *
+        cosineTheta *
+        occluded(lightSample.position(), point.position()) *
+        lightSample.densityInv() *
+        (cosineTheta > 0.0f ? vec3(1.0f) : vec3(0.0f));
+
+    const float d = bsdfSample.density() + lightSample.density();
+
+    return (
+        bsdfRadiance * bsdfSample.density() +
+        lightRadiance * lightSample.density()) / d;
 }
 
 }

@@ -1,3 +1,4 @@
+#include <streamops.hpp>
 #include <runtime_assert>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

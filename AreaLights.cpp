@@ -141,8 +141,8 @@ LightSample AreaLights::sample(
 
     LightSample result;
     result._position = _samplePosition(lightId, engine);
-    result._omega = normalize(result._position - position);
-    float cosineTheta = dot(-result.omega(), _shapes[lightId].direction);
+    result._omega = normalize(position - result._position);
+    float cosineTheta = dot(result.omega(), _shapes[lightId].direction);
     vec3 diff = position - result.position();
 
     result._areaDensity = _weights[lightId] / lightArea(lightId);

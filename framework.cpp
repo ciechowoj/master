@@ -61,7 +61,7 @@ out vec4 color;
 
 void main()
 {
-    const float scale = 100.0 / 255.0;
+    const float scale = 683.0 / 100.0;
     vec4 sample = texture2D(sampler, texcoord);
     color = clamp(vec4(sample.rgb / sample.a, 1) * scale, 0, 1);
 }
@@ -361,7 +361,6 @@ int Framework::run(size_t width, size_t height) {
 
                 trigger = true;
                 if (updateScene()) {
-                    std::memset(image, 0, width * height * sizeof(glm::vec4));
                     std::memset(buffer.data(), 0, buffer.size() * sizeof(buffer[0]));
                 }
 

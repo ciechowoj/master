@@ -55,7 +55,7 @@ const BSDFSample DiffuseBSDF::sample(
     result._omega = hemisphere.omega();
     result._density = hemisphere.density();
     result._densityInv = hemisphere.densityInv();
-    result._specular = false;
+    result._specular = 0.0f;
 
     return result;
 }
@@ -77,7 +77,7 @@ BSDFSample DiffuseBSDF::scatter(
         result._omega = point.toWorld(hemisphere.omega());
         result._density = hemisphere.density();
         result._densityInv = hemisphere.densityInv();
-        result._specular = false;
+        result._specular = 0.0f;
 
         return result;
     }
@@ -87,7 +87,7 @@ BSDFSample DiffuseBSDF::scatter(
         result._omega = vec3(0.0f);
         result._density = 0;
         result._densityInv = 0;
-        result._specular = false;
+        result._specular = 0.0f;
 
         return result;
     }

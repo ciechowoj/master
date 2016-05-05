@@ -27,6 +27,30 @@ Application::~Application() {
     rtcDeleteDevice(_device);
 }
 
+void Application::render(size_t width, size_t height, glm::vec4* data) {
+    if (_preprocessed) {
+        auto view = ImageView(data, width, height);
+        _technique->render(view, _engine, _options.cameraId, _options.parallel);
+
+        double elapsed = glfwGetTime() - _startTime;
+        _saveIfRequired(view, elapsed);
+        _updateQuitCond(view, elapsed);
+    }
+    else {
+        _technique->preprocess(_scene, _engine, [](string, float) {});
+        _preprocessed = true;
+    }
+}
+
+void Application::updateUI(size_t width, size_t height, const glm::vec4* data) {
+    _ui->update(
+        *_technique,
+        width,
+        height,
+        data,
+        0.0f);
+}
+
 bool Application::updateScene() {
     if (_options.reload) {
         auto modificationTime = getmtime(_options.input);

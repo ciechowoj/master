@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sstream>
 #include <GLFW/glfw3.h>
 #include <PathTracing.hpp>
@@ -43,25 +44,28 @@ vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
         auto& bsdf = _scene->queryBSDF(isect);
         SurfacePoint point = _scene->querySurface(isect);
 
-        DirectLightSample lightSample = _scene->sampleDirectLightArea(
+        vec3 lightSample = _scene->sampleDirectLightAngle(
             engine,
             point,
             -ray.direction,
             bsdf);
 
-        radiance += lightSample.radiance() * lightSample.densityInv() * throughput;
+        // radiance = point.toSurface(point.toWorld(point.normal()));
+        radiance += lightSample * throughput;
 
         auto bsdfSample = bsdf.sample(
             engine,
             point,
             -ray.direction);
 
-        throughput *= bsdfSample.throughput() * dot(point.normal(), bsdfSample.omega()) * bsdfSample.densityInv();
+        throughput *= bsdfSample.throughput() *
+            dot(point.normal(), bsdfSample.omega()) *
+            bsdfSample.densityInv();
 
         ray.direction = bsdfSample.omega();
         ray.origin = isect.position();
 
-        float prob = min(0.5f, length(throughput));
+        float prob = bounce > 8 ? 0.5f : 1.0f;
 
         if (prob < _scene->sampler.sample()) {
             break;

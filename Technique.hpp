@@ -1,4 +1,6 @@
 #pragma once
+#include <cmath>
+#include <ctgmath>
 #include <runtime_assert>
 #include <Prerequisites.hpp>
 #include <ImageView.hpp>
@@ -41,6 +43,12 @@ public:
         size_t cameraId,
         const F& func);
 
+    template <class F> static void for_each_ray_bsdf(
+        ImageView& view,
+        RandomEngine& engine,
+        const Cameras& cameras,
+        size_t cameraId,
+        const F& func);
 protected:
     size_t _numNormalRays;
     size_t _numShadowRays;
@@ -91,7 +99,7 @@ template <class F> inline void Technique::for_each_ray(
             const Ray ray = shoot(float(x), float(y));
             vec3 radiance = func(engine, ray);
             float cumulative = radiance.x + radiance.y + radiance.z;
-            view.absAt(x, y) += isnan(cumulative) ? vec4(0.0f) : vec4(radiance, 1.0f);
+            view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
         }
 
         ++y;
@@ -100,6 +108,63 @@ template <class F> inline void Technique::for_each_ray(
             for (int x = rXBegin; x > rXEnd; --x) {
                 const Ray ray = shoot(float(x), float(y));
                 vec3 radiance = func(engine, ray);
+                float cumulative = radiance.x + radiance.y + radiance.z;
+                view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
+            }
+        }
+    }
+}
+
+template <class F> inline void Technique::for_each_ray_bsdf(
+    ImageView& view,
+    RandomEngine& engine,
+    const Cameras& cameras,
+    size_t cameraId,
+    const F& func)
+{
+    const int xBegin = int(view.xBegin());
+    const int xEnd = int(view.xEnd());
+    const int rXBegin = int(xEnd - 1);
+    const int rXEnd = int(xBegin - 1);
+    const int yBegin = int(view.yBegin());
+    const int yEnd = int(view.yEnd());
+
+    runtime_assert(0 <= xBegin && xEnd <= view.width());
+    runtime_assert(0 <= yBegin && yEnd <= view.height());
+
+    const float width = float(view.width());
+    const float height = float(view.height());
+    const float widthInv = 1.0f / width;
+    const float heightInv = 1.0f / height;
+    const float aspect = width / height;
+
+    auto shoot = [&](float x, float y) -> Ray {
+        return cameras.shoot(
+            cameraId,
+            engine,
+            widthInv,
+            heightInv,
+            aspect,
+            float(x),
+            float(y));
+    };
+
+    auto bsdf = cameras.cameraBSDF(cameraId);
+
+    for (int y = yBegin; y < yEnd; ++y) {
+        for (int x = xBegin; x < xEnd; ++x) {
+            const Ray ray = shoot(float(x), float(y));
+            vec3 radiance = func(engine, ray, bsdf);
+            float cumulative = radiance.x + radiance.y + radiance.z;
+            view.absAt(x, y) += isnan(cumulative) ? vec4(0.0f) : vec4(radiance, 1.0f);
+        }
+
+        ++y;
+
+        if (y < yEnd) {
+            for (int x = rXBegin; x > rXEnd; --x) {
+                const Ray ray = shoot(float(x), float(y));
+                vec3 radiance = func(engine, ray, bsdf);
                 float cumulative = radiance.x + radiance.y + radiance.z;
                 view.absAt(x, y) += isnan(cumulative) ? vec4(0.0f) : vec4(radiance, 1.0f);
             }

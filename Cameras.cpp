@@ -3,6 +3,48 @@
 
 namespace haste {
 
+CameraBSDF::CameraBSDF() { }
+CameraBSDF::CameraBSDF(CameraBSDF&&) { }
+CameraBSDF::CameraBSDF(const CameraBSDF&) { }
+
+CameraBSDF& CameraBSDF::operator=(CameraBSDF&&) {
+    return *this;
+}
+
+CameraBSDF& CameraBSDF::operator=(const CameraBSDF&) {
+    return *this;
+}
+
+const vec3 CameraBSDF::query(
+    const vec3& a,
+    const vec3& b,
+    const vec3& n) const
+{
+    return a == b ? vec3(1.0f) : vec3(0.0f);
+}
+
+const BSDFSample CameraBSDF::sample(
+    RandomEngine& engine,
+    const vec3& omega) const
+{
+    BSDFSample result;
+    result._throughput = vec3(1.0f, 1.0f, 1.0f);
+    result._omega = omega;
+    result._density = 1.0f;
+    result._densityInv = 1.0f;
+    result._specular = 1.0f;
+
+    return result;
+}
+
+BSDFSample CameraBSDF::scatter(
+    RandomEngine& engine,
+    const SurfacePoint& point,
+    const vec3& omega) const
+{
+    return BSDF::sample(engine, point, omega);
+}
+
 size_t Cameras::addCameraFovX(
     const string& name,
     const vec3& position,
@@ -50,6 +92,10 @@ const size_t Cameras::cameraId(const string& name) const {
     }
 
     return InvalidCameraId;
+}
+
+const BSDF* Cameras::cameraBSDF(size_t cameraId) const {
+    return &_bsdf;
 }
 
 const vec3& Cameras::position(size_t cameraId) const {

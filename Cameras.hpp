@@ -1,6 +1,6 @@
 #pragma once
 #include <Prerequisites.hpp>
-#include <Sample.hpp>
+#include <BSDF.hpp>
 #include <glm>
 
 namespace haste {
@@ -10,6 +10,30 @@ static const size_t InvalidCameraId = SIZE_MAX;
 struct Ray {
     vec3 origin;
     vec3 direction;
+};
+
+class CameraBSDF : public BSDF {
+public:
+    CameraBSDF();
+    CameraBSDF(CameraBSDF&&);
+    CameraBSDF(const CameraBSDF&);
+
+    CameraBSDF& operator=(CameraBSDF&&);
+    CameraBSDF& operator=(const CameraBSDF&);
+
+    const vec3 query(
+        const vec3& a,
+        const vec3& b,
+        const vec3& n) const override;
+
+    const BSDFSample sample(
+        RandomEngine& engine,
+        const vec3& omega) const override;
+
+    BSDFSample scatter(
+        RandomEngine& engine,
+        const SurfacePoint& point,
+        const vec3& omega) const override;
 };
 
 class Cameras {
@@ -26,6 +50,7 @@ public:
     const size_t numCameras() const;
     const string& name(size_t cameraId) const;
     const size_t cameraId(const string& name) const;
+    const BSDF* cameraBSDF(size_t cameraId) const;
     const vec3& position(size_t cameraId) const;
     const vec3& direction(size_t cameraId) const;
     const vec3& up(size_t cameraId) const;
@@ -69,6 +94,7 @@ private:
     vector<Desc> _descs;
     vector<mat4> _views;
     vector<float> _focals;
+    CameraBSDF _bsdf;
 
     const mat4 _view(size_t cameraId) const;
 };

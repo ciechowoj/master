@@ -33,15 +33,6 @@ struct Mesh {
     vector<vec3> bitangents;
 };
 
-struct DirectLightSample {
-    vec3 _radiance;
-    float _densityInv;
-
-    const vec3& radiance() const { return _radiance; }
-    const float density() const { return 1.0f / _densityInv; }
-    const float densityInv() const { return _densityInv; }
-};
-
 class Scene {
 public:
     Scene(
@@ -83,19 +74,19 @@ public:
     const LightSample sampleLight(
         RandomEngine& engine) const;
 
-    const DirectLightSample sampleDirectLightAngle(
+    const vec3 sampleDirectLightAngle(
         RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omegaR,
         const BSDF& bsdf) const;
 
-    const DirectLightSample sampleDirectLightArea(
+    const vec3 sampleDirectLightArea(
         RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omegaR,
         const BSDF& bsdf) const;
 
-    const DirectLightSample sampleDirectLightMixed(
+    const vec3 sampleDirectLightMixed(
         RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omegaR,

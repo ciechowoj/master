@@ -10,13 +10,13 @@ struct BSDFSample {
     vec3 _omega;
     float _density;
     float _densityInv;
-    bool _specular;
+    float _specular;
 
     const vec3& throughput() const { return _throughput; }
     const vec3& omega() const { return _omega; }
     const float density() const { return _density; }
     const float densityInv() const { return _densityInv; }
-    const bool specular() const { return _specular; }
+    const float specular() const { return _specular; }
     const bool zero() const;
 };
 
