@@ -10,5 +10,5 @@ glfw.target=build/glfw/src/libglfw3.a
 build/glfw/src/libglfw3.a:
 	mkdir -p build
 	mkdir -p build/glfw
-	cd build/glfw && cmake ../../submodules/glfw/ $(glfw.CMakeFlags)
+	cd build/glfw && cmake ../../submodules/glfw $(glfw.CMakeFlags)
 	cd build/glfw && make $(NUM_THREADS)

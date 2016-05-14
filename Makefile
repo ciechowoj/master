@@ -74,12 +74,13 @@ LIB_DEPENDENCIES = \
 	$(assimp.target) \
 	build/imgui/libimgui.a \
 	build/googletest/libgtest.a \
-	build/embree/libembree.a
+	$(embree.target)
 
 all: master unittest
 
 include submodules/assimp.makefile
 include submodules/glfw.makefile
+include submodules/embree.makefile
 
 .PHONY: all master unittest
 
@@ -161,12 +162,6 @@ build/googletest/libgtest.a:
 	mkdir -p build/googletest
 	cd build/googletest && cmake ../../submodules/googletest/googletest
 	cd build/googletest && make $(NUM_THREADS)
-
-build/embree/libembree.a:
-	mkdir -p build
-	mkdir -p build/embree
-	cd build/embree && cmake ../../submodules/embree -DENABLE_STATIC_LIB=ON -DENABLE_TUTORIALS=OFF
-	cd build/embree && make embree $(NUM_THREADS)
 
 run: all
 	./build/master/master.bin models/FurnaceTest.blend --PT --parallel
