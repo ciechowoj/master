@@ -8,3 +8,11 @@
 
 using namespace haste;
 using namespace glm;
+
+TEST(NANTest, main) {
+    EXPECT_TRUE(std::isinf(1.0f / 0.0f));
+    EXPECT_FALSE(std::isnan(1.0f / 1.0f));
+    EXPECT_TRUE(std::isnan(0.0f / 0.0f));
+    EXPECT_TRUE(std::isnan(-0.0f / 0.0f));
+}
+
