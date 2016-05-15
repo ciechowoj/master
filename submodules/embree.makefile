@@ -2,7 +2,7 @@
 embree.CMakeFlags = \
 	-DENABLE_STATIC_LIB=ON \
 	-DENABLE_TUTORIALS=OFF \
-	-DRTCORE_ENABLE_RAY_MASK=ON
+	-DRTCORE_RAY_MASK=ON
 
 embree.target=build/embree/libembree.a
 

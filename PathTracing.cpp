@@ -65,7 +65,7 @@ vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
         ray.direction = bsdfSample.omega();
         ray.origin = isect.position();
 
-        float prob = bounce > 16 ? 0.5f : 1.0f;
+        float prob = bounce > 3 ? 0.5f : 1.0f;
 
         if (prob < _scene->sampler.sample()) {
             break;

@@ -3,6 +3,19 @@
 
 namespace haste {
 
+inline void setShadow(
+    RTCScene scene,
+    unsigned geomId,
+    const Geometry& geometry)
+{
+    rtcSetMask(
+        scene,
+        geomId,
+        geometry.castShadow()
+            ? RayIsect::occluderMask()
+            : RayIsect::lightMask());
+}
+
 const unsigned newMesh(RTCScene scene, const Geometry& geometry) {
     if (geometry.usesTriangles()) {
         unsigned geomId = rtcNewTriangleMesh(
@@ -19,6 +32,8 @@ const unsigned newMesh(RTCScene scene, const Geometry& geometry) {
 
         rtcUnmapBuffer(scene, geomId, RTC_INDEX_BUFFER);
         rtcUnmapBuffer(scene, geomId, RTC_VERTEX_BUFFER);
+
+        setShadow(scene, geomId, geometry);
 
         return geomId;
     }
@@ -39,6 +54,8 @@ const unsigned newMesh(RTCScene scene, const Geometry& geometry) {
 
         rtcUnmapBuffer(scene, geomId, RTC_INDEX_BUFFER);
         rtcUnmapBuffer(scene, geomId, RTC_VERTEX_BUFFER);
+
+        setShadow(scene, geomId, geometry);
 
         return geomId;
     }

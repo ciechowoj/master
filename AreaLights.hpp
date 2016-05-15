@@ -69,6 +69,7 @@ public:
         RandomEngine& engine,
         const vec3& position) const;
 
+    const bool castShadow() const override;
     const bool usesQuads() const override;
     const size_t numQuads() const override;
     void updateBuffers(int* indices, vec4* vertices) const override;

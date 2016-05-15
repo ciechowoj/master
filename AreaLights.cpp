@@ -158,6 +158,10 @@ LightSample AreaLights::sample(
     return result;
 }
 
+const bool AreaLights::castShadow() const {
+    return false;
+}
+
 const bool AreaLights::usesQuads() const {
     return true;
 }

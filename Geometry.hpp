@@ -7,6 +7,7 @@ class Geometry {
 public:
     virtual ~Geometry();
 
+    virtual const bool castShadow() const;
     virtual const bool usesQuads() const;
     virtual const bool usesTriangles() const;
     virtual const size_t numQuads() const;

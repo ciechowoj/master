@@ -173,7 +173,7 @@ float Scene::occluded(const vec3& origin, const vec3& target) const {
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.mask = 0xFFFFFFFF;
+    rtcRay.mask =   RayIsect::occluderMask();
     rtcRay.time = 0.f;
     rtcOccluded(rtcScene, rtcRay);
 
@@ -219,7 +219,7 @@ const vec3 Scene::sampleDirectLightAngle(
             bsdfSample.throughput() *
             dot(bsdfSample.omega(), point.normal()) *
             bsdfSample.densityInv() *
-            (dot(-bsdfSample.omega(), lights.lightNormal(isect.primId())) < 0.0f ? 1.0f : 0.0f);
+            (dot(-bsdfSample.omega(), lights.lightNormal(isect.primId())) > 0.0f ? 1.0f : 0.0f);
 
         ray.origin = isect.position();
         isect = intersect(ray);
@@ -265,7 +265,8 @@ const vec3 Scene::sampleDirectLightMixed(
             lights.lightRadiance(isect.primId()) *
             bsdfSample.throughput() *
             dot(bsdfSample.omega(), point.normal()) *
-            bsdfSample.densityInv();
+            bsdfSample.densityInv() *
+            (dot(-bsdfSample.omega(), lights.lightNormal(isect.primId())) > 0.0f ? 1.0f : 0.0f);
 
         ray.origin = isect.position();
         isect = intersect(ray);
@@ -284,8 +285,8 @@ const vec3 Scene::sampleDirectLightMixed(
 
     const float d = bsdfSample.density() + lightSample.density();
 
-    return (
-        bsdfRadiance * bsdfSample.density() +
+    return
+        (bsdfRadiance * bsdfSample.density() +
         lightRadiance * lightSample.density()) / d;
 }
 

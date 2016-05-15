@@ -4,6 +4,10 @@ namespace haste {
 
 Geometry::~Geometry() { }
 
+const bool Geometry::castShadow() const {
+	return true;
+}
+
 const bool Geometry::usesQuads() const {
     return false;
 }

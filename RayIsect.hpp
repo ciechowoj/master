@@ -10,6 +10,9 @@ private:
     using cpvec3 = const vec3*;
 
 public:
+    static const unsigned occluderMask() { return 1u;   }
+    static const unsigned lightMask() { return 2u; }
+
     const bool isPresent() const { return geomID != RTC_INVALID_GEOMETRY_ID; }
     const bool isLight() const { return geomID == 0; }
     const bool isMesh() const { return geomID > 0 && isPresent(); }
