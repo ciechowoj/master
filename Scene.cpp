@@ -19,6 +19,8 @@ Scene::Scene(
 
     _numIntersectRays = 0;
     _numOccludedRays = 0;
+
+    areaLights.init(this);
 }
 
 unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {

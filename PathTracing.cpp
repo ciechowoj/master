@@ -44,7 +44,7 @@ vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
         auto& bsdf = _scene->queryBSDF(isect);
         SurfacePoint point = _scene->querySurface(isect);
 
-        vec3 lightSample = _scene->sampleDirectLightMixed(
+        vec3 lightSample = _scene->sampleDirectLightArea(
             engine,
             point,
             -ray.direction,

@@ -22,6 +22,10 @@ namespace haste {
 // v1 ************************************** v2
 //
 
+void AreaLights::init(const Intersector* intersector) {
+    _intersector = intersector;
+}
+
 const size_t AreaLights::addLight(
     const string& name,
     const vec3& position,
@@ -113,6 +117,27 @@ Photon AreaLights::emit(RandomEngine& engine) const {
     result.power = result.power * length1;
 
     return result;
+}
+
+const float AreaLights::density(
+    const vec3& position,
+    const vec3& direction) const
+{
+    runtime_assert(_intersector != nullptr);
+
+    auto isect = _intersector->intersectLight(position, direction);
+
+    if (isect.isPresent()) {
+        const auto lightId = isect.primId();
+        const float cosTheta = -dot(direction, _shapes[lightId].direction);
+        return cosTheta > 0.0f
+            ? _weights[isect.primId()] * distance2(position, isect.position())
+                / (lightArea(lightId) * cosTheta)
+            : 0.0f;
+    }
+    else {
+        return 0.0f;
+    }
 }
 
 LightSample AreaLights::sample(

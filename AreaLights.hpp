@@ -2,7 +2,7 @@
 #include <Prerequisites.hpp>
 #include <Geometry.hpp>
 #include <utility.hpp>
-#include <RayIsect.hpp>
+#include <Intersector.hpp>
 #include <SurfacePoint.hpp>
 
 namespace haste {
@@ -41,6 +41,8 @@ struct LightSample {
 
 class AreaLights : public Geometry {
 public:
+    void init(const Intersector* intersector);
+
     const size_t addLight(
         const string& name,
         const vec3& position,
@@ -64,7 +66,7 @@ public:
 
     const float density(
         const vec3& position,
-        const vec3& incident) const;
+        const vec3& direction) const;
 
     LightSample sample(
         RandomEngine& engine) const;
@@ -78,6 +80,7 @@ public:
     const size_t numQuads() const override;
     void updateBuffers(int* indices, vec4* vertices) const override;
 public:
+    const Intersector* _intersector = nullptr;
     mutable PiecewiseSampler lightSampler;
 
     struct Shape {
