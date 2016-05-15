@@ -32,7 +32,7 @@ struct LightSample {
     const vec3& position() const { return _position; }
     const vec3& normal() const { return _normal; }
     const vec3& radiance() const { return _radiance; }
-    const vec3& omega() const { return _omega; } // outgouing from light
+    const vec3& omega() const { return _omega; } // outgoing from light
     const float density() const { return _areaDensity * _omegaDensity; }
     const float densityInv() const { return 1.0f / density(); }
     const float areaDensity() const { return _areaDensity; };
@@ -61,6 +61,10 @@ public:
     const vec3 toWorld(size_t lightId, const vec3& omega) const;
 
     Photon emit(RandomEngine& engine) const;
+
+    const float density(
+        const vec3& position,
+        const vec3& incident) const;
 
     LightSample sample(
         RandomEngine& engine) const;

@@ -1,6 +1,6 @@
 #pragma once
 #include <Prerequisites.hpp>
-#include <RayIsect.hpp>
+#include <Intersector.hpp>
 
 #include <BSDF.hpp>
 #include <AreaLights.hpp>
@@ -33,7 +33,7 @@ struct Mesh {
     vector<vec3> bitangents;
 };
 
-class Scene {
+class Scene : public Intersector {
 public:
     Scene(
         Cameras&& cameras,
@@ -61,13 +61,24 @@ public:
         RandomEngine& engine,
         const vec3& position) const;
 
-    RayIsect intersect(const vec3& origin, const vec3& direction) const;
-    RayIsect intersect(const Ray& ray) const;
-    float occluded(const vec3& origin, const vec3& target) const;
+    const RayIsect intersect(
+        const vec3& origin,
+        const vec3& direction) const override;
 
-    size_t numNormalRays() const;
-    size_t numShadowRays() const;
-    size_t numRays() const;
+    const RayIsect intersect(
+        const Ray& ray) const;
+
+    const float occluded(const vec3& origin,
+        const vec3& target) const override;
+
+    const RayIsect intersectLight(
+        const vec3& origin,
+        const vec3& direction) const override;
+
+    const size_t numNormalRays() const;
+    const size_t numShadowRays() const;
+    const size_t numRays() const;
+
 
     mutable UniformSampler sampler;
 

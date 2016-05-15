@@ -13,11 +13,33 @@ BSDF::~BSDF() { }
 
 const vec3 BSDF::query(
     const SurfacePoint& point,
-    const vec3& a,
-    const vec3& b,
-    const vec3& n) const
+    const vec3& incident,
+    const vec3& reflected,
+    const vec3& normal) const
 {
-    return query(point.toSurface(a), point.toSurface(b), point.toSurface(n));
+    return query(
+        point.toSurface(incident),
+        point.toSurface(reflected),
+        point.toSurface(normal));
+}
+
+const float BSDF::density(
+        const vec3& incident,
+        const vec3& reflected,
+        const vec3& normal) const
+{
+    return 0.0f;
+}
+
+const float BSDF::density(
+    const SurfacePoint& point,
+    const vec3& incident,
+    const vec3& reflected) const
+{
+    return density(
+        point.toSurface(incident),
+        point.toSurface(reflected),
+        point.toSurface(point.gnormal()));
 }
 
 const BSDFSample BSDF::sample(
@@ -42,6 +64,14 @@ const vec3 DiffuseBSDF::query(
     return dot(a, n) > 0.0f && dot(b, n) > 0.0f
         ? _diffuse * one_over_pi<float>()
         : vec3(0.0f);
+}
+
+const float DiffuseBSDF::density(
+    const vec3& incident,
+    const vec3& reflected,
+    const vec3& normal) const
+{
+    return incident.y > 0.0f ? incident.y * one_over_pi<float>() : 0.0f;
 }
 
 const BSDFSample DiffuseBSDF::sample(

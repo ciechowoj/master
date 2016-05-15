@@ -26,7 +26,7 @@ public:
     virtual ~BSDF();
 
     virtual const vec3 query(
-        const vec3& a,
+        const vec3& incomin,
         const vec3& b,
         const vec3& n) const = 0;
 
@@ -35,6 +35,16 @@ public:
         const vec3& a,
         const vec3& b,
         const vec3& n) const;
+
+    virtual const float density(
+        const vec3& incident,
+        const vec3& reflected,
+        const vec3& normal) const;
+
+    const float density(
+        const SurfacePoint& point,
+        const vec3& incident,
+        const vec3& reflected) const;
 
     virtual const BSDFSample sample(
         RandomEngine& engine,
@@ -62,6 +72,11 @@ public:
         const vec3& a,
         const vec3& b,
         const vec3& n) const override;
+
+    const float density(
+        const vec3& incident,
+        const vec3& reflected,
+        const vec3& normal) const override;
 
     const BSDFSample sample(
         RandomEngine& engine,

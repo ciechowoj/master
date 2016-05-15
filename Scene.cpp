@@ -142,7 +142,10 @@ LightSample Scene::sampleLight(
     return sample;
 }
 
-RayIsect Scene::intersect(const vec3& origin, const vec3& direction) const {
+const RayIsect Scene::intersect(
+    const vec3& origin,
+    const vec3& direction) const
+{
     RayIsect rtcRay;
     (*(vec3*)rtcRay.org) = origin;
     (*(vec3*)rtcRay.dir) = direction;
@@ -160,11 +163,10 @@ RayIsect Scene::intersect(const vec3& origin, const vec3& direction) const {
     return rtcRay;
 }
 
-RayIsect Scene::intersect(const Ray& ray) const {
-    return intersect(ray.origin, ray.direction);
-}
-
-float Scene::occluded(const vec3& origin, const vec3& target) const {
+const float Scene::occluded(
+    const vec3& origin,
+    const vec3& target) const
+{
     RTCRay rtcRay;
     (*(vec3*)rtcRay.org) = origin;
     (*(vec3*)rtcRay.dir) = target - origin;
@@ -173,7 +175,7 @@ float Scene::occluded(const vec3& origin, const vec3& target) const {
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.mask =   RayIsect::occluderMask();
+    rtcRay.mask = RayIsect::occluderMask();
     rtcRay.time = 0.f;
     rtcOccluded(rtcScene, rtcRay);
 
@@ -182,15 +184,40 @@ float Scene::occluded(const vec3& origin, const vec3& target) const {
     return rtcRay.geomID == 0 ? 0.f : 1.f;
 }
 
-size_t Scene::numNormalRays() const {
+const RayIsect Scene::intersect(const Ray& ray) const {
+    return intersect(ray.origin, ray.direction);
+}
+
+const RayIsect Scene::intersectLight(
+    const vec3& origin,
+    const vec3& direction) const
+{
+    RayIsect rtcRay;
+    (*(vec3*)rtcRay.org) = origin;
+    (*(vec3*)rtcRay.dir) = direction;
+    rtcRay.tnear = 0.00001f;
+    rtcRay.tfar = INFINITY;
+    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.mask = RayIsect::lightMask();
+    rtcRay.time = 0.f;
+    rtcIntersect(rtcScene, rtcRay);
+
+    ++_numIntersectRays;
+
+    return rtcRay;
+}
+
+const size_t Scene::numNormalRays() const {
     return _numIntersectRays;
 }
 
-size_t Scene::numShadowRays() const {
+const size_t Scene::numShadowRays() const {
     return _numOccludedRays;
 }
 
-size_t Scene::numRays() const {
+const size_t Scene::numRays() const {
     return _numIntersectRays + _numOccludedRays;
 }
 
@@ -265,7 +292,7 @@ const vec3 Scene::sampleDirectLightMixed(
             lights.lightRadiance(isect.primId()) *
             bsdfSample.throughput() *
             dot(bsdfSample.omega(), point.normal()) *
-            bsdfSample.densityInv() *
+            // bsdfSample.densityInv() *
             (dot(-bsdfSample.omega(), lights.lightNormal(isect.primId())) > 0.0f ? 1.0f : 0.0f);
 
         ray.origin = isect.position();
@@ -280,14 +307,16 @@ const vec3 Scene::sampleDirectLightMixed(
         bsdf.query(point, omegaR, -lightSample.omega(), point.gnormal()) *
         cosineTheta *
         occluded(lightSample.position(), point.position()) *
-        lightSample.densityInv() *
+        // lightSample.densityInv() *
         (cosineTheta > 0.0f ? vec3(1.0f) : vec3(0.0f));
 
     const float d = bsdfSample.density() + lightSample.density();
 
+    // std::cout << bsdfSample.density() << "/" << lightSample.density() << "\n";
+
     return
-        (bsdfRadiance * bsdfSample.density() +
-        lightRadiance * lightSample.density()) / d;
+        (bsdfRadiance +
+        lightRadiance) / d;
 }
 
 }

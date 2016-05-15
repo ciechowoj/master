@@ -164,7 +164,7 @@ build/googletest/libgtest.a:
 	cd build/googletest && make $(NUM_THREADS)
 
 run: all
-	./build/master/master.bin models/LightNoOcclusionTest.blend --PT --parallel
+	./build/master/master.bin models/CornellBoxDiffuse.blend --PT --parallel
 
 test: all
 	./build/master/unittest.bin

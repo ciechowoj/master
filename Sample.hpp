@@ -62,7 +62,7 @@ struct CosineHemisphereSample1 {
 
     const vec3 omega() const { return _omega; }
     const float density() const { return _omega.y * one_over_pi<float>(); }
-    const float densityInv() const { return 1.0f / _omega.y * pi<float>(); }
+    const float densityInv() const { return pi<float>() / _omega.y; }
 };
 
 struct BarycentricSample1 {
