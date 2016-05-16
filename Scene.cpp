@@ -20,7 +20,7 @@ Scene::Scene(
     _numIntersectRays = 0;
     _numOccludedRays = 0;
 
-    areaLights.init(this);
+    lights.init(this);
 }
 
 unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
@@ -197,7 +197,7 @@ const RayIsect Scene::intersectLight(
     RayIsect rtcRay;
     (*(vec3*)rtcRay.org) = origin;
     (*(vec3*)rtcRay.dir) = direction;
-    rtcRay.tnear = 0.00001f;
+    rtcRay.tnear = 0.0001f;
     rtcRay.tfar = INFINITY;
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
@@ -317,8 +317,12 @@ const vec3 Scene::sampleDirectLightMixed(
     // std::cout << bsdfSample.density() << "/" << lightSample.density() << "\n";
 
     return
-        (bsdfRadiance +
-        lightRadiance) / d;
+        bsdfRadiance /
+            (bsdfSample.density()
+                + lights.density(point.position(), bsdfSample.omega())) +
+        lightRadiance /
+            (lightSample.density()
+                + bsdf.density(point, -lightSample.omega(), omegaR));
 }
 
 }

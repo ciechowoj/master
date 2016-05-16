@@ -88,7 +88,6 @@ template <class Stream> Stream& operator<<(Stream& stream, const aiNode& node) {
         << "mTransformation }";
 }
 
-
 std::string dirname(const std::string& path) {
     auto index = path.find_last_of("/\\");
 
@@ -102,6 +101,22 @@ std::string dirname(const std::string& path) {
     else {
         return path;
     }
+}
+
+string toString(const aiString& s) {
+    return s.C_Str();
+}
+
+vec2 toVec2(const aiVector2D& v) {
+    return vec2(v.x, v.y);
+}
+
+vec3 toVec3(const aiVector3D& v) {
+    return vec3(v.x, v.y, v.z);
+}
+
+vec3 toVec3(const aiColor3D& v) {
+    return vec3(v.r, v.g, v.b);
 }
 
 string name(const aiMaterial* material) {
@@ -134,21 +149,136 @@ vec3 specular(const aiMaterial* material) {
     return vec3(result.r, result.g, result.b);
 }
 
-string toString(const aiString& s) {
-    return s.C_Str();
+vec3 transparent(const aiMaterial* material) {
+    aiColor3D result;
+    material->Get(AI_MATKEY_COLOR_TRANSPARENT, result);
+    return toVec3(result);
 }
 
-vec2 toVec2(const aiVector2D& v) {
-    return vec2(v.x, v.y);
+/* bool wireframe(const aiMaterial* material) {
+    bool result = false;
+    material->Get(AI_MATKEY_WIRE_FRAME, result);
+    return result;
+}*/
+
+bool twosided(const aiMaterial* material) {
+    bool result = false;
+    material->Get(AI_MATKEY_TWOSIDED, result);
+    return result;
 }
 
-vec3 toVec3(const aiVector3D& v) {
-    return vec3(v.x, v.y, v.z);
+int shadingModel(const aiMaterial* material) {
+    int result = 0;
+    material->Get(AI_MATKEY_SHADING_MODEL, result);
+    return result;
 }
 
-vec3 toVec3(const aiColor3D& v) {
-    return vec3(v.r, v.g, v.b);
+int blendFunc(const aiMaterial* material) {
+    int result = 0;
+    material->Get(AI_MATKEY_BLEND_FUNC, result);
+    return result;
 }
+
+float opacity(const aiMaterial* material) {
+    float result = 1.0f;
+    material->Get(AI_MATKEY_OPACITY, result);
+    return result;
+}
+
+float shininess(const aiMaterial* material) {
+    float result = 0.0f;
+    material->Get(AI_MATKEY_SHININESS, result);
+    return result;
+}
+
+float shininessStrength(const aiMaterial* material) {
+    float result = 1.0f;
+    material->Get(AI_MATKEY_SHININESS_STRENGTH, result);
+    return result;
+}
+
+float refracti(const aiMaterial* material) {
+    float result = 1.0f;
+    material->Get(AI_MATKEY_REFRACTI, result);
+    return result;
+}
+
+template <class Stream> Stream& operator<<(
+    Stream& stream,
+    const aiMaterial& material)
+{
+    stream << "aiMaterial { ";
+
+    for (unsigned i = 0; i < material.mNumProperties; ++i) {
+        if (material.mProperties[i]->mType == aiPTI_String) {
+            aiString result;
+            aiGetMaterialString(
+                &material,
+                material.mProperties[i]->mKey.C_Str(),
+                0, 0,
+                &result);
+
+            stream << material.mProperties[i]->mKey << " = \"" << result << "\", ";
+        }
+        else {
+            float result[8];
+            unsigned pMax = 8;
+
+            aiGetMaterialFloatArray(
+                &material,
+                material.mProperties[i]->mKey.C_Str(),
+                0, 0,
+                result,
+                &pMax);
+
+            unsigned size = material.mProperties[i]->mDataLength / sizeof(float);
+
+            stream << material.mProperties[i]->mKey << " = [";
+
+            if (size != 0) {
+                stream << result[0];
+
+                for (unsigned i = 1; i < size; ++i) {
+                    stream  << ", " << result[i];
+                }
+            }
+
+            stream << "], ";
+        }
+    }
+
+    return stream;
+
+//    return stream
+//        << "aiMaterial { "
+//        << "name = " << name(&material) << ", "
+//        << "COLOR_DIFFUSE = " << diffuse(&material) << ", "
+//        << "COLOR_SPECULAR = " << specular(&material) << ", "
+//        << "COLOR_AMBIENT = " << ambient(&material) << ", "
+//        << "COLOR_EMISSIVE = " << emissive(&material) << ", "
+//        << "COLOR_TRANSPARENT = " << transparent(&material) << ", "
+//        // << "WIREFRAME = " << wireframe(&material) << ", "
+//        << "TWOSIDED = " << twosided(&material) << ", "
+//        << "SHADING_MODEL = " << shadingModel(&material) << ", "
+//        << "BLEND_FUNC = " << blendFunc(&material) << ", "
+//        << "OPACITY = " << opacity(&material) << ", "
+//        << "SHININESS = " << shininess(&material) << ", "
+//        << "SHININESS_STRENGTH = " << shininessStrength(&material) << ", "
+//        << "REFRACTI = " << refracti(&material) << " }";
+
+        // TEXTURE(t,n)
+        // TEXBLEND(t,n)
+        // TEXOP(t,n)
+        // MAPPING(t,n)
+        // UVWSRC(t,n)
+        // MAPPINGMODE_U(t,n)
+        // MAPPINGMODE_V(t,n)
+        // TEXMAP_AXIS(t,n)
+        // TEXFLAGS(t,n)
+}
+
+
+
 
 bool isEmissive(const aiScene* scene, size_t meshID) {
     size_t materialID = scene->mMeshes[meshID]->mMaterialIndex;
@@ -294,6 +424,7 @@ shared<Scene> loadScene(string path) {
     Materials materials;
 
     for (size_t i = 0; i < scene->mNumMaterials; ++i) {
+        std::cout << *scene->mMaterials[i] << "\n";
         materials.names.push_back(name(scene->mMaterials[i]));
         materials.diffuses.push_back(diffuse(scene->mMaterials[i]));
         materials.speculars.push_back(specular(scene->mMaterials[i]));

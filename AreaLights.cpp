@@ -1,3 +1,4 @@
+#include <streamops.hpp>
 #include <runtime_assert>
 #include <Scene.hpp>
 
@@ -125,19 +126,21 @@ const float AreaLights::density(
 {
     runtime_assert(_intersector != nullptr);
 
-    auto isect = _intersector->intersectLight(position, direction);
+    auto isect = _intersector->intersect(position, direction);
 
-    if (isect.isPresent()) {
+    while (isect.isLight()) {
         const auto lightId = isect.primId();
         const float cosTheta = -dot(direction, _shapes[lightId].direction);
-        return cosTheta > 0.0f
-            ? _weights[isect.primId()] * distance2(position, isect.position())
-                / (lightArea(lightId) * cosTheta)
-            : 0.0f;
+
+        if (cosTheta > 0.0f) {
+            return _weights[isect.primId()] * distance2(position, isect.position())
+                / (lightArea(lightId) * cosTheta);
+        }
+
+        isect = _intersector->intersect(isect.position(), direction);
     }
-    else {
-        return 0.0f;
-    }
+
+    return 0.0f;
 }
 
 LightSample AreaLights::sample(
@@ -170,11 +173,11 @@ LightSample AreaLights::sample(
     float cosineTheta = dot(result.omega(), _shapes[lightId].direction);
     vec3 diff = position - result.position();
 
-    result._areaDensity = _weights[lightId] / lightArea(lightId);
+    result._areaDensity = _weights[lightId] / lightArea(lightId) * (dot(diff, diff) / cosineTheta);
     result._omegaDensity = 1.0f;
 
     if (cosineTheta > 0.0f) {
-        result._radiance = lightRadiance(lightId) / dot(diff, diff) * cosineTheta;
+        result._radiance = lightRadiance(lightId);
     }
     else {
         result._radiance = vec3(0.0f);

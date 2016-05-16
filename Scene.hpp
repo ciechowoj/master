@@ -43,7 +43,7 @@ public:
 
     Cameras _cameras;
     const vector<Mesh> meshes;
-    const AreaLights lights;
+    AreaLights lights;
     const Materials materials;
 
     const Cameras& cameras() const { return _cameras; }
