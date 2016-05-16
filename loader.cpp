@@ -155,11 +155,11 @@ vec3 transparent(const aiMaterial* material) {
     return toVec3(result);
 }
 
-/* bool wireframe(const aiMaterial* material) {
+bool wireframe(const aiMaterial* material) {
     bool result = false;
-    material->Get(AI_MATKEY_WIRE_FRAME, result);
+    material->Get(AI_MATKEY_ENABLE_WIREFRAME, result);
     return result;
-}*/
+}
 
 bool twosided(const aiMaterial* material) {
     bool result = false;
@@ -200,6 +200,18 @@ float shininessStrength(const aiMaterial* material) {
 float refracti(const aiMaterial* material) {
     float result = 1.0f;
     material->Get(AI_MATKEY_REFRACTI, result);
+    return result;
+}
+
+vec3 reflectivity(const aiMaterial* material) {
+    aiColor3D result;
+    material->Get(AI_MATKEY_COLOR_REFLECTIVE, result);
+    return toVec3(result);
+}
+
+float reflective(const aiMaterial* material) {
+    float result = 0.0f;
+    material->Get(AI_MATKEY_REFLECTIVITY, result);
     return result;
 }
 
@@ -265,7 +277,8 @@ template <class Stream> Stream& operator<<(
 //        << "SHININESS = " << shininess(&material) << ", "
 //        << "SHININESS_STRENGTH = " << shininessStrength(&material) << ", "
 //        << "REFRACTI = " << refracti(&material) << " }";
-
+// #define AI_MATKEY_REFLECTIVITY "$mat.reflectivity",0,0
+// #define AI_MATKEY_COLOR_REFLECTIVE "$clr.reflective",0,0
         // TEXTURE(t,n)
         // TEXBLEND(t,n)
         // TEXOP(t,n)
@@ -424,11 +437,18 @@ shared<Scene> loadScene(string path) {
     Materials materials;
 
     for (size_t i = 0; i < scene->mNumMaterials; ++i) {
-        std::cout << *scene->mMaterials[i] << "\n";
+        const aiMaterial* material = scene->mMaterials[i];
+        std::cout << *material << "\n";
         materials.names.push_back(name(scene->mMaterials[i]));
         materials.diffuses.push_back(diffuse(scene->mMaterials[i]));
         materials.speculars.push_back(specular(scene->mMaterials[i]));
-        materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(materials.diffuses.back())));
+
+        if (reflective(material) == 1.0f) {
+            materials.bsdfs.push_back(unique<BSDF>(new PerfectReflectionBSDF()));
+        }
+        else {
+            materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(materials.diffuses.back())));
+        }
     }
 
     shared<Scene> result = make_shared<Scene>(

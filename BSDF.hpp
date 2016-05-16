@@ -91,4 +91,48 @@ private:
     vec3 _diffuse;
 };
 
+class PerfectReflectionBSDF : public BSDF {
+public:
+    const vec3 query(
+        const vec3& incident,
+        const vec3& reflected,
+        const vec3& normal) const override;
+
+    const float density(
+        const vec3& incident,
+        const vec3& reflected,
+        const vec3& normal) const override;
+
+    const BSDFSample sample(
+        RandomEngine& engine,
+        const vec3& reflected) const override;
+
+    BSDFSample scatter(
+        RandomEngine& engine,
+        const SurfacePoint& point,
+        const vec3& incident) const override;
+};
+
+class PerfectTransmissionBSDF : public BSDF {
+public:
+    const vec3 query(
+        const vec3& incident,
+        const vec3& reflected,
+        const vec3& normal) const override;
+
+    const float density(
+        const vec3& incident,
+        const vec3& reflected,
+        const vec3& normal) const override;
+
+    const BSDFSample sample(
+        RandomEngine& engine,
+        const vec3& reflected) const override;
+
+    BSDFSample scatter(
+        RandomEngine& engine,
+        const SurfacePoint& point,
+        const vec3& incident) const override;
+};
+
 }

@@ -123,4 +123,80 @@ BSDFSample DiffuseBSDF::scatter(
     }
 }
 
+const vec3 PerfectReflectionBSDF::query(
+    const vec3& incident,
+    const vec3& reflected,
+    const vec3& normal) const
+{
+    return vec3(0.0f);
+}
+
+const float PerfectReflectionBSDF::density(
+    const vec3& incident,
+    const vec3& reflected,
+    const vec3& normal) const
+{
+    return 0.0f;
+}
+
+const BSDFSample PerfectReflectionBSDF::sample(
+    RandomEngine& engine,
+    const vec3& reflected) const
+{
+    BSDFSample result;
+    result._throughput = vec3(1.0f, 1.0f, 1.0f);
+    result._omega = vec3(0.0f, 2.0f * reflected.y, 0.0f) - reflected;
+    result._density = 1.0f;
+    result._densityInv = 1.0f;
+    result._specular = 1.0f;
+
+    return result;
+}
+
+BSDFSample PerfectReflectionBSDF::scatter(
+    RandomEngine& engine,
+    const SurfacePoint& point,
+    const vec3& incident) const
+{
+    return BSDFSample();
+}
+
+const vec3 PerfectTransmissionBSDF::query(
+    const vec3& incident,
+    const vec3& reflected,
+    const vec3& normal) const
+{
+    return vec3(0.0f);
+}
+
+const float PerfectTransmissionBSDF::density(
+    const vec3& incident,
+    const vec3& reflected,
+    const vec3& normal) const
+{
+    return 0.0f;
+}
+
+const BSDFSample PerfectTransmissionBSDF::sample(
+    RandomEngine& engine,
+    const vec3& reflected) const
+{
+    BSDFSample result;
+    result._throughput = vec3(1.0f, 1.0f, 1.0f);
+    result._omega = vec3(0.0f, 2.0f * reflected.y, 0.0f) - reflected;
+    result._density = 1.0f;
+    result._densityInv = 1.0f;
+    result._specular = 1.0f;
+
+    return result;
+}
+
+BSDFSample PerfectTransmissionBSDF::scatter(
+    RandomEngine& engine,
+    const SurfacePoint& point,
+    const vec3& incident) const
+{
+    return BSDFSample();
+}
+
 }
