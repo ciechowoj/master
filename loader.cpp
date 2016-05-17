@@ -155,6 +155,22 @@ vec3 transparent(const aiMaterial* material) {
     return toVec3(result);
 }
 
+template <class T> T property(const aiMaterial* material, const char* key) {
+    return T();
+}
+
+template <> bool property(const aiMaterial* material, const char* key) {
+    int result = 0;
+    material->Get(key, 0, 0, result);
+    return result != 0;
+}
+
+template <> float property(const aiMaterial* material, const char* key) {
+    float result = 0;
+    material->Get(key, 0, 0, result);
+    return result;
+}
+
 bool wireframe(const aiMaterial* material) {
     bool result = false;
     material->Get(AI_MATKEY_ENABLE_WIREFRAME, result);
@@ -443,7 +459,12 @@ shared<Scene> loadScene(string path) {
         materials.diffuses.push_back(diffuse(scene->mMaterials[i]));
         materials.speculars.push_back(specular(scene->mMaterials[i]));
 
-        if (reflective(material) == 1.0f) {
+        if (property<bool>(material, "$mat.blend.transparency.use")) {
+            float ior = property<float>(material, "$mat.blend.transparency.ior");
+            auto bsdf = unique<BSDF>(new PerfectTransmissionBSDF(ior, 1.0f));
+            materials.bsdfs.push_back(std::move(bsdf));
+        }
+        else if (property<bool>(material, "$mat.blend.mirror.use")) {
             materials.bsdfs.push_back(unique<BSDF>(new PerfectReflectionBSDF()));
         }
         else {

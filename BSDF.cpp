@@ -161,6 +161,14 @@ BSDFSample PerfectReflectionBSDF::scatter(
     return BSDFSample();
 }
 
+PerfectTransmissionBSDF::PerfectTransmissionBSDF(
+    float internalIOR,
+    float externalIOR)
+{
+    externalOverInternalIOR = externalIOR / internalIOR;
+    this->internalIOR = internalIOR;
+}
+
 const vec3 PerfectTransmissionBSDF::query(
     const vec3& incident,
     const vec3& reflected,
@@ -181,9 +189,26 @@ const BSDFSample PerfectTransmissionBSDF::sample(
     RandomEngine& engine,
     const vec3& reflected) const
 {
+    vec3 omega;
+
+    if (reflected.y > 0.f) {
+        const float eta = externalOverInternalIOR;
+
+        omega =
+            - eta * (reflected - vec3(0.0f, reflected.y, 0.0f))
+            - vec3(0.0f, sqrt(1 - eta * eta * (1 - reflected.y * reflected.y)), 0.0f);
+    }
+    else {
+        const float eta = 1.0f / externalOverInternalIOR;
+
+        omega =
+            - eta * (reflected - vec3(0.0f, reflected.y, 0.0f))
+            + vec3(0.0f, sqrt(1 - eta * eta * (1 - reflected.y * reflected.y)), 0.0f);
+    }
+
     BSDFSample result;
     result._throughput = vec3(1.0f, 1.0f, 1.0f);
-    result._omega = vec3(0.0f, 2.0f * reflected.y, 0.0f) - reflected;
+    result._omega = omega;
     result._density = 1.0f;
     result._densityInv = 1.0f;
     result._specular = 1.0f;

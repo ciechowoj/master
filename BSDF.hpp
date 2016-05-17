@@ -115,6 +115,10 @@ public:
 
 class PerfectTransmissionBSDF : public BSDF {
 public:
+    PerfectTransmissionBSDF(
+        float internalIOR,
+        float externalIOR);
+
     const vec3 query(
         const vec3& incident,
         const vec3& reflected,
@@ -133,6 +137,10 @@ public:
         RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& incident) const override;
+
+private:
+    float externalOverInternalIOR;
+    float internalIOR;
 };
 
 }
