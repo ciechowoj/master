@@ -74,7 +74,8 @@ LIB_DEPENDENCIES = \
 	$(glad.target) \
 	$(imgui.target) \
 	$(googletest.target) \
-	$(embree.target)
+	$(embree.target) \
+	$(glm.submodule)
 
 all: master unittest
 
@@ -84,6 +85,7 @@ include submodules/embree.makefile
 include submodules/glad.makefile
 include submodules/imgui.makefile
 include submodules/googletest.makefile
+include submodules/glm.makefile
 
 .PHONY: all master unittest
 
