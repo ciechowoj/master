@@ -6,8 +6,12 @@ glfw.CMakeFlags = \
 	-DGLFW_INSTALL=OFF
 
 glfw.target=build/glfw/src/libglfw3.a
+glfw.submodule=submodules/glfw/README.md
 
-build/glfw/src/libglfw3.a:
+$(glfw.submodule):
+	git submodule update --init submodules/glfw
+
+build/glfw/src/libglfw3.a: $(glfw.submodule)
 	mkdir -p build
 	mkdir -p build/glfw
 	cd build/glfw && cmake ../../submodules/glfw $(glfw.CMakeFlags)
