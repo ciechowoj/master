@@ -45,12 +45,16 @@ assimp.CMakeFlags = \
 	-DASSIMP_BUILD_GLTF_IMPORTER=FALSE
 
 assimp.target=build/assimp/code/libassimp.a
+assimp.submodule=submodules/assimp/README
 
-build/assimp/code/libassimp.a:
+build/assimp/code/libassimp.a: $(assimp.submodule)
 	mkdir -p build
 	mkdir -p build/assimp
 	cd build/assimp && cmake ../../submodules/assimp $(assimp.CMakeFlags)
 	cd build/assimp && make $(NUM_THREADS)
+
+$(assimp.submodule):
+	git submodule update --init submodules/assimp
 
 
 # 220s

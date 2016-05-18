@@ -1,4 +1,4 @@
-
+	
 NUM_THREADS=-j4
 
 INCLUDE_DIRS = \
@@ -69,11 +69,11 @@ TEST_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/unit_tests/$*.Td
 TEST_POST = mv -f build/master/unit_tests/$*.Td build/master/unit_tests/$*.d
 
 LIB_DEPENDENCIES = \
-	build/glad/libglad.a \
 	$(glfw.target) \
 	$(assimp.target) \
-	build/imgui/libimgui.a \
-	build/googletest/libgtest.a \
+	$(glad.target) \
+	$(imgui.target) \
+	$(googletest.target) \
 	$(embree.target)
 
 all: master unittest
@@ -81,6 +81,9 @@ all: master unittest
 include submodules/assimp.makefile
 include submodules/glfw.makefile
 include submodules/embree.makefile
+include submodules/glad.makefile
+include submodules/imgui.makefile
+include submodules/googletest.makefile
 
 .PHONY: all master unittest
 
@@ -122,33 +125,6 @@ build/master/%.d: ;
 -include build/master/main.d
 -include $(TEST_OBJECTS:build/master/unit_tests/%.o=build/master/unit_tests/%.d)
 
-build/glad/libglad.a: build/glad/loader/src/glad.c
-	cd build/glad && $(CC) -c loader/src/glad.c -o loader/src/glad.o -Iloader/include
-	cd build/glad && ar rcs libglad.a loader/src/glad.o
-
-build/glad/loader/src/glad.c:
-	mkdir -p build
-	cp -r submodules/glad build
-	cd build/glad && python setup.py build
-	cd build/glad && python -m glad --profile compatibility --out-path loader --api "gl=3.3" --generator c
-
-IMGUI_SOURCES = \
-	submodules/imgui/imgui.cpp \
-	submodules/imgui/imgui_demo.cpp \
-	submodules/imgui/imgui_draw.cpp \
-	submodules/imgui/examples/opengl3_example/imgui_impl_glfw_gl3.cpp
-
-IMGUI_OBJECTS = $(IMGUI_SOURCES:submodules/imgui/%.cpp=build/imgui/%.o)
-
-build/imgui/libimgui.a: $(IMGUI_OBJECTS)
-	ar rcs build/imgui/libimgui.a $(IMGUI_OBJECTS)
-
-build/imgui/%.o: submodules/imgui/%.cpp build/imgui/GL/gl3w.h
-	$(CC) -c $(CCFLAGS) $< -o $@ -Ibuild/glad/loader/include
-
-build/imgui/GL/gl3w.h: build/imgui/sentinel
-	echo "#include <glad/glad.h>\n" >> build/imgui/GL/gl3w.h
-
 build/imgui/sentinel:
 	mkdir -p build
 	mkdir -p build/imgui
@@ -156,12 +132,6 @@ build/imgui/sentinel:
 	mkdir -p build/imgui/examples
 	mkdir -p build/imgui/examples/opengl3_example
 	touch build/imgui/sentinel
-
-build/googletest/libgtest.a:
-	mkdir -p build
-	mkdir -p build/googletest
-	cd build/googletest && cmake ../../submodules/googletest/googletest
-	cd build/googletest && make $(NUM_THREADS)
 
 run: all
 	./build/master/master.bin models/CornellBoxSphere.blend --PT --parallel
