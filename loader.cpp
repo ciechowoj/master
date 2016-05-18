@@ -454,7 +454,7 @@ shared<Scene> loadScene(string path) {
 
     for (size_t i = 0; i < scene->mNumMaterials; ++i) {
         const aiMaterial* material = scene->mMaterials[i];
-        std::cout << *material << "\n";
+
         materials.names.push_back(name(scene->mMaterials[i]));
         materials.diffuses.push_back(diffuse(scene->mMaterials[i]));
         materials.speculars.push_back(specular(scene->mMaterials[i]));
