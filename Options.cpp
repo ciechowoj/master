@@ -437,7 +437,10 @@ shared<Technique> makeTechnique(const Options& options) {
                 options.maxRadius);
 
         case Options::VCM:
-            return std::make_shared<VertexMerging>();
+            return std::make_shared<VCM>(
+                options.numPhotons,
+                options.maxGather,
+                options.maxRadius);
     }
 }
 
