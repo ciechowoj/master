@@ -20,6 +20,16 @@ struct BSDFSample {
     const bool zero() const;
 };
 
+struct BSDFQuery {
+    vec3 _throughput;
+    float _density;
+
+    const vec3& throughput() const { return _throughput; }
+    const float density() const { return _density; }
+    const float densityInv() const { return 1.0f / _density; }
+    const bool zero() const;
+};
+
 class BSDF {
 public:
     BSDF();
@@ -42,6 +52,15 @@ public:
         const SurfacePoint& point,
         const vec3& incident,
         const vec3& reflected) const;
+
+    virtual const BSDFQuery queryEx(
+        const vec3& incident,
+        const vec3& outgoing) const;
+
+    const BSDFQuery queryEx(
+        const SurfacePoint& point,
+        const vec3& incident,
+        const vec3& outgoing) const;
 
     virtual const BSDFSample sample(
         RandomEngine& engine,

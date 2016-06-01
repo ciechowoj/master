@@ -67,7 +67,8 @@ vec3 VCM::_connect(
 }
 
 vec3 VCM::_connect(const EyeVertex& eye, const LightVertex& light) {
-
+    float distSq = distance2(eye.position(), light.position());
+    vec3 omega = normalize(eye.position() - light.position());
 
 
 

@@ -38,6 +38,26 @@ const float BSDF::density(
         point.toSurface(reflected));
 }
 
+const BSDFQuery BSDF::queryEx(
+    const vec3& incident,
+    const vec3& outgoing) const
+{
+    BSDFQuery result;
+    result._throughput = query(incident, outgoing);
+    result._density = density(incident, outgoing);
+    return result;
+}
+
+const BSDFQuery BSDF::queryEx(
+    const SurfacePoint& point,
+    const vec3& incident,
+    const vec3& outgoing) const
+{
+    return queryEx(
+        point.toSurface(incident),
+        point.toSurface(outgoing));
+}
+
 const BSDFSample BSDF::sample(
     RandomEngine& engine,
     const SurfacePoint& point,
