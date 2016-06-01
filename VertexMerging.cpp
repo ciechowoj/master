@@ -59,6 +59,8 @@ vec3 VCM::_connect(
     float density = eye.density * light.density();
     vec3 radiance = eye.throughput * throughput * cosTheta * light.radiance() / density;
 
+    radiance = vec3(0.0f);
+
     for (size_t i = 0; i < lightSize; ++i) {
         radiance += _connect(eye, lightPath[i]);
     }
@@ -67,15 +69,48 @@ vec3 VCM::_connect(
 }
 
 vec3 VCM::_connect(const EyeVertex& eye, const LightVertex& light) {
-    float distSq = distance2(eye.position(), light.position());
+    float distSqInv = 1.0f / distance2(eye.position(), light.position());
     vec3 omega = normalize(eye.position() - light.position());
 
+    BSDFQuery eyeBSDF = _scene->queryBSDFEx(eye.surface, -omega, eye.omega);
+    BSDFQuery lightBSDF = _scene->queryBSDFEx(light.surface, light.omega, omega);
 
+    float eyeCosTheta = abs(dot(-omega, eye.normal()));
+    float lightCosTheta = abs(dot(omega, light.normal()));
 
+    vec3 radiance =
+        eyeBSDF.throughput() *
+        eyeCosTheta *
+        lightBSDF.throughput() *
+        lightCosTheta *
+        distSqInv;
 
+    float density = eye.density * light.density;
 
+    float u =
+        (light.B * lightBSDF.density() + light.b)
+        * lightCosTheta
+        * distSqInv
+        * eyeBSDF.density();
 
-    return vec3(0.0f);
+    float v =
+        light.C *
+        lightBSDF.density() *
+        lightCosTheta *
+        distSqInv *
+        eyeBSDF.density();
+
+    float w =
+        (eye.D * eyeBSDF.density() + eye.d) *
+        eyeCosTheta *
+        distSqInv *
+        lightBSDF.density();
+
+    float weight =
+        u + v + w + 1 +
+        _eta() * lightCosTheta * distSqInv * eyeBSDF.density();
+
+    return radiance * weight / density;
 }
 
 size_t VCM::_trace(LightVertex* path, RandomEngine& engine) {

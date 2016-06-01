@@ -162,6 +162,17 @@ const vec3 Scene::queryBSDF(
     return bsdf->query(surface, incident, outgoing);
 }
 
+const BSDFQuery Scene::queryBSDFEx(
+    const SurfacePoint& surface,
+    const vec3& incident,
+    const vec3& outgoing) const
+{
+    runtime_assert(surface.materialId() < materials.bsdfs.size());
+
+    auto bsdf = materials.bsdfs[surface.materialId()].get();
+    return bsdf->queryEx(surface, incident, outgoing);
+}
+
 const RayIsect Scene::intersect(
     const vec3& origin,
     const vec3& direction) const

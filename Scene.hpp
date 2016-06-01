@@ -95,6 +95,11 @@ public:
         const vec3& incident,
         const vec3& outgoing) const;
 
+    const BSDFQuery queryBSDFEx(
+        const SurfacePoint& surface,
+        const vec3& incident,
+        const vec3& outgoing) const;
+
     const vec3 sampleDirectLightAngle(
         RandomEngine& engine,
         const SurfacePoint& point,
