@@ -160,28 +160,26 @@ LightSampleEx AreaLights::sample(
     return result;
 }
 
-
-LightSampleEx AreaLights::sample(
+LightSample AreaLights::sample(
     RandomEngine& engine,
     const vec3& position) const
 {
     size_t lightId = _sampleLight(engine);
 
-    LightSampleEx result;
+    LightSample result;
     result._position = _samplePosition(lightId, engine);
+    result._normal = _shapes[lightId].direction;
+    result._radiance = lightRadiance(lightId);
     result._omega = normalize(position - result._position);
-    float cosineTheta = dot(result.omega(), _shapes[lightId].direction);
-    vec3 diff = position - result.position();
+    result._density = _weights[lightId] / lightArea(lightId);
 
-    result._areaDensity = _weights[lightId] / lightArea(lightId) * (dot(diff, diff) / cosineTheta);
-    result._omegaDensity = 1.0f;
+    float cosTheta = dot(result.omega(), result.normal());
 
-    if (cosineTheta > 0.0f) {
-        result._radiance = lightRadiance(lightId);
-    }
-    else {
-        result._radiance = vec3(0.0f);
-    }
+    result._radiance *=
+        _intersector->occluded(result.position(), position) *
+        (cosTheta > 0.0f ? 1.0f : 0.0f) *
+        cosTheta /
+        distance2(result.position(), position);
 
     return result;
 }

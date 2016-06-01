@@ -53,17 +53,11 @@ vec3 VCM::_connect(
     const LightVertex* lightPath,
     size_t lightSize)
 {
-    vec3 radiance = vec3(0.0f);
-/*
-    BSDFSample light = _scene->sampleLight(engine, eye.position());
-    vec3 throughput = _scene->queryBSDF(eye.surface, light.omega(), eye.omega);
-
-    radiance +=
-        eye.throughput *
-        throughput *
-        dot(eye.normal(), light.omega()) *
-        light.throughput() /
-        (eye.density * light.density()); */
+    LightSample light = _scene->sampleLight(engine, eye.position());
+    vec3 throughput = _scene->queryBSDF(eye.surface, -light.omega(), eye.omega);
+    float cosTheta = dot(eye.normal(), -light.omega());
+    float density = eye.density * light.density();
+    vec3 radiance = eye.throughput * throughput * cosTheta * light.radiance() / density;
 
     for (size_t i = 0; i < lightSize; ++i) {
         radiance += _connect(eye, lightPath[i]);

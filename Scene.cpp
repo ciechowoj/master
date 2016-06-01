@@ -133,13 +133,11 @@ vec3 Scene::queryRadiance(const RayIsect& isect) const {
     return lights.lightRadiance(isect.primId());
 }
 
-LightSampleEx Scene::sampleLight(
+LightSample Scene::sampleLight(
     RandomEngine& engine,
     const vec3& position) const
 {
-    LightSampleEx sample = lights.sample(engine, position);
-    sample._radiance *= occluded(sample.position(), position);
-    return sample;
+    return lights.sample(engine, position);
 }
 
 const BSDFSample Scene::sampleBSDF(
@@ -148,8 +146,20 @@ const BSDFSample Scene::sampleBSDF(
     const vec3& omega) const
 {
     runtime_assert(surface.materialId() < materials.bsdfs.size());
+
     auto bsdf = materials.bsdfs[surface.materialId()].get();
     return bsdf->sample(engine, surface, omega);
+}
+
+const vec3 Scene::queryBSDF(
+    const SurfacePoint& surface,
+    const vec3& incident,
+    const vec3& outgoing) const
+{
+    runtime_assert(surface.materialId() < materials.bsdfs.size());
+
+    auto bsdf = materials.bsdfs[surface.materialId()].get();
+    return bsdf->query(surface, incident, outgoing);
 }
 
 const RayIsect Scene::intersect(
@@ -271,17 +281,15 @@ const vec3 Scene::sampleDirectLightArea(
     const vec3& omegaR,
     const BSDF& bsdf) const
 {
-    LightSampleEx lightSample = lights.sample(engine, point.position());
-    const float cosineTheta = dot(-lightSample.omega(), point.normal());
+    LightSample lightSample = lights.sample(engine, point.position());
+    const float cosTheta = dot(-lightSample.omega(), point.normal());
 
-    const vec3 radiance =
+    return
         lightSample.radiance() *
         bsdf.query(point, omegaR, -lightSample.omega()) *
-        cosineTheta *
-        occluded(lightSample.position(), point.position()) *
+        (cosTheta > 0.0f ? 1.0f : 0.0f) *
+        cosTheta *
         lightSample.densityInv();
-
-    return cosineTheta > 0.0f ? radiance : vec3(0.0f);
 }
 
 const vec3 Scene::sampleDirectLightMixed(
@@ -308,7 +316,7 @@ const vec3 Scene::sampleDirectLightMixed(
         isect = intersect(ray);
     }
 
-    LightSampleEx lightSample = lights.sample(engine, point.position());
+    LightSample lightSample = lights.sample(engine, point.position());
     const float cosineTheta = dot(-lightSample.omega(), point.normal());
 
     const vec3 lightRadiance =

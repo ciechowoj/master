@@ -57,7 +57,7 @@ public:
     vec3 queryRadiance(const RayIsect& isect) const;
     SurfacePoint querySurface(const RayIsect& isect) const;
 
-    LightSampleEx sampleLight(
+    LightSample sampleLight(
         RandomEngine& engine,
         const vec3& position) const;
 
@@ -89,6 +89,11 @@ public:
         RandomEngine& engine,
         const SurfacePoint& surface,
         const vec3& omega) const;
+
+    const vec3 queryBSDF(
+        const SurfacePoint& surface,
+        const vec3& incident,
+        const vec3& outgoing) const;
 
     const vec3 sampleDirectLightAngle(
         RandomEngine& engine,

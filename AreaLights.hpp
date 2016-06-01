@@ -21,6 +21,21 @@ struct Photon {
     }
 };
 
+struct LightSample {
+    vec3 _position;
+    vec3 _normal;
+    vec3 _radiance; // with respect to area
+    vec3 _omega;
+    float _density;
+
+    const vec3& position() const { return _position; }
+    const vec3& normal() const { return _normal; }
+    const vec3& radiance() const { return _radiance; }
+    const vec3& omega() const { return _omega; }
+    const float density() const { return _density; }
+    const float densityInv() const { return 1.0f / _density; }
+};
+
 struct LightSampleEx {
     vec3 _position;
     vec3 _normal;
@@ -71,7 +86,7 @@ public:
     LightSampleEx sample(
         RandomEngine& engine) const;
 
-    LightSampleEx sample(
+    LightSample sample(
         RandomEngine& engine,
         const vec3& position) const;
 
