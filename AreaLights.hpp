@@ -21,7 +21,7 @@ struct Photon {
     }
 };
 
-struct LightSample {
+struct LightSampleEx {
     vec3 _position;
     vec3 _normal;
     vec3 _radiance;
@@ -68,10 +68,10 @@ public:
         const vec3& position,
         const vec3& direction) const;
 
-    LightSample sample(
+    LightSampleEx sample(
         RandomEngine& engine) const;
 
-    LightSample sample(
+    LightSampleEx sample(
         RandomEngine& engine,
         const vec3& position) const;
 

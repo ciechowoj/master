@@ -133,11 +133,11 @@ vec3 Scene::queryRadiance(const RayIsect& isect) const {
     return lights.lightRadiance(isect.primId());
 }
 
-LightSample Scene::sampleLight(
+LightSampleEx Scene::sampleLight(
     RandomEngine& engine,
     const vec3& position) const
 {
-    LightSample sample = lights.sample(engine, position);
+    LightSampleEx sample = lights.sample(engine, position);
     sample._radiance *= occluded(sample.position(), position);
     return sample;
 }
@@ -231,7 +231,7 @@ const size_t Scene::numRays() const {
     return _numIntersectRays + _numOccludedRays;
 }
 
-const LightSample Scene::sampleLight(
+const LightSampleEx Scene::sampleLight(
         RandomEngine& engine) const
 {
     return lights.sample(engine);
@@ -271,7 +271,7 @@ const vec3 Scene::sampleDirectLightArea(
     const vec3& omegaR,
     const BSDF& bsdf) const
 {
-    LightSample lightSample = lights.sample(engine, point.position());
+    LightSampleEx lightSample = lights.sample(engine, point.position());
     const float cosineTheta = dot(-lightSample.omega(), point.normal());
 
     const vec3 radiance =
@@ -308,7 +308,7 @@ const vec3 Scene::sampleDirectLightMixed(
         isect = intersect(ray);
     }
 
-    LightSample lightSample = lights.sample(engine, point.position());
+    LightSampleEx lightSample = lights.sample(engine, point.position());
     const float cosineTheta = dot(-lightSample.omega(), point.normal());
 
     const vec3 lightRadiance =

@@ -57,7 +57,7 @@ public:
     vec3 queryRadiance(const RayIsect& isect) const;
     SurfacePoint querySurface(const RayIsect& isect) const;
 
-    LightSample sampleLight(
+    LightSampleEx sampleLight(
         RandomEngine& engine,
         const vec3& position) const;
 
@@ -82,7 +82,7 @@ public:
 
     mutable UniformSampler sampler;
 
-    const LightSample sampleLight(
+    const LightSampleEx sampleLight(
         RandomEngine& engine) const;
 
     const BSDFSample sampleBSDF(

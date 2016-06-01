@@ -143,13 +143,13 @@ const float AreaLights::density(
     return 0.0f;
 }
 
-LightSample AreaLights::sample(
+LightSampleEx AreaLights::sample(
     RandomEngine& engine) const
 {
     size_t lightId = _sampleLight(engine);
     auto sample = sampleCosineHemisphere1(engine);
 
-    LightSample result;
+    LightSampleEx result;
     result._position = _samplePosition(lightId, engine);
     result._normal = lightNormal(lightId);
     result._omega = toWorld(lightId, sample.omega());
@@ -161,13 +161,13 @@ LightSample AreaLights::sample(
 }
 
 
-LightSample AreaLights::sample(
+LightSampleEx AreaLights::sample(
     RandomEngine& engine,
     const vec3& position) const
 {
     size_t lightId = _sampleLight(engine);
 
-    LightSample result;
+    LightSampleEx result;
     result._position = _samplePosition(lightId, engine);
     result._omega = normalize(position - result._position);
     float cosineTheta = dot(result.omega(), _shapes[lightId].direction);

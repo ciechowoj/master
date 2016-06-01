@@ -87,7 +87,7 @@ size_t VCM::_trace(LightVertex* path, RandomEngine& engine) {
     size_t itr = 0;
     size_t prv = 0;
 
-    LightSample light = _scene->lights.sample(engine);
+    LightSampleEx light = _scene->lights.sample(engine);
 
     RayIsect isect = _scene->intersectMesh(light.position(), light.omega());
 
@@ -299,7 +299,7 @@ void VCM::_scatter(RandomEngine& engine)
     const float eta = _eta();
 
     for (size_t i = 0; i < _numPhotons; ++i) {
-        LightSample light = _scene->lights.sample(engine);
+        LightSampleEx light = _scene->lights.sample(engine);
         RayIsect isect = _scene->intersectMesh(light.position(), light.omega());
 
         if (!isect.isMesh())
