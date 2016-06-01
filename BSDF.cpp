@@ -14,19 +14,16 @@ BSDF::~BSDF() { }
 const vec3 BSDF::query(
     const SurfacePoint& point,
     const vec3& incident,
-    const vec3& reflected,
-    const vec3& normal) const
+    const vec3& reflected) const
 {
     return query(
         point.toSurface(incident),
-        point.toSurface(reflected),
-        point.toSurface(normal));
+        point.toSurface(reflected));
 }
 
 const float BSDF::density(
         const vec3& incident,
-        const vec3& reflected,
-        const vec3& normal) const
+        const vec3& reflected) const
 {
     return 0.0f;
 }
@@ -38,8 +35,7 @@ const float BSDF::density(
 {
     return density(
         point.toSurface(incident),
-        point.toSurface(reflected),
-        point.toSurface(point.normal()));
+        point.toSurface(reflected));
 }
 
 const BSDFSample BSDF::sample(
@@ -58,18 +54,16 @@ DiffuseBSDF::DiffuseBSDF(const vec3& diffuse)
 
 const vec3 DiffuseBSDF::query(
     const vec3& a,
-    const vec3& b,
-    const vec3& n) const
+    const vec3& b) const
 {
-    return dot(a, n) > 0.0f && dot(b, n) > 0.0f
+    return a.y > 0.0f && b.y > 0.0f
         ? _diffuse * one_over_pi<float>()
         : vec3(0.0f);
 }
 
 const float DiffuseBSDF::density(
     const vec3& incident,
-    const vec3& reflected,
-    const vec3& normal) const
+    const vec3& reflected) const
 {
     return incident.y > 0.0f ? incident.y * one_over_pi<float>() : 0.0f;
 }
@@ -125,16 +119,14 @@ BSDFSample DiffuseBSDF::scatter(
 
 const vec3 PerfectReflectionBSDF::query(
     const vec3& incident,
-    const vec3& reflected,
-    const vec3& normal) const
+    const vec3& reflected) const
 {
     return vec3(0.0f);
 }
 
 const float PerfectReflectionBSDF::density(
     const vec3& incident,
-    const vec3& reflected,
-    const vec3& normal) const
+    const vec3& reflected) const
 {
     return 0.0f;
 }
@@ -171,16 +163,14 @@ PerfectTransmissionBSDF::PerfectTransmissionBSDF(
 
 const vec3 PerfectTransmissionBSDF::query(
     const vec3& incident,
-    const vec3& reflected,
-    const vec3& normal) const
+    const vec3& reflected) const
 {
     return vec3(0.0f);
 }
 
 const float PerfectTransmissionBSDF::density(
     const vec3& incident,
-    const vec3& reflected,
-    const vec3& normal) const
+    const vec3& reflected) const
 {
     return 0.0f;
 }

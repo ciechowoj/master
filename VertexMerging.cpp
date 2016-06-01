@@ -54,7 +54,7 @@ vec3 VCM::_connect(
     size_t lightSize)
 {
     vec3 radiance = vec3(0.0f);
-
+/*
     BSDFSample light = _scene->sampleLight(engine, eye.position());
     vec3 throughput = _scene->queryBSDF(eye.surface, light.omega(), eye.omega);
 
@@ -63,7 +63,7 @@ vec3 VCM::_connect(
         throughput *
         dot(eye.normal(), light.omega()) *
         light.throughput() /
-        (eye.density * light.density());
+        (eye.density * light.density()); */
 
     for (size_t i = 0; i < lightSize; ++i) {
         radiance += _connect(eye, lightPath[i]);
@@ -211,8 +211,8 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
     float size = 2.0f;
 
     while (uniform < roulette) {
-        auto bsdf = _scene->queryBSDF(previous->surface)
-            .sample(engine, previous->surface, previous->omega);
+        auto bsdf =
+            _scene->sampleBSDF(engine, previous->surface, previous->omega);
 
         isect = _scene->intersect(previous->position(), bsdf.omega());
 
@@ -326,8 +326,7 @@ void VCM::_scatter(RandomEngine& engine)
             vertices.push_back(vertex);
             LightVertex previous = vertex;
 
-            auto& bsdf = _scene->queryBSDF(previous.surface);
-            auto sample = bsdf.sample(engine, previous.omega);
+            auto sample = _scene->sampleBSDF(engine, previous.surface, previous.omega);
             isect = _scene->intersectMesh(previous.position(), sample.omega());
 
             if (!isect.isMesh())

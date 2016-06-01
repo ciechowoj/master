@@ -23,8 +23,7 @@ public:
 
     const vec3 query(
         const vec3& a,
-        const vec3& b,
-        const vec3& n) const override;
+        const vec3& b) const override;
 
     const BSDFSample sample(
         RandomEngine& engine,

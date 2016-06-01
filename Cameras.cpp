@@ -17,8 +17,7 @@ CameraBSDF& CameraBSDF::operator=(const CameraBSDF&) {
 
 const vec3 CameraBSDF::query(
     const vec3& a,
-    const vec3& b,
-    const vec3& n) const
+    const vec3& b) const
 {
     return a == b ? vec3(1.0f) : vec3(0.0f);
 }

@@ -27,19 +27,16 @@ public:
 
     virtual const vec3 query(
         const vec3& incomin,
-        const vec3& b,
-        const vec3& n) const = 0;
+        const vec3& b) const = 0;
 
     const vec3 query(
         const SurfacePoint& point,
         const vec3& a,
-        const vec3& b,
-        const vec3& n) const;
+        const vec3& b) const;
 
     virtual const float density(
         const vec3& incident,
-        const vec3& reflected,
-        const vec3& normal) const;
+        const vec3& reflected) const;
 
     const float density(
         const SurfacePoint& point,
@@ -70,13 +67,11 @@ public:
 
     const vec3 query(
         const vec3& a,
-        const vec3& b,
-        const vec3& n) const override;
+        const vec3& b) const override;
 
     const float density(
         const vec3& incident,
-        const vec3& reflected,
-        const vec3& normal) const override;
+        const vec3& reflected) const override;
 
     const BSDFSample sample(
         RandomEngine& engine,
@@ -95,13 +90,11 @@ class PerfectReflectionBSDF : public BSDF {
 public:
     const vec3 query(
         const vec3& incident,
-        const vec3& reflected,
-        const vec3& normal) const override;
+        const vec3& reflected) const override;
 
     const float density(
         const vec3& incident,
-        const vec3& reflected,
-        const vec3& normal) const override;
+        const vec3& reflected) const override;
 
     const BSDFSample sample(
         RandomEngine& engine,
@@ -121,13 +114,11 @@ public:
 
     const vec3 query(
         const vec3& incident,
-        const vec3& reflected,
-        const vec3& normal) const override;
+        const vec3& reflected) const override;
 
     const float density(
         const vec3& incident,
-        const vec3& reflected,
-        const vec3& normal) const override;
+        const vec3& reflected) const override;
 
     const BSDFSample sample(
         RandomEngine& engine,

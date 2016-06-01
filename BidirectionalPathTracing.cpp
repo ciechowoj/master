@@ -40,7 +40,7 @@ vec3 BidirectionalPathTracing::trace(RandomEngine& engine, Ray ray, const BSDF* 
             dot(light.normal(), -omega) * dot(eye.normal(), omega)
             / distance2(light.position(), eye.position());
 
-        vec3 throughput = eye.bsdf()->query(eye.point(), omega, eye.normal(), eye.normal());
+        vec3 throughput = eye.bsdf()->query(eye.point(), omega, eye.normal());
         float visibility = _scene->occluded(light.position(), eye.position());
         float density = light.density() * eye.density();
 
@@ -58,8 +58,8 @@ vec3 BidirectionalPathTracing::trace(RandomEngine& engine, Ray ray, const BSDF* 
             auto omega = normalize(light.position() - eye.position());
 
             vec3 throughput =
-                light.bsdf()->query(light.point(), light.omega(), -omega, light.normal()) *
-                eye.bsdf()->query(eye.point(), eye.omega(), omega, eye.normal());
+                light.bsdf()->query(light.point(), light.omega(), -omega) *
+                eye.bsdf()->query(eye.point(), eye.omega(), omega);
 
             float geometry =
                 dot(light.normal(), -omega) * dot(eye.normal(), omega)

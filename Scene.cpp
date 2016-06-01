@@ -89,10 +89,6 @@ const BSDF& Scene::queryBSDF(const RayIsect& hit) const {
     return *materials.bsdfs[meshes[hit.meshId()].materialID];
 }
 
-const BSDF& Scene::queryBSDF(const SurfacePoint& surface) const {
-    return *materials.bsdfs[surface.materialId()];
-}
-
 vec3 Scene::lerpNormal(const RayIsect& hit) const {
     runtime_assert(hit.meshId() < meshes.size());
 
@@ -134,26 +130,26 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
 }
 
 vec3 Scene::queryRadiance(const RayIsect& isect) const {
-    vec3 normal = lights.lightNormal(isect.primId());
-
-    return dot(isect.omega(), normal) > 0.0f
-        ? lights.lightRadiance(isect.primId())
-        : vec3(0.0f);
+    return lights.lightRadiance(isect.primId());
 }
 
 LightSample Scene::sampleLight(
     RandomEngine& engine,
     const vec3& position) const
 {
-    return lights.sample(engine, position);
+    LightSample sample = lights.sample(engine, position);
+    sample._radiance *= occluded(sample.position(), position);
+    return sample;
 }
 
-BSDFSample Scene::sampleBSDF(
+const BSDFSample Scene::sampleBSDF(
     RandomEngine& engine,
     const SurfacePoint& surface,
     const vec3& omega) const
 {
-    return queryBSDF(surface).sample(engine, surface, omega);
+    runtime_assert(surface.materialId() < materials.bsdfs.size());
+    auto bsdf = materials.bsdfs[surface.materialId()].get();
+    return bsdf->sample(engine, surface, omega);
 }
 
 const RayIsect Scene::intersect(
@@ -223,18 +219,6 @@ const RayIsect Scene::intersectLight(
     return rtcRay;
 }
 
-const RayIsect Scene::intersectMesh(
-    const vec3& origin,
-    const vec3& direction) const
-{
-    RayIsect isect = intersect(origin, direction);
-
-    while (isect.isLight())
-        isect = intersect(isect.position(), direction);
-
-    return isect;
-}
-
 const size_t Scene::numNormalRays() const {
     return _numIntersectRays;
 }
@@ -287,17 +271,17 @@ const vec3 Scene::sampleDirectLightArea(
     const vec3& omegaR,
     const BSDF& bsdf) const
 {
-    LightSample light = lights.sample(engine, point.position());
-    const vec3 omega = normalize(light.position(), point.position());
-    const float cosTheta = dot(-light.omega(), point.normal());
+    LightSample lightSample = lights.sample(engine, point.position());
+    const float cosineTheta = dot(-lightSample.omega(), point.normal());
 
     const vec3 radiance =
-        light.throughput() *
-        bsdf.query(point, omegaR, -light.omega(), point.normal()) *
-        cosTheta *
-        light.densityInv();
+        lightSample.radiance() *
+        bsdf.query(point, omegaR, -lightSample.omega()) *
+        cosineTheta *
+        occluded(lightSample.position(), point.position()) *
+        lightSample.densityInv();
 
-    return cosTheta > 0.0f ? radiance : vec3(0.0f);
+    return cosineTheta > 0.0f ? radiance : vec3(0.0f);
 }
 
 const vec3 Scene::sampleDirectLightMixed(
@@ -324,25 +308,24 @@ const vec3 Scene::sampleDirectLightMixed(
         isect = intersect(ray);
     }
 
-    BSDFSample lightSample = lights.sample(engine, point.position());
-    const float cosTheta = dot(-lightSample.omega(), point.normal());
+    LightSample lightSample = lights.sample(engine, point.position());
+    const float cosineTheta = dot(-lightSample.omega(), point.normal());
 
     const vec3 lightRadiance =
-        lightSample.throughput() *
-        bsdf.query(point, omegaR, -lightSample.omega(), point.normal()) *
-        cosTheta *
-        (cosTheta > 0.0f ? vec3(1.0f) : vec3(0.0f));
+        lightSample.radiance() *
+        bsdf.query(point, omegaR, -lightSample.omega()) *
+        cosineTheta *
+        occluded(lightSample.position(), point.position()) *
+        (cosineTheta > 0.0f ? vec3(1.0f) : vec3(0.0f));
 
-    const float lightDensity = lightSample.density();
-
-    const float d = bsdfSample.density() + lightDensity;
+    const float d = bsdfSample.density() + lightSample.density();
 
     return
         bsdfRadiance /
             (bsdfSample.density()
                 + lights.density(point.position(), bsdfSample.omega())) +
         lightRadiance /
-            (lightDensity
+            (lightSample.density()
                 + bsdf.density(point, -lightSample.omega(), omegaR));
 }
 

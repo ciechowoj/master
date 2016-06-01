@@ -22,7 +22,7 @@ public:
 
     virtual const RayIsect intersectMesh(
         const vec3& origin,
-        const vec3& direction) const = 0;
+        const vec3& direction) const;
 };
 
 }
