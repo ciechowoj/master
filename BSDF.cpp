@@ -39,7 +39,7 @@ const float BSDF::density(
     return density(
         point.toSurface(incident),
         point.toSurface(reflected),
-        point.toSurface(point.gnormal()));
+        point.toSurface(point.normal()));
 }
 
 const BSDFSample BSDF::sample(

@@ -19,6 +19,10 @@ public:
     virtual const RayIsect intersectLight(
         const vec3& origin,
         const vec3& direction) const = 0;
+
+    virtual const RayIsect intersectMesh(
+        const vec3& origin,
+        const vec3& direction) const = 0;
 };
 
 }

@@ -89,6 +89,10 @@ const BSDF& Scene::queryBSDF(const RayIsect& hit) const {
     return *materials.bsdfs[meshes[hit.meshId()].materialID];
 }
 
+const BSDF& Scene::queryBSDF(const SurfacePoint& surface) const {
+    return *materials.bsdfs[surface.materialId()];
+}
+
 vec3 Scene::lerpNormal(const RayIsect& hit) const {
     runtime_assert(hit.meshId() < meshes.size());
 
@@ -109,39 +113,47 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
     SurfacePoint point;
     point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
 
-    point._gnormal = isect.normal();
-
-    point.toWorldM[0] =
+    point._tangent[0] =
         normalize(w * mesh.bitangents[mesh.indices[isect.primID * 3 + 0]] +
         isect.u * mesh.bitangents[mesh.indices[isect.primID * 3 + 1]] +
         isect.v * mesh.bitangents[mesh.indices[isect.primID * 3 + 2]]);
 
-    point.toWorldM[1] =
+    point._tangent[1] =
         normalize(w * mesh.normals[mesh.indices[isect.primID * 3 + 0]] +
         isect.u * mesh.normals[mesh.indices[isect.primID * 3 + 1]] +
         isect.v * mesh.normals[mesh.indices[isect.primID * 3 + 2]]);
 
-    point.toWorldM[2] =
+    point._tangent[2] =
         normalize(w * mesh.tangents[mesh.indices[isect.primID * 3 + 0]] +
         isect.u * mesh.tangents[mesh.indices[isect.primID * 3 + 1]] +
         isect.v * mesh.tangents[mesh.indices[isect.primID * 3 + 2]]);
 
-    point.materialID = mesh.materialID;
+    point._materialId = mesh.materialID;
 
     return point;
 }
 
 vec3 Scene::queryRadiance(const RayIsect& isect) const {
-    return lights.lightRadiance(isect.primId());
+    vec3 normal = lights.lightNormal(isect.primId());
+
+    return dot(isect.omega(), normal) > 0.0f
+        ? lights.lightRadiance(isect.primId())
+        : vec3(0.0f);
 }
 
 LightSample Scene::sampleLight(
-        RandomEngine& engine,
-        const vec3& position) const
+    RandomEngine& engine,
+    const vec3& position) const
 {
-    LightSample sample = lights.sample(engine, position);
-    sample._radiance *= occluded(sample.position(), position);
-    return sample;
+    return lights.sample(engine, position);
+}
+
+BSDFSample Scene::sampleBSDF(
+    RandomEngine& engine,
+    const SurfacePoint& surface,
+    const vec3& omega) const
+{
+    return queryBSDF(surface).sample(engine, surface, omega);
 }
 
 const RayIsect Scene::intersect(
@@ -211,6 +223,18 @@ const RayIsect Scene::intersectLight(
     return rtcRay;
 }
 
+const RayIsect Scene::intersectMesh(
+    const vec3& origin,
+    const vec3& direction) const
+{
+    RayIsect isect = intersect(origin, direction);
+
+    while (isect.isLight())
+        isect = intersect(isect.position(), direction);
+
+    return isect;
+}
+
 const size_t Scene::numNormalRays() const {
     return _numIntersectRays;
 }
@@ -263,17 +287,17 @@ const vec3 Scene::sampleDirectLightArea(
     const vec3& omegaR,
     const BSDF& bsdf) const
 {
-    LightSample lightSample = lights.sample(engine, point.position());
-    const float cosineTheta = dot(-lightSample.omega(), point.normal());
+    LightSample light = lights.sample(engine, point.position());
+    const vec3 omega = normalize(light.position(), point.position());
+    const float cosTheta = dot(-light.omega(), point.normal());
 
     const vec3 radiance =
-        lightSample.radiance() *
-        bsdf.query(point, omegaR, -lightSample.omega(), point.gnormal()) *
-        cosineTheta *
-        occluded(lightSample.position(), point.position()) *
-        lightSample.densityInv();
+        light.throughput() *
+        bsdf.query(point, omegaR, -light.omega(), point.normal()) *
+        cosTheta *
+        light.densityInv();
 
-    return cosineTheta > 0.0f ? radiance : vec3(0.0f);
+    return cosTheta > 0.0f ? radiance : vec3(0.0f);
 }
 
 const vec3 Scene::sampleDirectLightMixed(
@@ -294,34 +318,31 @@ const vec3 Scene::sampleDirectLightMixed(
             lights.lightRadiance(isect.primId()) *
             bsdfSample.throughput() *
             dot(bsdfSample.omega(), point.normal()) *
-            // bsdfSample.densityInv() *
             (dot(-bsdfSample.omega(), lights.lightNormal(isect.primId())) > 0.0f ? 1.0f : 0.0f);
 
         ray.origin = isect.position();
         isect = intersect(ray);
     }
 
-    LightSample lightSample = lights.sample(engine, point.position());
-    const float cosineTheta = dot(-lightSample.omega(), point.normal());
+    BSDFSample lightSample = lights.sample(engine, point.position());
+    const float cosTheta = dot(-lightSample.omega(), point.normal());
 
     const vec3 lightRadiance =
-        lightSample.radiance() *
-        bsdf.query(point, omegaR, -lightSample.omega(), point.gnormal()) *
-        cosineTheta *
-        occluded(lightSample.position(), point.position()) *
-        // lightSample.densityInv() *
-        (cosineTheta > 0.0f ? vec3(1.0f) : vec3(0.0f));
+        lightSample.throughput() *
+        bsdf.query(point, omegaR, -lightSample.omega(), point.normal()) *
+        cosTheta *
+        (cosTheta > 0.0f ? vec3(1.0f) : vec3(0.0f));
 
-    const float d = bsdfSample.density() + lightSample.density();
+    const float lightDensity = lightSample.density();
 
-    // std::cout << bsdfSample.density() << "/" << lightSample.density() << "\n";
+    const float d = bsdfSample.density() + lightDensity;
 
     return
         bsdfRadiance /
             (bsdfSample.density()
                 + lights.density(point.position(), bsdfSample.omega())) +
         lightRadiance /
-            (lightSample.density()
+            (lightDensity
                 + bsdf.density(point, -lightSample.omega(), omegaR));
 }
 

@@ -192,7 +192,7 @@ vec3 PhotonMapping::_gather(RandomEngine& source, Ray ray) {
                         point,
                         auxiliary[i].direction,
                         -normalize(ray.direction),
-                        point.gnormal());
+                        point.normal());
 
                 radius2 = max(radius2, distance2(isect.position(), auxiliary[i].position));
             }

@@ -51,6 +51,8 @@ public:
     void buildAccelStructs(RTCDevice device);
 
     const BSDF& queryBSDF(const RayIsect& hit) const;
+    const BSDF& queryBSDF(const SurfacePoint& surface) const;
+
     vec3 lightExitance(const RayIsect& hit) const;
     vec3 lerpNormal(const RayIsect& hit) const;
 
@@ -60,6 +62,16 @@ public:
     LightSample sampleLight(
         RandomEngine& engine,
         const vec3& position) const;
+
+    BSDFSample sampleBSDF(
+        RandomEngine& engine,
+        const SurfacePoint& surface,
+        const vec3& omega) const;
+
+    vec3 queryBSDF(
+        const SurfacePoint& surface,
+        const vec3& incident,
+        const vec3& outgoing) const;
 
     const RayIsect intersect(
         const vec3& origin,
@@ -72,6 +84,10 @@ public:
         const vec3& target) const override;
 
     const RayIsect intersectLight(
+        const vec3& origin,
+        const vec3& direction) const override;
+
+    const RayIsect intersectMesh(
         const vec3& origin,
         const vec3& direction) const override;
 

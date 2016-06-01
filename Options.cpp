@@ -218,9 +218,10 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--num-photons")) {
-            if (options.technique != Options::PM) {
+            if (options.technique != Options::PM &&
+                options.technique != Options::VCM) {
                 options.displayHelp = true;
-                options.displayMessage = "Number of photons can be specified for photon mapping only.";
+                options.displayMessage = "Number of photons can be specified for PM and VCM only.";
                 return options;
             }
             else if (!isUnsigned(dict["--num-photons"])) {
@@ -235,9 +236,10 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--max-gather")) {
-            if (options.technique != Options::PM) {
+            if (options.technique != Options::PM &&
+                options.technique != Options::VCM) {
                 options.displayHelp = true;
-                options.displayMessage = "--max-gather can be specified for PM only.";
+                options.displayMessage = "--max-gather can be specified for PM and VCM only.";
                 return options;
             }
             else if (!isUnsigned(dict["--max-gather"])) {
@@ -252,9 +254,10 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--max-radius")) {
-            if (options.technique != Options::PM) {
+            if (options.technique != Options::PM &&
+                options.technique != Options::VCM) {
                 options.displayHelp = true;
-                options.displayMessage = "--max-radius can be specified for PM only.";
+                options.displayMessage = "--max-radius can be specified for PM and VCM only.";
                 return options;
             }
             else if (!isReal(dict["--max-radius"])) {

@@ -40,7 +40,7 @@ vec3 BidirectionalPathTracing::trace(RandomEngine& engine, Ray ray, const BSDF* 
             dot(light.normal(), -omega) * dot(eye.normal(), omega)
             / distance2(light.position(), eye.position());
 
-        vec3 throughput = eye.bsdf()->query(eye.point(), omega, eye.normal(), eye.gnormal());
+        vec3 throughput = eye.bsdf()->query(eye.point(), omega, eye.normal(), eye.normal());
         float visibility = _scene->occluded(light.position(), eye.position());
         float density = light.density() * eye.density();
 
@@ -58,8 +58,8 @@ vec3 BidirectionalPathTracing::trace(RandomEngine& engine, Ray ray, const BSDF* 
             auto omega = normalize(light.position() - eye.position());
 
             vec3 throughput =
-                light.bsdf()->query(light.point(), light.omega(), -omega, light.gnormal()) *
-                eye.bsdf()->query(eye.point(), eye.omega(), omega, eye.gnormal());
+                light.bsdf()->query(light.point(), light.omega(), -omega, light.normal()) *
+                eye.bsdf()->query(eye.point(), eye.omega(), omega, eye.normal());
 
             float geometry =
                 dot(light.normal(), -omega) * dot(eye.normal(), omega)
@@ -82,11 +82,12 @@ vec3 BidirectionalPathTracing::trace(RandomEngine& engine, Ray ray, const BSDF* 
 }
 
 pair<size_t, vec3> BidirectionalPathTracing::traceLightSubpath(RandomEngine& engine, Vertex* subpath) {
+/*
     auto lightSample = _scene->sampleLight(engine);
 
     vec3 omega = lightSample.omega();
     subpath[0]._point._position = lightSample.position();
-    subpath[0]._point.toWorldM[1] = lightSample.normal();
+    subpath[0]._point._tangent[1] = lightSample.normal();
     subpath[0]._throughput = lightSample.radiance();
     subpath[0]._density = lightSample.areaDensity();
     subpath[0]._weightC = 0.0f;
@@ -123,14 +124,15 @@ pair<size_t, vec3> BidirectionalPathTracing::traceLightSubpath(RandomEngine& eng
     else {
         return std::make_pair(size_t(1), vec3(0.0f));
     }
+*/
+    return std::make_pair(size_t(1), vec3(0.0f));
 }
 
 pair<size_t, vec3> BidirectionalPathTracing::traceEyeSubpath(RandomEngine& engine, Vertex* subpath, Ray ray, const BSDF* cameraBSDF) {
     subpath[0]._point._position = ray.origin;
-    subpath[0]._point._gnormal = ray.direction;
-    subpath[0]._point.toWorldM[0] = vec3(1.0f, 0.0f, 0.0f);
-    subpath[0]._point.toWorldM[1] = vec3(0.0f, 1.0f, 0.0f);
-    subpath[0]._point.toWorldM[2] = vec3(0.0f, 0.0f, 1.0f);
+    subpath[0]._point._tangent[0] = vec3(1.0f, 0.0f, 0.0f);
+    subpath[0]._point._tangent[1] = vec3(0.0f, 1.0f, 0.0f);
+    subpath[0]._point._tangent[2] = vec3(0.0f, 0.0f, 1.0f);
     subpath[0]._omega = ray.direction;
     subpath[0]._throughput = vec3(1.0f);
     subpath[0]._density = 1;

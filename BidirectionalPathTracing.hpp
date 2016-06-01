@@ -38,7 +38,6 @@ private:
         const vec3& omega() const { return _omega; }
         const vec3& position() const { return _point.position(); }
         const vec3& normal() const { return _point.normal(); }
-        const vec3& gnormal() const { return _point.gnormal(); }
         const vec3& throughput() const { return _throughput; }
         const float specular() const { return _specular; }
         const float density() const { return _density; }
