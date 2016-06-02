@@ -169,7 +169,7 @@ pair<size_t, vec3> BidirectionalPathTracing::traceSubpath(
             }
 
             if (isect.isPresent()) {
-                float geometry = dot(-sample.omega(), isect.normal()) /
+                float geometry = dot(-sample.omega(), isect.gnormal()) /
                     distance2(subpath[size - 1].position(), isect.position());
 
                 subpath[size]._point = _scene->querySurface(isect);

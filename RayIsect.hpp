@@ -21,7 +21,7 @@ public:
     const size_t faceId() const { return primID; }
     const size_t primId() const { return primID; }
 
-    const vec3 normal() const { return normalize(-(const vec3&)Ng); }
+    const vec3 gnormal() const { return normalize(-(const vec3&)Ng); }
     const vec3 omega() const { return normalize(-(const vec3&)dir); }
     const vec3 position() const { return *cpvec3(org) + *cpvec3(dir) * tfar; }
 };

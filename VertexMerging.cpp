@@ -36,7 +36,7 @@ string VCM::name() const {
 }
 
 float VCM::_eta() const {
-    return float(_numPhotons) * pi<float>() * _maxRadius * _maxRadius;
+    return 0; // float(_numPhotons) * pi<float>() * _maxRadius * _maxRadius;
 }
 
 vec3 VCM::_gather(const EyeVertex* eye, RandomEngine& engine) {
@@ -59,8 +59,6 @@ vec3 VCM::_connect(
     float density = eye.density * light.density();
     vec3 radiance = eye.throughput * throughput * cosTheta * light.radiance() / density;
 
-    radiance = vec3(0.0f);
-
     for (size_t i = 0; i < lightSize; ++i) {
         radiance += _connect(eye, lightPath[i]);
     }
@@ -79,8 +77,10 @@ vec3 VCM::_connect(const EyeVertex& eye, const LightVertex& light) {
     float lightCosTheta = abs(dot(omega, light.normal()));
 
     vec3 radiance =
+        eye.throughput *
         eyeBSDF.throughput() *
         eyeCosTheta *
+        light.throughput *
         lightBSDF.throughput() *
         lightCosTheta *
         distSqInv;
@@ -109,6 +109,8 @@ vec3 VCM::_connect(const EyeVertex& eye, const LightVertex& light) {
     float weight =
         u + v + w + 1 +
         _eta() * lightCosTheta * distSqInv * eyeBSDF.density();
+
+    weight = 1.0f / weight;
 
     return radiance * weight / density;
 }
@@ -249,7 +251,7 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
         float cosTheta = abs(dot(previous->surface.normal(), bsdf.omega()));
 
         while (isect.isLight()) {
-            float specular = previous->specular * bsdf.specular();
+            /*float specular = previous->specular * bsdf.specular();
 
             if (specular != 0.0f)
             {
@@ -268,7 +270,7 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
                     bsdf.throughput() *
                     cosTheta /
                     (previous->density * bsdf.density() * roulette);
-            }
+            }*/
 
             isect = _scene->intersect(isect.position(), bsdf.omega());
         }
@@ -336,7 +338,7 @@ void VCM::_scatter(RandomEngine& engine)
             continue;
 
         vec3 d = isect.position() - light.position();
-        float vg = dot(isect.normal(), -light.omega()) /  dot(d, d);
+        float vg = dot(isect.gnormal(), -light.omega()) /  dot(d, d);
         float cg = dot(light.normal(), light.omega()) / dot(d, d);
 
         LightVertex vertex;
@@ -363,7 +365,7 @@ void VCM::_scatter(RandomEngine& engine)
                 break;
 
             vec3 distance = isect.position() - previous.position();
-            float fgeometry = dot(isect.normal(), -sample.omega());
+            float fgeometry = dot(isect.gnormal(), -sample.omega());
             float bgeometry = dot(previous.normal(), sample.omega());
             float fdensity = sample.density() * roulette;
             float bdensity = fdensity;
