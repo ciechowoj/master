@@ -156,7 +156,7 @@ const BSDFSample PerfectReflectionBSDF::sample(
     const vec3& reflected) const
 {
     BSDFSample result;
-    result._throughput = vec3(1.0f, 1.0f, 1.0f);
+    result._throughput = vec3(1.0f, 1.0f, 1.0f) / reflected.y;
     result._omega = vec3(0.0f, 2.0f * reflected.y, 0.0f) - reflected;
     result._density = 1.0f;
     result._densityInv = 1.0f;
@@ -217,7 +217,7 @@ const BSDFSample PerfectTransmissionBSDF::sample(
     }
 
     BSDFSample result;
-    result._throughput = vec3(1.0f, 1.0f, 1.0f);
+    result._throughput = vec3(1.0f, 1.0f, 1.0f) / abs(omega.y);
     result._omega = omega;
     result._density = 1.0f;
     result._densityInv = 1.0f;

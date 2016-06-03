@@ -5,6 +5,7 @@
 #include <loader.hpp>
 
 #include <BidirectionalPathTracing.hpp>
+#include <BPT.hpp>
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
 #include <VertexMerging.hpp>
@@ -26,12 +27,15 @@ R"(
       -h --help             Show this screen.
       --version             Show version.
       --BDPT                Use bidirectional path tracing (with beta = 1, no MIS).
+      --BPT                 Use bidirectional path tracing.
       --PT                  Use path tracing for rendering (this is default one).
       --PM                  Use photon mapping for rendering.
       --VCM                 Use vertex connection and merging (not implemented/wip).
       --num-photons=<n>     Use n photons. [default: 1 000 000]
       --max-gather=<n>      Use n as maximal number of gathered photons. [default: 100]
       --max-radius=<n>      Use n as maximum gather radius. [default: 0.1]
+      --min-subpath=<n>     Do not use Russian roulette for sub-paths shorter than n. [default: 5]
+      --roulette=<n>        Russian roulette coefficient. [default: 0.5]
       --batch               Run in batch mode (interactive otherwise).
       --no-reload           Disable autoreload (input file is reloaded on modification in interactive mode).
       --num-samples=<n>     Terminate after n samples.
@@ -191,6 +195,7 @@ Options parseArgs(int argc, char const* const* argv) {
 
         size_t numTechniqes =
             dict.count("--BDPT") +
+            dict.count("--BPT") +
             dict.count("--PT") +
             dict.count("--PM") +
             dict.count("--VCM");
@@ -203,6 +208,10 @@ Options parseArgs(int argc, char const* const* argv) {
         else if (dict.count("--BDPT")) {
             options.technique = Options::BDPT;
             dict.erase("--BDPT");
+        }
+        else if (dict.count("--BPT")) {
+            options.technique = Options::BPT;
+            dict.erase("--BPT");
         }
         else if (dict.count("--PT")) {
             options.technique = Options::PT;
@@ -268,6 +277,51 @@ Options parseArgs(int argc, char const* const* argv) {
             else {
                 options.maxRadius = atof(dict["--max-radius"].c_str());
                 dict.erase("--max-radius");
+            }
+        }
+
+        if (dict.count("--min-subpath")) {
+            if (options.technique != Options::BPT &&
+                options.technique != Options::PT &&
+                options.technique != Options::VCM) {
+                options.displayHelp = true;
+                options.displayMessage = "--min-subpath in not available for specified technique.";
+                return options;
+            }
+            else if (!isUnsigned(dict["--min-subpath"])) {
+                options.displayHelp = true;
+                options.displayMessage = "Invalid value for --min-subpath.";
+                return options;
+            }
+            else {
+                options.minSubpath = atoi(dict["--min-subpath"].c_str());
+                dict.erase("--min-subpath");
+            }
+        }
+
+        if (dict.count("--roulette")) {
+            if (options.technique != Options::BPT &&
+                options.technique != Options::PT &&
+                options.technique != Options::VCM) {
+                options.displayHelp = true;
+                options.displayMessage = "--roulette in not available for specified technique.";
+                return options;
+            }
+            else if (!isReal(dict["--roulette"])) {
+                options.displayHelp = true;
+                options.displayMessage = "Invalid value for --roulette.";
+                return options;
+            }
+            else {
+                options.roulette = atof(dict["--roulette"].c_str());
+
+                if (options.roulette <= 0.0 || 1.0 < options.roulette)
+                {
+                    options.displayHelp = true;
+                    options.displayMessage = "A value for --roulette must be in range (0, 1].";
+                }
+
+                dict.erase("--roulette");
             }
         }
 
@@ -429,6 +483,11 @@ shared<Technique> makeTechnique(const Options& options) {
     switch (options.technique) {
         case Options::BDPT:
             return std::make_shared<BidirectionalPathTracing>();
+
+        case Options::BPT:
+            return std::make_shared<BPT>(
+                options.minSubpath,
+                options.roulette);
 
         case Options::PT:
             return std::make_shared<PathTracing>();

@@ -36,13 +36,13 @@ public:
     virtual ~BSDF();
 
     virtual const vec3 query(
-        const vec3& incomin,
-        const vec3& b) const = 0;
+        const vec3& incident,
+        const vec3& outgoing) const = 0;
 
     const vec3 query(
         const SurfacePoint& point,
-        const vec3& a,
-        const vec3& b) const;
+        const vec3& incident,
+        const vec3& outgoing) const;
 
     virtual const float density(
         const vec3& incident,

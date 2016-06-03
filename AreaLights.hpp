@@ -24,7 +24,7 @@ struct Photon {
 struct LightSample {
     vec3 _position;
     vec3 _normal;
-    vec3 _radiance; // with respect to area
+    vec3 _radiance; // with respect to omega
     vec3 _omega;
     float _density;
 
@@ -39,7 +39,7 @@ struct LightSample {
 struct LightSampleEx {
     vec3 _position;
     vec3 _normal;
-    vec3 _radiance;
+    vec3 _radiance; // with respect to omega
     vec3 _omega;
     float _areaDensity;
     float _omegaDensity;
@@ -52,6 +52,16 @@ struct LightSampleEx {
     const float densityInv() const { return 1.0f / density(); }
     const float areaDensity() const { return _areaDensity; };
     const float omegaDensity() const { return _omegaDensity; };
+};
+
+struct LSDFQuery {
+    vec3 _radiance;
+    float _areaDensity;
+    float _omegaDensity;
+
+    const vec3& radiance() const { return _radiance; }
+    const float areaDensity() const { return _areaDensity; }
+    const float omegaDensity() const { return _omegaDensity; }
 };
 
 class AreaLights : public Geometry {
@@ -89,6 +99,18 @@ public:
     LightSample sample(
         RandomEngine& engine,
         const vec3& position) const;
+
+    LightSampleEx sampleEx(
+        RandomEngine& engine,
+        const vec3& position) const;
+
+    vec3 queryRadiance(
+        size_t lightId,
+        const vec3& omega) const;
+
+    LSDFQuery queryLSDF(
+        size_t lightId,
+        const vec3& omega) const;
 
     const bool castShadow() const override;
     const bool usesQuads() const override;

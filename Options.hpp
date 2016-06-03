@@ -11,7 +11,7 @@ using std::string;
 template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
-    enum Technique { BDPT, PT, PM, VCM };
+    enum Technique { BDPT, BPT, PT, PM, VCM };
 
     string input;
     string output;
@@ -19,6 +19,8 @@ struct Options {
     size_t numPhotons = 1000000;
     size_t maxGather = 100;
     double maxRadius = 0.1;
+    size_t minSubpath = 5;
+    double roulette = 0.5;
     bool batch = false;
     size_t numSamples = 0;
     double numSeconds = 0.0;

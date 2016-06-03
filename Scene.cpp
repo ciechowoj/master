@@ -84,9 +84,9 @@ void Scene::buildAccelStructs(RTCDevice device) {
     }
 }
 
-const BSDF& Scene::queryBSDF(const RayIsect& hit) const {
-    runtime_assert(hit.meshId() < meshes.size());
-    return *materials.bsdfs[meshes[hit.meshId()].materialID];
+const BSDF& Scene::queryBSDF(const RayIsect& isect) const {
+    runtime_assert(isect.meshId() < meshes.size());
+    return *materials.bsdfs[meshes[isect.meshId()].materialID];
 }
 
 vec3 Scene::lerpNormal(const RayIsect& hit) const {
@@ -138,6 +138,27 @@ LightSample Scene::sampleLight(
     const vec3& position) const
 {
     return lights.sample(engine, position);
+}
+
+LightSampleEx Scene::sampleLightEx(
+    RandomEngine& engine,
+    const vec3& position) const
+{
+    return lights.sampleEx(engine, position);
+}
+
+vec3 Scene::queryRadiance(
+    const RayIsect& isect,
+    const vec3& omega) const
+{
+    return lights.queryRadiance(isect.primId(), omega);
+}
+
+const LSDFQuery Scene::queryLSDF(
+    const RayIsect& isect,
+    const vec3& omega) const
+{
+    return lights.queryLSDF(isect.primId(), omega);
 }
 
 const BSDFSample Scene::sampleBSDF(
@@ -328,14 +349,18 @@ const vec3 Scene::sampleDirectLightMixed(
     }
 
     LightSample lightSample = lights.sample(engine, point.position());
-    const float cosineTheta = dot(-lightSample.omega(), point.normal());
+    float distSqInv = 1.0f / distance2(lightSample.position(), point.position());
+    float fCosTheta = abs(dot(lightSample.omega(), lightSample.normal()));
+    float bCosTheta = dot(-lightSample.omega(), point.normal());
 
     const vec3 lightRadiance =
         lightSample.radiance() *
         bsdf.query(point, omegaR, -lightSample.omega()) *
-        cosineTheta *
+        bCosTheta *
+        fCosTheta *
+        distSqInv *
         occluded(lightSample.position(), point.position()) *
-        (cosineTheta > 0.0f ? vec3(1.0f) : vec3(0.0f));
+        (bCosTheta > 0.0f ? vec3(1.0f) : vec3(0.0f));
 
     const float d = bsdfSample.density() + lightSample.density();
 

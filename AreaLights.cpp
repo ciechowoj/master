@@ -177,10 +177,52 @@ LightSample AreaLights::sample(
 
     result._radiance *=
         _intersector->occluded(result.position(), position) *
-        (cosTheta > 0.0f ? 1.0f : 0.0f) *
-        cosTheta /
-        distance2(result.position(), position);
+        (cosTheta > 0.0f ? 1.0f : 0.0f);
 
+    return result;
+}
+
+LightSampleEx AreaLights::sampleEx(
+    RandomEngine& engine,
+    const vec3& position) const
+{
+    size_t lightId = _sampleLight(engine);
+
+    LightSampleEx result;
+    result._position = _samplePosition(lightId, engine);
+    result._normal = _shapes[lightId].direction;
+    result._radiance = lightRadiance(lightId);
+    result._omega = normalize(position - result._position);
+    result._areaDensity = _weights[lightId] / lightArea(lightId);
+    result._omegaDensity = dot(result.omega(), result.normal());
+
+    float cosTheta = result._omegaDensity;
+
+    result._radiance *=
+        _intersector->occluded(result.position(), position) *
+        (cosTheta > 0.0f ? 1.0f : 0.0f);
+
+    return result;
+}
+
+vec3 AreaLights::queryRadiance(
+    size_t lightId,
+    const vec3& omega) const
+{
+    float cosTheta = dot(omega, lightNormal(lightId));
+    return lightRadiance(lightId) * (cosTheta > 0.0f ? 1.0f : 0.0f);
+}
+
+LSDFQuery AreaLights::queryLSDF(
+    size_t lightId,
+    const vec3& omega) const
+{
+    float cosTheta = dot(omega, lightNormal(lightId));
+
+    LSDFQuery result;
+    result._radiance = lightRadiance(lightId) * (cosTheta > 0.0f ? 1.0f : 0.0f);
+    result._areaDensity = _weights[lightId] / lightArea(lightId);
+    result._omegaDensity = abs(cosTheta);
     return result;
 }
 

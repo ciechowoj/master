@@ -50,7 +50,7 @@ public:
 
     void buildAccelStructs(RTCDevice device);
 
-    const BSDF& queryBSDF(const RayIsect& hit) const;
+    const BSDF& queryBSDF(const RayIsect& isect) const;
     vec3 lightExitance(const RayIsect& hit) const;
     vec3 lerpNormal(const RayIsect& hit) const;
 
@@ -60,6 +60,18 @@ public:
     LightSample sampleLight(
         RandomEngine& engine,
         const vec3& position) const;
+
+    LightSampleEx sampleLightEx(
+        RandomEngine& engine,
+        const vec3& position) const;
+
+    vec3 queryRadiance(
+        const RayIsect& isect,
+        const vec3& omega) const;
+
+    const LSDFQuery queryLSDF(
+        const RayIsect& isect,
+        const vec3& omega) const;
 
     const RayIsect intersect(
         const vec3& origin,
