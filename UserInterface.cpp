@@ -7,26 +7,9 @@
 
 namespace haste {
 
-//using std::
-
 UserInterface::UserInterface(string scenePath)
     : scenePath(scenePath) {
     strcpy(path, defpath.c_str());
-}
-
-void UserInterface::updateCamera() {
-    ImGui::Begin("Camera");
-    vec3 t = vec3(1, 2, 3);
-    ImGui::SliderFloat("yaw", &yaw, -glm::pi<float>(), glm::pi<float>());
-    ImGui::SliderFloat("pitch",  &pitch, -glm::half_pi<float>(), glm::half_pi<float>());
-    ImGui::SliderFloat("time",  &time, 0.0f, 1.0f);
-    ImGui::InputVec("position", &position);
-
-    ImGui::InputMat("view", &view);
-    ImGui::InputFloat("fovy", &fovy);
-    ImGui::End();
-
-    view = translate(position) * eulerAngleXY(pitch, yaw);
 }
 
 void UserInterface::update(
@@ -42,48 +25,51 @@ void UserInterface::update(
 
     // updateCamera();
 
-    ImGui::SetNextWindowPos(ImVec2(0, height - 150), ImGuiSetCond_Once);
-    ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiSetCond_Once);
+    ImGui::SetNextWindowPos(ImVec2(0, /*height - 150*/ 0), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(256, 256), ImGuiSetCond_Once);
 
     ImGui::Begin("Statistics");
 
-    if (timePerFrame == 0.0) {
-        timePerFrame = elapsed;
-    }
-    else {
-        timePerFrame = 0.95 * timePerFrame + 0.05 * elapsed * 1000.0;
-    }
+    _updateStatistics(technique, elapsed);
+    _updateSaveRegion(technique, width, height, image);
 
-    float localTimePerFrame = float(timePerFrame);
-    ImGui::InputFloat("ms/frame", &localTimePerFrame);
+    ImGui::Combo(
+        "Display",
+        (int*)&displayMode,
+        "Unsigned rel error\0Unsigned abs error\0Relative error\0Absolute error\0Current\0Reference\0\0");
 
-    float mainElapsed = float(glfwGetTime() - mainStart);
-    ImGui::InputFloat("real time [s] ", &mainElapsed);
+    ImGui::InputFloat("max error", &maxError);
 
     float numSamples = technique.numSamples();
     ImGui::InputFloat("samples ", &numSamples);
-    ImGui::Separator();
 
-    ImGui::InputText("", path, int(pathSize - 1));
-    ImGui::SameLine();
+    _updateComputeAverage();
 
-    if (ImGui::Button("Save EXR")) {
-        saveEXR(path, width, height, image);
+    size_t offset = min(100, int(maxErrors.size()));
+
+    if (maxErrors.size() > 1)
+    {
+        ImGui::PlotLines(
+            "log max error",
+            maxErrors.data() + maxErrors.size() - offset + 1,
+            offset - 1,
+            0,
+            NULL,
+            0.0f,
+            1.0f,
+            ImVec2(0, 100));
     }
 
-    string fixed = fixedPath(path, scenePath, technique.numSamples());
-    ImGui::LabelText("", "%s", fixed.c_str());
-    ImGui::SameLine();
-
-    ImGui::PushID("save-exr");
-
-    if (ImGui::Button("Save EXR")) {
-        saveEXR(fixed, width, height, image);
-    }
-
-    ImGui::PopID();
     ImGui::End();
 
+    _displayRadiance(width, height, image);
+}
+
+void UserInterface::_displayRadiance(
+    size_t width,
+    size_t height,
+    const vec4* image)
+{
     if (ImGui::IsMouseDown(0)) {
         auto pos = ImGui::GetMousePos();
         std::stringstream stream;
@@ -96,12 +82,58 @@ void UserInterface::update(
     }
 }
 
+void UserInterface::_updateSaveRegion(
+    const Technique& technique,
+    size_t width,
+    size_t height,
+    const vec4* image)
+{
+    if(ImGui::CollapsingHeader("Snapshot")) {
+        ImGui::InputText("", path, int(pathSize - 1));
+        ImGui::SameLine();
+
+        if (ImGui::Button("Save EXR")) {
+            saveEXR(path, width, height, image);
+        }
+
+        string fixed = fixedPath(path, scenePath, technique.numSamples());
+        ImGui::LabelText("", "%s", fixed.c_str());
+        ImGui::SameLine();
+
+        ImGui::PushID("save-exr");
+
+        if (ImGui::Button("Save EXR")) {
+            saveEXR(fixed, width, height, image);
+        }
+
+        ImGui::PopID();
+    }
+}
+
+void UserInterface::_updateComputeAverage() {
+    ImGui::Checkbox("compute average", &computeAverage);
+    ImGui::InputVec("", &averageValue);
+}
+
+
 void UserInterface::_updateStatistics(
     const Technique& technique,
-    size_t numSamples,
     double elapsed)
 {
+    if (timePerFrame == 0.0) {
+        timePerFrame = elapsed;
+    }
+    else {
+        timePerFrame = 0.95 * timePerFrame + 0.05 * elapsed * 1000.0;
+    }
 
+    if(ImGui::CollapsingHeader("Time statistics")) {
+        float localTimePerFrame = float(timePerFrame);
+        ImGui::InputFloat("ms/frame", &localTimePerFrame);
+
+        float mainElapsed = float(glfwGetTime() - mainStart);
+        ImGui::InputFloat("real time [s] ", &mainElapsed);
+    }
 }
 
 }

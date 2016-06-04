@@ -6,15 +6,26 @@
 
 namespace haste {
 
+enum DisplayMode : int {
+    DisplayModeUnsignedRelative,
+    DisplayModeUnsignedAbsolute,
+    DisplayModeRelative,
+    DisplayModeAbsolute,
+    DisplayModeCurrent,
+    DisplayModeReference
+};
+
 struct UserInterface {
+    DisplayMode displayMode;
+    float maxError = 0.0f;
+
+    vector<float> maxErrors;
+
+    float avgRelError = 0.0f;
+    float avgAbsError = 0.0f;
     static const size_t pathSize = 255;
     char path[pathSize];
-    float yaw = 0, pitch = -0.0;
-    // vec3 position = vec3(0.0f, 0.0f, 40.0f);
-    //vec3 position = vec3(0, 0.0f, 5.0);
-    vec3 position = vec3(0, -4.5f, 1.0);
-    double tpp = 0.001;
-    double tpf = 100;
+
     double mainStart = glfwGetTime();
     string scenePath;
     string defpath = homePath() + "/";
@@ -22,10 +33,9 @@ struct UserInterface {
     double timePerFrame = 0.0;
     double raysPerSecond = 0.0;
 
-    float time = 0.0f;
 
-    mat4 view;
-    float fovy = pi<float>() / 3.0f;
+    bool computeAverage = false;
+    vec3 averageValue = vec3(0.0f);
 
     UserInterface(string scenePath);
 
@@ -38,13 +48,22 @@ struct UserInterface {
         const vec4* image,
         float elapsed);
 private:
+    void _updateComputeAverage();
+
     void _updateStatistics(
         const Technique& technique,
-        size_t numSamples,
         double elapsed);
 
+    void _displayRadiance(
+        size_t width,
+        size_t height,
+        const vec4* image);
+
+    void _updateSaveRegion(
+        const Technique& technique,
+        size_t width,
+        size_t height,
+        const vec4* image);
 };
-
-
 
 }

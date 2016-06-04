@@ -49,6 +49,7 @@ vec3 BarycentricSampler::sample() {
 
 }
 
+#include <ImfInputFile.h>
 #include <ImfOutputFile.h>
 #include <ImfChannelList.h>
 #include <ImfStringAttribute.h>
@@ -116,6 +117,58 @@ void saveEXR(
     }
 
     saveEXR(path, width, height, data3.data());
+}
+
+void loadEXR(
+    const string& path,
+    size_t& width,
+    size_t& height,
+    vector<vec3>& data)
+{
+    InputFile file (path.c_str());
+
+    auto dw = file.header().dataWindow();
+    int ihegith = dw.max.x - dw.min.x + 1;
+    int iwidth = dw.max.y - dw.min.y + 1;
+
+    runtime_assert(iwidth >= 0);
+    runtime_assert(ihegith >= 0);
+
+    width = size_t(iwidth);
+    height = size_t(ihegith);
+
+    FrameBuffer framebuffer;
+
+    data.resize(width * height);
+
+    float* fdata = (float*)data.data();
+
+    auto R = Slice(Imf::FLOAT, (char*)(fdata + 0), sizeof(float) * 3, sizeof(float) * width * 3);
+    auto G = Slice(Imf::FLOAT, (char*)(fdata + 1), sizeof(float) * 3, sizeof(float) * width * 3);
+    auto B = Slice(Imf::FLOAT, (char*)(fdata + 2), sizeof(float) * 3, sizeof(float) * width * 3);
+
+    framebuffer.insert("R", R);
+    framebuffer.insert("G", G);
+    framebuffer.insert("B", B);
+
+    file.setFrameBuffer(framebuffer);
+    file.readPixels(dw.min.y, dw.max.y);
+}
+
+void loadEXR(
+    const string& path,
+    size_t& width,
+    size_t& height,
+    vector<vec4>& data)
+{
+    auto data3 = vector<vec3>();
+    loadEXR(path, width, height, data3);
+
+    data.resize(data3.size());
+
+    for (size_t i = 0; i < data3.size(); ++i) {
+        data[i] = vec4(data3[i], 1.0f);
+    }
 }
 
 }

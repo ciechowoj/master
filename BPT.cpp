@@ -23,7 +23,6 @@ string BPT::name() const {
     return "Bidirectional Path Tracing";
 }
 
-// checked
 void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     size_t itr = 0, prv = 0;
 
@@ -105,7 +104,6 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
         size = prv + 1;
     }
 }
-
 
 vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
     LightVertex light[_maxSubpath];

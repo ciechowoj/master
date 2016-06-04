@@ -136,7 +136,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/FurnaceTest.blend --BPT --parallel --resolution=512x512
+	./build/master/master.bin models/CornellBoxDiffuse.blend --BPT --parallel
 
 test: all
 	./build/master/unittest.bin

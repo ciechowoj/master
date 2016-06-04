@@ -15,6 +15,7 @@ struct Options {
 
     string input;
     string output;
+    string reference;
     Technique technique = PT;
     size_t numPhotons = 1000000;
     size_t maxGather = 100;
@@ -28,8 +29,8 @@ struct Options {
     bool reload = true;
     size_t snapshot = 0;
     size_t cameraId = 0;
-    size_t width = 800;
-    size_t height = 600;
+    size_t width = 512;
+    size_t height = 512;
 
     bool displayHelp = false;
     bool displayVersion = false;

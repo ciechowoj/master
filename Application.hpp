@@ -14,6 +14,8 @@ public:
 
     void render(size_t width, size_t height, glm::vec4* data) override;
     void updateUI(size_t width, size_t height, const glm::vec4* data) override;
+    void postproc(glm::vec4* dst, const glm::vec4* src, size_t width, size_t height) override;
+
     bool updateScene() override;
 
 private:
@@ -30,6 +32,7 @@ private:
     shared<UserInterface> _ui;
     double _startTime;
     size_t _modificationTime;
+    vector<vec4> _reference;
 };
 
 }

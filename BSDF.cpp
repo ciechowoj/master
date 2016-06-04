@@ -116,7 +116,7 @@ const BSDFSample DiffuseBSDF::sample(
     result._throughput = _diffuse * one_over_pi<float>();
     result._omega = hemisphere.omega();
     result._density = hemisphere.density();
-    result._densityRev = omega.y * one_over_pi<float>();
+    result._densityRev = abs(omega.y * one_over_pi<float>());
     result._specular = 0.0f;
 
     return result;

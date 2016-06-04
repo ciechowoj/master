@@ -61,7 +61,7 @@ out vec4 color;
 
 void main()
 {
-    const float scale = 683.0 / 100.0;
+    const float scale = 0.5;
     vec4 sample = texture2D(sampler, texcoord);
     color = clamp(vec4(sample.rgb / sample.a, 1) * scale, 0, 1);
 }
@@ -312,6 +312,11 @@ bool Framework::updateScene() {
     return false;
 }
 
+void Framework::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, size_t height) {
+    const size_t size = width * height * sizeof(glm::vec4);
+    std::memcpy(dst, src, size);
+}
+
 int Framework::run(size_t width, size_t height) {
     return ::run(width, height, [=](GLFWwindow* window) {
         _window = window;
@@ -349,8 +354,7 @@ int Framework::run(size_t width, size_t height) {
 
             if (done) {
                 if (bufferWidth == width && bufferHeight == height) {
-                    const size_t size = width * height * sizeof(glm::vec4);
-                    std::memcpy(image, buffer.data(), size);
+                    postproc((glm::vec4*)image, buffer.data(), width, height);
                 }
                 else {
                     buffer.resize(width * height);

@@ -125,8 +125,8 @@ public:
 
     const vec3 sampleDirectLightMixed(
         RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& omegaR,
+        const SurfacePoint& surface,
+        const vec3& omega,
         const BSDF& bsdf) const;
 
 private:

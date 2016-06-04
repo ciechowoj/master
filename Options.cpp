@@ -409,6 +409,23 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
+        if (dict.count("--reference")) {
+            if (!options.output.empty()) {
+                options.displayHelp = true;
+                options.displayMessage = "Output cannot be specified twice.";
+                return options;
+            }
+            else if (dict["--reference"].empty()) {
+                options.displayHelp = true;
+                options.displayMessage = "Invalid value for --reference.";
+                return options;
+            }
+            else {
+                options.reference = dict["--reference"];
+                dict.erase("--reference");
+            }
+        }
+
         if (dict.count("--camera")) {
             if (!isUnsigned(dict["--camera"])) {
                 options.displayHelp = true;
@@ -513,6 +530,7 @@ shared<Scene> loadScene(const Options& options) {
 string techniqueString(const Options& options) {
     switch (options.technique) {
         case Options::BDPT: return "BDPT";
+        case Options::BPT: return "BPT";
         case Options::PT: return "PT";
         case Options::PM: return "PM";
         case Options::VCM: return "VCM";

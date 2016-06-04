@@ -32,6 +32,7 @@ public:
 
     virtual void render(size_t width, size_t height, glm::vec4* data) = 0;
     virtual void updateUI(size_t width, size_t height, const glm::vec4* data) = 0;
+    virtual void postproc(glm::vec4* dst, const glm::vec4* src, size_t width, size_t height);
     virtual bool updateScene();
 
     int run(size_t width, size_t height);

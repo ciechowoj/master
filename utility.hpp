@@ -50,6 +50,18 @@ void saveEXR(
     size_t height,
     const vec4* data);
 
+void loadEXR(
+    const string& path,
+    size_t& width,
+    size_t& height,
+    vector<vec3>& data);
+
+void loadEXR(
+    const string& path,
+    size_t& width,
+    size_t& height,
+    vector<vec4>& data);
+
 string homePath();
 string baseName(string path);
 string fixedPath(string base, string scene, int samples);

@@ -20,6 +20,16 @@ Application::Application(const Options& options) {
     updateScene();
     _options.reload = reload;
 
+    if (!_options.reference.empty()) {
+        loadEXR(
+            _options.reference,
+            _options.width,
+            _options.height,
+            _reference);
+    }
+
+    std::cout << _reference.size() << std::endl;
+
     _startTime = glfwGetTime();
 }
 
@@ -49,6 +59,99 @@ void Application::updateUI(size_t width, size_t height, const glm::vec4* data) {
         height,
         data,
         0.0f);
+}
+
+void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, size_t height) {
+    size_t size = width * height;
+
+    if (_ui->computeAverage)
+    {
+        _ui->averageValue = vec3(0.f, 0.f, 0.f);
+
+        for (size_t i = 0; i < size; ++i) {
+            _ui->averageValue += src[i].rgb() / src[i].a;
+        }
+
+        _ui->averageValue /= float(size);
+    }
+
+    if (_reference.size() == 0) {
+        Framework::postproc(dst, src, width, height);
+    }
+    else {
+        _ui->maxError = 0.0f;
+
+        switch (_ui->displayMode)
+        {
+            case DisplayModeUnsignedRelative:
+                for (size_t i = 0; i < _reference.size(); ++i) {
+                    float current = length(src[i].rgb() / src[i].a);
+                    float reference = length(_reference[i].rgb());
+                    float error = abs(current - reference) / reference;
+
+                    _ui->maxError = std::max(_ui->maxError, error);
+
+                    dst[i] = vec4(vec3(error), 1.0f);
+                }
+
+                break;
+
+            case DisplayModeUnsignedAbsolute:
+                _ui->avgAbsError = 0.0f;
+
+                for (size_t i = 0; i < _reference.size(); ++i) {
+                    float current = length(src[i].rgb() / src[i].a);
+                    float reference = length(_reference[i].rgb());
+                    float error = abs(current - reference);
+
+                    _ui->maxError = std::max(_ui->maxError, error);
+
+                    dst[i] = vec4(vec3(error), 1.0f);
+                }
+
+                break;
+
+            case DisplayModeRelative:
+                for (size_t i = 0; i < _reference.size(); ++i) {
+                    float current = length(src[i].rgb() / src[i].a);
+                    float reference = length(_reference[i].rgb());
+                    float error = abs(current - reference) / reference;
+
+                    _ui->maxError = std::max(_ui->maxError, error);
+
+                    dst[i] = current < reference
+                        ? vec4(0.0f, 0.0f, error, 1.0f)
+                        : vec4(error, 0.0f, 0.0f, 1.0f);
+                }
+
+                break;
+
+            case DisplayModeAbsolute:
+                for (size_t i = 0; i < _reference.size(); ++i) {
+                    float current = length(src[i].rgb() / src[i].a);
+                    float reference = length(_reference[i].rgb());
+                    float error = abs(current - reference);
+
+                    _ui->maxError = std::max(_ui->maxError, error);
+
+                    dst[i] = current < reference
+                        ? vec4(0.0f, 0.0f, error, 1.0f)
+                        : vec4(error, 0.0f, 0.0f, 1.0f);
+                }
+
+                break;
+
+            case DisplayModeCurrent:
+                Framework::postproc(dst, src, width, height);
+                break;
+
+            case DisplayModeReference:
+                Framework::postproc(dst, _reference.data(), width, height);
+                break;
+        }
+
+        _ui->maxErrors.push_back(_ui->maxError);
+    }
 }
 
 bool Application::updateScene() {
