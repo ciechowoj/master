@@ -296,8 +296,8 @@ const vec3 Scene::sampleDirectLightAngle(
         radiance +=
             lights.lightRadiance(isect.primId()) *
             bsdfSample.throughput() *
-            dot(bsdfSample.omega(), point.normal()) *
-            bsdfSample.densityInv() *
+            dot(bsdfSample.omega(), point.normal()) /
+            bsdfSample.density() *
             (dot(-bsdfSample.omega(), lights.lightNormal(isect.primId())) > 0.0f ? 1.0f : 0.0f);
 
         ray.origin = isect.position();

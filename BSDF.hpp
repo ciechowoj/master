@@ -9,13 +9,13 @@ struct BSDFSample {
     vec3 _throughput;
     vec3 _omega;
     float _density;
-    float _densityInv;
+    float _densityRev;
     float _specular;
 
     const vec3& throughput() const { return _throughput; }
     const vec3& omega() const { return _omega; }
     const float density() const { return _density; }
-    const float densityInv() const { return _densityInv; }
+    const float densityRev() const { return _densityRev; }
     const float specular() const { return _specular; }
     const bool zero() const;
 };
@@ -23,10 +23,11 @@ struct BSDFSample {
 struct BSDFQuery {
     vec3 _throughput;
     float _density;
+    float _densityRev;
 
     const vec3& throughput() const { return _throughput; }
     const float density() const { return _density; }
-    const float densityInv() const { return 1.0f / _density; }
+    const float densityRev() const { return _densityRev; }
     const bool zero() const;
 };
 

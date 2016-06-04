@@ -98,7 +98,7 @@ const BSDFSample DiffuseBSDF::sample(
     result._throughput = _diffuse * one_over_pi<float>();
     result._omega = hemisphere.omega();
     result._density = hemisphere.density();
-    result._densityInv = hemisphere.densityInv();
+    result._densityRev = omega.y;
     result._specular = 0.0f;
 
     return result;
@@ -120,7 +120,7 @@ BSDFSample DiffuseBSDF::scatter(
         result._throughput = _diffuse / diffuseAvg;
         result._omega = point.toWorld(hemisphere.omega());
         result._density = hemisphere.density();
-        result._densityInv = hemisphere.densityInv();
+        result._densityRev = dot(point.normal(), omega);
         result._specular = 0.0f;
 
         return result;
@@ -130,7 +130,7 @@ BSDFSample DiffuseBSDF::scatter(
         result._throughput = vec3(0.0f);
         result._omega = vec3(0.0f);
         result._density = 0;
-        result._densityInv = 0;
+        result._densityRev = 0;
         result._specular = 0.0f;
 
         return result;
@@ -159,7 +159,7 @@ const BSDFSample PerfectReflectionBSDF::sample(
     result._throughput = vec3(1.0f, 1.0f, 1.0f) / reflected.y;
     result._omega = vec3(0.0f, 2.0f * reflected.y, 0.0f) - reflected;
     result._density = 1.0f;
-    result._densityInv = 1.0f;
+    result._densityRev = 1.0f;
     result._specular = 1.0f;
 
     return result;
@@ -220,7 +220,7 @@ const BSDFSample PerfectTransmissionBSDF::sample(
     result._throughput = vec3(1.0f, 1.0f, 1.0f) / abs(omega.y);
     result._omega = omega;
     result._density = 1.0f;
-    result._densityInv = 1.0f;
+    result._densityRev = 1.0f;
     result._specular = 1.0f;
 
     return result;

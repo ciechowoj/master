@@ -51,7 +51,7 @@ vec3 DirectIllumination::trace(RandomEngine& engine, Ray ray) {
             radiance += _scene->queryRadiance(isect)
                 * sample.throughput()
                 * dot(normalize(surface.normal()), sample.omega())
-                * sample.densityInv();
+                / sample.density();
         }
     }
 

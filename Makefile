@@ -136,7 +136,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxSphere.blend --BPT --parallel --roulette=0.5 --min-subpath=3 --resolution=512x512
+	./build/master/master.bin models/FurnaceTest.blend --BPT --parallel --roulette=0.5 --min-subpath=3 --resolution=512x512
 
 test: all
 	./build/master/unittest.bin

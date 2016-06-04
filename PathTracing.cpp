@@ -58,8 +58,8 @@ vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
             -ray.direction);
 
         throughput *= bsdfSample.throughput() *
-            abs(dot(point.normal(), bsdfSample.omega())) *
-            bsdfSample.densityInv();
+            abs(dot(point.normal(), bsdfSample.omega())) /
+            bsdfSample.density();
 
         ray.direction = bsdfSample.omega();
         ray.origin = isect.position();

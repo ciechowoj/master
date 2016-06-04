@@ -30,7 +30,7 @@ const BSDFSample CameraBSDF::sample(
     result._throughput = vec3(1.0f, 1.0f, 1.0f);
     result._omega = omega;
     result._density = 1.0f;
-    result._densityInv = 1.0f;
+    result._densityRev = 1.0f;
     result._specular = 1.0f;
 
     return result;

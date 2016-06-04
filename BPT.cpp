@@ -176,7 +176,7 @@ vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
                 float c = 1.0f / (fgeometry * bsdf.density());
                 float C = (eye[prv].C * bsdf.density() + eye[prv].c) * bgeometry * c;
 
-                float weight = 1.0f / (1.0f + (C * bsdf.density() + c) * lsdf.areaDensity());
+                float weight = 1.0f / (1.0f + (C * lsdf.omegaDensity() + c) * lsdf.areaDensity());
 
                 radiance +=
                     weight *
