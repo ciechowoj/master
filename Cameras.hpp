@@ -25,6 +25,14 @@ public:
         const vec3& a,
         const vec3& b) const override;
 
+    const float density(
+        const vec3& a,
+        const vec3& b) const override;
+
+    const float densityRev(
+        const vec3& a,
+        const vec3& b) const override;
+
     const BSDFSample sample(
         RandomEngine& engine,
         const vec3& omega) const override;

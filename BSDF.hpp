@@ -47,9 +47,18 @@ public:
 
     virtual const float density(
         const vec3& incident,
-        const vec3& reflected) const;
+        const vec3& reflected) const = 0;
 
     const float density(
+        const SurfacePoint& point,
+        const vec3& incident,
+        const vec3& reflected) const;
+
+    virtual const float densityRev(
+        const vec3& incident,
+        const vec3& reflected) const = 0;
+
+    const float densityRev(
         const SurfacePoint& point,
         const vec3& incident,
         const vec3& reflected) const;
@@ -93,6 +102,10 @@ public:
         const vec3& incident,
         const vec3& reflected) const override;
 
+    const float densityRev(
+        const vec3& incident,
+        const vec3& reflected) const override;
+
     const BSDFSample sample(
         RandomEngine& engine,
         const vec3& omega) const override;
@@ -113,6 +126,10 @@ public:
         const vec3& reflected) const override;
 
     const float density(
+        const vec3& incident,
+        const vec3& reflected) const override;
+
+    const float densityRev(
         const vec3& incident,
         const vec3& reflected) const override;
 
@@ -137,6 +154,10 @@ public:
         const vec3& reflected) const override;
 
     const float density(
+        const vec3& incident,
+        const vec3& reflected) const override;
+
+    const float densityRev(
         const vec3& incident,
         const vec3& reflected) const override;
 

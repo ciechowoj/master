@@ -38,6 +38,16 @@ const float BSDF::density(
         point.toSurface(reflected));
 }
 
+const float BSDF::densityRev(
+    const SurfacePoint& point,
+    const vec3& incident,
+    const vec3& reflected) const
+{
+    return densityRev(
+        point.toSurface(incident),
+        point.toSurface(reflected));
+}
+
 const BSDFQuery BSDF::queryEx(
     const vec3& incident,
     const vec3& outgoing) const
@@ -45,6 +55,7 @@ const BSDFQuery BSDF::queryEx(
     BSDFQuery result;
     result._throughput = query(incident, outgoing);
     result._density = density(incident, outgoing);
+    result._densityRev = densityRev(incident, outgoing);
     return result;
 }
 
@@ -85,6 +96,13 @@ const float DiffuseBSDF::density(
     const vec3& incident,
     const vec3& reflected) const
 {
+    return reflected.y > 0.0f ? reflected.y * one_over_pi<float>() : 0.0f;
+}
+
+const float DiffuseBSDF::densityRev(
+    const vec3& incident,
+    const vec3& reflected) const
+{
     return incident.y > 0.0f ? incident.y * one_over_pi<float>() : 0.0f;
 }
 
@@ -98,7 +116,7 @@ const BSDFSample DiffuseBSDF::sample(
     result._throughput = _diffuse * one_over_pi<float>();
     result._omega = hemisphere.omega();
     result._density = hemisphere.density();
-    result._densityRev = omega.y;
+    result._densityRev = omega.y * one_over_pi<float>();
     result._specular = 0.0f;
 
     return result;
@@ -151,6 +169,13 @@ const float PerfectReflectionBSDF::density(
     return 0.0f;
 }
 
+const float PerfectReflectionBSDF::densityRev(
+    const vec3& incident,
+    const vec3& reflected) const
+{
+    return 0.0f;
+}
+
 const BSDFSample PerfectReflectionBSDF::sample(
     RandomEngine& engine,
     const vec3& reflected) const
@@ -189,6 +214,13 @@ const vec3 PerfectTransmissionBSDF::query(
 }
 
 const float PerfectTransmissionBSDF::density(
+    const vec3& incident,
+    const vec3& reflected) const
+{
+    return 0.0f;
+}
+
+const float PerfectTransmissionBSDF::densityRev(
     const vec3& incident,
     const vec3& reflected) const
 {

@@ -194,7 +194,7 @@ LightSampleEx AreaLights::sampleEx(
     result._radiance = lightRadiance(lightId);
     result._omega = normalize(position - result._position);
     result._areaDensity = _weights[lightId] / lightArea(lightId);
-    result._omegaDensity = dot(result.omega(), result.normal());
+    result._omegaDensity = dot(result.omega(), result.normal()) * one_over_pi<float>();
 
     float cosTheta = result._omegaDensity;
 
@@ -222,7 +222,7 @@ LSDFQuery AreaLights::queryLSDF(
     LSDFQuery result;
     result._radiance = lightRadiance(lightId) * (cosTheta > 0.0f ? 1.0f : 0.0f);
     result._areaDensity = _weights[lightId] / lightArea(lightId);
-    result._omegaDensity = abs(cosTheta);
+    result._omegaDensity = abs(cosTheta) * one_over_pi<float>();
     return result;
 }
 

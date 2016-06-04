@@ -22,6 +22,20 @@ const vec3 CameraBSDF::query(
     return a == b ? vec3(1.0f) : vec3(0.0f);
 }
 
+const float CameraBSDF::density(
+    const vec3& a,
+    const vec3& b) const
+{
+    return 1.0f;
+}
+
+const float CameraBSDF::densityRev(
+    const vec3& a,
+    const vec3& b) const
+{
+    return 1.0f;
+}
+
 const BSDFSample CameraBSDF::sample(
     RandomEngine& engine,
     const vec3& omega) const
