@@ -369,10 +369,41 @@ const vec3 Scene::sampleDirectLightMixed(
     float bsdfDensity2 = bsdf.densityRev(surface, -lightSample.omega(), omega);
     float lightDensity2 = lights.density(surface.position(), bsdfSample.omega());
 
-    float bsdfWeight = 1.0f / (bsdfDensity + lightDensity2);
-    float lightWeight = 1.0f / (bsdfDensity2 + lightDensity);
+    vec3 bsdfThroughput = bsdfRadiance / bsdfDensity;
+    vec3 lightThroughput = lightRadiance / lightDensity;
 
-    return bsdfRadiance * bsdfWeight + lightRadiance * lightWeight;
+    // cutoff
+
+    /*float alpha = 1.0;
+
+    float bsdfMax = max(bsdfDensity, lightDensity2) * alpha;
+    float lightMax = max(lightDensity, bsdfDensity2) * alpha;
+
+    float bsdfWeight = bsdfDensity < bsdfMax
+        ? 0.0f
+        : bsdfDensity /
+        ((bsdfDensity >= bsdfMax ? bsdfDensity : 0.0f)
+        + (lightDensity2 >= bsdfMax ? lightDensity2 : 0.0f));
+
+    float lightWeight = lightDensity < lightMax
+        ? 0.0f
+        : lightDensity /
+        ((lightDensity >= lightMax ? lightDensity : 0.0f)
+        + (bsdfDensity2 >= lightMax ? bsdfDensity2 : 0.0f));*/
+
+
+    // power
+    float bsdfWeight =
+        bsdfDensity * bsdfDensity /
+        (bsdfDensity * bsdfDensity + lightDensity2 * lightDensity2);
+
+    float lightWeight =
+        lightDensity * lightDensity /
+        (bsdfDensity2 * bsdfDensity2 + lightDensity * lightDensity);
+
+    return
+        bsdfThroughput * bsdfWeight +
+        lightThroughput * lightWeight;
 }
 
 }

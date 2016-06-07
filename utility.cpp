@@ -153,6 +153,12 @@ void loadEXR(
 
     file.setFrameBuffer(framebuffer);
     file.readPixels(dw.min.y, dw.max.y);
+
+    for (size_t i = 0; i < height / 2; ++i) {
+        for (size_t j = 0; j < width; ++j) {
+            std::swap(data[i * width + j], data[(height - i - 1) * width + j]);
+        }
+    }
 }
 
 void loadEXR(

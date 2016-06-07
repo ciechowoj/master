@@ -55,13 +55,13 @@ GLuint create_program() {
 #version 330
 
 uniform sampler2D sampler;
+uniform float scale;
 
 in vec2 texcoord;
 out vec4 color;
 
 void main()
 {
-    const float scale = 0.5;
     vec4 sample = texture2D(sampler, texcoord);
     color = clamp(vec4(sample.rgb / sample.a, 1) * scale, 0, 1);
 }
@@ -157,13 +157,17 @@ void draw_fullscreen_quad(GLuint quad) {
 
 void draw_fullscreen_quad(
     GLFWwindow* window,
-    const std::vector<glm::vec4>& image) {
+    const std::vector<glm::vec4>& image,
+    float scale) {
 
     window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
     glUseProgram(context->program_id);
     glBindVertexArray(context->varray_id);
 
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, context->pixel_buffer_id);
+
+    glUniform1f(context->scale_location, scale);
+
     bind_fullscreen_texture(window);
 
     glTexSubImage2D(
@@ -253,6 +257,7 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
     window_resize(window, width, height);
     context->program_id = create_program();
     context->sampler_location = glGetUniformLocation(context->program_id, "sampler");
+    context->scale_location = glGetUniformLocation(context->program_id, "scale");
 
     glGenVertexArrays(1, &context->varray_id);
     glBindVertexArray(context->varray_id);
@@ -278,7 +283,7 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
     return 0;
 }
 
-int loop(GLFWwindow* window, const std::function<void(int, int, void*)>& loop) {
+int loop(GLFWwindow* window, const std::function<void(int, int, float&, void*)>& loop) {
     while (!glfwWindowShouldClose(window)) {
         window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
         glViewport(0, 0, context->texture_width, context->texture_height);
@@ -291,14 +296,16 @@ int loop(GLFWwindow* window, const std::function<void(int, int, void*)>& loop) {
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, context->pixel_buffer_id);
         void* pointer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
 
+        float scale;
+
         if (pointer) {
-            loop(context->texture_width, context->texture_height, pointer);
+            loop(context->texture_width, context->texture_height, scale, pointer);
             glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
         }
 
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-        draw_fullscreen_quad(window, std::vector<glm::vec4>());
+        draw_fullscreen_quad(window, std::vector<glm::vec4>(), scale);
 
         ImGui::Render();
         glfwSwapBuffers(window);
@@ -349,8 +356,9 @@ int Framework::run(size_t width, size_t height) {
             quitCondition.notify_all();
         });
 
-        loop(window, [&](int width, int height, void* image) {
+        loop(window, [&](int width, int height, float& scale, void* image) {
             double start = glfwGetTime();
+            scale = _scale;
 
             if (done) {
                 if (bufferWidth == width && bufferHeight == height) {

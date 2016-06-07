@@ -197,10 +197,10 @@ LightSampleEx AreaLights::sampleEx(
     result._omegaDensity = dot(result.omega(), result.normal()) * one_over_pi<float>();
 
     float cosTheta = result._omegaDensity;
+    float signum = (cosTheta > 0.0f ? 1.0f : 0.0f);
 
-    result._radiance *=
-        _intersector->occluded(result.position(), position) *
-        (cosTheta > 0.0f ? 1.0f : 0.0f);
+    result._radiance *= _intersector->occluded(result.position(), position) * signum;
+    result._omegaDensity *= signum;
 
     return result;
 }
@@ -278,10 +278,6 @@ void AreaLights::_updateSampler() {
     lightSampler = PiecewiseSampler(
         _weights.data(),
         _weights.data() + _weights.size());
-
-    /*for (size_t i = 0; i < numLights; ++i) {
-        _weights[i] = 1.f / _weights[i];
-    }*/
 }
 
 const size_t AreaLights::_sampleLight(RandomEngine& engine) const {

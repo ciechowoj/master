@@ -11,7 +11,7 @@ Application::Application(const Options& options) {
     runtime_assert(_device != nullptr);
 
     _technique = makeTechnique(options);
-    _ui = make_shared<UserInterface>(options.input);
+    _ui = make_shared<UserInterface>(options.input, _scale);
 
     _modificationTime = 0;
 

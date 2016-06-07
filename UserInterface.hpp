@@ -33,11 +33,14 @@ struct UserInterface {
     double timePerFrame = 0.0;
     double raysPerSecond = 0.0;
 
+    float& brightness;
 
-    bool computeAverage = false;
+    bool computeAverage = true;
     vec3 averageValue = vec3(0.0f);
 
-    UserInterface(string scenePath);
+    UserInterface(
+        string scenePath,
+        float& brightness);
 
     void updateCamera();
 

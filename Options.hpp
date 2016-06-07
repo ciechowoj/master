@@ -11,7 +11,7 @@ using std::string;
 template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
-    enum Technique { BDPT, BPT, PT, PM, VCM };
+    enum Technique { BDPT, BPT, MBPT, PT, PM, VCM };
 
     string input;
     string output;
@@ -31,6 +31,7 @@ struct Options {
     size_t cameraId = 0;
     size_t width = 512;
     size_t height = 512;
+    double beta = 1.0f;
 
     bool displayHelp = false;
     bool displayVersion = false;

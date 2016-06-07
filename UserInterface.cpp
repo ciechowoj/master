@@ -7,8 +7,9 @@
 
 namespace haste {
 
-UserInterface::UserInterface(string scenePath)
-    : scenePath(scenePath) {
+UserInterface::UserInterface(string scenePath, float& brightness)
+    : scenePath(scenePath)
+    , brightness(brightness) {
     strcpy(path, defpath.c_str());
 }
 
@@ -44,6 +45,8 @@ void UserInterface::update(
     ImGui::InputFloat("samples ", &numSamples);
 
     _updateComputeAverage();
+
+    ImGui::SliderFloat("brightness", &brightness, 0.0f, 100.0f);
 
     size_t offset = min(100, int(maxErrors.size()));
 

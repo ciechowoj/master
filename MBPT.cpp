@@ -1,13 +1,17 @@
-#include <BPT.hpp>
+#include <streamops.hpp>
+#include <MBPT.hpp>
 
 namespace haste {
 
-BPT::BPT(size_t minSubpath, float roulette)
+#define assert_positive(expr) { if (expr < 0.0f) std::cout << #expr << " " << expr << "\n"; }
+
+MBPT::MBPT(size_t minSubpath, float roulette, float beta)
     : _minSubpath(minSubpath)
     , _roulette(roulette)
+    , _beta(beta)
 { }
 
-void BPT::render(
+void MBPT::render(
     ImageView& view,
     RandomEngine& engine,
     size_t cameraId)
@@ -19,11 +23,11 @@ void BPT::render(
     for_each_ray(view, engine, _scene->cameras(), cameraId, trace);
 }
 
-string BPT::name() const {
+string MBPT::name() const {
     return "Bidirectional Path Tracing";
 }
 
-void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
+void MBPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     size_t itr = 0, prv = 0;
 
     LightSampleEx light = _scene->sampleLight(engine);
@@ -41,18 +45,20 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     float fgeometry = distSqInv * fCosTheta;
     float bgeometry = distSqInv * bCosTheta;
 
+
+
     path[itr].surface = _scene->querySurface(isect);
     path[itr].omega = -light.omega();
     path[itr].throughput = light.radiance() * fgeometry;
     path[itr].density = light.density() * fgeometry;
-    path[itr].b = 1.0f / (fgeometry * light.omegaDensity());
-    path[itr].B = bgeometry * path[itr].b / light.areaDensity();
+    path[itr].b = 1.0f / _pow(fgeometry * light.omegaDensity());
+    path[itr].B = _pow(bgeometry) * path[itr].b / _pow(light.areaDensity());
 
     prv = itr;
     ++itr;
 
-    size_t eSize = 2;
-    float roulette = eSize < _minSubpath ? 1.0f : _roulette;
+    size_t lSize = 2;
+    float roulette = lSize < _minSubpath ? 1.0f : _roulette;
     float uniform = sampleUniform1(engine).value();
 
     while (uniform < roulette) {
@@ -79,8 +85,9 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
 
         path[itr].throughput = path[prv].throughput * bsdf.throughput() * bCosTheta * fgeometry;
         path[itr].density = path[prv].density * bsdf.density() * fgeometry * roulette;
-        path[itr].b = 1.0f / (fgeometry * bsdf.density());
-        path[itr].B = (path[prv].B * bsdf.densityRev() + path[prv].b) * bgeometry * path[itr].b;
+        path[itr].b = 1.0f / _pow(fgeometry * bsdf.density());
+        path[itr].B =
+            (path[prv].B * _pow(bsdf.densityRev()) + path[prv].b) * _pow(bgeometry) * path[itr].b;
 
         if (bsdf.specular() > 0.0f) {
             path[prv] = path[itr];
@@ -90,8 +97,8 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
             ++itr;
         }
 
-        ++eSize;
-        roulette = eSize < _minSubpath ? 1.0f : _roulette;
+        ++lSize;
+        roulette = lSize < _minSubpath ? 1.0f : _roulette;
         uniform = sampleUniform1(engine).value();
     }
 
@@ -105,7 +112,7 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     }
 }
 
-vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
+vec3 MBPT::_trace(RandomEngine& engine, const Ray& ray) {
     LightVertex light[_maxSubpath];
     size_t lSize = 0;
 
@@ -173,18 +180,17 @@ vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
                 bgeometry = distSqInv * bCosTheta;
 
                 auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
-                float c = 1.0f / (fgeometry * bsdf.density());
-                float C = (eye[prv].C * bsdf.densityRev() + eye[prv].c) * bgeometry * c;
+                float c = 1.0f / _pow(fgeometry * bsdf.density());
+                float C = (eye[prv].C * _pow(bsdf.densityRev()) + eye[prv].c) * _pow(bgeometry) * c;
 
-                float weight = 1.0f / (1.0f + (C * lsdf.omegaDensity() + c) * lsdf.areaDensity());
+                float weightInv = 1.0f + (C * _pow(lsdf.omegaDensity()) + c) * _pow(lsdf.areaDensity());
 
                 radiance +=
-                    weight *
                     lsdf.radiance() *
                     eye[prv].throughput *
                     bsdf.throughput() *
                     bCosTheta /
-                    (eye[prv].density * bsdf.density() * roulette);
+                    (eye[prv].density * bsdf.density() * roulette * weightInv);
             }
 
             isect = _scene->intersect(isect.position(), bsdf.omega());
@@ -206,13 +212,14 @@ vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
         eye[itr].throughput = eye[prv].throughput * bsdf.throughput() * bCosTheta * fgeometry;
         eye[itr].density = eye[prv].density * bsdf.density() * fgeometry * roulette;
         eye[itr].specular = eye[prv].specular * bsdf.specular();
-        eye[itr].c = 1.0f / (fgeometry * bsdf.density());
-        eye[itr].C = (eye[prv].C * bsdf.densityRev() + eye[prv].c) * bgeometry * eye[itr].c;
+        eye[itr].c = 1.0f / _pow(fgeometry * bsdf.density());
+        eye[itr].C =
+            (eye[prv].C * _pow(bsdf.densityRev()) + eye[prv].c) * _pow(bgeometry) * eye[itr].c;
 
+        ++eSize;
         radiance += _connect(engine, eye[itr], lSize, light);
         std::swap(itr, prv);
 
-        ++eSize;
         roulette = eSize < _minSubpath ? 1.0f : _roulette;
         uniform = sampleUniform1(engine).value();
     }
@@ -220,7 +227,7 @@ vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
     return radiance;
 }
 
-vec3 BPT::_connect(RandomEngine& engine, const EyeVertex& eye) {
+vec3 MBPT::_connect(RandomEngine& engine, const EyeVertex& eye) {
     LightSampleEx light = _scene->sampleLightEx(engine, eye.position());
     auto bsdf = _scene->queryBSDFEx(eye.surface, -light.omega(), eye.omega);
 
@@ -229,9 +236,9 @@ vec3 BPT::_connect(RandomEngine& engine, const EyeVertex& eye) {
     float lCosTheta = abs(dot(light.omega(), light.normal()));
 
     float weightInv =
-        bsdf.densityRev() * lCosTheta * distSqInv / light.areaDensity() +
+        _pow(bsdf.densityRev() * lCosTheta * distSqInv / light.areaDensity()) +
         1.0f +
-        (eye.C * bsdf.density() + eye.c) * eCosTheta * distSqInv * light.omegaDensity();
+        (eye.C * _pow(bsdf.density()) + eye.c) * _pow(eCosTheta * distSqInv * light.omegaDensity());
 
     return
         light.radiance() *
@@ -243,22 +250,22 @@ vec3 BPT::_connect(RandomEngine& engine, const EyeVertex& eye) {
         (eye.density * light.areaDensity() * weightInv);
 }
 
-vec3 BPT::_connect(const EyeVertex& eye, const LightVertex& light) {
+vec3 MBPT::_connect(const EyeVertex& eye, const LightVertex& light) {
     vec3 omega = normalize(eye.position() - light.position());
 
     auto lightBSDF = _scene->queryBSDFEx(light.surface, light.omega, omega);
     auto eyeBSDF = _scene->queryBSDFEx(eye.surface, -omega, eye.omega);
 
     float distSqInv = 1.0f / distance2(eye.position(), light.position());
-    float lCosTheta = dot(omega, light.normal());
-    float eCosTheta = dot(-omega, eye.gnormal());
+    float lCosTheta = abs(dot(omega, light.normal()));
+    float eCosTheta = abs(dot(omega, eye.gnormal()));
     float lGeometry = lCosTheta * distSqInv;
     float eGeometry = eCosTheta * distSqInv;
 
     float weightInv =
-        (light.B * lightBSDF.densityRev() + light.b) * lGeometry * eyeBSDF.densityRev() +
+        (light.B * _pow(lightBSDF.densityRev()) + light.b) * _pow(lGeometry * eyeBSDF.densityRev()) +
         1.0f +
-        (eye.C * eyeBSDF.density() + eye.c) * eGeometry * lightBSDF.density();
+        (eye.C * _pow(eyeBSDF.density()) + eye.c) * _pow(eGeometry * lightBSDF.density());
 
     return
         _scene->occluded(eye.position(), light.position()) *
@@ -272,7 +279,7 @@ vec3 BPT::_connect(const EyeVertex& eye, const LightVertex& light) {
         (light.density * eye.density * weightInv);
 }
 
-vec3 BPT::_connect(
+vec3 MBPT::_connect(
     RandomEngine& engine,
     const EyeVertex& eye,
     size_t size,

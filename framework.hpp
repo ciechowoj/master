@@ -13,6 +13,7 @@ struct window_context_t {
     GLuint program_id = 0;
     GLuint sampler_id = 0;
     GLuint sampler_location = 0;
+    GLuint scale_location = 0;
     GLuint buffer_id = 0;
     GLuint varray_id = 0;
     GLuint pixel_buffer_id = 0;
@@ -22,9 +23,10 @@ int run(int width, int height, const std::function<void(GLFWwindow* window)>& fu
 
 void draw_fullscreen_quad(
     GLFWwindow* window,
-    const std::vector<glm::vec4>& image);
+    const std::vector<glm::vec4>& image,
+    float scale);
 
-int loop(GLFWwindow* window, const std::function<void(int, int, void*)>& loop);
+int loop(GLFWwindow* window, const std::function<void(int, int, float&, void*)>& loop);
 
 class Framework {
 public:
@@ -39,6 +41,9 @@ public:
     int runBatch(size_t width, size_t height);
     void quit();
     bool batch() const;
+
+protected:
+    float _scale = 10.0f;
 
 private:
     GLFWwindow* _window = nullptr;

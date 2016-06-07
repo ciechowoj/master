@@ -6,6 +6,7 @@
 
 #include <BidirectionalPathTracing.hpp>
 #include <BPT.hpp>
+#include <MBPT.hpp>
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
 #include <VertexMerging.hpp>
@@ -26,8 +27,9 @@ R"(
     Options:
       -h --help             Show this screen.
       --version             Show version.
-      --BDPT                Use bidirectional path tracing (with beta = 1, no MIS).
-      --BPT                 Use bidirectional path tracing.
+      --BDPT                Use bidirectional path tracing (with beta = 0, no MIS).
+      --BPT                 Use bidirectional path tracing (balance heuristics).
+      --MBPT                Use bidirectional path tracing with adjustable beta.
       --PT                  Use path tracing for rendering (this is default one).
       --PM                  Use photon mapping for rendering.
       --VCM                 Use vertex connection and merging (not implemented/wip).
@@ -44,6 +46,7 @@ R"(
       --parallel            Use multithreading.
       --snapshot=<n>        Save output every n samples (adds number of samples to output file).
       --output=<path>       Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
+      --reference=<path>    Reference file for comparison.
       --camera=<id>         Use camera with given id. [default: 0]
       --resolution=<WxH>    Resolution of output image. [default: 800x600]
 
@@ -196,6 +199,7 @@ Options parseArgs(int argc, char const* const* argv) {
         size_t numTechniqes =
             dict.count("--BDPT") +
             dict.count("--BPT") +
+            dict.count("--MBPT") +
             dict.count("--PT") +
             dict.count("--PM") +
             dict.count("--VCM");
@@ -212,6 +216,10 @@ Options parseArgs(int argc, char const* const* argv) {
         else if (dict.count("--BPT")) {
             options.technique = Options::BPT;
             dict.erase("--BPT");
+        }
+        else if (dict.count("--MBPT")) {
+            options.technique = Options::MBPT;
+            dict.erase("--MBPT");
         }
         else if (dict.count("--PT")) {
             options.technique = Options::PT;
@@ -282,6 +290,7 @@ Options parseArgs(int argc, char const* const* argv) {
 
         if (dict.count("--min-subpath")) {
             if (options.technique != Options::BPT &&
+                options.technique != Options::MBPT &&
                 options.technique != Options::PT &&
                 options.technique != Options::VCM) {
                 options.displayHelp = true;
@@ -301,6 +310,7 @@ Options parseArgs(int argc, char const* const* argv) {
 
         if (dict.count("--roulette")) {
             if (options.technique != Options::BPT &&
+                options.technique != Options::MBPT &&
                 options.technique != Options::PT &&
                 options.technique != Options::VCM) {
                 options.displayHelp = true;
@@ -506,6 +516,12 @@ shared<Technique> makeTechnique(const Options& options) {
                 options.minSubpath,
                 options.roulette);
 
+        case Options::MBPT:
+            return std::make_shared<MBPT>(
+                options.minSubpath,
+                options.roulette,
+                options.beta);
+
         case Options::PT:
             return std::make_shared<PathTracing>();
 
@@ -531,6 +547,7 @@ string techniqueString(const Options& options) {
     switch (options.technique) {
         case Options::BDPT: return "BDPT";
         case Options::BPT: return "BPT";
+        case Options::MBPT: return "MBPT";
         case Options::PT: return "PT";
         case Options::PM: return "PM";
         case Options::VCM: return "VCM";

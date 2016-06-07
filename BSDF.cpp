@@ -138,7 +138,7 @@ BSDFSample DiffuseBSDF::scatter(
         result._throughput = _diffuse / diffuseAvg;
         result._omega = point.toWorld(hemisphere.omega());
         result._density = hemisphere.density();
-        result._densityRev = dot(point.normal(), omega);
+        result._densityRev = dot(point.normal(), omega) * one_over_pi<float>();
         result._specular = 0.0f;
 
         return result;
