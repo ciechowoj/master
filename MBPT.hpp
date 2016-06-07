@@ -19,7 +19,6 @@ private:
         SurfacePoint surface;
         vec3 omega;
         vec3 throughput;
-        float density;
         float b, B;
 
         const vec3& position() const { return surface.position(); }
@@ -31,7 +30,6 @@ private:
         SurfacePoint surface;
         vec3 omega;
         vec3 throughput;
-        float density;
         float specular;
         float c, C;
 
@@ -40,20 +38,21 @@ private:
         const vec3& gnormal() const { return surface.gnormal(); }
     };
 
-    static const size_t _maxSubpath = 128;
+    static const size_t _maxSubpath = 1024;
     const size_t _minSubpath;
     const float _roulette;
     const float _beta;
 
     float _pow(float x) const {
-        return pow(x, 1.0f);
+        return pow(x, 2.0f);
     }
 
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
     vec3 _trace(RandomEngine& engine, const Ray& ray);
-    vec3 _connect(RandomEngine& engine, const EyeVertex& eye);
+    vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
+    vec3 _connect1(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light);
-    vec3 _connect(RandomEngine& engine, const EyeVertex& eye, size_t size, const LightVertex* path);
+    vec3 _connect(RandomEngine& engine, const EyeVertex& eye, size_t eSize, size_t size, const LightVertex* path);
 };
 
 }
