@@ -1,9 +1,8 @@
 #include <streamops.hpp>
+#include <sstream>
 #include <MBPT.hpp>
 
 namespace haste {
-
-#define assert_positive(expr) { if (expr < 0.0f) std::cout << #expr << " " << expr << "\n"; }
 
 MBPT::MBPT(size_t minSubpath, float roulette, float beta)
     : _minSubpath(minSubpath)
@@ -24,7 +23,9 @@ void MBPT::render(
 }
 
 string MBPT::name() const {
-    return "Bidirectional Path Tracing";
+    std::stringstream stream;
+    stream << "Bidirectional Path Tracing (beta = " << _beta << ")";
+    return stream.str();
 }
 
 void MBPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
@@ -77,11 +78,17 @@ void MBPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
         bgeometry = distSqInv * bCosTheta;
 
         path[itr].throughput =
-            path[prv].throughput * bsdf.throughput() * bCosTheta / (bsdf.density() * roulette);
+            path[prv].throughput *
+            bsdf.throughput() *
+            bCosTheta /
+            (bsdf.density() * roulette);
 
         path[itr].b = 1.0f / _pow(fgeometry * bsdf.density());
+
         path[itr].B =
-            (path[prv].B * _pow(bsdf.densityRev()) + path[prv].b) * _pow(bgeometry) * path[itr].b;
+            (path[prv].B * _pow(bsdf.densityRev()) + path[prv].b) *
+            _pow(bgeometry) *
+            path[itr].b;
 
         if (bsdf.specular() > 0.0f) {
             path[prv] = path[itr];
@@ -141,7 +148,7 @@ vec3 MBPT::_trace(RandomEngine& engine, const Ray& ray) {
     eye[itr].c = 0;
     eye[itr].C = 0;
 
-    radiance += _connect(engine, eye[itr], 2, lSize, light);
+    radiance += _connect(engine, eye[itr], lSize, light);
     std::swap(itr, prv);
 
     size_t eSize = 2;
@@ -173,10 +180,12 @@ vec3 MBPT::_trace(RandomEngine& engine, const Ray& ray) {
         eye[itr].specular = eye[prv].specular * bsdf.specular();
         eye[itr].c = 1.0f / _pow(fgeometry * bsdf.density());
         eye[itr].C =
-            (eye[prv].C * _pow(bsdf.densityRev()) + eye[prv].c) * _pow(bgeometry) * eye[itr].c;
+            (eye[prv].C * _pow(bsdf.densityRev()) + eye[prv].c) *
+            _pow(bgeometry) *
+            eye[itr].c;
 
         ++eSize;
-        radiance += _connect(engine, eye[itr], eSize, lSize, light);
+        radiance += _connect(engine, eye[itr], lSize, light);
         std::swap(itr, prv);
 
         roulette = eSize < _minSubpath ? 1.0f : _roulette;
@@ -288,7 +297,6 @@ vec3 MBPT::_connect(const EyeVertex& eye, const LightVertex& light) {
 vec3 MBPT::_connect(
     RandomEngine& engine,
     const EyeVertex& eye,
-    size_t eSize,
     size_t size,
     const LightVertex* path)
 {

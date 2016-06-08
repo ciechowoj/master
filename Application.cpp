@@ -28,7 +28,7 @@ Application::Application(const Options& options) {
             _reference);
     }
 
-    std::cout << _reference.size() << std::endl;
+    std::cout << "Using: " << _technique->name() << std::endl;
 
     _startTime = glfwGetTime();
 }

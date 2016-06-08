@@ -4,7 +4,6 @@
 #include <Options.hpp>
 #include <loader.hpp>
 
-#include <BidirectionalPathTracing.hpp>
 #include <BPT.hpp>
 #include <MBPT.hpp>
 #include <PathTracing.hpp>
@@ -209,17 +208,9 @@ Options parseArgs(int argc, char const* const* argv) {
             options.displayMessage = "Only one technique can be specified.";
             return options;
         }
-        else if (dict.count("--BDPT")) {
-            options.technique = Options::BDPT;
-            dict.erase("--BDPT");
-        }
         else if (dict.count("--BPT")) {
             options.technique = Options::BPT;
             dict.erase("--BPT");
-        }
-        else if (dict.count("--MBPT")) {
-            options.technique = Options::MBPT;
-            dict.erase("--MBPT");
         }
         else if (dict.count("--PT")) {
             options.technique = Options::PT;
@@ -290,7 +281,6 @@ Options parseArgs(int argc, char const* const* argv) {
 
         if (dict.count("--min-subpath")) {
             if (options.technique != Options::BPT &&
-                options.technique != Options::MBPT &&
                 options.technique != Options::PT &&
                 options.technique != Options::VCM) {
                 options.displayHelp = true;
@@ -308,9 +298,27 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
+        if (dict.count("--beta")) {
+            if (options.technique != Options::BPT &&
+                options.technique != Options::PT &&
+                options.technique != Options::VCM) {
+                options.displayHelp = true;
+                options.displayMessage = "--beta in not available for specified technique.";
+                return options;
+            }
+            else if (!isReal(dict["--beta"])) {
+                options.displayHelp = true;
+                options.displayMessage = "Invalid value for --beta.";
+                return options;
+            }
+            else {
+                options.beta = atof(dict["--beta"].c_str());
+                dict.erase("--beta");
+            }
+        }
+
         if (dict.count("--roulette")) {
             if (options.technique != Options::BPT &&
-                options.technique != Options::MBPT &&
                 options.technique != Options::PT &&
                 options.technique != Options::VCM) {
                 options.displayHelp = true;
@@ -508,19 +516,20 @@ pair<bool, int> displayHelpIfNecessary(
 
 shared<Technique> makeTechnique(const Options& options) {
     switch (options.technique) {
-        case Options::BDPT:
-            return std::make_shared<BidirectionalPathTracing>();
-
         case Options::BPT:
-            return std::make_shared<BPT>(
-                options.minSubpath,
-                options.roulette);
-
-        case Options::MBPT:
-            return std::make_shared<MBPT>(
-                options.minSubpath,
-                options.roulette,
-                options.beta);
+            if (options.beta == 1.0f)
+            {
+                return std::make_shared<BPT>(
+                    options.minSubpath,
+                    options.roulette);
+            }
+            else
+            {
+                return std::make_shared<MBPT>(
+                    options.minSubpath,
+                    options.roulette,
+                    options.beta);
+            }
 
         case Options::PT:
             return std::make_shared<PathTracing>();
@@ -545,9 +554,7 @@ shared<Scene> loadScene(const Options& options) {
 
 string techniqueString(const Options& options) {
     switch (options.technique) {
-        case Options::BDPT: return "BDPT";
         case Options::BPT: return "BPT";
-        case Options::MBPT: return "MBPT";
         case Options::PT: return "PT";
         case Options::PM: return "PM";
         case Options::VCM: return "VCM";

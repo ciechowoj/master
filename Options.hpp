@@ -11,7 +11,7 @@ using std::string;
 template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
-    enum Technique { BDPT, BPT, MBPT, PT, PM, VCM };
+    enum Technique { BPT, PT, PM, VCM };
 
     string input;
     string output;
@@ -21,6 +21,7 @@ struct Options {
     size_t maxGather = 100;
     double maxRadius = 0.1;
     size_t minSubpath = 5;
+    double beta = 1.0f;
     double roulette = 0.5;
     bool batch = false;
     size_t numSamples = 0;
@@ -31,7 +32,6 @@ struct Options {
     size_t cameraId = 0;
     size_t width = 512;
     size_t height = 512;
-    double beta = 1.0f;
 
     bool displayHelp = false;
     bool displayVersion = false;

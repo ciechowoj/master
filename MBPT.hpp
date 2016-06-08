@@ -44,7 +44,7 @@ private:
     const float _beta;
 
     float _pow(float x) const {
-        return pow(x, 2.0f);
+        return pow(x, _beta);
     }
 
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
@@ -52,7 +52,7 @@ private:
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect1(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light);
-    vec3 _connect(RandomEngine& engine, const EyeVertex& eye, size_t eSize, size_t size, const LightVertex* path);
+    vec3 _connect(RandomEngine& engine, const EyeVertex& eye, size_t size, const LightVertex* path);
 };
 
 }
