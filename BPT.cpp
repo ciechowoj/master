@@ -43,7 +43,7 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
 
     path[itr].surface = _scene->querySurface(isect);
     path[itr].omega = -light.omega();
-    path[itr].throughput = light.radiance() / light.density();
+    path[itr].throughput = light.radiance() * bCosTheta / light.density();
     path[itr].b = 1.0f / (fgeometry * light.omegaDensity());
     path[itr].B = bgeometry * path[itr].b / light.areaDensity();
 
