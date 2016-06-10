@@ -8,7 +8,7 @@
 #include <MBPT.hpp>
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
-#include <VertexMerging.hpp>
+#include <VCM.hpp>
 
 namespace haste {
 
@@ -26,14 +26,12 @@ R"(
     Options:
       -h --help             Show this screen.
       --version             Show version.
-      --BDPT                Use bidirectional path tracing (with beta = 0, no MIS).
       --BPT                 Use bidirectional path tracing (balance heuristics).
-      --MBPT                Use bidirectional path tracing with adjustable beta.
       --PT                  Use path tracing for rendering (this is default one).
       --PM                  Use photon mapping for rendering.
       --VCM                 Use vertex connection and merging (not implemented/wip).
       --num-photons=<n>     Use n photons. [default: 1 000 000]
-      --max-gather=<n>      Use n as maximal number of gathered photons. [default: 100]
+      --num-gather=<n>      Use n as maximal number of gathered photons. [default: 100]
       --max-radius=<n>      Use n as maximum gather radius. [default: 0.1]
       --min-subpath=<n>     Do not use Russian roulette for sub-paths shorter than n. [default: 5]
       --roulette=<n>        Russian roulette coefficient. [default: 0.5]
@@ -196,9 +194,7 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         size_t numTechniqes =
-            dict.count("--BDPT") +
             dict.count("--BPT") +
-            dict.count("--MBPT") +
             dict.count("--PT") +
             dict.count("--PM") +
             dict.count("--VCM");
@@ -243,21 +239,21 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
-        if (dict.count("--max-gather")) {
+        if (dict.count("--num-gather")) {
             if (options.technique != Options::PM &&
                 options.technique != Options::VCM) {
                 options.displayHelp = true;
-                options.displayMessage = "--max-gather can be specified for PM and VCM only.";
+                options.displayMessage = "--num-gather can be specified for PM and VCM only.";
                 return options;
             }
-            else if (!isUnsigned(dict["--max-gather"])) {
+            else if (!isUnsigned(dict["--num-gather"])) {
                 options.displayHelp = true;
-                options.displayMessage = "Invalid value for --max-gather.";
+                options.displayMessage = "Invalid value for --num-gather.";
                 return options;
             }
             else {
-                options.maxGather = atoi(dict["--max-gather"].c_str());
-                dict.erase("--max-gather");
+                options.numGather = atoi(dict["--num-gather"].c_str());
+                dict.erase("--num-gather");
             }
         }
 
@@ -300,8 +296,7 @@ Options parseArgs(int argc, char const* const* argv) {
 
         if (dict.count("--beta")) {
             if (options.technique != Options::BPT &&
-                options.technique != Options::PT &&
-                options.technique != Options::VCM) {
+                options.technique != Options::PT) {
                 options.displayHelp = true;
                 options.displayMessage = "--beta in not available for specified technique.";
                 return options;
@@ -537,14 +532,16 @@ shared<Technique> makeTechnique(const Options& options) {
         case Options::PM:
             return std::make_shared<PhotonMapping>(
                 options.numPhotons,
-                options.maxGather,
+                options.numGather,
                 options.maxRadius);
 
         case Options::VCM:
             return std::make_shared<VCM>(
                 options.numPhotons,
-                options.maxGather,
-                options.maxRadius);
+                options.numGather,
+                options.maxRadius,
+                options.minSubpath,
+                options.roulette);
     }
 }
 

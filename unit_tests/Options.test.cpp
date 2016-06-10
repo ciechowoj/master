@@ -56,7 +56,7 @@ TEST(OptionsTest, basic_tests) {
     EXPECT_EQ("foo.baz", x4.output);
     EXPECT_EQ(Options::PM, x4.technique);
     EXPECT_EQ(100, x4.numPhotons);
-    EXPECT_EQ(10, x4.maxGather);
+    EXPECT_EQ(10, x4.numGather);
     EXPECT_EQ(0.01, x4.maxRadius);
     EXPECT_TRUE(x4.batch);
     EXPECT_EQ(31415, x4.numSamples);
