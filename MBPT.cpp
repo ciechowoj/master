@@ -149,7 +149,6 @@ vec3 MBPT::_trace(RandomEngine& engine, const Ray& ray) {
     eye[itr].C = 0;
 
     radiance += _connect(engine, eye[itr], lSize, light);
-    // radiance += _connect1(engine, eye[itr]);
     std::swap(itr, prv);
 
     size_t eSize = 2;
@@ -303,8 +302,6 @@ vec3 MBPT::_connect(
     size_t size,
     const LightVertex* path)
 {
-    // vec3 radiance = vec3(0.0f);
-
     vec3 radiance = _connect0(engine, eye) + _connect1(engine, eye);
 
     for (size_t i = 0; i < size; ++i) {

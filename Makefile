@@ -136,7 +136,8 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/FurnaceTest.blend --BPT --parallel --beta=1.0
+	./build/master/master.bin models/CornellBoxDiffuse.blend --BPT --parallel --beta=2.0 --reference=/home/wojciech/CornellBoxDiffuse.10218.exr
+	
 
 test: all
 	./build/master/unittest.bin
