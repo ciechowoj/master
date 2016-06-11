@@ -159,7 +159,7 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
 
     eye[itr].throughput = vec3(1.0f);
     eye[itr].specular = 1.0f;
-    eye[itr].c = 0;
+    eye[itr].c = -_eta;
     eye[itr].C = 0;
 
     radiance += _connect(engine, eye[itr], lSize, light);
@@ -283,7 +283,7 @@ vec3 VCM::_connect0(RandomEngine& engine, const EyeVertex& eye) {
 
             float weightInv =
                 (C * lsdf.omegaDensity() + c + _eta) * lsdf.areaDensity() +
-                _eta +
+                // _eta +
                 1.0f;
 
             radiance +=
@@ -313,7 +313,7 @@ vec3 VCM::_connect1(RandomEngine& engine, const EyeVertex& eye) {
     float weightInv =
         bsdf.densityRev() * lCosTheta * distSqInv / light.areaDensity() +
         (eye.C * bsdf.density() + eye.c + _eta) * eGeometry * light.omegaDensity() +
-        _eta * lGeometry +
+        // _eta * lGeometry +
         1.0f;
 
     return

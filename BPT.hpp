@@ -1,5 +1,6 @@
 #pragma once
 #include <Technique.hpp>
+#include <Edge.hpp>
 
 namespace haste {
 
@@ -19,7 +20,7 @@ private:
         SurfacePoint surface;
         vec3 omega;
         vec3 throughput;
-        float b, B;
+        float a, A;
 
         const vec3& position() const { return surface.position(); }
         const vec3& normal() const { return surface.normal(); }
