@@ -49,8 +49,8 @@ void MBPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     path[itr].surface = _scene->querySurface(isect);
     path[itr].omega = -light.omega();
     path[itr].throughput = light.radiance() * bCosTheta / light.density();
-    path[itr].b = 1.0f / _pow(fgeometry * light.omegaDensity());
-    path[itr].B = _pow(bgeometry) * path[itr].b / _pow(light.areaDensity());
+    path[itr].a = 1.0f / _pow(fgeometry * light.omegaDensity());
+    path[itr].A = _pow(bgeometry) * path[itr].a / _pow(light.areaDensity());
 
     prv = itr;
     ++itr;
@@ -83,12 +83,12 @@ void MBPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
             bCosTheta /
             (bsdf.density() * roulette);
 
-        path[itr].b = 1.0f / _pow(fgeometry * bsdf.density());
+        path[itr].a = 1.0f / _pow(fgeometry * bsdf.density());
 
-        path[itr].B =
-            (path[prv].B * _pow(bsdf.densityRev()) + path[prv].b) *
+        path[itr].A =
+            (path[prv].A * _pow(bsdf.densityRev()) + path[prv].a) *
             _pow(bgeometry) *
-            path[itr].b;
+            path[itr].a;
 
         if (bsdf.specular() > 0.0f) {
             path[prv] = path[itr];
@@ -280,7 +280,7 @@ vec3 MBPT::_connect(const EyeVertex& eye, const LightVertex& light) {
     float eGeometry = eCosTheta * distSqInv;
 
     float weightInv =
-        (light.B * _pow(lightBSDF.densityRev()) + light.b) * _pow(lGeometry * eyeBSDF.densityRev()) +
+        (light.A * _pow(lightBSDF.densityRev()) + light.a) * _pow(lGeometry * eyeBSDF.densityRev()) +
         1.0f +
         (eye.C * _pow(eyeBSDF.density()) + eye.c) * _pow(eGeometry * lightBSDF.density());
 
