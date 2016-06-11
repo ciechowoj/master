@@ -28,7 +28,7 @@ public:
     virtual void render(
         ImageView& view,
         RandomEngine& engine,
-        size_t cameraId) = 0;
+        size_t cameraId);
 
     virtual string name() const = 0;
 
@@ -54,6 +54,10 @@ protected:
     size_t _numShadowRays;
     size_t _numSamples;
     shared<const Scene> _scene;
+
+    virtual vec3 _trace(
+        RandomEngine& engine,
+        const Ray& ray);
 
 private:
     Technique(const Technique&) = delete;

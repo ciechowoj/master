@@ -7,93 +7,8 @@ BPT::BPT(size_t minSubpath, float roulette)
     , _roulette(roulette)
 { }
 
-void BPT::render(
-    ImageView& view,
-    RandomEngine& engine,
-    size_t cameraId)
-{
-    auto trace = [&](RandomEngine& engine, Ray ray) -> vec3 {
-        return _trace(engine, ray);
-    };
-
-    for_each_ray(view, engine, _scene->cameras(), cameraId, trace);
-}
-
 string BPT::name() const {
     return "Bidirectional Path Tracing (Balance Heuristic)";
-}
-
-void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
-    size_t itr = 0, prv = 0;
-
-    LightSampleEx light = _scene->sampleLight(engine);
-
-    RayIsect isect = _scene->intersectMesh(light.position(), light.omega());
-
-    if (!isect.isPresent()) {
-        size = 0;
-        return;
-    }
-
-    auto edge = Edge(light, isect);
-
-    path[itr].surface = _scene->querySurface(isect);
-    path[itr]._omega = -light.omega();
-    path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
-    path[itr].a = 1.0f / (edge.fGeometry * light.omegaDensity());
-    path[itr].A = edge.bGeometry * path[itr].a / light.areaDensity();
-
-    prv = itr;
-    ++itr;
-
-    size_t lSize = 2;
-    float roulette = lSize < _minSubpath ? 1.0f : _roulette;
-    float uniform = sampleUniform1(engine).value();
-
-    while (uniform < roulette) {
-        auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
-
-        isect = _scene->intersectMesh(path[prv].position(), bsdf.omega());
-
-        if (!isect.isPresent()) {
-            break;
-        }
-
-        path[itr].surface = _scene->querySurface(isect);
-        path[itr]._omega = -bsdf.omega();
-
-        edge = Edge(path[prv], path[itr]);
-
-        path[itr].throughput =
-            path[prv].throughput *
-            bsdf.throughput() *
-            edge.bCosTheta /
-            (bsdf.density() * roulette);
-
-        path[itr].a = 1.0f / (edge.fGeometry * bsdf.density());
-        path[itr].A = (path[prv].A * bsdf.densityRev() + path[prv].a) * edge.bGeometry * path[itr].a;
-
-        if (bsdf.specular() > 0.0f) {
-            path[prv] = path[itr];
-        }
-        else {
-            prv = itr;
-            ++itr;
-        }
-
-        ++lSize;
-        roulette = lSize < _minSubpath ? 1.0f : _roulette;
-        uniform = sampleUniform1(engine).value();
-    }
-
-    auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
-
-    if (bsdf.specular() > 0.0f) {
-        size = prv;
-    }
-    else {
-        size = prv + 1;
-    }
 }
 
 vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
@@ -167,6 +82,79 @@ vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
     }
 
     return radiance;
+}
+
+void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
+    size_t itr = 0, prv = 0;
+
+    LightSampleEx light = _scene->sampleLight(engine);
+
+    RayIsect isect = _scene->intersectMesh(light.position(), light.omega());
+
+    if (!isect.isPresent()) {
+        size = 0;
+        return;
+    }
+
+    auto edge = Edge(light, isect);
+
+    path[itr].surface = _scene->querySurface(isect);
+    path[itr]._omega = -light.omega();
+    path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
+    path[itr].a = 1.0f / (edge.fGeometry * light.omegaDensity());
+    path[itr].A = edge.bGeometry * path[itr].a / light.areaDensity();
+
+    prv = itr;
+    ++itr;
+
+    size_t lSize = 2;
+    float roulette = lSize < _minSubpath ? 1.0f : _roulette;
+    float uniform = sampleUniform1(engine).value();
+
+    while (uniform < roulette) {
+        auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
+
+        isect = _scene->intersectMesh(path[prv].position(), bsdf.omega());
+
+        if (!isect.isPresent()) {
+            break;
+        }
+
+        path[itr].surface = _scene->querySurface(isect);
+        path[itr]._omega = -bsdf.omega();
+
+        edge = Edge(path[prv], path[itr]);
+
+        path[itr].throughput =
+            path[prv].throughput *
+            bsdf.throughput() *
+            edge.bCosTheta /
+            (bsdf.density() * roulette);
+
+        path[itr].a = 1.0f / (edge.fGeometry * bsdf.density());
+        path[itr].A = (path[prv].A * bsdf.densityRev() + path[prv].a) * edge.bGeometry * path[itr].a;
+
+        if (bsdf.specular() > 0.0f) {
+            path[prv] = path[itr];
+        }
+        else {
+            prv = itr;
+            ++itr;
+        }
+
+        ++lSize;
+        roulette = lSize < _minSubpath ? 1.0f : _roulette;
+        uniform = sampleUniform1(engine).value();
+    }
+
+    auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
+
+    if (bsdf.specular() > 0.0f) {
+        size = prv;
+    }
+    else {
+        size = prv + 1;
+    }
 }
 
 vec3 BPT::_connect0(RandomEngine& engine, const EyeVertex& eye) {

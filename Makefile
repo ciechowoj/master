@@ -136,7 +136,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --BPT --parallel --reference=/home/wojciech/CornellBoxDiffuse.10218.exr
+	./build/master/master.bin models/CornellBoxSphere.blend --VCM --max-radius=0.3 --num-photons=100000 --parallel
 	
 
 test: all

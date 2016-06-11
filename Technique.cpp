@@ -60,4 +60,23 @@ void Technique::render(
     _numSamples = size_t(view.last().w);
 }
 
+void Technique::render(
+    ImageView& view,
+    RandomEngine& engine,
+    size_t cameraId)
+{
+     auto trace = [&](RandomEngine& engine, Ray ray) -> vec3 {
+        return _trace(engine, ray);
+    };
+
+    for_each_ray(view, engine, _scene->cameras(), cameraId, trace);
+}
+
+vec3 Technique::_trace(
+    RandomEngine& engine,
+    const Ray& ray)
+{
+    return vec3(1.0f, 0.0f, 1.0f);
+}
+
 }
