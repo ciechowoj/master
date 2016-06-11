@@ -18,18 +18,19 @@ public:
 private:
     struct LightVertex {
         SurfacePoint surface;
-        vec3 omega;
+        vec3 _omega;
         vec3 throughput;
         float a, A;
 
         const vec3& position() const { return surface.position(); }
         const vec3& normal() const { return surface.normal(); }
         const vec3& gnormal() const { return surface.gnormal(); }
+        const vec3& omega() const { return _omega; }
     };
 
     struct EyeVertex {
         SurfacePoint surface;
-        vec3 omega;
+        vec3 _omega;
         vec3 throughput;
         float specular;
         float c, C;
@@ -37,6 +38,7 @@ private:
         const vec3& position() const { return surface.position(); }
         const vec3& normal() const { return surface.normal(); }
         const vec3& gnormal() const { return surface.gnormal(); }
+        const vec3& omega() const { return _omega; }
     };
 
     static const size_t _maxSubpath = 128;

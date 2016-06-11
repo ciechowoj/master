@@ -8,8 +8,8 @@ struct Edge
     template <class A, class B> Edge(const A& fst, const B& snd)
     {
         distSqInv = 1.0f / distance2(fst.position(), snd.position());
-        fCosTheta = abs(dot(fst.omega(), snd.gnormal()));
-        bCosTheta = abs(dot(fst.omega(), fst.gnormal()));
+        fCosTheta = abs(dot(snd.omega(), snd.gnormal()));
+        bCosTheta = abs(dot(snd.omega(), fst.gnormal()));
         fGeometry = distSqInv * fCosTheta;
         bGeometry = distSqInv * bCosTheta;
     }
