@@ -61,11 +61,12 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
     eye[itr].c = -_eta;
     eye[itr].C = 0;
 
-    radiance += _connect2(engine, eye[itr], lSize, light);
+    size_t eSize = 2;
+
+    radiance += _connect(engine, eSize, eye[itr], lSize, light);
     radiance += _gather(engine, eye[itr]);
     std::swap(itr, prv);
 
-    size_t eSize = 2;
     float roulette = eSize < _minSubpath ? 1.0f : _roulette;
     float uniform = sampleUniform1(engine).value();
 
@@ -94,7 +95,7 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
         eye[itr].C = 0.0f;
 
         ++eSize;
-        radiance += _connectN(engine, eye[itr], lSize, light);
+        radiance += _connect(engine, eSize, eye[itr], lSize, light);
         radiance += _gather(engine, eye[itr]);
         std::swap(itr, prv);
 
@@ -130,7 +131,7 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
             eye[itr].c;
 
         ++eSize;
-        radiance += _connectN(engine, eye[itr], lSize, light);
+        radiance += _connect(engine, eSize, eye[itr], lSize, light);
         radiance += _gather(engine, eye[itr]);
         std::swap(itr, prv);
 
@@ -251,7 +252,7 @@ vec3 VCM::_connectSpecular(const EyeVertex& eye, const RayIsect& isect, const BS
         (bsdf.density());
 }
 
-vec3 VCM::_connect03(RandomEngine& engine, const EyeVertex& eye) {
+vec3 VCM::_connect0(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye) {
     vec3 radiance = vec3(0.0f);
 
     auto bsdf = _scene->sampleBSDF(engine, eye.surface, eye.omega());
@@ -261,14 +262,30 @@ vec3 VCM::_connect03(RandomEngine& engine, const EyeVertex& eye) {
     {
         if (eye.specular * bsdf.specular() > 0.0f)
         {
-            radiance += _connectSpecular(eye, isect, bsdf);
+            radiance +=
+                _scene->queryRadiance(isect, -bsdf.omega()) *
+                eye.throughput *
+                bsdf.throughput() *
+                abs(dot(eye.gnormal(), bsdf.omega())) /
+                (bsdf.density());
         }
         else
         {
             auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
             auto edge = Edge(eye, isect, bsdf.omega());
 
-            float weightInv = lsdf.areaDensity() / (edge.fGeometry * bsdf.density()) + 1.0f;
+            float weightInv = 0.f;
+
+            if (eyeSize == 2) {
+                weightInv = lsdf.areaDensity() / (edge.fGeometry * bsdf.density()) + 1.0f;
+            }
+            else {
+                float c = 1.0f / (edge.fGeometry * bsdf.density());
+                float C = (eye.C * bsdf.densityRev() + eye.c + _eta) * edge.bGeometry * c;
+                float Cp = (C * lsdf.omegaDensity() + c + _eta) * lsdf.areaDensity();
+
+                weightInv = Cp + _eta * edge.fGeometry * bsdf.density();
+            }
 
             radiance +=
                 lsdf.radiance() *
@@ -284,50 +301,24 @@ vec3 VCM::_connect03(RandomEngine& engine, const EyeVertex& eye) {
     return radiance;
 }
 
-vec3 VCM::_connect0N(RandomEngine& engine, const EyeVertex& eye) {
-    vec3 radiance = vec3(0.0f);
-
-    auto bsdf = _scene->sampleBSDF(engine, eye.surface, eye.omega());
-    RayIsect isect = _scene->intersect(eye.position(), bsdf.omega());
-
-    while (isect.isLight())
-    {
-        if (eye.specular * bsdf.specular() > 0.0f)
-        {
-            radiance += _connectSpecular(eye, isect, bsdf);
-        }
-        else
-        {
-            auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
-            auto edge = Edge(eye, isect, bsdf.omega());
-
-            float c = 1.0f / (edge.fGeometry * bsdf.density());
-            float C = (eye.C * bsdf.densityRev() + eye.c + _eta) * edge.bGeometry * c;
-            float Cp = (C * lsdf.omegaDensity() + c + _eta) * lsdf.areaDensity();
-
-            float weightInv = Cp + _eta * edge.fGeometry * bsdf.density();
-
-            radiance +=
-                lsdf.radiance() *
-                eye.throughput *
-                bsdf.throughput() *
-                edge.bCosTheta /
-                (bsdf.density() * weightInv);
-        }
-
-        isect = _scene->intersect(isect.position(), bsdf.omega());
-    }
-
-    return radiance;
-}
-
-vec3 VCM::_connect12(RandomEngine& engine, const EyeVertex& eye) {
+vec3 VCM::_connect1(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye) {
     LightSampleEx light = _scene->sampleLightEx(engine, eye.position());
 
     auto bsdf = _scene->queryBSDFEx(eye.surface, -light.omega(), eye.omega());
     auto edge = Edge(light, eye, light.omega());
 
-    float weightInv = (bsdf.densityRev() * edge.bGeometry) / light.areaDensity() + 1.0f;
+    float weightInv = 0.f;
+
+    if (eyeSize == 2) {
+        weightInv = (bsdf.densityRev() * edge.bGeometry) / light.areaDensity() + 1.0f;
+    }
+    else {
+        float Ap = bsdf.densityRev() * edge.bGeometry / light.areaDensity();
+        float Bp = 0.0f;
+        float Cp = (eye.C * bsdf.density() + eye.c + _eta) * edge.fGeometry * light.omegaDensity();
+
+        weightInv = Ap + Bp + Cp + _eta * edge.bGeometry * bsdf.density() + 1.0f;
+    }
 
     return
         light.radiance() *
@@ -338,51 +329,16 @@ vec3 VCM::_connect12(RandomEngine& engine, const EyeVertex& eye) {
         (light.areaDensity() * weightInv);
 }
 
-vec3 VCM::_connect1N(RandomEngine& engine, const EyeVertex& eye) {
-    LightSampleEx light = _scene->sampleLightEx(engine, eye.position());
-
-    auto bsdf = _scene->queryBSDFEx(eye.surface, -light.omega(), eye.omega());
-    auto edge = Edge(light, eye, light.omega());
-
-    float Ap = bsdf.densityRev() * edge.bGeometry / light.areaDensity();
-    float Bp = 0.0f;
-    float Cp = (eye.C * bsdf.density() + eye.c + _eta) * edge.fGeometry * light.omegaDensity();
-
-    float weightInv = Ap + Bp + Cp + _eta * edge.bGeometry * bsdf.density() + 1.0f;
-
-    return
-        light.radiance() *
-        eye.throughput *
-        bsdf.throughput() *
-        edge.bCosTheta *
-        edge.fGeometry /
-        (light.areaDensity() * weightInv);
-}
-
-vec3 VCM::_connect2(
+vec3 VCM::_connect(
     RandomEngine& engine,
+    size_t eyeSize,
     const EyeVertex& eye,
-    size_t size,
+    size_t lightSize,
     const LightVertex* path)
 {
-    vec3 radiance = _connect03(engine, eye) + _connect12(engine, eye);
+    vec3 radiance = _connect0(engine, eyeSize, eye) + _connect1(engine, eyeSize, eye);
 
-    for (size_t i = 0; i < size; ++i) {
-        radiance += _connect(eye, path[i]);
-    }
-
-    return radiance;
-}
-
-vec3 VCM::_connectN(
-    RandomEngine& engine,
-    const EyeVertex& eye,
-    size_t size,
-    const LightVertex* path)
-{
-    vec3 radiance = _connect0N(engine, eye) + _connect1N(engine, eye);
-
-    for (size_t i = 0; i < size; ++i) {
+    for (size_t i = 0; i < lightSize; ++i) {
         radiance += _connect(eye, path[i]);
     }
 
@@ -421,15 +377,16 @@ vec3 VCM::_gather(RandomEngine& engine, const EyeVertex& eye)
         _maxRadius);
 
     vec3 radiance = vec3(0.0f);
+    float radius = distance(isect.position(), light[0].position());
 
     for (size_t i = 0; i < gathered; ++i) {
-        radiance += _merge(eye, light[i]);
+        radiance += _merge(eye, light[i], radius);
     }
 
     return radiance / float(_numPhotons);
 }
 
-vec3 VCM::_merge(const EyeVertex& eye, const LightVertex& light)
+vec3 VCM::_merge(const EyeVertex& eye, const LightVertex& light, float radius)
 {
     vec3 omega = normalize(eye.position() - light.position());
 
@@ -445,8 +402,6 @@ vec3 VCM::_merge(const EyeVertex& eye, const LightVertex& light)
     float weightInv = Ap + Bp + Cp + _eta * edge.bGeometry * eyeBSDF.densityRev() + 1.0f;
     weightInv /= _eta;
 
-    // std::cout << weightInv << "/" << edge.bGeometry << " " << eyeBSDF.densityRev() << "\n";
-
     return
         _scene->occluded(eye.position(), light.position()) *
         light.throughput *
@@ -455,7 +410,7 @@ vec3 VCM::_merge(const EyeVertex& eye, const LightVertex& light)
         eyeBSDF.throughput() *
         edge.bCosTheta *
         edge.fGeometry /
-        (weightInv * pi<float>() * _maxRadius * _maxRadius);
+        (weightInv * pi<float>() * radius * radius);
 }
 
 }

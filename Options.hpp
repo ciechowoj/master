@@ -50,5 +50,4 @@ shared<Technique> makeTechnique(const Options& options);
 shared<Scene> loadScene(const Options& options);
 string techniqueString(const Options& options);
 
-
 }

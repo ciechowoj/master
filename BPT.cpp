@@ -39,10 +39,11 @@ vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
     eye[itr].c = 0;
     eye[itr].C = 0;
 
+    size_t eSize = 2;
+
     radiance += _connect(engine, eye[itr], lSize, light);
     std::swap(itr, prv);
 
-    size_t eSize = 2;
     float roulette = eSize < _minSubpath ? 1.0f : _roulette;
     float uniform = sampleUniform1(engine).value();
 

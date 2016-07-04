@@ -63,16 +63,19 @@ private:
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light);
     vec3 _connectSpecular(const EyeVertex& eye, const RayIsect& isect, const BSDFSample& bsdf);
-    vec3 _connect03(RandomEngine& engine, const EyeVertex& eye);
-    vec3 _connect12(RandomEngine& engine, const EyeVertex& eye);
-    vec3 _connect0N(RandomEngine& engine, const EyeVertex& eye);
-    vec3 _connect1N(RandomEngine& engine, const EyeVertex& eye);
-    vec3 _connect2(RandomEngine& engine, const EyeVertex& eye, size_t size, const LightVertex* path);
-    vec3 _connectN(RandomEngine& engine, const EyeVertex& eye, size_t size, const LightVertex* path);
+    vec3 _connect0(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye);
+    vec3 _connect1(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye);
+
+    vec3 _connect(
+        RandomEngine& engine,
+        size_t eyeSize,
+        const EyeVertex& eye,
+        size_t ligthSize,
+        const LightVertex* path);
 
     void _scatter(RandomEngine& engine);
     vec3 _gather(RandomEngine& engine, const EyeVertex& eye);
-    vec3 _merge(const EyeVertex& eye, const LightVertex& light);
+    vec3 _merge(const EyeVertex& eye, const LightVertex& light, float radius);
 };
 
 }
