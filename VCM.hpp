@@ -49,7 +49,7 @@ private:
         const vec3& omega() const { return _omega; }
     };
 
-    static const size_t _maxSubpath = 128;
+    static const size_t _maxSubpath = 10240;
     const size_t _numPhotons;
     const size_t _numGather;
     const float _maxRadius;
@@ -62,7 +62,6 @@ private:
     vec3 _trace(RandomEngine& engine, const Ray& ray) override;
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light);
-    vec3 _connectSpecular(const EyeVertex& eye, const RayIsect& isect, const BSDFSample& bsdf);
     vec3 _connect0(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye);
     vec3 _connect1(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye);
 
@@ -74,8 +73,23 @@ private:
         const LightVertex* path);
 
     void _scatter(RandomEngine& engine);
-    vec3 _gather(RandomEngine& engine, const EyeVertex& eye);
-    vec3 _merge(const EyeVertex& eye, const LightVertex& light, float radius);
+
+    vec3 _gather0(
+        RandomEngine& engine,
+        const vec3& position,
+        const EyeVertex& tentative);
+
+    vec3 _gather(
+        RandomEngine& engine,
+        const EyeVertex& eye,
+        const BSDFQuery& eyeBSDF,
+        const EyeVertex& tentative);
+
+    vec3 _merge(
+        const EyeVertex& eye,
+        const BSDFQuery& eyeBSDF,
+        const LightVertex& light,
+        float radius);
 };
 
 }

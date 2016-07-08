@@ -136,8 +136,8 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --max-radius=0.05 --num-photons=100000 --num-gather=10 --parallel
-	# ./build/master/master.bin models/CornellBoxDiffuse.blend --PT
+	./build/master/master.bin models/CornellBoxSphere.blend --VCM --max-radius=0.01 --num-photons=262144 --num-gather=2000 --parallel
+	# ./build/master/master.bin models/CornellBoxSphere.blend --BPT
 
 test: all
 	./build/master/unittest.bin

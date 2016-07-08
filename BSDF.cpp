@@ -8,6 +8,15 @@ const bool BSDFSample::zero() const
     return _throughput.x + _throughput.y + _throughput.z == 0.0f;
 }
 
+const BSDFQuery BSDFSample::query() const
+{
+    BSDFQuery query;
+    query._throughput = throughput();
+    query._density = density();
+    query._densityRev = densityRev();
+    return query;
+}
+
 BSDF::BSDF() { }
 BSDF::~BSDF() { }
 
