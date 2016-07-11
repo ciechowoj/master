@@ -126,8 +126,8 @@ void VCM::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     path[itr].surface = _scene->querySurface(isect);
     path[itr]._omega = -light.omega();
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
-    path[itr].a = 1.0f / (edge.fGeometry * light.omegaDensity()); // a_1
-    path[itr].A = edge.bGeometry * path[itr].a / light.areaDensity(); // A_1
+    path[itr].a = 1.0f / (edge.fGeometry * light.omegaDensity());
+    path[itr].A = edge.bGeometry * path[itr].a / light.areaDensity();
     path[itr].B = 0;
 
     prv = itr;
@@ -283,10 +283,10 @@ vec3 VCM::_connect(const EyeVertex& eye, const LightVertex& light) {
     auto edge = Edge(light, eye, omega);
 
     float Ap = (light.A * lightBSDF.densityRev() + light.a) * edge.bGeometry * eyeBSDF.densityRev();
-    float Bp = light.B * lightBSDF.densityRev() * edge.bGeometry * eyeBSDF.densityRev();
-    float Cp = (eye.C * eyeBSDF.density() + eye.c + _eta) * edge.fGeometry * lightBSDF.density();
+    float Bp = (light.B * lightBSDF.densityRev() + _eta) * edge.bGeometry * eyeBSDF.densityRev();
+    float Cp = (eye.C * eyeBSDF.density() + eye.c) * edge.fGeometry * lightBSDF.density();
 
-    float weightInv = Ap + Bp + Cp + _eta * edge.bGeometry * eyeBSDF.densityRev() + 1.0f;
+    float weightInv = Ap + Bp + Cp + _eta * edge.fGeometry * lightBSDF.density() + 1.0f;
 
     return
         _scene->occluded(eye.position(), light.position()) *
@@ -321,18 +321,11 @@ vec3 VCM::_connect0(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye) 
             auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
             auto edge = Edge(eye, isect, bsdf.omega());
 
-            float weightInv = 0.f;
+            float c = 1.0f / (edge.fGeometry * bsdf.density());
+            float C = (eye.C * bsdf.densityRev() + eye.c + _eta) * edge.bGeometry * c;
+            float Cp = (C * lsdf.omegaDensity() + c) * lsdf.areaDensity();
 
-            if (eyeSize == 2) {
-                weightInv = lsdf.areaDensity() / (edge.fGeometry * bsdf.density()) + 1.0f;
-            }
-            else {
-                float c = 1.0f / (edge.fGeometry * bsdf.density());
-                float C = (eye.C * bsdf.densityRev() + eye.c + _eta) * edge.bGeometry * c;
-                float Cp = (C * lsdf.omegaDensity() + c + _eta) * lsdf.areaDensity();
-
-                weightInv = Cp + 1;
-            }
+            float weightInv = Cp + 1;
 
             radiance +=
                 lsdf.radiance() *
@@ -354,18 +347,11 @@ vec3 VCM::_connect1(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye) 
     auto bsdf = _scene->queryBSDFEx(eye.surface, -light.omega(), eye.omega());
     auto edge = Edge(light, eye, light.omega());
 
-    float weightInv = 0.f;
+    float Ap = bsdf.densityRev() * edge.bGeometry / light.areaDensity();
+    float Bp = 0.0f;
+    float Cp = (eye.C * bsdf.density() + eye.c) * edge.fGeometry * light.omegaDensity();
 
-    if (eyeSize == 2) {
-        weightInv = (bsdf.densityRev() * edge.bGeometry) / light.areaDensity() + 1.0f;
-    }
-    else {
-        float Ap = bsdf.densityRev() * edge.bGeometry / light.areaDensity();
-        float Bp = 0.0f;
-        float Cp = (eye.C * bsdf.density() + eye.c + _eta) * edge.fGeometry * light.omegaDensity();
-
-        weightInv = Ap + Bp + Cp + 1.0f;
-    }
+    float weightInv = Ap + Bp + Cp + _eta * edge.fGeometry * light.omegaDensity() + 1.0f;
 
     return
         light.radiance() *
