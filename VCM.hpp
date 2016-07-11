@@ -36,6 +36,23 @@ private:
         const vec3& omega() const { return _omega; }
     };
 
+    struct LightPhoton {
+        SurfacePoint surface;
+        vec3 _omega;
+        vec3 throughput;
+        float A, B;
+        float fCosTheta;
+        float fDensity;
+        float fGeometry;
+
+        float operator[](size_t i) const { return surface.position()[i]; }
+
+        const vec3& position() const { return surface.position(); }
+        const vec3& normal() const { return surface.normal(); }
+        const vec3& gnormal() const { return surface.gnormal(); }
+        const vec3& omega() const { return _omega; }
+    };
+
     struct EyeVertex {
         SurfacePoint surface;
         vec3 _omega;
@@ -57,10 +74,11 @@ private:
     const float _roulette;
     const float _eta;
 
-    KDTree3D<LightVertex> _vertices;
+    KDTree3D<LightPhoton> _vertices;
 
     vec3 _trace(RandomEngine& engine, const Ray& ray) override;
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
+    void _trace(RandomEngine& engine, size_t& size, LightPhoton* path);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light);
     vec3 _connect0(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye);
     vec3 _connect1(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye);
@@ -74,21 +92,13 @@ private:
 
     void _scatter(RandomEngine& engine);
 
-    vec3 _gather0(
-        RandomEngine& engine,
-        const vec3& position,
-        const EyeVertex& tentative);
-
     vec3 _gather(
         RandomEngine& engine,
-        const EyeVertex& eye,
-        const BSDFQuery& eyeBSDF,
-        const EyeVertex& tentative);
+        const EyeVertex& eye);
 
     vec3 _merge(
         const EyeVertex& eye,
-        const BSDFQuery& eyeBSDF,
-        const LightVertex& light,
+        const LightPhoton& light,
         float radius);
 };
 

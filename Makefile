@@ -25,10 +25,10 @@ LIBRARY_DIRS = \
 	-Lbuild/assimp/code
 
 CC = gcc
-CCFLAGS = -march=native -O2 -w -Wall $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CCFLAGS = -march=native -O3 -w -Wall $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 CXX = g++
-CXXFLAGS = -march=native -O2 -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CXXFLAGS = -march=native -O3 -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \
@@ -136,7 +136,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxSphere.blend --VCM --max-radius=0.01 --num-photons=262144 --num-gather=2000 --parallel
+	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --max-radius=0.01 --num-photons=10000 --num-gather=2000 --parallel
 	# ./build/master/master.bin models/CornellBoxSphere.blend --BPT
 
 test: all

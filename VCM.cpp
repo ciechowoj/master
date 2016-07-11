@@ -58,13 +58,13 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
     eye[itr]._omega = -ray.direction;
     eye[itr].throughput = vec3(1.0f);
     eye[itr].specular = 1.0f;
-    eye[itr].c = -_eta;
+    eye[itr].c = 0;
     eye[itr].C = 0;
 
     size_t eSize = 2;
 
     radiance += _connect(engine, eSize, eye[itr], lSize, light);
-    radiance += _gather0(engine, ray.origin, eye[itr]);
+    radiance += _gather(engine, eye[itr]);
     std::swap(itr, prv);
 
     float roulette = eSize < _minSubpath ? 1.0f : _roulette;
@@ -92,20 +92,14 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
 
         eye[itr].specular = eye[prv].specular * bsdf.specular();
         eye[itr].c = 1.0f / (edge.fGeometry * bsdf.density());
-
-        if (eSize == 2) {
-            eye[itr].C = 0.0f;
-        }
-        else {
-            eye[itr].C =
-                (eye[prv].C * bsdf.densityRev() + eye[prv].c + _eta) *
-                edge.bGeometry *
-                eye[itr].c;
-        }
+        eye[itr].C =
+            (eye[prv].C * bsdf.densityRev() + eye[prv].c + _eta) *
+            edge.bGeometry *
+            eye[itr].c;
 
         ++eSize;
         radiance += _connect(engine, eSize, eye[itr], lSize, light);
-        radiance += _gather(engine, eye[prv], bsdf.query(), eye[itr]);
+        radiance += _gather(engine, eye[itr]);
         std::swap(itr, prv);
 
         roulette = eSize < _minSubpath ? 1.0f : _roulette;
@@ -132,9 +126,9 @@ void VCM::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     path[itr].surface = _scene->querySurface(isect);
     path[itr]._omega = -light.omega();
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
-    path[itr].a = 1.0f / (edge.fGeometry * light.omegaDensity());
-    path[itr].A = edge.bGeometry * path[itr].a / light.areaDensity();
-    path[itr].B = 0.f;
+    path[itr].a = 1.0f / (edge.fGeometry * light.omegaDensity()); // a_1
+    path[itr].A = edge.bGeometry * path[itr].a / light.areaDensity(); // A_1
+    path[itr].B = 0;
 
     prv = itr;
     ++itr;
@@ -166,6 +160,96 @@ void VCM::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
         path[itr].a = 1.0f / (edge.fGeometry * bsdf.density());
         path[itr].A = (path[prv].A * bsdf.densityRev() + path[prv].a) * edge.bGeometry * path[itr].a;
         path[itr].B = (path[prv].B * bsdf.densityRev() + _eta) * edge.bGeometry * path[itr].a;
+
+        if (bsdf.specular() > 0.0f) {
+            path[prv] = path[itr];
+        }
+        else {
+            prv = itr;
+            ++itr;
+        }
+
+        ++lSize;
+        roulette = lSize < _minSubpath ? 1.0f : _roulette;
+        uniform = sampleUniform1(engine).value();
+    }
+
+    auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
+
+    if (bsdf.specular() > 0.0f) {
+        size = prv;
+    }
+    else {
+        size = prv + 1;
+    }
+}
+
+void VCM::_trace(RandomEngine& engine, size_t& size, LightPhoton* path) {
+    size_t itr = 0, prv = 0;
+
+    LightSampleEx light = _scene->sampleLight(engine);
+
+    RayIsect isect = _scene->intersectMesh(light.position(), light.omega());
+
+    if (!isect.isPresent()) {
+        size = 0;
+        return;
+    }
+
+    float a, A, B;
+
+    auto edge = Edge(light, isect);
+
+    path[itr].surface = _scene->querySurface(isect);
+    path[itr]._omega = -light.omega();
+    path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
+    path[itr].A = edge.bGeometry / light.areaDensity();
+    path[itr].B = 0;
+    path[itr].fGeometry = edge.fGeometry;
+    path[itr].fDensity = light.omegaDensity();
+    path[itr].fCosTheta = edge.fCosTheta;
+
+    a = 1.0f / (edge.fGeometry * light.omegaDensity());
+    A = edge.bGeometry * a / light.areaDensity();
+    B = 0;
+
+    prv = itr;
+    ++itr;
+
+    size_t lSize = 2;
+    float roulette = lSize < _minSubpath ? 1.0f : _roulette;
+    float uniform = sampleUniform1(engine).value();
+
+    while (uniform < roulette) {
+        auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
+
+        isect = _scene->intersectMesh(path[prv].position(), bsdf.omega());
+
+        if (!isect.isPresent()) {
+            break;
+        }
+
+        path[itr].surface = _scene->querySurface(isect);
+        path[itr]._omega = -bsdf.omega();
+
+        edge = Edge(path[prv], path[itr]);
+
+        path[itr].throughput =
+            path[prv].throughput *
+            bsdf.throughput() *
+            edge.bCosTheta /
+            (bsdf.density() * roulette);
+
+        path[itr].A = (A * bsdf.densityRev() + a) * edge.bGeometry;
+        path[itr].B = (B * bsdf.densityRev() + _eta) * edge.bGeometry;
+        path[itr].fDensity = bsdf.density();
+        path[itr].fCosTheta = edge.fCosTheta;
+        path[itr].fGeometry = edge.fGeometry;
+
+        float prv_a = a;
+        a = 1.0f / (edge.fGeometry * bsdf.density());
+        A = (path[prv].A * bsdf.densityRev() + prv_a) * edge.bGeometry * a;
+        B = (path[prv].B * bsdf.densityRev() + _eta) * edge.bGeometry * a;
 
         if (bsdf.specular() > 0.0f) {
             path[prv] = path[itr];
@@ -310,7 +394,7 @@ vec3 VCM::_connect(
 
 void VCM::_scatter(RandomEngine& engine)
 {
-    vector<LightVertex> vertices;
+    vector<LightPhoton> vertices;
 
     size_t itr = 0;
 
@@ -323,50 +407,25 @@ void VCM::_scatter(RandomEngine& engine)
 
     vertices.resize(itr);
 
-    _vertices = KDTree3D<LightVertex>(move(vertices));
-}
-
-vec3 VCM::_gather0(
-    RandomEngine& engine,
-    const vec3& position,
-    const EyeVertex& tentative)
-{
-    EyeVertex eye;
-    eye.surface._position = position;
-    eye.surface._tangent[0] = -tentative.omega();
-    eye.surface._tangent[1] = -tentative.omega();
-    eye.surface._tangent[2] = -tentative.omega();
-    eye._omega = -tentative.omega();
-    eye.throughput = vec3(1.0f);
-    eye.c = 0.0f;
-    eye.C = 0.0f;
-
-    BSDFQuery query;
-    query._throughput = vec3(1.0f);
-    query._density = 1.0f;
-    query._densityRev = 1.0f;
-
-    return _gather(engine, eye, query, tentative);
+    _vertices = KDTree3D<LightPhoton>(move(vertices));
 }
 
 vec3 VCM::_gather(
     RandomEngine& engine,
-    const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF,
-    const EyeVertex& tentative)
+    const EyeVertex& eye)
 {
-    LightVertex light[_maxSubpath];
+    LightPhoton light[_maxSubpath];
 
     size_t gathered = _vertices.query_k(
         light,
-        tentative.position(),
+        eye.position(),
         _numGather,
         _maxRadius);
 
     vec3 radiance = vec3(0.0f);
 
     for (size_t i = 0; i < gathered; ++i) {
-        radiance += _merge(eye, eyeBSDF, light[i], _maxRadius);
+        radiance += _merge(eye, light[i], _maxRadius);
     }
 
     return radiance / float(_numPhotons);
@@ -374,32 +433,23 @@ vec3 VCM::_gather(
 
 vec3 VCM::_merge(
     const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF,
-    const LightVertex& light,
+    const LightPhoton& light,
     float radius)
 {
-    vec3 omega = normalize(eye.position() - light.position());
+    auto eyeBSDF = _scene->queryBSDFEx(eye.surface, light.omega(), eye.omega());
 
-    auto lightBSDF = _scene->queryBSDFEx(light.surface, light.omega(), omega);
-    /* auto eyeBSDF = _scene->queryBSDFEx(eye.surface, -omega, eye.omega()); */
+    float Ap = light.A * eyeBSDF.densityRev();
+    float Bp = light.B * eyeBSDF.densityRev();
+    float Cp = (eye.C * eyeBSDF.density() + eye.c) * light.fGeometry * light.fDensity;
 
-    auto edge = Edge(light, eye, omega);
-
-    float Ap = (light.A * lightBSDF.densityRev() + light.a) * edge.bGeometry * eyeBSDF.densityRev();
-    float Bp = light.B * lightBSDF.densityRev() * edge.bGeometry * eyeBSDF.densityRev();
-    float Cp = (eye.C * eyeBSDF.density() + eye.c + _eta) * edge.fGeometry * lightBSDF.density();
-
-    float weightInv = Ap + Bp + Cp + _eta * edge.bGeometry * eyeBSDF.densityRev() + 1.0f;
-    weightInv /= _eta;
+    float weightInv = Ap + Bp + Cp + _eta * light.fGeometry * light.fDensity + 1.0f;
+    weightInv /= _eta * light.fGeometry * light.fDensity;
 
     return
-        _scene->occluded(eye.position(), light.position()) *
         light.throughput *
-        lightBSDF.throughput() *
         eye.throughput *
         eyeBSDF.throughput() *
-        edge.bCosTheta *
-        edge.fGeometry /
+        light.fCosTheta /
         (weightInv * pi<float>() * radius * radius);
 }
 
