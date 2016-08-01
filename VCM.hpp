@@ -80,12 +80,11 @@ private:
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
     void _trace(RandomEngine& engine, size_t& size, LightPhoton* path);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light);
-    vec3 _connect0(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye);
-    vec3 _connect1(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye);
+    vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
+    vec3 _connect1(RandomEngine& engine, const EyeVertex& eye);
 
     vec3 _connect(
         RandomEngine& engine,
-        size_t eyeSize,
         const EyeVertex& eye,
         size_t ligthSize,
         const LightVertex* path);

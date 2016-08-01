@@ -481,4 +481,45 @@ shared<Scene> loadScene(string path) {
     return result;
 }
 
+vector<Triangle> loadTriangles(string path)
+{
+    Assimp::Importer importer;
+
+    auto flags =
+    aiProcess_Triangulate |
+    aiProcess_GenNormals |
+    aiProcess_JoinIdenticalVertices |
+    aiProcess_PreTransformVertices;
+
+    const aiScene* scene = importer.ReadFile(path, flags);
+
+    if (!scene) {
+        throw std::runtime_error("Cannot load \"" + path + "\" scene.");
+    }
+
+    vector<Triangle> triangles;
+
+    for (size_t iMesh = 0; iMesh < scene->mNumMeshes; ++iMesh) {
+        auto mesh = scene->mMeshes[iMesh];
+
+        runtime_assert(mesh != nullptr);
+        runtime_assert(mesh->mVertices != nullptr);
+
+        for (size_t iFace = 0; iFace < mesh->mNumFaces; ++iFace) {
+            runtime_assert(mesh->mFaces[iFace].mNumIndices == 3);
+
+            Triangle triangle;
+
+            for (size_t iVertex = 0; iVertex < 3; ++iVertex) {
+                size_t index = mesh->mFaces[iFace].mIndices[iVertex];
+                triangle[iVertex] = toVec3(mesh->mVertices[index]);
+            }
+
+            triangles.push_back(triangle);
+        }
+    }
+
+    return triangles;
+}
+
 }

@@ -2,7 +2,7 @@
 	"build_systems":
 	[
 		{
-			"target": "minion",
+			"target": "super_exec",
 
 			"cmd":
 			[
@@ -11,20 +11,24 @@
 			],
 			"file_regex": "^(?:(?:  what\\(\\):  )|)(..[^:\\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
 			"name": "Build master.",
+			"working_dir": "${project_path}",
 
 			"variants":
 			[
 				{
 					"cmd": ["make", "-s", "run"],
 					"name": "Run master.",
-					"working_dir": "${project_path}"
 				},
 
 				{
 					"cmd": ["make", "-s", "test"],
 					"name": "Test master.",
-					"working_dir": "${project_path}"
 				},
+
+				{
+					"cmd": ["make", "-s", "benchmark"],
+					"name": "Benchmark.",
+				}
 			],
 
 			"working_dir": "${project_path}"

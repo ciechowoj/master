@@ -63,7 +63,7 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
 
     size_t eSize = 2;
 
-    radiance += _connect(engine, eSize, eye[itr], lSize, light);
+    radiance += _connect(engine, eye[itr], lSize, light);
     radiance += _gather(engine, eye[itr]);
     std::swap(itr, prv);
 
@@ -98,7 +98,7 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
             eye[itr].c;
 
         ++eSize;
-        radiance += _connect(engine, eSize, eye[itr], lSize, light);
+        radiance += _connect(engine, eye[itr], lSize, light);
         radiance += _gather(engine, eye[itr]);
         std::swap(itr, prv);
 
@@ -299,7 +299,7 @@ vec3 VCM::_connect(const EyeVertex& eye, const LightVertex& light) {
         weightInv;
 }
 
-vec3 VCM::_connect0(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye) {
+vec3 VCM::_connect0(RandomEngine& engine, const EyeVertex& eye) {
     vec3 radiance = vec3(0.0f);
 
     auto bsdf = _scene->sampleBSDF(engine, eye.surface, eye.omega());
@@ -341,7 +341,7 @@ vec3 VCM::_connect0(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye) 
     return radiance;
 }
 
-vec3 VCM::_connect1(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye) {
+vec3 VCM::_connect1(RandomEngine& engine, const EyeVertex& eye) {
     LightSampleEx light = _scene->sampleLightEx(engine, eye.position());
 
     auto bsdf = _scene->queryBSDFEx(eye.surface, -light.omega(), eye.omega());
@@ -364,12 +364,13 @@ vec3 VCM::_connect1(RandomEngine& engine, size_t eyeSize, const EyeVertex& eye) 
 
 vec3 VCM::_connect(
     RandomEngine& engine,
-    size_t eyeSize,
     const EyeVertex& eye,
     size_t lightSize,
     const LightVertex* path)
 {
-    vec3 radiance = _connect0(engine, eyeSize, eye) + _connect1(engine, eyeSize, eye);
+    return vec3(0.0f);
+
+    vec3 radiance = _connect0(engine, eye) + _connect1(engine, eye);
 
     for (size_t i = 0; i < lightSize; ++i) {
         radiance += _connect(eye, path[i]);

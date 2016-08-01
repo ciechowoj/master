@@ -1,4 +1,4 @@
-	
+
 NUM_THREADS=-j4
 
 INCLUDE_DIRS = \
@@ -57,7 +57,7 @@ STD_LIBS = \
 
 MAIN_HEADERS = $(wildcard *.hpp)
 MAIN_SOURCES := $(wildcard *.cpp)
-MAIN_SOURCES := $(filter-out main.cpp, $(MAIN_SOURCES))
+MAIN_SOURCES := $(filter-out main.cpp benchmark.cpp, $(MAIN_SOURCES))
 MAIN_OBJECTS = $(MAIN_SOURCES:%.cpp=build/master/%.o)
 MAIN_LIBS = $(GLFW_LIBS) $(STD_LIBS) -lglad -limgui -lgtest $(EMBREE_LIBS) -lassimp -lz
 MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td
@@ -87,11 +87,15 @@ include submodules/imgui.makefile
 include submodules/googletest.makefile
 include submodules/glm.makefile
 
-.PHONY: all master unittest
+.PHONY: all master unittest benchmark
 
 master: build/master/master.bin
 
 unittest: build/master/unittest.bin
+
+benchmark: \
+	build/master/benchmark.bin
+	./build/master/benchmark.bin
 
 build/master/master.bin: \
 	$(LIB_DEPENDENCIES) \
@@ -106,6 +110,13 @@ build/master/unittest.bin: \
 	$(MAIN_OBJECTS) \
 	$(TEST_OBJECTS)
 	$(CXX) $(MAIN_OBJECTS) $(TEST_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/unittest.bin
+
+build/master/benchmark.bin: \
+	$(LIB_DEPENDENCIES) \
+	Makefile \
+	$(MAIN_OBJECTS) \
+	build/master/benchmark.o
+	$(CXX) $(MAIN_OBJECTS) build/master/benchmark.o $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/benchmark.bin
 
 build/master/%.o: %.cpp build/master/%.d build/master/sentinel
 	$(CXX) -c $(MAIN_DEPENDENCY_FLAGS) $(CXXFLAGS) $< -o $@
@@ -136,14 +147,14 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	# ./build/master/master.bin models/CornellBoxSphere.blend --VCM --max-radius=0.001 --num-photons=200000 --num-gather=2000 --parallel
-	./build/master/master.bin models/CornellBoxSphere.blend --BPT
+	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --max-radius=0.005 --num-photons=2000000 --num-gather=2000 --parallel
+	# ./build/master/master.bin models/CornellBoxSphere.blend --BPT
 
 test: all
 	./build/master/unittest.bin
 
 clean:
-	rm -rf build/master	
+	rm -rf build/master
 
 distclean:
 	rm -rf build
