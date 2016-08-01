@@ -35,3 +35,4 @@ build/*
 dna.txt
 *.blend1
 *.blend2
+*.dat
