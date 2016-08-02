@@ -147,9 +147,9 @@ public:
 
         const float radiusSq = radius * radius;
 
-        while (stackSize) {
-            uint32_t begin = stack[stackSize - 1].begin;
-            uint32_t end = stack[stackSize - 1].end;
+        while (stackSize--) {
+            uint32_t begin = stack[stackSize].begin;
+            uint32_t end = stack[stackSize].end;
             uint32_t median = begin + (end - begin) / 2;
 
             vec3 point = _points[median];
@@ -158,18 +158,16 @@ public:
             if (distanceSq < radiusSq) {
                 callback(_data[median]);
 
-                --stackSize;
-
                 if (begin != median) {
+                    stack[stackSize].begin = begin;
+                    stack[stackSize].end = median;
                     ++stackSize;
-                    stack[stackSize - 1].begin = begin;
-                    stack[stackSize - 1].end = median;
                 }
 
                 if (median + 1 != end) {
+                    stack[stackSize].begin = median + 1;
+                    stack[stackSize].end = end;
                     ++stackSize;
-                    stack[stackSize - 1].begin = median + 1;
-                    stack[stackSize - 1].end = end;
                 }
             }
             else if (end - begin != 1) {
@@ -178,42 +176,31 @@ public:
                 float axisDistanceSq = axisDistance * axisDistance;
 
                 if (axisDistance < 0.0) {
-                    stack[stackSize - 1].begin = begin;
-                    stack[stackSize - 1].end = median;
-
-                    if (begin == median) {
-                        --stackSize;
+                    if (begin != median) {
+                        stack[stackSize].begin = begin;
+                        stack[stackSize].end = median;
+                        ++stackSize;
                     }
 
-                    if (axisDistanceSq < radiusSq) {
+                    if (axisDistanceSq < radiusSq && median + 1 != end) {
                         stack[stackSize].begin = median + 1;
                         stack[stackSize].end = end;
-
-                        if (median + 1 != end) {
-                            ++stackSize;
-                        }
+                        ++stackSize;
                     }
                 }
                 else {
-                    stack[stackSize - 1].begin = median + 1;
-                    stack[stackSize - 1].end = end;
-
-                    if (median + 1 == end) {
-                        --stackSize;
+                    if (median + 1 != end) {
+                        stack[stackSize].begin = median + 1;
+                        stack[stackSize].end = end;
+                        ++stackSize;
                     }
 
-                    if (axisDistanceSq < radiusSq) {
+                    if (axisDistanceSq < radiusSq && begin != median) {
                         stack[stackSize].begin = begin;
                         stack[stackSize].end = median;
-
-                        if (begin != median) {
-                            ++stackSize;
-                        }
+                        ++stackSize;
                     }
                 }
-            }
-            else {
-                --stackSize;
             }
         }
     }
