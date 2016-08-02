@@ -8,8 +8,9 @@
 #include <sstream>
 #include <vector>
 #include <loader.hpp>
-#include <KDTree3D.hpp>
 
+#include <KDTree3D.hpp>
+#include <KDTree3Dv2.hpp>
 
 using namespace std;
 using namespace glm;
@@ -316,16 +317,15 @@ template <class T> bool equal(const vector<T>& a, const vector<T>& b)
 }
 
 void runQueries(
-    const KDTree3D<TestStruct>& kdtree,
+    const v2::KDTree3D<TestStruct>& kdtree,
     const vector<vec3>& queries,
     vector<vector<TestStruct>>& result,
     float radius)
 {
     for (size_t i = 0; i < queries.size(); ++i) {
-        size_t size = kdtree.query_k(
+        size_t size = kdtree.rQuery(
             result[i].data(),
             queries[i],
-            result[i].size(),
             radius);
 
         result[i].resize(size);
@@ -339,6 +339,7 @@ void run_test_case(ifstream& stream) {
     loadTestCase(stream, data, queries, result, radius);
 
     cout
+        << setw(10) << "<current>"
         << setw(16) << data.size()
         << setw(16) << queries.size()
         << setw(16) << radius;
@@ -352,10 +353,11 @@ void run_test_case(ifstream& stream) {
 
     auto start = chrono::high_resolution_clock::now();
 
-    KDTree3D<TestStruct> kdtree(testData);
+    v2::KDTree3D<TestStruct> kdtree(testData);
 
     auto build = chrono::high_resolution_clock::now();
 
+    // BENCHMARKED CALL
     runQueries(kdtree, queries, testResult, radius);
 
     auto end = chrono::high_resolution_clock::now();
@@ -365,9 +367,9 @@ void run_test_case(ifstream& stream) {
     chrono::duration<double> totalTime = end - start;
 
     cout
-        << setw(12) << buildTime.count() << "s"
-        << setw(12) << queriesTime.count() << "s"
-        << setw(12) << totalTime.count() << "s" << endl;
+        << setw(12) << setprecision(4) << fixed << buildTime.count() << "s"
+        << setw(12) << setprecision(4) << fixed << queriesTime.count() << "s"
+        << setw(12) << setprecision(4) << fixed << totalTime.count() << "s" << endl;
 
     for (size_t i = 0; i < result.size(); ++i) {
         auto actual = extractPositions(testResult[i]);
@@ -383,7 +385,7 @@ void run_test_case(ifstream& stream) {
             });
 
         if (!equal(result[i], actual)) {
-            cout << "Test failed:\n";
+            cout << "Test failed (query = " << i << "):\n";
             cout << "Expected:\n";
             cout << result[i] << "\n";
             cout << "Actual:\n";
@@ -402,16 +404,19 @@ void run_test_case(string path) {
 }
 
 void test_case_header() {
-    cout << "      NUM POINTS     NUM QUERIES          RADIUS        BUILD        QUERY        TOTAL" << endl;
+    cout << "      NAME      NUM POINTS     NUM QUERIES          RADIUS        BUILD        QUERY        TOTAL" << endl;
 }
 
 int main(int argc, char **argv) {
 
-    // prepareCornellTestCase("test_case_2.dat", 100000, 1000, 1.f);
+    // prepareCornellTestCase("test_case_3.dat", 500000, 2000, 1.f);
 
     test_case_header();
-    run_test_case("test_case_2.dat");
 
+    cout << "        v0          500000            2000               1      0.9369s      0.1569s       1.094s" << endl;
+    cout << "        v1          500000            2000               1      0.9398s      0.1116s       1.051s" << endl;
+
+    run_test_case("test_case_3.dat");
 
     return 0;
 }
