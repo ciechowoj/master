@@ -136,28 +136,21 @@ public:
         // the stack will be no bigger than 32.
 
         struct Stack {
-            size_t begin;
-            size_t end;
+            uint32_t begin;
+            uint32_t end;
         };
 
         Stack stack[32];
         stack[0].begin = 0;
         stack[0].end = _points.size();
-        size_t stackSize = 1;
+        uint32_t stackSize = 1;
 
         const float radiusSq = radius * radius;
 
         while (stackSize) {
-            size_t begin = stack[stackSize - 1].begin;
-            size_t end = stack[stackSize - 1].end;
-
-            if (end == begin) {
-                --stackSize;
-                continue;
-            }
-
-            size_t median = begin + (end - begin) / 2;
-            size_t axis = _axes.get(median);
+            uint32_t begin = stack[stackSize - 1].begin;
+            uint32_t end = stack[stackSize - 1].end;
+            uint32_t median = begin + (end - begin) / 2;
 
             vec3 point = _points[median];
             float distanceSq = distance2(query, point);
@@ -165,18 +158,22 @@ public:
             if (distanceSq < radiusSq) {
                 callback(_data[median]);
 
-                if (axis != leaf) {
+                --stackSize;
+
+                if (begin != median) {
                     ++stackSize;
-                    stack[stackSize - 2].begin = begin;
-                    stack[stackSize - 2].end = median;
+                    stack[stackSize - 1].begin = begin;
+                    stack[stackSize - 1].end = median;
+                }
+
+                if (median + 1 != end) {
+                    ++stackSize;
                     stack[stackSize - 1].begin = median + 1;
                     stack[stackSize - 1].end = end;
                 }
-                else {
-                    --stackSize;
-                }
             }
-            else if (axis != leaf) {
+            else if (end - begin != 1) {
+                uint32_t axis = _axes.get(median);
                 float axisDistance = query[axis] - point[axis];
                 float axisDistanceSq = axisDistance * axisDistance;
 
@@ -184,20 +181,34 @@ public:
                     stack[stackSize - 1].begin = begin;
                     stack[stackSize - 1].end = median;
 
+                    if (begin == median) {
+                        --stackSize;
+                    }
+
                     if (axisDistanceSq < radiusSq) {
                         stack[stackSize].begin = median + 1;
                         stack[stackSize].end = end;
-                        ++stackSize;
+
+                        if (median + 1 != end) {
+                            ++stackSize;
+                        }
                     }
                 }
                 else {
                     stack[stackSize - 1].begin = median + 1;
                     stack[stackSize - 1].end = end;
 
+                    if (median + 1 == end) {
+                        --stackSize;
+                    }
+
                     if (axisDistanceSq < radiusSq) {
                         stack[stackSize].begin = begin;
                         stack[stackSize].end = median;
-                        ++stackSize;
+
+                        if (begin != median) {
+                            ++stackSize;
+                        }
                     }
                 }
             }
