@@ -172,7 +172,14 @@ public:
             }
             else if (end - begin != 1) {
                 uint32_t axis = _axes.get(median);
-                float axisDistance = query[axis] - point[axis];
+                float axisDistance;
+
+                switch (axis) {
+                    case 0: axisDistance = query.x - point.x; break;
+                    case 1: axisDistance = query.y - point.y; break;
+                    case 2: axisDistance = query.z - point.z; break;
+                }
+
                 float axisDistanceSq = axisDistance * axisDistance;
 
                 if (axisDistance < 0.0) {
