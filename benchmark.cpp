@@ -413,8 +413,9 @@ int main(int argc, char **argv) {
 
     test_case_header();
 
-    cout << "        v0          500000            2000               1      0.9369s      0.1569s       1.094s" << endl;
-    cout << "        v1          500000            2000               1      0.9398s      0.1116s       1.051s" << endl;
+    cout << "        v0          500000            2000               1      0.9369s      0.1569s      1.0940s" << endl;
+    cout << "        v1          500000            2000               1      0.9398s      0.1116s      1.0510s" << endl;
+    cout << "        v2          500000            2000               1      0.7510s      0.0845s      0.8354s" << endl;
 
     run_test_case("test_case_3.dat");
 

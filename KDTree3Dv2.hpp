@@ -75,7 +75,25 @@ private:
 
     struct Point {
         vec3 position;
-        uint32_t index;
+        uint32_t _index;
+
+        size_t index() const {
+            return _index >> 2;
+        }
+
+        void setIndex(size_t index) {
+            _index &= 3u;
+            _index |= uint32_t(index) << 2;
+        }
+
+        size_t axis() const {
+            return _index & 3u;
+        }
+
+        void setAxis(size_t axis) {
+            _index &= ~uint32_t(3u);
+            _index |= axis;
+        }
     };
 
     static const size_t leaf = 3;
@@ -90,7 +108,7 @@ public:
 
         for (size_t i = 0; i < _data.size(); ++i) {
             _points[i].position = _data[i].position();
-            _points[i].index = i;
+            _points[i].setIndex(i);
         }
 
         if (!_points.empty()) {
@@ -198,7 +216,7 @@ public:
             float distanceSq = distance2(query, point);
 
             if (distanceSq < radiusSq) {
-                callback(_data[_points[median].index]);
+                callback(_data[_points[median].index()]);
 
                 if (axis != leaf) {
                     ++stackSize;
