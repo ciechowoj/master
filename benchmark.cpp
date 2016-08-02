@@ -413,9 +413,14 @@ int main(int argc, char **argv) {
 
     test_case_header();
 
+    // Initial version.
     cout << "        v0          500000            2000               1      0.9369s      0.1569s      1.0940s" << endl;
+    // Replaced heap.
     cout << "        v1          500000            2000               1      0.9398s      0.1116s      1.0510s" << endl;
+    // Added proxy structure.
     cout << "        v2          500000            2000               1      0.7510s      0.0845s      0.8354s" << endl;
+    // Packed axis to proxy structure removed bitfields.
+    cout << "        v3          500000            2000               1      0.7130s      0.0769s      0.7900s" << endl;
 
     run_test_case("test_case_3.dat");
 

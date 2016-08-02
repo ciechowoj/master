@@ -15,43 +15,6 @@ using std::pair;
 using std::make_pair;
 using std::uint32_t;
 
-template <size_t N> class BitfieldVector {
-private:
-    static const size_t _flags_per_item = (sizeof(size_t) * 8) / N;
-    static const size_t mask = ~(~size_t(0) >> N << N);
-public:
-    BitfieldVector() { }
-
-    BitfieldVector(size_t size) {
-        resize(size);
-    }
-
-    void resize(size_t size) {
-        data.resize((size + _flags_per_item - 1) / _flags_per_item);
-    }
-
-    void set(size_t index, size_t value) {
-        size_t item = index / _flags_per_item;
-        size_t shift = index % _flags_per_item * N;
-        data[item] = (data[item] & ~(mask << shift)) | (value << shift);
-    }
-
-    size_t get(size_t index) const {
-        size_t item = index / _flags_per_item;
-        size_t shift = index % _flags_per_item * N;
-        return (data[item] >> shift) & mask;
-    }
-
-    void swap(size_t a, size_t b) {
-        size_t t = get(a);
-        set(a, get(b));
-        set(b, t);
-    }
-
-private:
-    vector<size_t> data;
-};
-
 inline size_t max_axis(const pair<vec3, vec3>& aabb) {
     vec3 diff = abs(aabb.first - aabb.second);
 
@@ -74,25 +37,64 @@ private:
     };
 
     struct Point {
-        vec3 position;
-        uint32_t _index;
+        union {
+            struct {
+                float x, y, z;
+            } _position;
 
-        size_t index() const {
-            return _index >> 2;
+            struct {
+                uint32_t x, y, z;
+            } _bitfields;
+
+            float vector[3];
+        };
+
+        vec3 position() const {
+            return vec3(
+                abs(_position.x),
+                abs(_position.y),
+                abs(_position.z));
         }
 
-        void setIndex(size_t index) {
-            _index &= 3u;
-            _index |= uint32_t(index) << 2;
+        void setPosition(const vec3& position)
+        {
+            size_t axis = this->axis();
+            _position.x = position.x;
+            _position.y = position.y;
+            _position.z = position.z;
+            setAxis(axis);
         }
 
         size_t axis() const {
-            return _index & 3u;
+            //return _index;
+            return _position.x < 0.f ? (_position.y < 0.f ? 0 : 1) : (_position.y < 0.f ? 2 : 3);
         }
 
         void setAxis(size_t axis) {
-            _index &= ~uint32_t(3u);
-            _index |= axis;
+            //_index = axis;
+            //return;
+            switch (axis) {
+                case 0:
+                    _position.x = abs(_position.x) * -1;
+                    _position.y = abs(_position.y) * -1;
+                    break;
+                case 1:
+                    _position.x = abs(_position.x) * -1;
+                    _position.y = abs(_position.y) * +1;
+                    break;
+                case 2:
+                    _position.x = abs(_position.x) * +1;
+                    _position.y = abs(_position.y) * -1;
+                    break;
+                default:
+                    _position.x = abs(_position.x) * +1;
+                    _position.y = abs(_position.y) * +1;
+                    break;
+            }
+        }
+
+        float operator[](size_t index) const {
+            return abs(vector[index]);
         }
     };
 
@@ -103,21 +105,22 @@ public:
 
     KDTree3D(vector<T>&& that) {
         _data = move(that);
-        _flags.resize(_data.size());
         _points.resize(_data.size());
 
-        for (size_t i = 0; i < _data.size(); ++i) {
-            _points[i].position = _data[i].position();
-            _points[i].setIndex(i);
-        }
-
         if (!_points.empty()) {
-            vec3 lower = _points[0].position, upper = _points[0].position;
+            vec3 lower = _points[0].position(), upper = _points[0].position();
+
+            for (size_t i = 0; i < _data.size(); ++i) {
+                lower = min(lower, _data[i].position());
+                upper = max(upper, _data[i].position());
+            }
+
+            _origin = lower - 1.0f;
+            upper -= _origin;
+            lower -= _origin;
 
             for (size_t i = 0; i < _points.size(); ++i) {
-                vec3 pos = _points[i].position;
-                lower = min(lower, pos);
-                upper = max(upper, pos);
+                _points[i].setPosition(_data[i].position() - _origin);
             }
 
             vector<size_t> X(_points.size());
@@ -154,7 +157,12 @@ public:
                 size_t k = X[j];
 
                 while (k != X[k]) {
-                    swap(_points[j], _points[X[j]]);
+                    vec3 position = _points[j].position();
+                    _points[j].setPosition(_points[X[j]].position());
+                    _points[X[j]].setPosition(position);
+
+                    swap(_data[j], _data[X[j]]);
+
                     // _flags.swap(j, X[j]);
                     X[j] = j;
                     j = k;
@@ -182,7 +190,7 @@ public:
 
     template <class Callback> void rQuery(
         Callback callback,
-        const vec3& query,
+        const vec3& query_,
         const float radius) const
     {
         // As the tree is balanced, assuming no more than 2^32 elements
@@ -199,6 +207,7 @@ public:
         size_t stackSize = 1;
 
         const float radiusSq = radius * radius;
+        const vec3 query = query_ - _origin;
 
         while (stackSize) {
             size_t begin = stack[stackSize - 1].begin;
@@ -210,13 +219,13 @@ public:
             }
 
             size_t median = begin + (end - begin) / 2;
-            size_t axis = _flags.get(median);
+            size_t axis = _points[median].axis();
 
-            vec3 point = _points[median].position;
+            vec3 point = _points[median].position();
             float distanceSq = distance2(query, point);
 
             if (distanceSq < radiusSq) {
-                callback(_data[_points[median].index()]);
+                callback(_data[median]);
 
                 if (axis != leaf) {
                     ++stackSize;
@@ -281,43 +290,10 @@ public:
         return _data.size();
     }
 
-    size_t axis() const {
-        return _flags.get(size() / 2);
-    }
-
-    KDTree3D copy_left() const {
-        KDTree3D result;
-        size_t median = size() / 2;
-        result._data.resize(median);
-        result._flags.resize(median);
-
-        for (size_t i = 0; i < median; ++i) {
-            result._data[i] = _data[i];
-            result._flags.set(i, _flags.get(i));
-        }
-
-        return result;
-    }
-
-    KDTree3D copy_right() const {
-        KDTree3D result;
-        size_t median = size() / 2;
-        size_t rsize = size() - median - 1;
-        result._data.resize(rsize);
-        result._flags.resize(rsize);
-
-        for (size_t i = 0; i < rsize; ++i) {
-            result._data[i] = _data[i + median + 1];
-            result._flags.set(i, _flags.get(i + median + 1));
-        }
-
-        return result;
-    }
-
 private:
     vector<T> _data;
     vector<Point> _points;
-    BitfieldVector<2> _flags;
+    vec3 _origin;
 
     size_t query_k(
         QueryKState& state,
@@ -326,7 +302,7 @@ private:
     {
         if (end != begin) {
             size_t median = begin + (end - begin) / 2;
-            size_t axis = _flags.get(median);
+            size_t axis = _points[median].axis();
             vec3 point = position(_data[median]);
             float query_dist = distance2(point, state.query);
 
@@ -388,7 +364,7 @@ private:
         const vector<size_t>& unique,
         const vector<Point>& data) {
         std::sort(v.begin(), v.end(), [&](size_t a, size_t b) -> bool {
-            return data[a].position[D] == data[b].position[D] ? unique[a] < unique[b] : data[a].position[D] < data[b].position[D];
+            return data[a][D] == data[b][D] ? unique[a] < unique[b] : data[a][D] < data[b][D];
         });
     }
 
@@ -425,9 +401,9 @@ private:
         }
 
         auto less = [&](size_t a, size_t b) -> bool {
-            return _points[a].position[axis] == _points[b].position[axis]
+            return _points[a][axis] == _points[b][axis]
                 ? unique[a] < unique[b]
-                : _points[a].position[axis] < _points[b].position[axis];
+                : _points[a][axis] < _points[b][axis];
         };
 
         for (size_t j = 0; j < 3; ++j) {
@@ -486,17 +462,17 @@ private:
             size_t median = begin + size / 2;
 
             rearrange(axis, begin, end, median, subranges, unique, scratch);
-            _flags.set(median, axis);
+            _points[median].setAxis(axis);
 
             pair<vec3, vec3> left_aabb = aabb, right_aabb = aabb;
-            left_aabb.second[axis] = _data[median][axis];
-            right_aabb.first[axis] = _data[median][axis];
+            left_aabb.second[axis] = _points[median][axis];
+            right_aabb.first[axis] = _points[median][axis];
 
             build(begin, median, left_aabb, subranges, unique, scratch);
             build(median + 1, end, right_aabb, subranges, unique, scratch);
         }
         else if (size == 1) {
-            _flags.set(begin, leaf);
+            _points[begin].setAxis(leaf);
         }
     }
 
