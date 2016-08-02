@@ -39,15 +39,6 @@ private:
 
     struct Point {
         vec3 position;
-        uint32_t _axis;
-
-        size_t axis() const {
-            return _axis;
-        }
-
-        void setAxis(size_t axis) {
-            _axis = axis;
-        }
 
         float operator[](size_t index) const {
             return position[index];
@@ -62,12 +53,13 @@ public:
     KDTree3D(vector<T>&& that) {
         _data = move(that);
         _points.resize(_data.size());
+        _axes.resize(_data.size());
 
         if (!_points.empty()) {
-            vec3 lower = _points[0].position, upper = _points[0].position;
+            vec3 lower = _points[0], upper = _points[0];
 
             for (size_t i = 0; i < _data.size(); ++i) {
-                _points[i].position = _data[i].position();
+                _points[i] = _data[i].position();
                 lower = min(lower, _data[i].position());
                 upper = max(upper, _data[i].position());
             }
@@ -107,7 +99,7 @@ public:
                 size_t k = X[j];
 
                 while (k != X[k]) {
-                    std::swap(_points[j].position, _points[X[j]].position);
+                    std::swap(_points[j], _points[X[j]]);
                     swap(_data[j], _data[X[j]]);
 
                     // _flags.swap(j, X[j]);
@@ -165,9 +157,9 @@ public:
             }
 
             size_t median = begin + (end - begin) / 2;
-            size_t axis = _points[median].axis();
+            size_t axis = _axes.get(median);
 
-            vec3 point = _points[median].position;
+            vec3 point = _points[median];
             float distanceSq = distance2(query, point);
 
             if (distanceSq < radiusSq) {
@@ -238,7 +230,7 @@ public:
 
 private:
     vector<T> _data;
-    vector<Point> _points;
+    vector<vec3> _points;
     BitfieldVector<2> _axes;
 
     size_t query_k(
@@ -248,7 +240,7 @@ private:
     {
         if (end != begin) {
             size_t median = begin + (end - begin) / 2;
-            size_t axis = _points[median].axis();
+            size_t axis = _axes.get(median);
             vec3 point = position(_data[median]);
             float query_dist = distance2(point, state.query);
 
@@ -308,7 +300,7 @@ private:
     template <size_t D> static void sort(
         vector<size_t>& v,
         const vector<size_t>& unique,
-        const vector<Point>& data) {
+        const vector<vec3>& data) {
         std::sort(v.begin(), v.end(), [&](size_t a, size_t b) -> bool {
             return data[a][D] == data[b][D] ? unique[a] < unique[b] : data[a][D] < data[b][D];
         });
@@ -408,7 +400,7 @@ private:
             size_t median = begin + size / 2;
 
             rearrange(axis, begin, end, median, subranges, unique, scratch);
-            _points[median].setAxis(axis);
+            _axes.set(median, axis);
 
             pair<vec3, vec3> left_aabb = aabb, right_aabb = aabb;
             left_aabb.second[axis] = _points[median][axis];
@@ -418,7 +410,7 @@ private:
             build(median + 1, end, right_aabb, subranges, unique, scratch);
         }
         else if (size == 1) {
-            _points[begin].setAxis(leaf);
+            _axes.set(begin, leaf);
         }
     }
 
