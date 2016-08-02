@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdint>
+#include <KDTree3D.hpp>
 
 namespace haste {
 
@@ -37,47 +38,19 @@ private:
     };
 
     struct Point {
-        union {
-            struct {
-                float x, y, z;
-            } _position;
-
-            struct {
-                uint32_t x, y, z;
-            } _bitfields;
-
-            float vector[3];
-        };
-
-        vec3 position() const {
-            return vec3(
-                abs(_position.x),
-                abs(_position.y),
-                abs(_position.z));
-        }
-
-        void setPosition(const vec3& position)
-        {
-            size_t axis = this->axis();
-            _position.x = position.x;
-            _position.y = position.y;
-            _position.z = position.z;
-            setAxis(axis);
-        }
+        vec3 position;
+        uint32_t _axis;
 
         size_t axis() const {
-            return ((_bitfields.x >> 30) & 2u) | (_bitfields.y >> 31);
+            return _axis;
         }
 
         void setAxis(size_t axis) {
-            _bitfields.x &= ~(uint32_t(1u) << 31);
-            _bitfields.x |= (uint32_t(axis) << 30) & (uint32_t(1u) << 31);
-            _bitfields.y &= ~(uint32_t(1u) << 31);
-            _bitfields.y |= (uint32_t(axis) << 31) & (uint32_t(1u) << 31);
+            _axis = axis;
         }
 
         float operator[](size_t index) const {
-            return abs(vector[index]);
+            return position[index];
         }
     };
 
@@ -91,20 +64,14 @@ public:
         _points.resize(_data.size());
 
         if (!_points.empty()) {
-            vec3 lower = _points[0].position(), upper = _points[0].position();
+            vec3 lower = _points[0].position, upper = _points[0].position;
 
             for (size_t i = 0; i < _data.size(); ++i) {
+                _points[i].position = _data[i].position();
                 lower = min(lower, _data[i].position());
                 upper = max(upper, _data[i].position());
             }
 
-            _origin = lower;
-            upper -= _origin;
-            lower -= _origin;
-
-            for (size_t i = 0; i < _points.size(); ++i) {
-                _points[i].setPosition(_data[i].position() - _origin);
-            }
 
             vector<size_t> X(_points.size());
             vector<size_t> Y(_points.size());
@@ -140,10 +107,7 @@ public:
                 size_t k = X[j];
 
                 while (k != X[k]) {
-                    vec3 position = _points[j].position();
-                    _points[j].setPosition(_points[X[j]].position());
-                    _points[X[j]].setPosition(position);
-
+                    std::swap(_points[j].position, _points[X[j]].position);
                     swap(_data[j], _data[X[j]]);
 
                     // _flags.swap(j, X[j]);
@@ -173,7 +137,7 @@ public:
 
     template <class Callback> void rQuery(
         Callback callback,
-        const vec3& query_,
+        const vec3& query,
         const float radius) const
     {
         // As the tree is balanced, assuming no more than 2^32 elements
@@ -190,7 +154,6 @@ public:
         size_t stackSize = 1;
 
         const float radiusSq = radius * radius;
-        const vec3 query = query_ - _origin;
 
         while (stackSize) {
             size_t begin = stack[stackSize - 1].begin;
@@ -204,7 +167,7 @@ public:
             size_t median = begin + (end - begin) / 2;
             size_t axis = _points[median].axis();
 
-            vec3 point = _points[median].position();
+            vec3 point = _points[median].position;
             float distanceSq = distance2(query, point);
 
             if (distanceSq < radiusSq) {
@@ -276,7 +239,7 @@ public:
 private:
     vector<T> _data;
     vector<Point> _points;
-    vec3 _origin;
+    BitfieldVector<2> _axes;
 
     size_t query_k(
         QueryKState& state,
