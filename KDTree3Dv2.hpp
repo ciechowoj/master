@@ -66,31 +66,14 @@ private:
         }
 
         size_t axis() const {
-            //return _index;
-            return _position.x < 0.f ? (_position.y < 0.f ? 0 : 1) : (_position.y < 0.f ? 2 : 3);
+            return ((_bitfields.x >> 30) & 2u) | (_bitfields.y >> 31);
         }
 
         void setAxis(size_t axis) {
-            //_index = axis;
-            //return;
-            switch (axis) {
-                case 0:
-                    _position.x = abs(_position.x) * -1;
-                    _position.y = abs(_position.y) * -1;
-                    break;
-                case 1:
-                    _position.x = abs(_position.x) * -1;
-                    _position.y = abs(_position.y) * +1;
-                    break;
-                case 2:
-                    _position.x = abs(_position.x) * +1;
-                    _position.y = abs(_position.y) * -1;
-                    break;
-                default:
-                    _position.x = abs(_position.x) * +1;
-                    _position.y = abs(_position.y) * +1;
-                    break;
-            }
+            _bitfields.x &= ~(uint32_t(1u) << 31);
+            _bitfields.x |= (uint32_t(axis) << 30) & (uint32_t(1u) << 31);
+            _bitfields.y &= ~(uint32_t(1u) << 31);
+            _bitfields.y |= (uint32_t(axis) << 31) & (uint32_t(1u) << 31);
         }
 
         float operator[](size_t index) const {
@@ -115,7 +98,7 @@ public:
                 upper = max(upper, _data[i].position());
             }
 
-            _origin = lower - 1.0f;
+            _origin = lower;
             upper -= _origin;
             lower -= _origin;
 
