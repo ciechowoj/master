@@ -127,6 +127,23 @@ public:
         return state.size;
     }
 
+    template <class Callback> void nQuery(
+        Callback callback,
+        const vec3& query,
+        const float radius) const
+    {
+        const float radiusSq = radius * radius;
+
+        for (uint32_t i = 0; i < _points.size(); ++i) {
+            vec3 point = _points[i];
+            float distanceSq = distance2(query, point);
+
+            if (distanceSq < radiusSq) {
+                callback(_data[i]);
+            }
+        }
+    }
+
     template <class Callback> void rQuery(
         Callback callback,
         const vec3& query,
@@ -155,7 +172,15 @@ public:
             vec3 point = _points[median];
             float distanceSq = distance2(query, point);
 
-            if (distanceSq < radiusSq) {
+            if (end - begin < 64)
+            {
+                for (uint32_t i = begin; i < end; ++i) {
+                    if (distance2(query, _points[i]) < radiusSq) {
+                        callback(_data[i]);
+                    }
+                }
+            }
+            else if (distanceSq < radiusSq) {
                 callback(_data[median]);
 
                 if (begin != median) {

@@ -404,7 +404,7 @@ void run_test_case(string path) {
 }
 
 void test_case_header() {
-    cout << "      NAME      NUM POINTS     NUM QUERIES          RADIUS        BUILD        QUERY        TOTAL" << endl;
+    cout << "      NAME      NUM POINTS     NUM QUERIES          RADIUS        BUILD    N-QUERIES        TOTAL" << endl;
 }
 
 int main(int argc, char **argv) {
@@ -421,6 +421,10 @@ int main(int argc, char **argv) {
     cout << "        v2          500000            2000               1      0.7510s      0.0845s      0.8354s" << endl;
     // Packed axis to proxy structure removed bitfields.
     cout << "        v3          500000            2000               1      0.7130s      0.0769s      0.7900s" << endl;
+    // Implicit indices in proxy, separate bitfields.
+    cout << "        v4          500000            2000               1      0.7373s      0.0655s      0.8028s" << endl;
+    // Constant cutoff (64 points).
+    cout << "        v5          500000            2000               1      0.7388s      0.0481s      0.7869s" << endl;
 
     run_test_case("test_case_3.dat");
 

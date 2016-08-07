@@ -394,26 +394,21 @@ void VCM::_scatter(RandomEngine& engine)
 
     vertices.resize(itr);
 
-    _vertices = KDTree3D<LightPhoton>(move(vertices));
+    _vertices = v2::KDTree3D<LightPhoton>(move(vertices));
 }
 
 vec3 VCM::_gather(
     RandomEngine& engine,
     const EyeVertex& eye)
 {
-    LightPhoton light[_maxSubpath];
-
-    size_t gathered = _vertices.query_k(
-        light,
-        eye.position(),
-        _numGather,
-        _maxRadius);
-
     vec3 radiance = vec3(0.0f);
 
-    for (size_t i = 0; i < gathered; ++i) {
-        radiance += _merge(eye, light[i], _maxRadius);
-    }
+    _vertices.rQuery(
+        [&](const LightPhoton& photon) {
+            radiance += _merge(eye, photon, _maxRadius);
+        },
+        eye.position(),
+        _maxRadius);
 
     return radiance / float(_numPhotons);
 }
