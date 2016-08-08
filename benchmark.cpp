@@ -11,6 +11,7 @@
 
 #include <KDTree3D.hpp>
 #include <KDTree3Dv2.hpp>
+#include <HashGrid.hpp>
 
 using namespace std;
 using namespace glm;
@@ -316,14 +317,14 @@ template <class T> bool equal(const vector<T>& a, const vector<T>& b)
     return true;
 }
 
-void runQueries(
-    const v2::KDTree3D<TestStruct>& kdtree,
+template <class T> void runQueries(
+    const T& points,
     const vector<vec3>& queries,
     vector<vector<TestStruct>>& result,
     float radius)
 {
     for (size_t i = 0; i < queries.size(); ++i) {
-        size_t size = kdtree.rQuery(
+        size_t size = points.rQuery(
             result[i].data(),
             queries[i],
             radius);
@@ -353,12 +354,14 @@ void run_test_case(ifstream& stream) {
 
     auto start = chrono::high_resolution_clock::now();
 
-    v2::KDTree3D<TestStruct> kdtree(testData);
+    // v2::KDTree3D<TestStruct> kdtree(testData);
+    HashGrid3D<TestStruct> grid(testData, radius);
 
     auto build = chrono::high_resolution_clock::now();
 
     // BENCHMARKED CALL
-    runQueries(kdtree, queries, testResult, radius);
+    // runQueries(kdtree, queries, testResult, radius);
+    runQueries(grid, queries, testResult, radius);
 
     auto end = chrono::high_resolution_clock::now();
 
@@ -425,6 +428,8 @@ int main(int argc, char **argv) {
     cout << "        v4          500000            2000               1      0.7373s      0.0655s      0.8028s" << endl;
     // Constant cutoff (64 points).
     cout << "        v5          500000            2000               1      0.7388s      0.0481s      0.7869s" << endl;
+    // Initial implementation of hash grid.
+    cout << "        v6          500000            2000               1      0.4627s      0.0357s      0.4984s" << endl;
 
     run_test_case("test_case_3.dat");
 

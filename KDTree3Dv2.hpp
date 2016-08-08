@@ -172,8 +172,7 @@ public:
             vec3 point = _points[median];
             float distanceSq = distance2(query, point);
 
-            if (end - begin < 64)
-            {
+            if (end - begin < 64) {
                 for (uint32_t i = begin; i < end; ++i) {
                     if (distance2(query, _points[i]) < radiusSq) {
                         callback(_data[i]);
