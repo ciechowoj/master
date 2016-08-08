@@ -430,6 +430,8 @@ int main(int argc, char **argv) {
     cout << "        v5          500000            2000               1      0.7388s      0.0481s      0.7869s" << endl;
     // Initial implementation of hash grid.
     cout << "        v6          500000            2000               1      0.4627s      0.0357s      0.4984s" << endl;
+    // Replaced most inner loop (xs takes subsequent places in point array)
+    cout << "        v7          500000            2000               1      0.7933s      0.0257s      0.8190s" << endl;
 
     run_test_case("test_case_3.dat");
 

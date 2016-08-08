@@ -1,5 +1,6 @@
 #pragma once
 #include <glm>
+#include <map>
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
@@ -25,7 +26,9 @@ namespace std
 
 namespace haste {
 
+using std::map;
 using std::unordered_map;
+using std::make_pair;
 
 template <class T> class HashGrid3D {
 public:
@@ -50,15 +53,13 @@ public:
 
         for (float z = -1.f; z < 2.f; z += 1.f) {
             for (float y = -1.f; y < 2.f; y += 1.f) {
-                for (float x = -1.f; x < 2.f; x += 1.f) {
-                    vec3 key = center + vec3(x, y, z);
-                    auto cell = _ranges.find(key);
+                vec3 key = vec3(center.x, center.y + y, center.z + z);
+                auto cell = _ranges.find(key);
 
-                    if (cell != _ranges.end()) {
-                        for (uint32_t i = cell->second.begin; i < cell->second.end; ++i) {
-                            if (distance2(query, _points[i]) < radiusSq) {
-                                callback(_data[i]);
-                            }
+                if (cell != _ranges.end()) {
+                    for (uint32_t i = cell->second.begin; i < cell->second.end; ++i) {
+                        if (distance2(query, _points[i]) < radiusSq) {
+                            callback(_data[i]);
                         }
                     }
                 }
@@ -102,11 +103,20 @@ private:
     }
 
     void build(const vector<T>& data, float radius) {
-        unordered_map<vec3, uint32_t> counts;
+        struct Comparator {
+            bool operator()(const vec3& a, const vec3& b) const {
+                return a.z != b.z ? a.z < b.z : (a.y != b.y ? a.y < b.y : a.x < b.x);
+            }
+        };
+
+        map<vec3, uint32_t, Comparator> counts;
 
         for (uint32_t i = 0; i < data.size(); ++i) {
             vec3 key = floor(data[i].position() / radius);
             ++counts[key];
+
+            counts.insert(make_pair(key + vec3(1.f, 0.f, 0.f), uint32_t(0)));
+            counts.insert(make_pair(key - vec3(1.f, 0.f, 0.f), uint32_t(0)));
         }
 
         uint32_t offset = 0;
@@ -127,6 +137,20 @@ private:
             _points[cell->second.end] = data[i].position();
 
             ++cell->second.end;
+        }
+
+
+        for (auto&& itr : counts) {
+            auto prev = counts.find(itr.first - vec3(1.f, 0.f, 0.f));
+            auto next = counts.find(itr.first + vec3(1.f, 0.f, 0.f));
+
+            if (prev != counts.end()) {
+                _ranges[itr.first].begin -= prev->second;
+            }
+
+            if (next != counts.end()) {
+                _ranges[itr.first].end += next->second;
+            }
         }
 
         _radius = radius;
