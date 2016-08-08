@@ -2,6 +2,7 @@
 #include <Technique.hpp>
 #include <KDTree3D.hpp>
 #include <KDTree3Dv2.hpp>
+#include <HashGrid3D.hpp>
 
 namespace haste {
 
@@ -75,7 +76,7 @@ private:
     const float _roulette;
     const float _eta;
 
-    v2::KDTree3D<LightPhoton> _vertices;
+    HashGrid3D<LightPhoton> _vertices;
 
     vec3 _trace(RandomEngine& engine, const Ray& ray) override;
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);

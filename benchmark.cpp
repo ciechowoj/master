@@ -11,7 +11,7 @@
 
 #include <KDTree3D.hpp>
 #include <KDTree3Dv2.hpp>
-#include <HashGrid.hpp>
+#include <HashGrid3D.hpp>
 
 using namespace std;
 using namespace glm;

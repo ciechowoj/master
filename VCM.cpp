@@ -394,7 +394,7 @@ void VCM::_scatter(RandomEngine& engine)
 
     vertices.resize(itr);
 
-    _vertices = v2::KDTree3D<LightPhoton>(move(vertices));
+    _vertices = HashGrid3D<LightPhoton>(move(vertices), _maxRadius);
 }
 
 vec3 VCM::_gather(
