@@ -340,7 +340,7 @@ void run_test_case(ifstream& stream) {
     loadTestCase(stream, data, queries, result, radius);
 
     cout
-        << setw(10) << "<current>"
+        << setw(14) << "<current>"
         << setw(16) << data.size()
         << setw(16) << queries.size()
         << setw(16) << radius;
@@ -349,13 +349,13 @@ void run_test_case(ifstream& stream) {
     vector<vector<TestStruct>> testResult(result.size());
 
     for (size_t i = 0; i < testResult.size(); ++i) {
-        testResult[i].resize(result[i].size());
+        testResult[i].resize(result[i].size() * 2);
     }
 
     auto start = chrono::high_resolution_clock::now();
 
     // v2::KDTree3D<TestStruct> kdtree(testData);
-    HashGrid3D<TestStruct> grid(testData, radius);
+    v2::HashGrid3D<TestStruct> grid(testData, radius);
 
     auto build = chrono::high_resolution_clock::now();
 
@@ -387,6 +387,16 @@ void run_test_case(ifstream& stream) {
                 return distB == distA ? a.x > b.x : distB < distA;
             });
 
+        sort(
+            result[i].begin(),
+            result[i].end(),
+            [&](const vec3& a, const vec3& b) -> bool {
+                auto distA = distance(a, queries[i]);
+                auto distB = distance(b, queries[i]);
+
+                return distB == distA ? a.x > b.x : distB < distA;
+            });
+
         if (!equal(result[i], actual)) {
             cout << "Test failed (query = " << i << "):\n";
             cout << "Expected:\n";
@@ -407,7 +417,7 @@ void run_test_case(string path) {
 }
 
 void test_case_header() {
-    cout << "      NAME      NUM POINTS     NUM QUERIES          RADIUS        BUILD    N-QUERIES        TOTAL" << endl;
+    cout << "          NAME      NUM POINTS     NUM QUERIES          RADIUS        BUILD    N-QUERIES        TOTAL" << endl;
 }
 
 int main(int argc, char **argv) {
@@ -417,21 +427,27 @@ int main(int argc, char **argv) {
     test_case_header();
 
     // Initial version.
-    cout << "        v0          500000            2000               1      0.9369s      0.1569s      1.0940s" << endl;
+    cout << "            v0          500000            2000               1      0.9369s      0.1569s      1.0940s" << endl;
     // Replaced heap.
-    cout << "        v1          500000            2000               1      0.9398s      0.1116s      1.0510s" << endl;
+    cout << "            v1          500000            2000               1      0.9398s      0.1116s      1.0510s" << endl;
     // Added proxy structure.
-    cout << "        v2          500000            2000               1      0.7510s      0.0845s      0.8354s" << endl;
+    cout << "            v2          500000            2000               1      0.7510s      0.0845s      0.8354s" << endl;
     // Packed axis to proxy structure removed bitfields.
-    cout << "        v3          500000            2000               1      0.7130s      0.0769s      0.7900s" << endl;
+    cout << "            v3          500000            2000               1      0.7130s      0.0769s      0.7900s" << endl;
     // Implicit indices in proxy, separate bitfields.
-    cout << "        v4          500000            2000               1      0.7373s      0.0655s      0.8028s" << endl;
+    cout << "            v4          500000            2000               1      0.7373s      0.0655s      0.8028s" << endl;
     // Constant cutoff (64 points).
-    cout << "        v5          500000            2000               1      0.7388s      0.0481s      0.7869s" << endl;
+    cout << "            v5          500000            2000               1      0.7388s      0.0481s      0.7869s" << endl;
     // Initial implementation of hash grid.
-    cout << "        v6          500000            2000               1      0.4627s      0.0357s      0.4984s" << endl;
+    cout << "            v6          500000            2000               1      0.4627s      0.0357s      0.4984s" << endl;
     // Replaced most inner loop (xs takes subsequent places in point array)
-    cout << "        v7          500000            2000               1      0.7933s      0.0257s      0.8190s" << endl;
+    cout << "            v7          500000            2000               1      0.7933s      0.0257s      0.8190s" << endl;
+    // SmallVCM with cell size equal radius size.
+    cout << "smallVCM    v8          500000            2000               1      0.4805s      0.0486s      0.5290s" << endl;
+    // Standard version with doubled radius.
+    cout << "            v9          500000            2000               1      0.5950s      0.0276s      0.6226s" << endl;
+    // SmallVCM with cell size equal to doubled radius.
+    cout << "smallVCM   v10          500000            2000               1      0.4732s      0.0370s      0.5102s" << endl;
 
     run_test_case("test_case_3.dat");
 
