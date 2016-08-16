@@ -308,43 +308,19 @@ public:
         const vec3& query,
         const float radius) const
     {
-        vec3 center = floor(query / _cellSize);
-        vec3 offset = query / _cellSize - center;
+        vec3 center = floor(query / _radius);
 
         const float radiusSq = radius * radius;
 
-        float zBegin = 0.f, zEnd = 2.f;
+        for (float z = -1.f; z < 2.f; z += 1.f) {
+            for (float y = -1.f; y < 2.f; y += 1.f) {
+                vec3 key = vec3(center.x, center.y + y, center.z + z);
+                auto cell = _ranges.find(key);
 
-        if (offset.z < 0.5f) {
-            zBegin -= 1.f;
-            zEnd -= 1.f;
-        }
-
-        float yBegin = 0.f, yEnd = 2.f;
-
-        if (offset.y < 0.5f) {
-            yBegin -= 1.f;
-            yEnd -= 1.f;
-        }
-
-        float xBegin = 0.f, xEnd = 2.f;
-
-        if (offset.x < 0.5f) {
-            xBegin -= 1.f;
-            xEnd -= 1.f;
-        }
-
-        for (float z = zBegin; z < zEnd; z += 1.f) {
-            for (float y = yBegin; y < yEnd; y += 1.f) {
-                for (float x = xBegin; x < xEnd; x += 1.f) {
-                    vec3 key = vec3(center + vec3(x, y, z));
-                    auto cell = _ranges.find(key);
-
-                    if (cell != _ranges.end()) {
-                        for (uint32_t i = cell->second.begin; i < cell->second.end; ++i) {
-                            if (distance2(query, _points[i]) < radiusSq) {
-                                callback(_data[i]);
-                            }
+                if (cell != _ranges.end()) {
+                    for (uint32_t i = cell->second.begin; i < cell->second.end; ++i) {
+                        if (distance2(query, _points[i]) < radiusSq) {
+                            callback(_data[i]);
                         }
                     }
                 }
@@ -368,7 +344,7 @@ public:
 private:
     vector<T> _data;
     vector<vec3> _points;
-    float _cellSize;
+    float _radius;
 
     struct Range {
         uint32_t begin;
@@ -384,28 +360,44 @@ private:
             }
         };
 
-        _cellSize = radius * 2.f;
-        map<vec3, uint32_t, Comparator> counts;
+        struct Count : public Comparator
+        {
+            vec3 position;
+            uint32_t count;
+
+            bool operator<(const Count& b) const {
+                return this->operator()(position, b.position);
+            }
+        };
+
+        unordered_map<vec3, uint32_t> counts2;
+        vector<Count> counts3;
 
         for (uint32_t i = 0; i < data.size(); ++i) {
-            vec3 key = floor(data[i].position() / _cellSize);
-            ++counts[key];
-
-            counts.insert(make_pair(key + vec3(1.f, 0.f, 0.f), uint32_t(0)));
-            counts.insert(make_pair(key - vec3(1.f, 0.f, 0.f), uint32_t(0)));
+            ++counts2[floor(data[i].position() / radius)];
         }
 
+        counts3.resize(counts2.size());
+        size_t jtr = 0;
+
+        for (auto&& itr : counts2) {
+            counts3[jtr].position = itr.first;
+            counts3[jtr++].count = itr.second;
+        }
+
+        std::sort(counts3.begin(), counts3.end());
+
         uint32_t offset = 0;
-        for (auto&& itr : counts) {
-            _ranges[itr.first] = { offset, offset };
-            offset += itr.second;
+        for (auto&& itr : counts3) {
+            _ranges[itr.position] = { offset, offset };
+            offset += itr.count;
         }
 
         _data.resize(offset);
         _points.resize(offset);
 
         for (uint32_t i = 0; i < data.size(); ++i) {
-            vec3 key = floor(data[i].position() / _cellSize);
+            vec3 key = floor(data[i].position() / radius);
 
             auto cell = _ranges.find(key);
 
@@ -415,19 +407,65 @@ private:
             ++cell->second.end;
         }
 
+        for (uint32_t i = 1; i < counts3.size() - 1; ++i) {
+            auto begin = counts3[i].position.x == counts3[i - 1].position.x + 1.0f;
+            auto end = counts3[i].position.x == counts3[i + 1].position.x - 1.0f;
+            auto center = _ranges.find(counts3[i].position);
 
-        /*for (auto&& itr : counts) {
-            auto prev = counts.find(itr.first - vec3(1.f, 0.f, 0.f));
-            auto next = counts.find(itr.first + vec3(1.f, 0.f, 0.f));
-
-            if (prev != counts.end()) {
-                _ranges[itr.first].begin -= prev->second;
+            if (!begin) {
+                if (counts3[i - 1].position.x + 1.f == counts3[i].position.x - 1.f) {
+                    _ranges[counts3[i].position - vec3(1, 0, 0)].end = center->second.end;
+                }
+                else {
+                    _ranges.insert(
+                        make_pair(counts3[i].position - vec3(1, 0, 0), center->second));
+                }
             }
 
-            if (next != counts.end()) {
-                _ranges[itr.first].end += next->second;
+            if (!end) {
+                _ranges.insert(
+                    make_pair(counts3[i].position + vec3(1, 0, 0), center->second));
             }
-        }*/
+
+            if (begin) {
+               _ranges[counts3[i].position].begin -= counts3[i - 1].count;
+            }
+
+            if (end) {
+               _ranges[counts3[i].position].end += counts3[i + 1].count;
+            }
+        }
+
+        if (counts3.size() > 1) {
+            uint32_t size = counts3.size();
+
+            if (counts3[0].position.x == counts3[1].position.x - 1.0f) {
+                _ranges[counts3[0].position].end += counts3[1].count;
+            }
+            else {
+                auto center = _ranges.find(counts3[0].position);
+                _ranges.insert(
+                    make_pair(counts3[0].position + vec3(1, 0, 0), center->second));
+            }
+
+            if (counts3[size - 1].position.x == counts3[size - 2].position.x + 1.0f) {
+                _ranges[counts3[size - 1].position].begin -= counts3[size - 2].count;
+            }
+            else {
+                auto center = _ranges.find(counts3[size - 1].position);
+
+                if (size > 2 &&
+                    counts3[size - 2].position.x + 1.f == counts3[size - 1].position.x - 1.f) {
+                    _ranges[counts3[size - 1].position - vec3(1, 0, 0)].end = center->second.end;
+                }
+                else {
+                    _ranges.insert(
+                        make_pair(counts3[size - 1].position - vec3(1, 0, 0), center->second));
+                }
+            }
+        }
+
+        _radius = radius;
     }
 };
 

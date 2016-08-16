@@ -76,7 +76,7 @@ private:
     const float _roulette;
     const float _eta;
 
-    HashGrid3D<LightPhoton> _vertices;
+    v3::HashGrid3D<LightPhoton> _vertices;
 
     vec3 _trace(RandomEngine& engine, const Ray& ray) override;
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);

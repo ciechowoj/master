@@ -355,7 +355,7 @@ void run_test_case(ifstream& stream) {
     auto start = chrono::high_resolution_clock::now();
 
     // v2::KDTree3D<TestStruct> kdtree(testData);
-    v2::HashGrid3D<TestStruct> grid(testData, radius);
+    v3::HashGrid3D<TestStruct> grid(testData, radius);
 
     auto build = chrono::high_resolution_clock::now();
 
@@ -448,6 +448,8 @@ int main(int argc, char **argv) {
     cout << "            v9          500000            2000               1      0.5950s      0.0276s      0.6226s" << endl;
     // SmallVCM with cell size equal to doubled radius.
     cout << "smallVCM   v10          500000            2000               1      0.4732s      0.0370s      0.5102s" << endl;
+    // v7 with improved construction time
+    cout << "       v7b v11          500000            2000               1      0.4774s      0.0258s      0.5033s" << endl;
 
     run_test_case("test_case_3.dat");
 
