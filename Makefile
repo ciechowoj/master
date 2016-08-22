@@ -151,6 +151,13 @@ run: all
 	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --max-radius=0.005 --num-photons=2000000 --parallel
 	# ./build/master/master.bin models/CornellBoxDiffuse.blend --BPT
 
+profile:
+	valgrind \
+	--tool=callgrind \
+	./build/master/master.bin \
+	models/CornellBoxDiffuse.blend \
+	--VCM --max-radius=0.005 --num-photons=2000000 --parallel
+
 test: all
 	./build/master/unittest.bin
 

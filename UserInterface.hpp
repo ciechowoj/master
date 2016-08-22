@@ -49,7 +49,7 @@ struct UserInterface {
         size_t width,
         size_t height,
         const vec4* image,
-        float elapsed);
+        double elapsed);
 private:
     void _updateComputeAverage();
 

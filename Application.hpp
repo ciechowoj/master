@@ -13,7 +13,7 @@ public:
 	~Application();
 
     void render(size_t width, size_t height, glm::vec4* data) override;
-    void updateUI(size_t width, size_t height, const glm::vec4* data) override;
+    void updateUI(size_t width, size_t height, const glm::vec4* data, double elapsed) override;
     void postproc(glm::vec4* dst, const glm::vec4* src, size_t width, size_t height) override;
 
     bool updateScene() override;

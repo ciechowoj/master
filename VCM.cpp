@@ -34,7 +34,9 @@ string VCM::name() const {
 }
 
 vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
-    LightVertex light[_maxSubpath];
+    char lightRaw[_maxSubpath * sizeof(LightVertex)];
+    LightVertex* light = (LightVertex*)lightRaw;
+
     size_t lSize = 0;
 
     _trace(engine, lSize, light);

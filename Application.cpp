@@ -52,13 +52,18 @@ void Application::render(size_t width, size_t height, glm::vec4* data) {
     }
 }
 
-void Application::updateUI(size_t width, size_t height, const glm::vec4* data) {
+void Application::updateUI(
+    size_t width,
+    size_t height,
+    const glm::vec4* data,
+    double elapsed)
+{
     _ui->update(
         *_technique,
         width,
         height,
         data,
-        0.0f);
+        elapsed);
 }
 
 void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, size_t height) {

@@ -331,6 +331,7 @@ int Framework::run(size_t width, size_t height) {
         std::vector<glm::vec4> buffer;
         std::atomic<size_t> bufferWidth, bufferHeight;
         std::atomic<bool> trigger, done, quit;
+        std::atomic<double> elapsed;
         std::mutex workerMutex;
         std::condition_variable workerCondition;
         std::condition_variable quitCondition;
@@ -338,9 +339,12 @@ int Framework::run(size_t width, size_t height) {
         trigger = false;
         done = true;
         quit = false;
+        elapsed = 0.0;
 
         auto worker = std::thread([&]() {
             while (!quit) {
+                double start = glfwGetTime();
+
                 while (!trigger) {
                     std::unique_lock<std::mutex> lock(workerMutex);
                     workerCondition.wait(lock);
@@ -351,13 +355,14 @@ int Framework::run(size_t width, size_t height) {
                     render(bufferWidth, bufferHeight, buffer.data());
                     done = true;
                 }
+
+                elapsed = glfwGetTime() - start;
             }
 
             quitCondition.notify_all();
         });
 
         loop(window, [&](int width, int height, float& scale, void* image) {
-            double start = glfwGetTime();
             scale = _scale;
 
             if (done) {
@@ -380,7 +385,7 @@ int Framework::run(size_t width, size_t height) {
                 workerCondition.notify_all();
             }
 
-            updateUI(width, height, (glm::vec4*)image);
+            updateUI(width, height, (glm::vec4*)image, elapsed);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         });

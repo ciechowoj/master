@@ -18,7 +18,7 @@ void UserInterface::update(
     size_t width,
     size_t height,
     const vec4* image,
-    float elapsed)
+    double elapsed)
 {
     // bool show_test_window = true;
     // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
@@ -123,12 +123,7 @@ void UserInterface::_updateStatistics(
     const Technique& technique,
     double elapsed)
 {
-    if (timePerFrame == 0.0) {
-        timePerFrame = elapsed;
-    }
-    else {
-        timePerFrame = 0.95 * timePerFrame + 0.05 * elapsed * 1000.0;
-    }
+    timePerFrame = elapsed;
 
     if(ImGui::CollapsingHeader("Time statistics")) {
         float localTimePerFrame = float(timePerFrame);
