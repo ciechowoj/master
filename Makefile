@@ -148,8 +148,8 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --max-radius=0.005 --num-photons=2000000 --parallel
-	# ./build/master/master.bin models/CornellBoxDiffuse.blend --BPT
+	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --max-radius=0.04 --num-photons=200000 --parallel
+	# ./build/master/master.bin models/CornellBoxDiffuse.blend --PT
 
 profile:
 	valgrind \

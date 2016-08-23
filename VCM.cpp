@@ -34,12 +34,16 @@ string VCM::name() const {
 }
 
 vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
+    return _traceEye(engine, ray);
+}
+
+vec3 VCM::_traceEye(RandomEngine& engine, const Ray& ray) {
     char lightRaw[_maxSubpath * sizeof(LightVertex)];
     LightVertex* light = (LightVertex*)lightRaw;
 
     size_t lSize = 0;
 
-    _trace(engine, lSize, light);
+    _traceLight(engine, lSize, light);
 
     vec3 radiance = vec3(0.0f);
     EyeVertex eye[2];
@@ -111,7 +115,7 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
     return radiance;
 }
 
-void VCM::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
+void VCM::_traceLight(RandomEngine& engine, size_t& size, LightVertex* path) {
     size_t itr = 0, prv = 0;
 
     LightSampleEx light = _scene->sampleLight(engine);
@@ -186,7 +190,7 @@ void VCM::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     }
 }
 
-void VCM::_trace(RandomEngine& engine, size_t& size, LightPhoton* path) {
+void VCM::_traceLight(RandomEngine& engine, size_t& size, LightPhoton* path) {
     size_t itr = 0, prv = 0;
 
     LightSampleEx light = _scene->sampleLight(engine);
@@ -206,7 +210,7 @@ void VCM::_trace(RandomEngine& engine, size_t& size, LightPhoton* path) {
     path[itr]._omega = -light.omega();
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
     path[itr].A = edge.bGeometry / light.areaDensity();
-    path[itr].B = 0;
+    path[itr].B = edge.bGeometry / light.areaDensity();
     path[itr].fGeometry = edge.fGeometry;
     path[itr].fDensity = light.omegaDensity();
     path[itr].fCosTheta = edge.fCosTheta;
@@ -370,8 +374,6 @@ vec3 VCM::_connect(
     size_t lightSize,
     const LightVertex* path)
 {
-    return vec3(0.0f);
-
     vec3 radiance = _connect0(engine, eye) + _connect1(engine, eye);
 
     for (size_t i = 0; i < lightSize; ++i) {
@@ -390,7 +392,7 @@ void VCM::_scatter(RandomEngine& engine)
     for (size_t i = 0; i < _numPhotons; ++i) {
         vertices.resize(itr + _maxSubpath);
         size_t size = 0;
-        _trace(engine, size, vertices.data() + itr);
+        _traceLight(engine, size, vertices.data() + itr);
         itr += size;
     }
 
@@ -422,8 +424,8 @@ vec3 VCM::_merge(
 {
     auto eyeBSDF = _scene->queryBSDFEx(eye.surface, light.omega(), eye.omega());
 
-    float Ap = light.A * eyeBSDF.densityRev();
-    float Bp = light.B * eyeBSDF.densityRev();
+    float Ap = light.A * eyeBSDF.densityRev() * light.fGeometry * light.fDensity * eyeBSDF.densityRev();
+    float Bp = light.B * eyeBSDF.densityRev() * light.fGeometry * light.fDensity * eyeBSDF.densityRev();
     float Cp = (eye.C * eyeBSDF.density() + eye.c) * light.fGeometry * light.fDensity;
 
     float weightInv = Ap + Bp + Cp + _eta * light.fGeometry * light.fDensity + 1.0f;
