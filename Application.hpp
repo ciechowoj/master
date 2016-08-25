@@ -19,6 +19,7 @@ public:
     bool updateScene() override;
 
 private:
+    void _printStatistics(const ImageView& view, double elapsed, bool preprocessed);
     void _saveIfRequired(const ImageView& view, double elapsed);
     void _updateQuitCond(const ImageView& view, double elapsed);
     void _save(const ImageView& view, size_t numSamples, bool snapshot);

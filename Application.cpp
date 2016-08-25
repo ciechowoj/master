@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <Application.hpp>
 
 namespace haste {
@@ -10,8 +11,8 @@ Application::Application(const Options& options) {
     _device = rtcNewDevice(NULL);
     runtime_assert(_device != nullptr);
 
-    _technique = makeTechnique(options);
-    _ui = make_shared<UserInterface>(options.input, _scale);
+    _technique = makeTechnique(_options);
+    _ui = make_shared<UserInterface>(_options.input, _scale);
 
     _modificationTime = 0;
 
@@ -45,9 +46,11 @@ void Application::render(size_t width, size_t height, glm::vec4* data) {
         double elapsed = glfwGetTime() - _startTime;
         _saveIfRequired(view, elapsed);
         _updateQuitCond(view, elapsed);
+        _printStatistics(view, elapsed, false);
     }
     else {
         _technique->preprocess(_scene, _engine, [](string, float) {});
+        _printStatistics(ImageView(), 0.0f, true);
         _preprocessed = true;
     }
 }
@@ -160,7 +163,7 @@ void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, s
 }
 
 bool Application::updateScene() {
-    if (_options.reload) {
+    if (_options.reload && _options.technique != Options::Viewer) {
         auto modificationTime = getmtime(_options.input);
 
         if (_modificationTime < modificationTime) {
@@ -173,6 +176,33 @@ bool Application::updateScene() {
     }
 
     return false;
+}
+
+void Application::_printStatistics(const ImageView& view, double elapsed, bool preprocessed) {
+    if (!_options.quiet && _options.technique != Options::Viewer) {
+        if (preprocessed) {
+            std::cout << "Preprocessing finished..." << std::endl;
+        }
+        else {
+            size_t numSamples = size_t(view.last().w);
+            std::cout
+                << "Sample #"
+                << std::setw(6)
+                << std::left
+                << numSamples
+                << " "
+                << std::right
+                << std::fixed
+                << std::setw(8)
+                << std::setprecision(3)
+                << elapsed
+                << "s"
+                << std::setw(8)
+                << elapsed / numSamples
+                << "s/sample"
+                << std::endl;
+        }
+    }
 }
 
 void Application::_saveIfRequired(const ImageView& view, double elapsed) {

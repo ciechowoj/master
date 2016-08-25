@@ -1,5 +1,6 @@
 #pragma once
 #include <glm>
+#include <vector>
 
 namespace haste {
 
@@ -39,6 +40,8 @@ struct ImageView {
     vec4* data() { return _data; }
     const vec4* data() const { return _data; }
     void clear();
+
+    void copyFrom(const std::vector<vec4>& data, size_t width, size_t height);
 };
 
 }

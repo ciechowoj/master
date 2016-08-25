@@ -9,6 +9,7 @@
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
 #include <VCM.hpp>
+#include <Viewer.hpp>
 
 namespace haste {
 
@@ -19,7 +20,7 @@ using std::make_pair;
 static const char help[] =
 R"(
     Usage:
-      master <input> [<output>] [options]
+      master <input> [options]
       master (-h | --help)
       master --version
 
@@ -36,6 +37,7 @@ R"(
       --min-subpath=<n>     Do not use Russian roulette for sub-paths shorter than n. [default: 5]
       --roulette=<n>        Russian roulette coefficient. [default: 0.5]
       --batch               Run in batch mode (interactive otherwise).
+      --quiet               Do not output anything to console.
       --no-reload           Disable autoreload (input file is reloaded on modification in interactive mode).
       --num-samples=<n>     Terminate after n samples.
       --num-seconds=<n>     Terminate after n seconds.
@@ -45,7 +47,7 @@ R"(
       --output=<path>       Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
       --reference=<path>    Reference file for comparison.
       --camera=<id>         Use camera with given id. [default: 0]
-      --resolution=<WxH>    Resolution of output image. [default: 800x600]
+      --resolution=<WxH>    Resolution of output image. [default: 512x512]
 
 )";
 
@@ -55,7 +57,10 @@ map<string, string> extractOptions(int argc, char const* const* argv) {
     map<string, string> result;
 
     for (int i = 1; i < argc; ++i) {
-        if (strstr(argv[i], "--") == argv[i]) {
+        if(strcmp(argv[i], "-h") == 0) {
+            result.insert(make_pair<string, string>("--help", ""));
+        }
+        else if (strstr(argv[i], "-") == argv[i]) {
             const char* eq = strstr(argv[i], "=");
 
             if (eq == nullptr) {
@@ -65,11 +70,8 @@ map<string, string> extractOptions(int argc, char const* const* argv) {
                 result.insert(make_pair(string((const char*)argv[i], eq), string(eq + 1)));
             }
         }
-        else if(strcmp(argv[i], "-h") == 0) {
-            result.insert(make_pair<string, string>("--help", ""));
-        }
-        else if (i != 1 && i != 2) {
-            result.insert(make_pair<string, string>(argv[i], ""));
+        else {
+            result.insert(make_pair<string, string>("--input", argv[i]));
         }
     }
 
@@ -176,22 +178,14 @@ Options parseArgs(int argc, char const* const* argv) {
         options.displayVersion = true;
         return options;
     }
-    else if (strstr(argv[1], "-") == argv[1]) {
+    else if (dict.count("--input") == 0) {
         options.displayHelp = true;
         options.displayMessage = "Input file is required.";
         return options;
     }
     else {
-        options.input = argv[1];
-
-        if (argc >= 3 && strstr(argv[2], "-") != argv[2]) {
-            options.output = argv[2];
-        }
-        else if (argc >= 3 && strcmp(argv[2], "-") == 0) {
-            options.displayHelp = true;
-            options.displayMessage = "- cannot be output file.";
-            return options;
-        }
+        options.input = dict["--input"];
+        dict.erase("--input");
 
         size_t numTechniqes =
             dict.count("--BPT") +
@@ -219,6 +213,9 @@ Options parseArgs(int argc, char const* const* argv) {
         else if (dict.count("--VCM")) {
             options.technique = Options::VCM;
             dict.erase("--VCM");
+        }
+        else {
+            options.technique = Options::Viewer;
         }
 
         if (dict.count("--num-photons")) {
@@ -341,6 +338,11 @@ Options parseArgs(int argc, char const* const* argv) {
         if (dict.count("--batch")) {
             options.batch = true;
             dict.erase("--batch");
+        }
+
+        if (dict.count("--quiet")) {
+            options.quiet = true;
+            dict.erase("--quiet");
         }
 
         if (dict.count("--no-reload")) {
@@ -509,7 +511,13 @@ pair<bool, int> displayHelpIfNecessary(
     return std::make_pair(false, 0);
 }
 
-shared<Technique> makeTechnique(const Options& options) {
+shared<Technique> makeViewer(Options& options) {
+    auto image = vector<vec4>();
+    loadEXR(options.input, options.width, options.height, image);
+    return std::make_shared<Viewer>(image, options.width, options.height);
+}
+
+shared<Technique> makeTechnique(Options& options) {
     switch (options.technique) {
         case Options::BPT:
             if (options.beta == 1.0f)
@@ -542,6 +550,9 @@ shared<Technique> makeTechnique(const Options& options) {
                 options.maxRadius,
                 options.minSubpath,
                 options.roulette);
+
+        case Options::Viewer:
+            return makeViewer(options);
     }
 }
 

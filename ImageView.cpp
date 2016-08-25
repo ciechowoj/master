@@ -48,4 +48,12 @@ void ImageView::clear() {
     }
 }
 
+void ImageView::copyFrom(const std::vector<vec4>& data, size_t width, size_t height) {
+    if (width == this->width() && height == this->height()) {
+        for (size_t y = 0; y < height; ++y) {
+            std::memcpy(_data + width * y, data.data() + width * y, sizeof(vec4) * width);
+        }
+    }
+}
+
 }

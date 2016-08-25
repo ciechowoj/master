@@ -11,19 +11,20 @@ using std::string;
 template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
-    enum Technique { BPT, PT, PM, VCM };
+    enum Technique { BPT, PT, PM, VCM, Viewer };
 
     string input;
     string output;
     string reference;
     Technique technique = PT;
-    size_t numPhotons = 100000;
+    size_t numPhotons = 1000000;
     size_t numGather = 100;
-    double maxRadius = 0.1;
+    double maxRadius = 0.01;
     size_t minSubpath = 5;
     double beta = 1.0f;
     double roulette = 0.5;
     bool batch = false;
+    bool quiet = false;
     size_t numSamples = 0;
     double numSeconds = 0.0;
     bool parallel = false;
@@ -46,7 +47,7 @@ pair<bool, int> displayHelpIfNecessary(
 class Technique;
 class Scene;
 
-shared<Technique> makeTechnique(const Options& options);
+shared<Technique> makeTechnique(Options& options);
 shared<Scene> loadScene(const Options& options);
 string techniqueString(const Options& options);
 
