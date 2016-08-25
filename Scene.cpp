@@ -172,7 +172,7 @@ const BSDFSample Scene::sampleBSDF(
     return bsdf->sample(engine, surface, omega);
 }
 
-const vec3 Scene::queryBSDF(
+const BSDFQuery Scene::queryBSDF(
     const SurfacePoint& surface,
     const vec3& incident,
     const vec3& outgoing) const
@@ -181,17 +181,6 @@ const vec3 Scene::queryBSDF(
 
     auto bsdf = materials.bsdfs[surface.materialId()].get();
     return bsdf->query(surface, incident, outgoing);
-}
-
-const BSDFQuery Scene::queryBSDFEx(
-    const SurfacePoint& surface,
-    const vec3& incident,
-    const vec3& outgoing) const
-{
-    runtime_assert(surface.materialId() < materials.bsdfs.size());
-
-    auto bsdf = materials.bsdfs[surface.materialId()].get();
-    return bsdf->queryEx(surface, incident, outgoing);
 }
 
 const RayIsect Scene::intersect(
@@ -321,7 +310,7 @@ const vec3 Scene::sampleDirectLightArea(
 
     return
         lightSample.radiance() *
-        bsdf.query(point, -lightSample.omega(), omegaR) *
+        bsdf.query(point, -lightSample.omega(), omegaR).throughput() *
         distSqInv *
         fCosTheta *
         bCosTheta *
@@ -360,13 +349,13 @@ const vec3 Scene::sampleDirectLightMixed(
 
     vec3 lightRadiance =
         lightSample.radiance() *
-        bsdf.query(surface, -lightSample.omega(), omega) *
+        bsdf.query(surface, -lightSample.omega(), omega).throughput() *
         bCosTheta;
 
     float lightDensity = lightSample.density() / (fCosTheta * distSqInv);
 
     // combine
-    float bsdfDensity2 = bsdf.densityRev(surface, -lightSample.omega(), omega);
+    float bsdfDensity2 = bsdf.query(surface, -lightSample.omega(), omega).densityRev();
     float lightDensity2 = lights.density(surface.position(), bsdfSample.omega());
 
     vec3 bsdfThroughput = bsdfRadiance / bsdfDensity;

@@ -246,7 +246,7 @@ vec3 MBPT::_connect0(RandomEngine& engine, const EyeVertex& eye) {
 
 vec3 MBPT::_connect1(RandomEngine& engine, const EyeVertex& eye) {
     LightSampleEx light = _scene->sampleLightEx(engine, eye.position());
-    auto bsdf = _scene->queryBSDFEx(eye.surface, -light.omega(), eye.omega);
+    auto bsdf = _scene->queryBSDF(eye.surface, -light.omega(), eye.omega);
 
     float distSqInv = 1.0f / distance2(eye.position(), light.position());
     float eCosTheta = abs(dot(light.omega(), eye.gnormal()));
@@ -270,8 +270,8 @@ vec3 MBPT::_connect1(RandomEngine& engine, const EyeVertex& eye) {
 vec3 MBPT::_connect(const EyeVertex& eye, const LightVertex& light) {
     vec3 omega = normalize(eye.position() - light.position());
 
-    auto lightBSDF = _scene->queryBSDFEx(light.surface, light.omega, omega);
-    auto eyeBSDF = _scene->queryBSDFEx(eye.surface, -omega, eye.omega);
+    auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
+    auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
 
     float distSqInv = 1.0f / distance2(eye.position(), light.position());
     float lCosTheta = abs(dot(omega, light.gnormal()));
