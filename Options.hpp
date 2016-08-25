@@ -22,7 +22,7 @@ struct Options {
     double maxRadius = 0.01;
     size_t minSubpath = 5;
     double beta = 1.0f;
-    double roulette = 0.5;
+    double roulette = 0.6;
     bool batch = false;
     bool quiet = false;
     size_t numSamples = 0;

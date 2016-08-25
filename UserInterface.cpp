@@ -1,4 +1,5 @@
 #include <sstream>
+#include <iomanip>
 #include <UserInterface.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
@@ -53,7 +54,7 @@ void UserInterface::update(
     if (maxErrors.size() > 1)
     {
         ImGui::PlotLines(
-            "log max error",
+            "max error",
             maxErrors.data() + maxErrors.size() - offset + 1,
             offset - 1,
             0,
@@ -79,7 +80,20 @@ void UserInterface::_displayRadiance(
 
         vec4 radiance = image[size_t((height - pos.y - 1) * width + pos.x)];
 
-        stream << "[" << pos.x << ", " << pos.y << "]: " << radiance.xyz() / radiance.w << " W/(m*m*sr)";
+        vec3 radianceDivW = radiance.xyz() / radiance.w;
+
+        stream
+            << "[" << pos.x << ", " << pos.y << "]: "
+            << std::fixed
+            << std::setprecision(6)
+            << "["
+            << radianceDivW.x
+            << ", "
+            << radianceDivW.y
+            << ", "
+            << radianceDivW.z
+            << "]"
+            << " W/(m*m*sr)";
 
         ImGui::SetTooltip(stream.str().c_str());
     }

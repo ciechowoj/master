@@ -7,6 +7,11 @@
 #include <utility.hpp>
 #include <loader.hpp>
 
+#include <DiffuseBSDF.hpp>
+#include <ReflectionBSDF.hpp>
+#include <TransmissionBSDF.hpp>
+
+
 namespace haste {
 
 using std::move;
@@ -461,11 +466,11 @@ shared<Scene> loadScene(string path) {
 
         if (property<bool>(material, "$mat.blend.transparency.use")) {
             float ior = property<float>(material, "$mat.blend.transparency.ior");
-            auto bsdf = unique<BSDF>(new PerfectTransmissionBSDF(ior, 1.0f));
+            auto bsdf = unique<BSDF>(new TransmissionBSDF(ior, 1.0f));
             materials.bsdfs.push_back(std::move(bsdf));
         }
         else if (property<bool>(material, "$mat.blend.mirror.use")) {
-            materials.bsdfs.push_back(unique<BSDF>(new PerfectReflectionBSDF()));
+            materials.bsdfs.push_back(unique<BSDF>(new ReflectionBSDF()));
         }
         else {
             materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(materials.diffuses.back())));

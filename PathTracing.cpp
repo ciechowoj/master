@@ -22,15 +22,17 @@ void PathTracing::render(
 vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
     vec3 throughput = vec3(1.0f);
     vec3 radiance = vec3(0.0f);
-    bool specular = 0;
+    float specular = 0.0f;
     int bounce = 0;
 
     while (true) {
         auto isect = _scene->intersect(ray.origin, ray.direction);
 
         while (isect.isLight()) {
-            if (bounce == 0 || specular) {
-                radiance += throughput * _scene->queryRadiance(isect);
+            if (bounce == 0 || specular == 1.0f) {
+                radiance +=
+                    throughput *
+                    _scene->queryRadiance(isect, -ray.direction);
             }
 
             ray.origin = isect.position();
@@ -56,6 +58,8 @@ vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
             engine,
             point,
             -ray.direction);
+
+        specular = glm::max(specular, bsdfSample.specular()) * bsdfSample.specular();
 
         throughput *= bsdfSample.throughput() *
             abs(dot(point.normal(), bsdfSample.omega())) /

@@ -148,8 +148,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	# ./build/master/master.bin models/CornellBoxSphere.blend --VCM --max-radius=0.01 --num-photons=500000 --parallel
-	./build/master/master.bin models/CornellBoxSphere.blend --PT
+	./build/master/master.bin models/CornellBoxSpecular.blend --BPT --parallel
 
 profile:
 	valgrind \
@@ -161,8 +160,105 @@ profile:
 test: all
 	./build/master/unittest.bin
 
+build/master/%.o: %.cpp build/master/%.d build/master/sentinel
+	$(CXX) -c $(MAIN_DEPENDENCY_FLAGS) $(CXXFLAGS) $< -o $@
+
 clean:
 	rm -rf build/master
 
 distclean:
 	rm -rf build
+
+# integration tests stuff
+
+ALL_MODELS = $(wildcard models/*.blend)
+TEST_MODELS = \
+	models/LightPathNone.blend \
+	models/IndirectCubeHalf.blend \
+	models/IndirectCubeIOR1.blend \
+	models/IndirectCubeNone.blend \
+	models/IndirectCubeH25.blend \
+	models/IndirectCubeEye.blend \
+	models/IndirectCubeLens1.blend
+
+IMAGES_512_512 = $(TEST_MODELS:models/%.blend=images/%.512.512.exr)
+IMAGES_100_ = $(IMAGES_512_512:images/%.exr=images/%.100.exr)
+IMAGES_1000_ = $(IMAGES_512_512:images/%.exr=images/%.1000.exr)
+IMAGES_10000_ = $(IMAGES_512_512:images/%.exr=images/%.10000.exr)
+IMAGES_100000_ = $(IMAGES_512_512:images/%.exr=images/%.100000.exr)
+
+IMAGES_100 = \
+	$(IMAGES_100_:images/%.exr=images/%.PT.exr) \
+	$(IMAGES_100_:images/%.exr=images/%.BPT.exr)
+
+IMAGES_1000 = \
+	$(IMAGES_1000_:images/%.exr=images/%.PT.exr) \
+	$(IMAGES_1000_:images/%.exr=images/%.BPT.exr)
+
+IMAGES_10000 = \
+	$(IMAGES_10000_:images/%.exr=images/%.PT.exr) \
+	$(IMAGES_10000_:images/%.exr=images/%.BPT.exr)
+
+IMAGES_100000 = \
+	$(IMAGES_100000_:images/%.exr=images/%.PT.exr) \
+	$(IMAGES_100000_:images/%.exr=images/%.BPT.exr) \
+	$(IMAGES_100000_:images/%.exr=images/%.MBPT.exr) \
+	$(IMAGES_100000_:images/%.exr=images/%.VCM.exr)
+
+# 100 samples
+images/%.512.512.100.PT.exr: models/%.blend
+	./build/master/master.bin $< --PT --output=$@ --batch --num-samples=100 --parallel
+
+images/%.512.512.100.BPT.exr: models/%.blend
+	./build/master/master.bin $< --BPT --output=$@ --batch --num-samples=100 --parallel
+
+images/%.512.512.100.MBPT.exr: models/%.blend
+	./build/master/master.bin $< --BPT --output=$@ --batch --num-samples=100 --parallel --beta=2
+
+images/%.512.512.100.VCM.exr: models/%.blend
+	./build/master/master.bin $< --VCM --output=$@ --batch --num-samples=100 --parallel
+
+# 1000 samples
+images/%.512.512.1000.PT.exr: models/%.blend
+	./build/master/master.bin $< --PT --output=$@ --batch --num-samples=1000 --parallel
+
+images/%.512.512.1000.BPT.exr: models/%.blend
+	./build/master/master.bin $< --BPT --output=$@ --batch --num-samples=1000 --parallel
+
+images/%.512.512.1000.MBPT.exr: models/%.blend
+	./build/master/master.bin $< --BPT --output=$@ --batch --num-samples=1000 --parallel --beta=2
+
+images/%.512.512.1000.VCM.exr: models/%.blend
+	./build/master/master.bin $< --VCM --output=$@ --batch --num-samples=1000 --parallel
+
+# 10000 samples
+images/%.512.512.10000.PT.exr: models/%.blend
+	./build/master/master.bin $< --PT --output=$@ --batch --num-samples=10000 --parallel
+
+images/%.512.512.10000.BPT.exr: models/%.blend
+	./build/master/master.bin $< --BPT --output=$@ --batch --num-samples=10000 --parallel
+
+images/%.512.512.10000.MBPT.exr: models/%.blend
+	./build/master/master.bin $< --BPT --output=$@ --batch --num-samples=10000 --parallel --beta=2
+
+images/%.512.512.10000.VCM.exr: models/%.blend
+	./build/master/master.bin $< --VCM --output=$@ --batch --num-samples=10000 --parallel
+
+# 100000 samples
+images/%.512.512.100000.PT.exr: models/%.blend
+	./build/master/master.bin $< --PT --output=$@ --batch --num-samples=100000 --parallel
+
+images/%.512.512.100000.BPT.exr: models/%.blend
+	./build/master/master.bin $< --BPT --output=$@ --batch --num-samples=100000 --parallel
+
+images/%.512.512.100000.MBPT.exr: models/%.blend
+	./build/master/master.bin $< --BPT --output=$@ --batch --num-samples=100000 --parallel --beta=2
+
+images/%.512.512.100000.VCM.exr: models/%.blend
+	./build/master/master.bin $< --VCM --output=$@ --batch --num-samples=100000 --parallel
+
+render-100: $(IMAGES_100)
+render-1000: $(IMAGES_1000)
+render-10000: $(IMAGES_10000)
+render-100000: $(IMAGES_100000)
+

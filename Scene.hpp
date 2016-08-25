@@ -101,12 +101,17 @@ public:
         const SurfacePoint& surface,
         const vec3& omega) const;
 
-    const vec3 queryBSDF(
+    const BSDFSample sampleAdjointBSDF(
+        RandomEngine& engine,
+        const SurfacePoint& surface,
+        const vec3& omega) const;
+
+    const BSDFQuery queryBSDF(
         const SurfacePoint& surface,
         const vec3& incident,
         const vec3& outgoing) const;
 
-    const BSDFQuery queryBSDFEx(
+    const BSDFQuery queryAdjointBSDF(
         const SurfacePoint& surface,
         const vec3& incident,
         const vec3& outgoing) const;

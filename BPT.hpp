@@ -1,6 +1,5 @@
 #pragma once
 #include <Technique.hpp>
-#include <Edge.hpp>
 
 namespace haste {
 
@@ -15,6 +14,7 @@ private:
         SurfacePoint surface;
         vec3 _omega;
         vec3 throughput;
+        float specular;
         float a, A;
 
         const vec3& position() const { return surface.position(); }
@@ -36,7 +36,7 @@ private:
         const vec3& omega() const { return _omega; }
     };
 
-    static const size_t _maxSubpath = 128;
+    static const size_t _maxSubpath = 1024;
     const size_t _minSubpath;
     const float _roulette;
 

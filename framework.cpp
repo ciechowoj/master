@@ -15,11 +15,11 @@
 #include <chrono>
 #include <atomic>
 
-GLFWwindow* create_window(int x, int y) {
+GLFWwindow* create_window(int x, int y, const std::string& caption) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    return glfwCreateWindow(x, y, "Hello World", NULL, NULL);
+    return glfwCreateWindow(x, y, caption.c_str(), NULL, NULL);
 }
 
 GLuint create_shader(GLenum type, const std::string& source) {
@@ -223,13 +223,18 @@ void window_resize(GLFWwindow* window, int width, int height) {
     std::cerr << "Window resized to (" << width << ", " << height << ")." << std::endl;
 }
 
-int run(int width, int height, const std::function<void(GLFWwindow* window)>& func) {
+int run(
+    int width,
+    int height,
+    const std::string& caption,
+    const std::function<void(GLFWwindow* window)>& func)
+{
     if (!glfwInit()) {
         std::cerr << "Cannot initialize glfw." << std::endl;
         return -1;
     }
 
-    auto window = create_window(width, height);
+    auto window = create_window(width, height, caption);
 
     if (!window) {
         std::cerr << "Cannot create window." << std::endl;
@@ -324,8 +329,8 @@ void Framework::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, siz
     std::memcpy(dst, src, size);
 }
 
-int Framework::run(size_t width, size_t height) {
-    return ::run(width, height, [=](GLFWwindow* window) {
+int Framework::run(size_t width, size_t height, const std::string& caption) {
+    return ::run(width, height, caption, [=](GLFWwindow* window) {
         _window = window;
 
         std::vector<glm::vec4> buffer;

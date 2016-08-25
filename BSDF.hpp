@@ -35,40 +35,23 @@ struct BSDFSample {
 class BSDF {
 public:
     BSDF();
+
     virtual ~BSDF();
 
-    virtual const vec3 query(
+    virtual const BSDFQuery query(
         const vec3& incident,
-        const vec3& outgoing) const = 0;
+        const vec3& outgoing) const;
 
-    const vec3 query(
+    virtual const BSDFQuery queryAdjoint(
+        const vec3& incident,
+        const vec3& outgoing) const;
+
+    const BSDFQuery query(
         const SurfacePoint& point,
         const vec3& incident,
         const vec3& outgoing) const;
 
-    virtual const float density(
-        const vec3& incident,
-        const vec3& reflected) const = 0;
-
-    const float density(
-        const SurfacePoint& point,
-        const vec3& incident,
-        const vec3& reflected) const;
-
-    virtual const float densityRev(
-        const vec3& incident,
-        const vec3& reflected) const = 0;
-
-    const float densityRev(
-        const SurfacePoint& point,
-        const vec3& incident,
-        const vec3& reflected) const;
-
-    virtual const BSDFQuery queryEx(
-        const vec3& incident,
-        const vec3& outgoing) const;
-
-    const BSDFQuery queryEx(
+    const BSDFQuery queryAdjoint(
         const SurfacePoint& point,
         const vec3& incident,
         const vec3& outgoing) const;
@@ -77,7 +60,16 @@ public:
         RandomEngine& engine,
         const vec3& omega) const = 0;
 
+    virtual const BSDFSample sampleAdjoint(
+        RandomEngine& engine,
+        const vec3& omega) const;
+
     const BSDFSample sample(
+        RandomEngine& engine,
+        const SurfacePoint& point,
+        const vec3& omega) const;
+
+    const BSDFSample sampleAdjoint(
         RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omega) const;
@@ -85,95 +77,21 @@ public:
     virtual BSDFSample scatter(
         RandomEngine& engine,
         const SurfacePoint& point,
-        const vec3& omega) const = 0;
+        const vec3& omega) const;
 
     BSDF(const BSDF&) = delete;
     BSDF& operator=(const BSDF&) = delete;
 };
 
-class DiffuseBSDF : public BSDF {
+class DeltaBSDF : public BSDF {
 public:
-    DiffuseBSDF(const vec3& diffuse);
-
-    const vec3 query(
-        const vec3& a,
-        const vec3& b) const override;
-
-    const float density(
+    virtual const BSDFQuery query(
         const vec3& incident,
-        const vec3& reflected) const override;
+        const vec3& outgoing) const;
 
-    const float densityRev(
+    virtual const BSDFQuery queryAdjoint(
         const vec3& incident,
-        const vec3& reflected) const override;
-
-    const BSDFSample sample(
-        RandomEngine& engine,
-        const vec3& omega) const override;
-
-    BSDFSample scatter(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& omega) const override;
-
-private:
-    vec3 _diffuse;
-};
-
-class PerfectReflectionBSDF : public BSDF {
-public:
-    const vec3 query(
-        const vec3& incident,
-        const vec3& reflected) const override;
-
-    const float density(
-        const vec3& incident,
-        const vec3& reflected) const override;
-
-    const float densityRev(
-        const vec3& incident,
-        const vec3& reflected) const override;
-
-    const BSDFSample sample(
-        RandomEngine& engine,
-        const vec3& reflected) const override;
-
-    BSDFSample scatter(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& incident) const override;
-};
-
-class PerfectTransmissionBSDF : public BSDF {
-public:
-    PerfectTransmissionBSDF(
-        float internalIOR,
-        float externalIOR);
-
-    const vec3 query(
-        const vec3& incident,
-        const vec3& reflected) const override;
-
-    const float density(
-        const vec3& incident,
-        const vec3& reflected) const override;
-
-    const float densityRev(
-        const vec3& incident,
-        const vec3& reflected) const override;
-
-    const BSDFSample sample(
-        RandomEngine& engine,
-        const vec3& reflected) const override;
-
-    BSDFSample scatter(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& incident) const override;
-
-private:
-    float externalOverInternalIOR;
-    float internalIOR;
+        const vec3& outgoing) const;
 };
 
 }
