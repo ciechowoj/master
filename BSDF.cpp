@@ -95,6 +95,7 @@ const BSDFSample BSDF::sample(
 {
     BSDFSample result = sample(engine, point.toSurface(omega));
     result._omega = point.toWorld(result.omega());
+
     return result;
 }
 

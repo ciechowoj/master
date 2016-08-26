@@ -172,6 +172,17 @@ const BSDFSample Scene::sampleBSDF(
     return bsdf->sample(engine, surface, omega);
 }
 
+const BSDFSample Scene::sampleAdjointBSDF(
+    RandomEngine& engine,
+    const SurfacePoint& surface,
+    const vec3& omega) const
+{
+    runtime_assert(surface.materialId() < materials.bsdfs.size());
+
+    auto bsdf = materials.bsdfs[surface.materialId()].get();
+    return bsdf->sampleAdjoint(engine, surface, omega);
+}
+
 const BSDFQuery Scene::queryBSDF(
     const SurfacePoint& surface,
     const vec3& incident,
@@ -181,6 +192,17 @@ const BSDFQuery Scene::queryBSDF(
 
     auto bsdf = materials.bsdfs[surface.materialId()].get();
     return bsdf->query(surface, incident, outgoing);
+}
+
+const BSDFQuery Scene::queryAdjointBSDF(
+    const SurfacePoint& surface,
+    const vec3& incident,
+    const vec3& outgoing) const
+{
+    runtime_assert(surface.materialId() < materials.bsdfs.size());
+
+    auto bsdf = materials.bsdfs[surface.materialId()].get();
+    return bsdf->queryAdjoint(surface, incident, outgoing);
 }
 
 const RayIsect Scene::intersect(
@@ -277,20 +299,23 @@ const vec3 Scene::sampleDirectLightAngle(
     auto bsdfSample = bsdf.sample(engine, point, omegaR);
 
     Ray ray = { point.position(), bsdfSample.omega() };
-    RayIsect isect = intersect(ray);
 
     vec3 radiance = vec3(0.0f);
 
-    while (isect.isLight()) {
-        radiance +=
-            lights.lightRadiance(isect.primId()) *
-            bsdfSample.throughput() *
-            dot(bsdfSample.omega(), point.normal()) /
-            bsdfSample.density() *
-            (dot(-bsdfSample.omega(), lights.lightNormal(isect.primId())) > 0.0f ? 1.0f : 0.0f);
+    if (bsdfSample.specular() == 0.0f) {
+        RayIsect isect = intersect(ray);
 
-        ray.origin = isect.position();
-        isect = intersect(ray);
+        while (isect.isLight()) {
+            radiance +=
+                lights.lightRadiance(isect.primId()) *
+                bsdfSample.throughput() *
+                dot(bsdfSample.omega(), point.normal()) /
+                bsdfSample.density() *
+                (dot(-bsdfSample.omega(), lights.lightNormal(isect.primId())) > 0.0f ? 1.0f : 0.0f);
+
+            ray.origin = isect.position();
+            isect = intersect(ray);
+        }
     }
 
     return radiance;
@@ -326,17 +351,19 @@ const vec3 Scene::sampleDirectLightMixed(
     // sample BSDF
     auto bsdfSample = bsdf.sample(engine, surface, omega);
 
-    RayIsect isect = intersect(surface.position(), bsdfSample.omega());
-
     vec3 bsdfRadiance = vec3(0.0f);
 
-    while (isect.isLight()) {
-        bsdfRadiance +=
-            lights.queryRadiance(isect.primId(), -bsdfSample.omega()) *
-            bsdfSample.throughput() *
-            dot(bsdfSample.omega(), surface.gnormal());
+    if (bsdfSample.specular() == 0.0f) {
+        RayIsect isect = intersect(surface.position(), bsdfSample.omega());
 
-        isect = intersect(isect.position(), bsdfSample.omega());
+        while (isect.isLight()) {
+            bsdfRadiance +=
+                lights.queryRadiance(isect.primId(), -bsdfSample.omega()) *
+                bsdfSample.throughput() *
+                dot(bsdfSample.omega(), surface.gnormal());
+
+            isect = intersect(isect.position(), bsdfSample.omega());
+        }
     }
 
     float bsdfDensity = bsdfSample.density();
@@ -360,26 +387,6 @@ const vec3 Scene::sampleDirectLightMixed(
 
     vec3 bsdfThroughput = bsdfRadiance / bsdfDensity;
     vec3 lightThroughput = lightRadiance / lightDensity;
-
-    // cutoff
-
-    /*float alpha = 1.0;
-
-    float bsdfMax = max(bsdfDensity, lightDensity2) * alpha;
-    float lightMax = max(lightDensity, bsdfDensity2) * alpha;
-
-    float bsdfWeight = bsdfDensity < bsdfMax
-        ? 0.0f
-        : bsdfDensity /
-        ((bsdfDensity >= bsdfMax ? bsdfDensity : 0.0f)
-        + (lightDensity2 >= bsdfMax ? lightDensity2 : 0.0f));
-
-    float lightWeight = lightDensity < lightMax
-        ? 0.0f
-        : lightDensity /
-        ((lightDensity >= lightMax ? lightDensity : 0.0f)
-        + (bsdfDensity2 >= lightMax ? bsdfDensity2 : 0.0f));*/
-
 
     // power
     float bsdfWeight =

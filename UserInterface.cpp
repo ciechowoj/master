@@ -53,7 +53,7 @@ void UserInterface::update(
     if (maxErrors.size() > 1)
     {
         ImGui::PlotLines(
-            "log max error",
+            "max error",
             maxErrors.data() + maxErrors.size() - offset + 1,
             offset - 1,
             0,

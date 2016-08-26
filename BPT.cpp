@@ -115,7 +115,7 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     float uniform = sampleUniform1(engine).value();
 
     while (uniform < roulette) {
-        auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
+        auto bsdf = _scene->sampleAdjointBSDF(engine, path[prv].surface, path[prv].omega());
 
         isect = _scene->intersectMesh(path[prv].position(), bsdf.omega());
 
@@ -150,7 +150,7 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
         uniform = sampleUniform1(engine).value();
     }
 
-    auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
+    auto bsdf = _scene->sampleAdjointBSDF(engine, path[prv].surface, path[prv].omega());
 
     if (bsdf.specular() > 0.0f) {
         size = prv;
@@ -226,7 +226,7 @@ vec3 BPT::_connect1(RandomEngine& engine, const EyeVertex& eye) {
 vec3 BPT::_connect(const EyeVertex& eye, const LightVertex& light) {
     vec3 omega = normalize(eye.position() - light.position());
 
-    auto lightBSDF = _scene->queryBSDF(light.surface, light.omega(), omega);
+    auto lightBSDF = _scene->queryAdjointBSDF(light.surface, light.omega(), omega);
     auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega());
 
     auto edge = Edge(light, eye, omega);

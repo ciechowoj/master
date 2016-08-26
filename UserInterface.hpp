@@ -7,10 +7,10 @@
 namespace haste {
 
 enum DisplayMode : int {
-    DisplayModeUnsignedRelative,
-    DisplayModeUnsignedAbsolute,
-    DisplayModeRelative,
     DisplayModeAbsolute,
+    DisplayModeRelative,
+    DisplayModeUnsignedAbsolute,
+    DisplayModeUnsignedRelative,
     DisplayModeCurrent,
     DisplayModeReference
 };
