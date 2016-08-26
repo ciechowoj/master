@@ -20,7 +20,7 @@ struct Options {
     size_t numPhotons = 1000000;
     size_t numGather = 100;
     double maxRadius = 0.01;
-    size_t minSubpath = 5;
+    size_t minSubpath = 10;
     double beta = 1.0f;
     double roulette = 0.5;
     bool batch = false;

@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
     Application application(options);
 
     if (!options.batch) {
-        return application.run(options.width, options.height);
+        return application.run(options.width, options.height, options.input);
     }
     else {
         return application.runBatch(options.width, options.height);

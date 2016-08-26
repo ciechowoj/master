@@ -69,7 +69,7 @@ vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
             edge.bCosTheta /
             (bsdf.density() * roulette);
 
-        eye[itr].specular = eye[prv].specular * bsdf.specular();
+        eye[itr].specular = max(eye[prv].specular, bsdf.specular()) * bsdf.specular();
         eye[itr].c = 1.0f / (edge.fGeometry * bsdf.density());
         eye[itr].C =
             (eye[prv].C * bsdf.densityRev() + eye[prv].c) *

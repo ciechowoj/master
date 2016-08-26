@@ -43,7 +43,7 @@ public:
     virtual void postproc(glm::vec4* dst, const glm::vec4* src, size_t width, size_t height);
     virtual bool updateScene();
 
-    int run(size_t width, size_t height);
+    int run(size_t width, size_t height, const std::string& caption);
     int runBatch(size_t width, size_t height);
     void quit();
     bool batch() const;
