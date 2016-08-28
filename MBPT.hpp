@@ -47,8 +47,8 @@ private:
         return pow(x, _beta);
     }
 
-    void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
     vec3 _trace(RandomEngine& engine, const Ray& ray);
+    void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect1(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light);
