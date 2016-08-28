@@ -148,7 +148,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/SimpleCubeIOR1.blend --BPT --beta=0
+	./build/master/master.bin models/SimpleCubeIOR1.blend --BPT --beta=0.0 --parallel
 
 profile:
 	valgrind \

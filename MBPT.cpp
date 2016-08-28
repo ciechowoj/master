@@ -144,7 +144,7 @@ vec3 MBPT::_trace(RandomEngine& engine, const Ray& ray) {
     fgeometry = distSqInv * fCosTheta;
 
     eye[itr].throughput = vec3(1.0f);
-    eye[itr].specular = 1.0f;
+    eye[itr].specular = 0.0f;
     eye[itr].c = 0;
     eye[itr].C = 0;
 
@@ -182,7 +182,7 @@ vec3 MBPT::_trace(RandomEngine& engine, const Ray& ray) {
         eye[itr].specular = max(eye[prv].specular, bsdf.specular()) * bsdf.specular();
         eye[itr].c = 1.0f / _pow(fgeometry * bsdf.density());
         eye[itr].C =
-            (eye[prv].C * _pow(bsdf.densityRev()) + eye[prv].c) *
+            (eye[prv].C * _pow(bsdf.densityRev()) + eye[prv].c * (1.0f - eye[prv].specular)) *
             _pow(bgeometry) *
             eye[itr].c;
 
@@ -228,7 +228,7 @@ vec3 MBPT::_connect0(RandomEngine& engine, const EyeVertex& eye) {
             float c = 1.0f / _pow(fgeometry * bsdf.density());
             float C = (eye.C * _pow(bsdf.densityRev()) + eye.c) * _pow(bgeometry) * c;
 
-            float weightInv = 1.0f + (C * _pow(lsdf.omegaDensity()) + c) * _pow(lsdf.areaDensity());
+            float weightInv = 1.0f + (C * _pow(lsdf.omegaDensity()) + c * (1.0f - eye.specular)) * _pow(lsdf.areaDensity());
 
             radiance +=
                 lsdf.radiance() *
@@ -255,7 +255,7 @@ vec3 MBPT::_connect1(RandomEngine& engine, const EyeVertex& eye) {
     float weightInv =
         _pow(bsdf.densityRev() * lCosTheta * distSqInv / light.areaDensity()) +
         1.0f +
-        (eye.C * _pow(bsdf.density()) + eye.c) * _pow(eCosTheta * distSqInv * light.omegaDensity());
+        (eye.C * _pow(bsdf.density()) + eye.c * (1.0f - eye.specular)) * _pow(eCosTheta * distSqInv * light.omegaDensity());
 
     return
         light.radiance() *

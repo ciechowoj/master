@@ -37,7 +37,7 @@ vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
     eye[itr].surface = _scene->querySurface(isect);
     eye[itr]._omega = -ray.direction;
     eye[itr].throughput = vec3(1.0f);
-    eye[itr].specular = 1.0f;
+    eye[itr].specular = 0.0f;
     eye[itr].c = 0;
     eye[itr].C = 0;
 
@@ -72,7 +72,7 @@ vec3 BPT::_trace(RandomEngine& engine, const Ray& ray) {
         eye[itr].specular = max(eye[prv].specular, bsdf.specular()) * bsdf.specular();
         eye[itr].c = 1.0f / (edge.fGeometry * bsdf.density());
         eye[itr].C =
-            (eye[prv].C * bsdf.densityRev() + eye[prv].c) *
+            (eye[prv].C * bsdf.densityRev() + eye[prv].c * (1.0f - eye[prv].specular)) *
             edge.bGeometry *
             eye[itr].c;
 
@@ -135,7 +135,10 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
             (bsdf.density() * roulette);
 
         path[itr].a = 1.0f / (edge.fGeometry * bsdf.density());
-        path[itr].A = (path[prv].A * bsdf.densityRev() + path[prv].a) * edge.bGeometry * path[itr].a;
+        path[itr].A =
+            (path[prv].A * bsdf.densityRev() + path[prv].a) *
+            edge.bGeometry *
+            path[itr].a;
 
         if (bsdf.specular() > 0.0f) {
             path[prv] = path[itr];
@@ -185,7 +188,7 @@ vec3 BPT::_connect0(RandomEngine& engine, const EyeVertex& eye) {
 
             auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
             float c = 1.0f / (edge.fGeometry * bsdf.density());
-            float C = (eye.C * bsdf.densityRev() + eye.c) * edge.bGeometry * c;
+            float C = (eye.C * bsdf.densityRev() + eye.c * (1.0f - eye.specular)) * edge.bGeometry * c;
 
             float weightInv = 1.0f + (C * lsdf.omegaDensity() + c) * lsdf.areaDensity();
 
@@ -212,7 +215,7 @@ vec3 BPT::_connect1(RandomEngine& engine, const EyeVertex& eye) {
     float weightInv =
         bsdf.densityRev() * edge.bGeometry / light.areaDensity() +
         1.0f +
-        (eye.C * bsdf.density() + eye.c) * edge.fGeometry * light.omegaDensity();
+        (eye.C * bsdf.density() + eye.c * (1.0f - eye.specular)) * edge.fGeometry * light.omegaDensity();
 
     return
         light.radiance() *
