@@ -29,11 +29,10 @@ vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
         auto isect = _scene->intersect(ray.origin, ray.direction);
 
         while (isect.isLight()) {
-            if (bounce == 0) {
-                radiance += throughput * _scene->queryRadiance(isect);
-            }
-            else if (specular == 1.0f) {
-                radiance += throughput * _scene->queryRadiance(isect);
+            if (bounce == 0 || specular == 1.0f) {
+                radiance +=
+                    throughput *
+                    _scene->queryRadiance(isect, -ray.direction);
             }
 
             ray.origin = isect.position();

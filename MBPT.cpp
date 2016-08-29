@@ -305,7 +305,7 @@ vec3 MBPT::_connect(
     vec3 radiance = _connect0(engine, eye) + _connect1(engine, eye);
 
     for (size_t i = 0; i < size; ++i) {
-        radiance += _connect(eye, path[i]);
+        // radiance += _connect(eye, path[i]);
     }
 
     return radiance;

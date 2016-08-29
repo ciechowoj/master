@@ -32,16 +32,30 @@ const BSDFSample DiffuseBSDF::sample(
     RandomEngine& engine,
     const vec3& omega) const
 {
-    auto hemisphere = sampleCosineHemisphere1(engine);
+    if (omega.y < 0.0f)
+    {
+        BSDFSample sample;
+        sample._throughput = vec3(0.0f);
+        sample._omega = -omega;
+        sample._density = 1.0f;
+        sample._densityRev = 1.0f;
+        sample._specular = 0.0f;
 
-    BSDFSample sample;
-    sample._throughput = _diffuse * one_over_pi<float>();
-    sample._omega = hemisphere.omega();
-    sample._density = hemisphere.density();
-    sample._densityRev = abs(omega.y * one_over_pi<float>());
-    sample._specular = 0.0f;
+        return sample;
+    }
+    else
+    {
+        auto hemisphere = sampleCosineHemisphere1(engine);
 
-    return sample;
+        BSDFSample sample;
+        sample._throughput = _diffuse * one_over_pi<float>();
+        sample._omega = hemisphere.omega();
+        sample._density = hemisphere.density();
+        sample._densityRev = abs(omega.y * one_over_pi<float>());
+        sample._specular = 0.0f;
+
+        return sample;
+    }
 }
 
 BSDFSample DiffuseBSDF::scatter(

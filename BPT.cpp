@@ -219,7 +219,7 @@ vec3 BPT::_connect1(RandomEngine& engine, const EyeVertex& eye) {
     float weightInv =
         bsdf.densityRev() * edge.bGeometry / light.areaDensity() +
         1.0f +
-        (eye.C * bsdf.density() + eye.c * (1.0f - eye.specular)) * edge.fGeometry * light.omegaDensity();
+        (eye.C * bsdf.density() + eye.c) * edge.fGeometry * light.omegaDensity();
 
     return
         light.radiance() *
