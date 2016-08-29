@@ -13,6 +13,7 @@ INCLUDE_DIRS = \
 	-Isubmodules/assimp/include \
 	-Ibuild/glad/loader/include \
 	-Ibuild/imgui \
+	$(TBB_INCLUDE_PATH) \
 	-I.
 
 LIBRARY_DIRS = \
@@ -22,7 +23,8 @@ LIBRARY_DIRS = \
 	-Lbuild/googletest \
 	-Lbuild/glad \
 	-Lbuild/embree \
-	-Lbuild/assimp/code
+	-Lbuild/assimp/code \
+	$(TBB_LIBRARY_PATH)
 
 CC = gcc
 CCFLAGS = -march=native -g -O2 -w -Wall $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
@@ -54,6 +56,12 @@ STD_LIBS = \
 	-lpthread \
 	-lIlmImf \
 	-lIex
+
+TBB_URL = \
+	https://www.threadingbuildingblocks.org/sites/default/files/software_releases/linux/tbb44_20160526oss_lin_1.tgz
+
+TBB_ARCHIVE = \
+	tbb44_20160526oss_lin_1.tgz
 
 MAIN_HEADERS = $(wildcard *.hpp)
 MAIN_SOURCES := $(wildcard *.cpp)
@@ -87,7 +95,7 @@ include submodules/imgui.makefile
 include submodules/googletest.makefile
 include submodules/glm.makefile
 
-.PHONY: all master unittest benchmark
+.PHONY: all master unittest benchmark install-tbb
 
 master: build/master/master.bin
 
@@ -165,3 +173,15 @@ clean:
 
 distclean:
 	rm -rf build
+
+$(TBB_ARCHIVE):
+	wget $(TBB_URL)
+
+install-tbb: $(TBB_ARCHIVE)
+	tar xf $(TBB_ARCHIVE)
+
+master-tbb: TBB_LIBRARY_PATH = -L$(shell pwd)/tbb44_20160526oss/lib/intel64/gcc4.4
+master-tbb: TBB_INCLUDE_PATH = -I$(shell pwd)/tbb44_20160526oss/include
+master-tbb: master
+	echo $(TBB_LIBRARY_PATH)
+	echo $(TBB_INCLUDE_PATH)
