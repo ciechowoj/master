@@ -41,11 +41,6 @@ const BSDFSample TransmissionBSDF::sample(
     return result;
 }
 
-}
-
-
-namespace haste {
-
 const BSDFSample TransmissionBSDF::sampleAdjoint(
     RandomEngine& engine,
     const vec3& reflected) const

@@ -99,6 +99,8 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
         return;
     }
 
+    float specular = 0.0f;
+
     auto edge = Edge(light, isect);
 
     path[itr].surface = _scene->querySurface(isect);
@@ -136,9 +138,11 @@ void BPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
 
         path[itr].a = 1.0f / (edge.fGeometry * bsdf.density());
         path[itr].A =
-            (path[prv].A * bsdf.densityRev() + path[prv].a) *
+            (path[prv].A * bsdf.densityRev() + path[prv].a * (1.0f - specular)) *
             edge.bGeometry *
             path[itr].a;
+
+        specular = max(specular, bsdf.specular()) * bsdf.specular();
 
         if (bsdf.specular() > 0.0f) {
             path[prv] = path[itr];
