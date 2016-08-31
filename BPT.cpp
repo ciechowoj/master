@@ -1,6 +1,6 @@
 #include <streamops.hpp>
 #include <sstream>
-#include <MBPT.hpp>
+#include <BPT.hpp>
 #include <Edge.hpp>
 
 namespace haste {
@@ -41,16 +41,16 @@ inline void VariableBeta::init(float beta) {
     _beta = beta;
 }
 
-template <class Beta> MBPT<Beta>::MBPT(size_t minSubpath, float roulette)
+template <class Beta> BPTBase<Beta>::BPTBase(size_t minSubpath, float roulette)
     : _minSubpath(minSubpath)
     , _roulette(roulette)
 { }
 
-template <class Beta> string MBPT<Beta>::name() const {
+template <class Beta> string BPTBase<Beta>::name() const {
     return Beta::name();
 }
 
-template <class Beta> vec3 MBPT<Beta>::_trace(
+template <class Beta> vec3 BPTBase<Beta>::_trace(
     RandomEngine& engine,
     const Ray& ray)
 {
@@ -129,7 +129,7 @@ template <class Beta> vec3 MBPT<Beta>::_trace(
     return radiance;
 }
 
-template <class Beta> void MBPT<Beta>::_trace(
+template <class Beta> void BPTBase<Beta>::_trace(
     RandomEngine& engine,
     size_t& size,
     LightVertex* path)
@@ -203,7 +203,7 @@ template <class Beta> void MBPT<Beta>::_trace(
     size = prv + 1;
 }
 
-template <class Beta> vec3 MBPT<Beta>::_connect0(
+template <class Beta> vec3 BPTBase<Beta>::_connect0(
     RandomEngine& engine,
     const EyeVertex& eye)
 {
@@ -243,7 +243,7 @@ template <class Beta> vec3 MBPT<Beta>::_connect0(
     return radiance;
 }
 
-template <class Beta> vec3 MBPT<Beta>::_connect1(
+template <class Beta> vec3 BPTBase<Beta>::_connect1(
     RandomEngine& engine,
     const EyeVertex& eye)
 {
@@ -267,7 +267,7 @@ template <class Beta> vec3 MBPT<Beta>::_connect1(
         (light.areaDensity() * weightInv);
 }
 
-template <class Beta> vec3 MBPT<Beta>::_connect(
+template <class Beta> vec3 BPTBase<Beta>::_connect(
     const EyeVertex& eye,
     const LightVertex& light)
 {
@@ -296,7 +296,7 @@ template <class Beta> vec3 MBPT<Beta>::_connect(
         weightInv;
 }
 
-template <class Beta> vec3 MBPT<Beta>::_connect(
+template <class Beta> vec3 BPTBase<Beta>::_connect(
     RandomEngine& engine,
     const EyeVertex& eye,
     size_t size,
@@ -312,7 +312,7 @@ template <class Beta> vec3 MBPT<Beta>::_connect(
 }
 
 BPTb::BPTb(size_t minSubpath, float roulette, float beta)
-    : MBPT<VariableBeta>(minSubpath, roulette)
+    : BPTBase<VariableBeta>(minSubpath, roulette)
 {
     VariableBeta::init(beta);
 }
@@ -321,9 +321,9 @@ template class FixedBeta<0>;
 template class FixedBeta<1>;
 template class FixedBeta<2>;
 
-template class MBPT<FixedBeta<0>>;
-template class MBPT<FixedBeta<1>>;
-template class MBPT<FixedBeta<2>>;
-template class MBPT<VariableBeta>;
+template class BPTBase<FixedBeta<0>>;
+template class BPTBase<FixedBeta<1>>;
+template class BPTBase<FixedBeta<2>>;
+template class BPTBase<VariableBeta>;
 
 }

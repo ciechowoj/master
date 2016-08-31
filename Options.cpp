@@ -4,8 +4,8 @@
 #include <Options.hpp>
 #include <loader.hpp>
 
-#include <MBPT.hpp>
-#include <PathTracing.hpp>
+#include <BPT.hpp>
+#include <PT.hpp>
 #include <PhotonMapping.hpp>
 #include <VCM.hpp>
 #include <Viewer.hpp>
@@ -536,7 +536,9 @@ shared<Technique> makeTechnique(Options& options) {
             }
 
         case Options::PT:
-            return std::make_shared<PathTracing>();
+            return std::make_shared<PathTracing>(
+                options.minSubpath,
+                options.roulette);
 
         case Options::PM:
             return std::make_shared<PhotonMapping>(

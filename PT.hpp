@@ -5,7 +5,7 @@ namespace haste {
 
 class PathTracing : public Technique {
 public:
-    PathTracing();
+    PathTracing(size_t minSubpath, float roulette);
 
     void render(
         ImageView& view,
@@ -15,6 +15,10 @@ public:
     vec3 trace(RandomEngine& engine, Ray ray);
 
     string name() const override;
+
+private:
+    const size_t _minSubpath;
+    const float _roulette;
 };
 
 }

@@ -19,9 +19,9 @@ private:
 };
 
 
-template <class Beta> class MBPT : public Technique, protected Beta {
+template <class Beta> class BPTBase : public Technique, protected Beta {
 public:
-    MBPT(size_t minSubpath = 3, float roulette = 0.5f);
+    BPTBase(size_t minSubpath, float roulette);
 
     string name() const override;
 
@@ -64,13 +64,13 @@ private:
     vec3 _connect(RandomEngine& engine, const EyeVertex& eye, size_t size, const LightVertex* path);
 };
 
-typedef MBPT<FixedBeta<0>> BPT0;
-typedef MBPT<FixedBeta<1>> BPT1;
-typedef MBPT<FixedBeta<2>> BPT2;
+typedef BPTBase<FixedBeta<0>> BPT0;
+typedef BPTBase<FixedBeta<1>> BPT1;
+typedef BPTBase<FixedBeta<2>> BPT2;
 
-class BPTb : public MBPT<VariableBeta> {
+class BPTb : public BPTBase<VariableBeta> {
 public:
-    BPTb(size_t minSubpath = 3, float roulette = 0.5f, float beta = 1.0f);
+    BPTb(size_t minSubpath, float roulette, float beta);
 };
 
 }

@@ -1,11 +1,12 @@
 #include <iostream>
 #include <sstream>
 #include <GLFW/glfw3.h>
-#include <PathTracing.hpp>
+#include <PT.hpp>
 
 namespace haste {
 
-PathTracing::PathTracing() { }
+PathTracing::PathTracing(size_t minSubpath, float roulette)
+    : _minSubpath(minSubpath), _roulette(roulette) { }
 
 void PathTracing::render(
     ImageView& view,
@@ -68,7 +69,7 @@ vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
         ray.direction = bsdfSample.omega();
         ray.origin = isect.position();
 
-        float prob = bounce > 5 ? 0.5f : 1.0f;
+        float prob = bounce > _minSubpath ? _roulette : 1.0f;
 
         if (prob < _scene->sampler.sample()) {
             break;
