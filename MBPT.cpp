@@ -5,19 +5,55 @@
 
 namespace haste {
 
-MBPT::MBPT(size_t minSubpath, float roulette, float beta)
-    : _minSubpath(minSubpath)
-    , _roulette(roulette)
-    , _beta(beta)
-{ }
+template <int C> inline float FixedBeta<C>::beta(float x) {
+    return pow(x, float(C));
+}
 
-string MBPT::name() const {
+template <int C> inline string FixedBeta<C>::name() const {
     std::stringstream stream;
-    stream << "Bidirectional Path Tracing (beta = " << _beta << ")";
+    stream << u8"Bidirectional Path Tracing (β = " << C << ")";
     return stream.str();
 }
 
-vec3 MBPT::_trace(RandomEngine& engine, const Ray& ray) {
+template <> inline float FixedBeta<0>::beta(float x) {
+    return 1.0f;
+}
+
+template <> inline float FixedBeta<1>::beta(float x) {
+    return x;
+}
+
+template <> inline float FixedBeta<2>::beta(float x) {
+    return x * x;
+}
+
+inline float VariableBeta::beta(float x) {
+    return pow(x, _beta);
+}
+
+inline string VariableBeta::name() const {
+    std::stringstream stream;
+    stream << u8"Bidirectional Path Tracing (β = " << _beta << ")";
+    return stream.str();
+}
+
+inline void VariableBeta::init(float beta) {
+    _beta = beta;
+}
+
+template <class Beta> MBPT<Beta>::MBPT(size_t minSubpath, float roulette)
+    : _minSubpath(minSubpath)
+    , _roulette(roulette)
+{ }
+
+template <class Beta> string MBPT<Beta>::name() const {
+    return Beta::name();
+}
+
+template <class Beta> vec3 MBPT<Beta>::_trace(
+    RandomEngine& engine,
+    const Ray& ray)
+{
     char lightRaw[_maxSubpath * sizeof(LightVertex)];
     LightVertex* light = (LightVertex*)lightRaw;
 
@@ -76,11 +112,11 @@ vec3 MBPT::_trace(RandomEngine& engine, const Ray& ray) {
 
         eye[prv].specular = max(eye[prv].specular, bsdf.specular());
         eye[itr].specular = max(eye[prv].specular, bsdf.specular()) * bsdf.specular();
-        eye[itr].c = 1.0f / _pow(edge.fGeometry * bsdf.density());
-        eye[itr].C =
-            (eye[prv].C * _pow(bsdf.densityRev()) + eye[prv].c * (1.0f - eye[prv].specular)) *
-            _pow(edge.bGeometry) *
-            eye[itr].c;
+        eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
+        eye[itr].C
+            = (eye[prv].C * Beta::beta(bsdf.densityRev()) + eye[prv].c * (1.0f - eye[prv].specular))
+            * Beta::beta(edge.bGeometry)
+            * eye[itr].c;
 
         ++eSize;
         radiance += _connect(engine, eye[itr], lSize, light);
@@ -93,7 +129,11 @@ vec3 MBPT::_trace(RandomEngine& engine, const Ray& ray) {
     return radiance;
 }
 
-void MBPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
+template <class Beta> void MBPT<Beta>::_trace(
+    RandomEngine& engine,
+    size_t& size,
+    LightVertex* path)
+{
     size_t itr = 0, prv = 0;
 
     LightSampleEx light = _scene->sampleLight(engine);
@@ -110,8 +150,9 @@ void MBPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
     path[itr].surface = _scene->querySurface(isect);
     path[itr]._omega = -light.omega();
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
-    path[itr].a = 1.0f / _pow(edge.fGeometry * light.omegaDensity());
-    path[itr].A = _pow(edge.bGeometry) * path[itr].a / _pow(light.areaDensity());
+    path[itr].specular = 0.0f;
+    path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
+    path[itr].A = Beta::beta(edge.bGeometry) * path[itr].a / Beta::beta(light.areaDensity());
 
     prv = itr;
     ++itr;
@@ -140,36 +181,32 @@ void MBPT::_trace(RandomEngine& engine, size_t& size, LightVertex* path) {
             edge.bCosTheta /
             (bsdf.density() * roulette);
 
-        path[itr].a = 1.0f / _pow(edge.fGeometry * bsdf.density());
-        path[itr].A =
-            (path[prv].A * _pow(bsdf.densityRev()) + path[prv].a) *
-            _pow(edge.bGeometry) *
-            path[itr].a;
+        path[prv].specular = max(path[prv].specular, bsdf.specular());
+        path[itr].specular = max(path[prv].specular, bsdf.specular()) * bsdf.specular();
+        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
+        path[itr].A
+            = (path[prv].A
+                * Beta::beta(bsdf.densityRev())
+                + path[prv].a
+                * (1.0f - path[prv].specular))
+            * Beta::beta(edge.bGeometry)
+            * path[itr].a;
 
-        if (bsdf.specular() > 0.0f) {
-            path[prv] = path[itr];
-        }
-        else {
-            prv = itr;
-            ++itr;
-        }
+        prv = itr;
+        ++itr;
 
         ++lSize;
         roulette = lSize < _minSubpath ? 1.0f : _roulette;
         uniform = sampleUniform1(engine).value();
     }
 
-    auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
-
-    if (bsdf.specular() > 0.0f) {
-        size = prv;
-    }
-    else {
-        size = prv + 1;
-    }
+    size = prv + 1;
 }
 
-vec3 MBPT::_connect0(RandomEngine& engine, const EyeVertex& eye) {
+template <class Beta> vec3 MBPT<Beta>::_connect0(
+    RandomEngine& engine,
+    const EyeVertex& eye)
+{
     vec3 radiance = vec3(0.0f);
 
     auto bsdf = _scene->sampleBSDF(engine, eye.surface, eye.omega());
@@ -177,34 +214,28 @@ vec3 MBPT::_connect0(RandomEngine& engine, const EyeVertex& eye) {
 
     float roulette = 1.0f;
 
-    while (isect.isLight())
-    {
-        if (eye.specular * bsdf.specular() > 0.0f)
-        {
-            radiance +=
-                _scene->queryRadiance(isect, -bsdf.omega()) *
-                eye.throughput *
-                bsdf.throughput() *
-                abs(dot(eye.gnormal(), bsdf.omega())) /
-                (bsdf.density() * roulette);
-        }
-        else
-        {
-            auto edge = Edge(eye, isect, bsdf.omega());
+    while (isect.isLight()) {
+        auto edge = Edge(eye, isect, bsdf.omega());
 
-            auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
-            float c = 1.0f / _pow(edge.fGeometry * bsdf.density());
-            float C = (eye.C * _pow(bsdf.densityRev()) + eye.c * (1.0f - eye.specular)) * _pow(edge.bGeometry) * c;
+        auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
+        float c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
+        float C
+            = (eye.C * Beta::beta(bsdf.densityRev())
+                + eye.c
+                * (1.0f - eye.specular))
+            * Beta::beta(edge.bGeometry) * c;
 
-            float weightInv = 1.0f + (C * _pow(lsdf.omegaDensity()) + c) * _pow(lsdf.areaDensity());
+        float weightInv
+            = 1.0f
+            + (C * Beta::beta(lsdf.omegaDensity()) + c * (1.0f - bsdf.specular()))
+            * Beta::beta(lsdf.areaDensity());
 
-            radiance +=
-                lsdf.radiance() *
-                eye.throughput *
-                bsdf.throughput() *
-                edge.bCosTheta /
-                (bsdf.density() * roulette * weightInv);
-        }
+        radiance +=
+            lsdf.radiance() *
+            eye.throughput *
+            bsdf.throughput() *
+            edge.bCosTheta /
+            (bsdf.density() * roulette * weightInv);
 
         isect = _scene->intersect(isect.position(), bsdf.omega());
     }
@@ -212,16 +243,20 @@ vec3 MBPT::_connect0(RandomEngine& engine, const EyeVertex& eye) {
     return radiance;
 }
 
-vec3 MBPT::_connect1(RandomEngine& engine, const EyeVertex& eye) {
+template <class Beta> vec3 MBPT<Beta>::_connect1(
+    RandomEngine& engine,
+    const EyeVertex& eye)
+{
     LightSampleEx light = _scene->sampleLightEx(engine, eye.position());
     auto bsdf = _scene->queryBSDF(eye.surface, -light.omega(), eye.omega());
 
     auto edge = Edge(light, eye, light.omega());
 
-    float weightInv =
-        _pow(bsdf.densityRev() * edge.bGeometry / light.areaDensity()) +
-        1.0f +
-        (eye.C * _pow(bsdf.density()) + eye.c * (1.0f - eye.specular)) * _pow(edge.fGeometry * light.omegaDensity());
+    float weightInv
+        = Beta::beta(bsdf.densityRev() * edge.bGeometry / light.areaDensity())
+        + 1.0f
+        + (eye.C * Beta::beta(bsdf.density()) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(edge.fGeometry * light.omegaDensity());
 
     return
         light.radiance() *
@@ -232,7 +267,10 @@ vec3 MBPT::_connect1(RandomEngine& engine, const EyeVertex& eye) {
         (light.areaDensity() * weightInv);
 }
 
-vec3 MBPT::_connect(const EyeVertex& eye, const LightVertex& light) {
+template <class Beta> vec3 MBPT<Beta>::_connect(
+    const EyeVertex& eye,
+    const LightVertex& light)
+{
     vec3 omega = normalize(eye.position() - light.position());
 
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega(), omega);
@@ -240,10 +278,12 @@ vec3 MBPT::_connect(const EyeVertex& eye, const LightVertex& light) {
 
     auto edge = Edge(light, eye, omega);
 
-    float weightInv =
-        (light.A * _pow(lightBSDF.densityRev()) + light.a) * _pow(edge.bGeometry * eyeBSDF.densityRev()) +
-        1.0f +
-        (eye.C * _pow(eyeBSDF.density()) + eye.c * (1.0f - eye.specular)) * _pow(edge.fGeometry * lightBSDF.density());
+    float weightInv
+        = (light.A * Beta::beta(lightBSDF.densityRev()) + light.a * (1.0f - light.specular))
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev())
+        + 1.0f
+        + (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(edge.fGeometry * lightBSDF.density());
 
     return
         _scene->occluded(eye.position(), light.position()) *
@@ -256,7 +296,7 @@ vec3 MBPT::_connect(const EyeVertex& eye, const LightVertex& light) {
         weightInv;
 }
 
-vec3 MBPT::_connect(
+template <class Beta> vec3 MBPT<Beta>::_connect(
     RandomEngine& engine,
     const EyeVertex& eye,
     size_t size,
@@ -270,5 +310,20 @@ vec3 MBPT::_connect(
 
     return radiance;
 }
+
+BPTb::BPTb(size_t minSubpath, float roulette, float beta)
+    : MBPT<VariableBeta>(minSubpath, roulette)
+{
+    VariableBeta::init(beta);
+}
+
+template class FixedBeta<0>;
+template class FixedBeta<1>;
+template class FixedBeta<2>;
+
+template class MBPT<FixedBeta<0>>;
+template class MBPT<FixedBeta<1>>;
+template class MBPT<FixedBeta<2>>;
+template class MBPT<VariableBeta>;
 
 }

@@ -4,7 +4,6 @@
 #include <Options.hpp>
 #include <loader.hpp>
 
-#include <BPT.hpp>
 #include <MBPT.hpp>
 #include <PathTracing.hpp>
 #include <PhotonMapping.hpp>
@@ -520,15 +519,17 @@ shared<Technique> makeViewer(Options& options) {
 shared<Technique> makeTechnique(Options& options) {
     switch (options.technique) {
         case Options::BPT:
-            if (options.beta == 1.0f)
-            {
-                return std::make_shared<BPT>(
-                    options.minSubpath,
-                    options.roulette);
+            if (options.beta == 0.0f) {
+                return std::make_shared<BPT0>(options.minSubpath, options.roulette);
             }
-            else
-            {
-                return std::make_shared<MBPT>(
+            else if (options.beta == 1.0f) {
+                return std::make_shared<BPT1>(options.minSubpath, options.roulette);
+            }
+            else if (options.beta == 2.0f) {
+                return std::make_shared<BPT2>(options.minSubpath, options.roulette);
+            }
+            else {
+                return std::make_shared<BPTb>(
                     options.minSubpath,
                     options.roulette,
                     options.beta);
