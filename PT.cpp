@@ -1,6 +1,3 @@
-#include <iostream>
-#include <sstream>
-#include <GLFW/glfw3.h>
 #include <PT.hpp>
 
 namespace haste {

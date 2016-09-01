@@ -1,4 +1,3 @@
-#include <iostream>
 #include <VCM.hpp>
 #include <Edge.hpp>
 

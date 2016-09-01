@@ -52,6 +52,10 @@ R"(
 
 )";
 
+string Options::caption() const {
+    return input0 + " [" + techniqueString(*this) + "]";
+}
+
 bool startsWith(const string& a, const string& b);
 
 map<string, string> extractOptions(int argc, char const* const* argv) {
@@ -611,6 +615,7 @@ string techniqueString(const Options& options) {
         case Options::PT: return "PT";
         case Options::PM: return "PM";
         case Options::VCM: return "VCM";
+        case Options::Viewer: return "Viewer";
         default: return "UNKNOWN";
     }
 }

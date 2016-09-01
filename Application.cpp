@@ -194,7 +194,6 @@ void Application::_printStatistics(const ImageView& view, double elapsed, bool p
         else {
             size_t numSamples = size_t(view.last().w);
             std::cout
-                << "\r"
                 << "Sample #"
                 << std::setw(6)
                 << std::left
@@ -208,9 +207,8 @@ void Application::_printStatistics(const ImageView& view, double elapsed, bool p
                 << "s"
                 << std::setw(8)
                 << elapsed / numSamples
-                << "s/sample";
-
-            std::cout.flush();
+                << "s/sample"
+                << std::endl;
         }
     }
 }

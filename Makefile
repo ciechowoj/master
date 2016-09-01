@@ -148,7 +148,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --PT --parallel
+	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --parallel
 
 profile:
 	valgrind \
@@ -159,9 +159,6 @@ profile:
 
 test: all
 	./build/master/unittest.bin
-
-build/master/%.o: %.cpp build/master/%.d build/master/sentinel
-	$(CXX) -c $(MAIN_DEPENDENCY_FLAGS) $(CXXFLAGS) $< -o $@
 
 clean:
 	rm -rf build/master

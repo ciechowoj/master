@@ -13,6 +13,7 @@ struct BSDFQuery {
     const vec3& throughput() const { return _throughput; }
     const float density() const { return _density; }
     const float densityRev() const { return _densityRev; }
+    const float specular() const { return 1.0f - ceil(_density); }
     const bool zero() const;
 };
 

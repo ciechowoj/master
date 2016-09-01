@@ -40,6 +40,8 @@ struct Options {
     bool displayHelp = false;
     bool displayVersion = false;
     string displayMessage;
+
+    string caption() const;
 };
 
 Options parseArgs(int argc, char const* const* argv);
