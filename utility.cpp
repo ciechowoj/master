@@ -1,3 +1,6 @@
+#include <iostream>
+#include <iomanip>
+#include <stdexcept>
 #include <runtime_assert>
 #include <utility.hpp>
 
@@ -349,6 +352,64 @@ size_t getmtime(const string& path) {
     struct stat buf;
     stat(path.c_str(), &buf);
     return buf.st_mtime;
+}
+
+vec3 computeAVG(const string& path) {
+    vector<vec3> data;
+    size_t width, height;
+
+    loadEXR(path, width, height, data);
+
+    vec3 result = vec3(0.0f);
+
+    for (size_t i = 0; i < data.size(); ++i) {
+        result += data[i];
+    }
+
+    return result / float(data.size());
+}
+
+static void printVec(const vec3& v) {
+    std::cout
+        << std::setprecision(7)
+        << std::fixed
+        << std::setw(12)
+        << v.x
+        << std::setw(12)
+        << v.y
+        << std::setw(12)
+        << v.z
+        << std::endl;
+}
+
+void printAVG(const string& path) {
+    printVec(computeAVG(path));
+}
+
+vec3 computeRMS(const string& path0, const string& path1) {
+    vector<vec3> data0, data1;
+    size_t width0, height0, width1, height1;
+
+    loadEXR(path0, width0, height0, data0);
+    loadEXR(path1, width1, height1, data1);
+
+    vec3 result = vec3(0.0f);
+
+    if (data0.size() != data1.size()) {
+        throw std::runtime_error(
+            "Sizes of '" + path0 + "' and '" + path1 + "' doesn't match.");
+    }
+
+    for (size_t i = 0; i < data0.size(); ++i) {
+        auto diff = data0[i] - data1[i];
+        result += diff * diff;
+    }
+
+    return sqrt(result / float(data0.size()));
+}
+
+void printRMS(const string& path0, const string& path1) {
+    printVec(computeRMS(path0, path1));
 }
 
 }

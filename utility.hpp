@@ -91,5 +91,11 @@ void renderPoints(
     float phi,
     float radius);
 
+vec3 computeAVG(const string& path);
+void printAVG(const string& path);
+
+vec3 computeRMS(const string& path0, const string& path1);
+void printRMS(const string& path0, const string& path1);
+
 }
 

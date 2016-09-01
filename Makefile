@@ -174,12 +174,14 @@ distclean:
 ALL_MODELS = $(wildcard models/*.blend)
 TEST_MODELS = \
 	models/LightPathNone.blend \
+	models/LightOverBox.blend \
 	models/IndirectCubeHalf.blend \
 	models/IndirectCubeIOR1.blend \
 	models/IndirectCubeNone.blend \
 	models/IndirectCubeH25.blend \
 	models/IndirectCubeEye.blend \
-	models/IndirectCubeLens1.blend
+	models/IndirectCubeLens1.blend \
+	models/CornellBoxDiffuse.blend
 
 IMAGES_512_512 = $(TEST_MODELS:models/%.blend=images/%.512.512.exr)
 IMAGES_100_ = $(IMAGES_512_512:images/%.exr=images/%.100.exr)

@@ -7,12 +7,12 @@
 namespace haste {
 
 enum DisplayMode : int {
+    DisplayModeCurrent,
+    DisplayModeReference,
     DisplayModeAbsolute,
     DisplayModeRelative,
     DisplayModeUnsignedAbsolute,
     DisplayModeUnsignedRelative,
-    DisplayModeCurrent,
-    DisplayModeReference
 };
 
 struct UserInterface {

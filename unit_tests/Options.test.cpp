@@ -17,7 +17,7 @@ TEST(OptionsTest, basic_tests) {
 
     Options x0 = parseArgs2("", "input.blend", "output.exr");
     ASSERT_FALSE(x0.displayHelp);
-    EXPECT_EQ(x0.input, "input.blend");
+    EXPECT_EQ(x0.input0, "input.blend");
     EXPECT_EQ(x0.output, "output.exr");
 
     Options x1 = parseArgs2("", "input.blend");
@@ -31,7 +31,7 @@ TEST(OptionsTest, basic_tests) {
 
     Options x3 = parseArgs2("", "input.blend", "--output=x.exr", "--num-samples=42", "--batch");
     EXPECT_FALSE(x3.displayHelp);
-    EXPECT_EQ("input.blend", x3.input);
+    EXPECT_EQ("input.blend", x3.input0);
     EXPECT_EQ("x.exr", x3.output);
     EXPECT_EQ(42, x3.numSamples);
     EXPECT_TRUE(x3.batch);
@@ -52,7 +52,7 @@ TEST(OptionsTest, basic_tests) {
         "--camera=1");
 
     EXPECT_FALSE(x4.displayHelp);
-    EXPECT_EQ("foo.bar", x4.input);
+    EXPECT_EQ("foo.bar", x4.input0);
     EXPECT_EQ("foo.baz", x4.output);
     EXPECT_EQ(Options::PM, x4.technique);
     EXPECT_EQ(100, x4.numPhotons);

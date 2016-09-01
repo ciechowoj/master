@@ -12,7 +12,7 @@ Application::Application(const Options& options) {
     runtime_assert(_device != nullptr);
 
     _technique = makeTechnique(_options);
-    _ui = make_shared<UserInterface>(_options.input, _scale);
+    _ui = make_shared<UserInterface>(_options.input0, _scale);
 
     _modificationTime = 0;
 
@@ -29,7 +29,9 @@ Application::Application(const Options& options) {
             _reference);
     }
 
-    std::cout << "Using: " << _technique->name() << std::endl;
+    if (!_options.quiet) {
+        std::cout << "Using: " << _technique->name() << std::endl;
+    }
 
     _startTime = glfwGetTime();
 }
@@ -95,7 +97,10 @@ void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, s
                 for (size_t i = 0; i < _reference.size(); ++i) {
                     float current = length(src[i].rgb() / src[i].a);
                     float reference = length(_reference[i].rgb());
-                    float error = abs(current - reference) / reference;
+                    float error
+                        = current == reference
+                        ? 0.0f
+                        : abs(current - reference) / reference;
 
                     _ui->maxError = std::max(_ui->maxError, error);
 
@@ -123,7 +128,10 @@ void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, s
                 for (size_t i = 0; i < _reference.size(); ++i) {
                     float current = length(src[i].rgb() / src[i].a);
                     float reference = length(_reference[i].rgb());
-                    float error = abs(current - reference) / reference;
+                    float error
+                        = current == reference
+                        ? 0.0f
+                        : abs(current - reference) / reference;
 
                     _ui->maxError = std::max(_ui->maxError, error);
 
@@ -164,7 +172,7 @@ void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, s
 
 bool Application::updateScene() {
     if (_options.reload && _options.technique != Options::Viewer) {
-        auto modificationTime = getmtime(_options.input);
+        auto modificationTime = getmtime(_options.input0);
 
         if (_modificationTime < modificationTime) {
             _scene = loadScene(_options);
@@ -186,6 +194,7 @@ void Application::_printStatistics(const ImageView& view, double elapsed, bool p
         else {
             size_t numSamples = size_t(view.last().w);
             std::cout
+                << "\r"
                 << "Sample #"
                 << std::setw(6)
                 << std::left
@@ -199,8 +208,9 @@ void Application::_printStatistics(const ImageView& view, double elapsed, bool p
                 << "s"
                 << std::setw(8)
                 << elapsed / numSamples
-                << "s/sample"
-                << std::endl;
+                << "s/sample";
+
+            std::cout.flush();
         }
     }
 }
@@ -242,7 +252,7 @@ void Application::_save(const ImageView& view, size_t numSamples, bool snapshot)
     bool hasSamples = false;
 
     if (_options.output.empty()) {
-        auto split = splitext(_options.input);
+        auto split = splitext(_options.input0);
         std::stringstream stream;
         stream
             << split.first << "."

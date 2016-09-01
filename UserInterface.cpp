@@ -38,7 +38,13 @@ void UserInterface::update(
     ImGui::Combo(
         "Display",
         (int*)&displayMode,
-        "Unsigned rel error\0Unsigned abs error\0Relative error\0Absolute error\0Current\0Reference\0\0");
+        "Current\0"
+        "Reference\0"
+        "Absolute error\0"
+        "Relative error\0"
+        "Unsigned abs error\0"
+        "Unsigned rel error\0"
+        "\0");
 
     ImGui::InputFloat("max error", &maxError);
 

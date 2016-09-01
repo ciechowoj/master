@@ -22,31 +22,33 @@ R"(
       master <input> [options]
       master (-h | --help)
       master --version
+      master avg <x>      Compute average value of pixels in <x>.
+      master rms <x> <y>  Compute root mean square error between <x> and <y>.
 
     Options:
-      -h --help             Show this screen.
-      --version             Show version.
-      --BPT                 Use bidirectional path tracing (balance heuristics).
-      --PT                  Use path tracing for rendering (this is default one).
-      --PM                  Use photon mapping for rendering.
-      --VCM                 Use vertex connection and merging (not implemented/wip).
-      --num-photons=<n>     Use n photons. [default: 1 000 000]
-      --num-gather=<n>      Use n as maximal number of gathered photons. [default: 100]
-      --max-radius=<n>      Use n as maximum gather radius. [default: 0.1]
-      --min-subpath=<n>     Do not use Russian roulette for sub-paths shorter than n. [default: 5]
-      --roulette=<n>        Russian roulette coefficient. [default: 0.5]
-      --batch               Run in batch mode (interactive otherwise).
-      --quiet               Do not output anything to console.
-      --no-reload           Disable autoreload (input file is reloaded on modification in interactive mode).
-      --num-samples=<n>     Terminate after n samples.
-      --num-seconds=<n>     Terminate after n seconds.
-      --num-minutes=<n>     Terminate after n minutes.
-      --parallel            Use multithreading.
-      --snapshot=<n>        Save output every n samples (adds number of samples to output file).
-      --output=<path>       Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
-      --reference=<path>    Reference file for comparison.
-      --camera=<id>         Use camera with given id. [default: 0]
-      --resolution=<WxH>    Resolution of output image. [default: 512x512]
+      -h --help           Show this screen.
+      --version           Show version.
+      --BPT               Use bidirectional path tracing (balance heuristics).
+      --PT                Use path tracing for rendering (this is default one).
+      --PM                Use photon mapping for rendering.
+      --VCM               Use vertex connection and merging (not implemented/wip).
+      --num-photons=<n>   Use n photons. [default: 1 000 000]
+      --num-gather=<n>    Use n as maximal number of gathered photons. [default: 100]
+      --max-radius=<n>    Use n as maximum gather radius. [default: 0.1]
+      --min-subpath=<n>   Do not use Russian roulette for sub-paths shorter than n. [default: 5]
+      --roulette=<n>      Russian roulette coefficient. [default: 0.5]
+      --batch             Run in batch mode (interactive otherwise).
+      --quiet             Do not output anything to console.
+      --no-reload         Disable autoreload (input file is reloaded on modification in interactive mode).
+      --num-samples=<n>   Terminate after n samples.
+      --num-seconds=<n>   Terminate after n seconds.
+      --num-minutes=<n>   Terminate after n minutes.
+      --parallel          Use multithreading.
+      --snapshot=<n>      Save output every n samples (adds number of samples to output file).
+      --output=<path>     Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
+      --reference=<path>  Reference file for comparison.
+      --camera=<id>       Use camera with given id. [default: 0]
+      --resolution=<WxH>  Resolution of output image. [default: 512x512]
 
 )";
 
@@ -160,7 +162,47 @@ bool isResolution(const string& s) {
     return true;
 }
 
+Options parseAvgArgs(int argc, char const* const* argv) {
+    Options options;
+
+    if (argc != 3) {
+        options.displayHelp = true;
+        options.displayMessage = "Input file is required.";
+    }
+    else {
+        options.action = Options::AVG;
+        options.input0 = argv[2];
+    }
+
+    return options;
+}
+
+Options parseRmsArgs(int argc, char const* const* argv) {
+    Options options;
+
+    if (argc != 4) {
+        options.displayHelp = true;
+        options.displayMessage = "Input files are required.";
+    }
+    else {
+        options.action = Options::RMS;
+        options.input0 = argv[2];
+        options.input1 = argv[3];
+    }
+
+    return options;
+}
+
 Options parseArgs(int argc, char const* const* argv) {
+    if (1 < argc) {
+        if (1 < argc && argv[1] == string("avg")) {
+            return parseAvgArgs(argc, argv);
+        }
+        else if (1 < argc && argv[1] == string("rms")) {
+            return parseRmsArgs(argc, argv);
+        }
+    }
+
     auto dict = extractOptions(argc, argv);
     Options options;
 
@@ -183,7 +225,7 @@ Options parseArgs(int argc, char const* const* argv) {
         return options;
     }
     else {
-        options.input = dict["--input"];
+        options.input0 = dict["--input"];
         dict.erase("--input");
 
         size_t numTechniqes =
@@ -512,7 +554,7 @@ pair<bool, int> displayHelpIfNecessary(
 
 shared<Technique> makeViewer(Options& options) {
     auto image = vector<vec4>();
-    loadEXR(options.input, options.width, options.height, image);
+    loadEXR(options.input0, options.width, options.height, image);
     return std::make_shared<Viewer>(image, options.width, options.height);
 }
 
@@ -560,7 +602,7 @@ shared<Technique> makeTechnique(Options& options) {
 }
 
 shared<Scene> loadScene(const Options& options) {
-    return loadScene(options.input);
+    return loadScene(options.input0);
 }
 
 string techniqueString(const Options& options) {

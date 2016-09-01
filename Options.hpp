@@ -12,11 +12,14 @@ template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
     enum Technique { BPT, PT, PM, VCM, Viewer };
+    enum Action { Render, AVG, RMS };
 
-    string input;
+    string input0;
+    string input1;
     string output;
     string reference;
     Technique technique = PT;
+    Action action = Render;
     size_t numPhotons = 1000000;
     size_t numGather = 100;
     double maxRadius = 0.01;
