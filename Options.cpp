@@ -594,11 +594,11 @@ shared<Technique> makeTechnique(Options& options) {
 
         case Options::VCM:
             return std::make_shared<VCM>(
+                options.minSubpath,
+                options.roulette,
                 options.numPhotons,
                 options.numGather,
-                options.maxRadius,
-                options.minSubpath,
-                options.roulette);
+                options.maxRadius);
 
         case Options::Viewer:
             return makeViewer(options);

@@ -137,15 +137,16 @@ template <class Beta> void BPTBase<Beta>::_trace(
 
         edge = Edge(path[prv], path[itr]);
 
-        path[itr].throughput =
-            path[prv].throughput *
-            bsdf.throughput() *
-            edge.bCosTheta /
-            (bsdf.density() * roulette);
+        path[itr].throughput
+            = path[prv].throughput
+            * bsdf.throughput()
+            * edge.bCosTheta
+            / (bsdf.density() * roulette);
 
         path[prv].specular = max(path[prv].specular, bsdf.specular());
         path[itr].specular = max(path[prv].specular, bsdf.specular()) * bsdf.specular();
         path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
+
         path[itr].A
             = (path[prv].A
                 * Beta::beta(bsdf.densityRev())
@@ -193,8 +194,8 @@ template <class Beta> vec3 BPTBase<Beta>::_connect0(
 
     while (isect.isLight()) {
         auto edge = Edge(eye, isect, bsdf.omega());
-
         auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
+
         float c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
         float C
             = (eye.C * Beta::beta(bsdf.densityRev())
@@ -202,10 +203,11 @@ template <class Beta> vec3 BPTBase<Beta>::_connect0(
                 * (1.0f - max(eye.specular, bsdf.specular())))
             * Beta::beta(edge.bGeometry) * c;
 
-        float weightInv
-            = 1.0f
-            + (C * Beta::beta(lsdf.omegaDensity()) + c * (1.0f - bsdf.specular()))
+        float Cp
+            = (C * Beta::beta(lsdf.omegaDensity()) + c * (1.0f - bsdf.specular()))
             * Beta::beta(lsdf.areaDensity());
+
+        float weightInv = Cp + 1.0f;
 
         radiance
             += lsdf.radiance()

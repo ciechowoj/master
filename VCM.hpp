@@ -1,19 +1,18 @@
 #pragma once
 #include <Technique.hpp>
-#include <KDTree3D.hpp>
-#include <KDTree3Dv2.hpp>
 #include <HashGrid3D.hpp>
+#include <Beta.hpp>
 
 namespace haste {
 
 class VCM : public Technique {
 public:
     VCM(
-        size_t numPhotons = 10000,
-        size_t numGather = 100,
-        float maxRadius = 0.33f,
-        size_t minSubpath = 3,
-        float roulette = 0.5f);
+        size_t minSubpath,
+        float roulette,
+        size_t numPhotons,
+        size_t numGather,
+        float maxRadius);
 
     void preprocess(
         const shared<const Scene>& scene,
@@ -28,9 +27,8 @@ private:
         SurfacePoint surface;
         vec3 _omega;
         vec3 throughput;
+        float specular;
         float a, A, B;
-
-        float operator[](size_t i) const { return surface.position()[i]; }
 
         const vec3& position() const { return surface.position(); }
         const vec3& normal() const { return surface.normal(); }
@@ -42,12 +40,11 @@ private:
         SurfacePoint surface;
         vec3 _omega;
         vec3 throughput;
+        float specular;
         float A, B;
         float fCosTheta;
         float fDensity;
         float fGeometry;
-
-        float operator[](size_t i) const { return surface.position()[i]; }
 
         const vec3& position() const { return surface.position(); }
         const vec3& normal() const { return surface.normal(); }
@@ -82,14 +79,14 @@ private:
     vec3 _traceEye(RandomEngine& engine, const Ray& ray);
     void _traceLight(RandomEngine& engine, size_t& size, LightVertex* path);
     void _traceLight(RandomEngine& engine, size_t& size, LightPhoton* path);
-    vec3 _connect(const EyeVertex& eye, const LightVertex& light);
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect1(RandomEngine& engine, const EyeVertex& eye);
+    vec3 _connect(const EyeVertex& eye, const LightVertex& light);
 
     vec3 _connect(
         RandomEngine& engine,
         const EyeVertex& eye,
-        size_t ligthSize,
+        size_t size,
         const LightVertex* path);
 
     void _scatter(RandomEngine& engine);
