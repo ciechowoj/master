@@ -1,44 +1,7 @@
-#include <sstream>
 #include <BPT.hpp>
 #include <Edge.hpp>
 
 namespace haste {
-
-template <int C> inline float FixedBeta<C>::beta(float x) {
-    return pow(x, float(C));
-}
-
-template <int C> inline string FixedBeta<C>::name() const {
-    std::stringstream stream;
-    stream << u8"Bidirectional Path Tracing (β = " << C << ")";
-    return stream.str();
-}
-
-template <> inline float FixedBeta<0>::beta(float x) {
-    return 1.0f;
-}
-
-template <> inline float FixedBeta<1>::beta(float x) {
-    return x;
-}
-
-template <> inline float FixedBeta<2>::beta(float x) {
-    return x * x;
-}
-
-inline float VariableBeta::beta(float x) {
-    return pow(x, _beta);
-}
-
-inline string VariableBeta::name() const {
-    std::stringstream stream;
-    stream << u8"Bidirectional Path Tracing (β = " << _beta << ")";
-    return stream.str();
-}
-
-inline void VariableBeta::init(float beta) {
-    _beta = beta;
-}
 
 template <class Beta> BPTBase<Beta>::BPTBase(size_t minSubpath, float roulette)
     : _minSubpath(minSubpath)
@@ -336,10 +299,6 @@ BPTb::BPTb(size_t minSubpath, float roulette, float beta)
 {
     VariableBeta::init(beta);
 }
-
-template class FixedBeta<0>;
-template class FixedBeta<1>;
-template class FixedBeta<2>;
 
 template class BPTBase<FixedBeta<0>>;
 template class BPTBase<FixedBeta<1>>;

@@ -148,7 +148,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --parallel
+	./build/master/master.bin models/CornellBoxDiffuse.blend --BPT --parallel
 
 profile:
 	valgrind \
@@ -178,6 +178,7 @@ TEST_MODELS = \
 	models/IndirectCubeH25.blend \
 	models/IndirectCubeEye.blend \
 	models/IndirectCubeLens1.blend \
+	models/CornellBoxSpecular.blend \
 	models/CornellBoxDiffuse.blend
 
 IMAGES_512_512 = $(TEST_MODELS:models/%.blend=images/%.512.512.exr)
@@ -260,4 +261,3 @@ render-100: $(IMAGES_100)
 render-1000: $(IMAGES_1000)
 render-10000: $(IMAGES_10000)
 render-100000: $(IMAGES_100000)
-

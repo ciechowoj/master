@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cstdint>
 
+#include <tbb/parallel_sort.h>
+
 namespace std
 {
     template<> struct hash<glm::vec3>
@@ -386,6 +388,7 @@ private:
         }
 
         std::sort(counts3.begin(), counts3.end());
+        // tbb::parallel_sort(counts3.begin(), counts3.end());
 
         uint32_t offset = 0;
         for (auto&& itr : counts3) {

@@ -1,23 +1,8 @@
 #pragma once
 #include <Technique.hpp>
+#include <Beta.hpp>
 
 namespace haste {
-
-template <int C> class FixedBeta {
-public:
-    float beta(float x);
-    string name() const;
-};
-
-class VariableBeta {
-public:
-    float beta(float x);
-    string name() const;
-    void init(float beta);
-private:
-    float _beta = 1.0f;
-};
-
 
 template <class Beta> class BPTBase : public Technique, protected Beta {
 public:
