@@ -28,7 +28,7 @@ void UserInterface::update(
     // updateCamera();
 
     ImGui::SetNextWindowPos(ImVec2(0, /*height - 150*/ 0), ImGuiSetCond_Once);
-    ImGui::SetNextWindowSize(ImVec2(256, 256), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(300, 256), ImGuiSetCond_Once);
 
     ImGui::Begin("Statistics");
 

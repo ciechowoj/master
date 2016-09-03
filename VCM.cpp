@@ -62,7 +62,8 @@ vec3 VCM::_traceEye(RandomEngine& engine, const Ray& ray) {
     eye[itr].surface = _scene->querySurface(isect);
     eye[itr]._omega = -ray.direction;
     eye[itr].throughput = vec3(1.0f);
-    eye[itr].specular = 1.0f;
+    eye[itr].vcSpecular = 1.0f;
+    eye[itr].vmSpecular = 1.0f;
     eye[itr].c = 0;
     eye[itr].C = 0;
 
@@ -94,11 +95,15 @@ vec3 VCM::_traceEye(RandomEngine& engine, const Ray& ray) {
             * edge.bCosTheta
             / (bsdf.density() * roulette);
 
-        eye[prv].specular = max(eye[prv].specular, bsdf.specular());
-        eye[itr].specular = max(eye[prv].specular, bsdf.specular()) * bsdf.specular();
+        eye[prv].vcSpecular = max(eye[prv].vcSpecular, bsdf.specular());
+        eye[itr].vcSpecular = bsdf.specular();
+        eye[itr].vmSpecular = bsdf.specular();
         eye[itr].c = 1.0f / (edge.fGeometry * bsdf.density());
         eye[itr].C
-            = (eye[prv].C * bsdf.densityRev() + eye[prv].c + _eta)
+            = (eye[prv].C
+                * bsdf.densityRev()
+                + eye[prv].c * (1.0f - eye[prv].vcSpecular)
+                + _eta * (1.0f - eye[prv].vmSpecular))
             * edge.bGeometry
             * eye[itr].c;
 
@@ -135,6 +140,8 @@ void VCM::_traceLight(
     path[itr].surface = _scene->querySurface(isect);
     path[itr]._omega = -light.omega();
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
+    path[itr].vcSpecular = 0.0f;
+    path[itr].vmSpecular = 0.0f;
     path[itr].a = 1.0f / (edge.fGeometry * light.omegaDensity());
     path[itr].A = edge.bGeometry * path[itr].a / light.areaDensity();
     path[itr].B = 0.0f;
@@ -166,21 +173,23 @@ void VCM::_traceLight(
             * edge.bCosTheta
             / (bsdf.density() * roulette);
 
-        path[prv].specular = max(path[prv].specular, bsdf.specular());
-        path[itr].specular = max(path[prv].specular, bsdf.specular()) * bsdf.specular();
+        path[prv].vcSpecular = max(path[prv].vcSpecular, bsdf.specular());
+        path[itr].vcSpecular = bsdf.specular();
+        path[itr].vmSpecular = bsdf.specular();
+
         path[itr].a = 1.0f / (edge.fGeometry * bsdf.density());
 
         path[itr].A
             = (path[prv].A
                 * bsdf.densityRev()
-                + path[prv].a)
+                + path[prv].a * (1.0f - path[prv].vcSpecular))
             * edge.bGeometry
             * path[itr].a;
 
         path[itr].B
             = (path[prv].B
                 * bsdf.densityRev()
-                + _eta)
+                + _eta * (1.0f - path[prv].vmSpecular))
             * edge.bGeometry
             * path[itr].a;
 
@@ -223,11 +232,13 @@ void VCM::_traceLight(RandomEngine& engine, size_t& size, LightPhoton* path) {
     }
 
     auto edge = Edge(light, isect);
-    float a;
+    float a, prv_a;
 
     path[itr].surface = _scene->querySurface(isect);
     path[itr]._omega = -light.omega();
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
+    path[itr].vcSpecular = 0.0f;
+    path[itr].vmSpecular = 0.0f;
     a = 1.0f / (edge.fGeometry * light.omegaDensity());
     path[itr].A = edge.bGeometry * a / light.areaDensity();
     path[itr].B = 0.0f;
@@ -256,21 +267,36 @@ void VCM::_traceLight(RandomEngine& engine, size_t& size, LightPhoton* path) {
 
         edge = Edge(path[prv], path[itr]);
 
-        path[itr].throughput =
-            path[prv].throughput *
-            bsdf.throughput() *
-            edge.bCosTheta /
-            (bsdf.density() * roulette);
+        path[itr].throughput
+            = path[prv].throughput
+            * bsdf.throughput()
+            * edge.bCosTheta
+            / (bsdf.density() * roulette);
 
-        float prv_a = a;
+        path[prv].vcSpecular = max(path[prv].vcSpecular, bsdf.specular());
+        path[itr].vcSpecular = bsdf.specular();
+        path[itr].vmSpecular = bsdf.specular();
+
+        prv_a = a;
         a = 1.0f / (edge.fGeometry * bsdf.density());
-        path[itr].A = (path[prv].A * bsdf.densityRev() + prv_a) * edge.bGeometry * a;
-        path[itr].B = (path[prv].B * bsdf.densityRev() + _eta) * edge.bGeometry * a;
+
+        path[itr].A
+            = (path[prv].A
+                * bsdf.densityRev()
+                + prv_a * (1.0f - path[prv].vcSpecular))
+            * edge.bGeometry * a;
+
+        path[itr].B
+            = (path[prv].B
+                * bsdf.densityRev()
+                + _eta * (1.0f - path[prv].vmSpecular))
+            * edge.bGeometry * a;
+
         path[itr].fDensity = bsdf.density();
         path[itr].fCosTheta = edge.fCosTheta;
         path[itr].fGeometry = edge.fGeometry;
 
-        if (bsdf.specular() > 0.0f) {
+        if (bsdf.specular() == 1.0f) {
             path[prv] = path[itr];
         }
         else {
@@ -285,7 +311,7 @@ void VCM::_traceLight(RandomEngine& engine, size_t& size, LightPhoton* path) {
 
     auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
 
-    if (bsdf.specular() > 0.0f) {
+    if (bsdf.specular() == 1.0f) {
         size = prv;
     }
     else {
@@ -309,12 +335,12 @@ vec3 VCM::_connect0(
         float c = 1.0f / (edge.fGeometry * bsdf.density());
         float C
             = (eye.C * bsdf.densityRev()
-                + eye.c
-                + _eta)
+                + eye.c * (1.0f - max(eye.vcSpecular, bsdf.specular()))
+                + _eta * (1.0f - eye.vmSpecular))
             * edge.bGeometry * c;
 
         float Cp
-            = (C * lsdf.omegaDensity() + c)
+            = (C * lsdf.omegaDensity() + c * (1.0f - bsdf.specular()))
             * lsdf.areaDensity();
 
         float weightInv = Cp + 1.0f;
@@ -336,11 +362,19 @@ vec3 VCM::_connect1(RandomEngine& engine, const EyeVertex& eye) {
     LightSampleEx light = _scene->sampleLightEx(engine, eye.position());
 
     auto bsdf = _scene->queryBSDF(eye.surface, -light.omega(), eye.omega());
+
+    if (bsdf.specular() == 1.0f) {
+        return vec3(0.0f);
+    }
+
     auto edge = Edge(light, eye, light.omega());
 
     float Ap = bsdf.densityRev() * edge.bGeometry / light.areaDensity();
     float Bp = 0.0f;
-    float Cp = (eye.C * bsdf.density() + eye.c) * edge.fGeometry * light.omegaDensity();
+
+    float Cp
+        = (eye.C * bsdf.density() + eye.c * (1.0f - eye.vcSpecular))
+        * edge.fGeometry * light.omegaDensity();
 
     float weightInv = Ap + Bp + Cp + _eta * edge.fGeometry * light.omegaDensity() + 1.0f;
 
@@ -367,9 +401,17 @@ vec3 VCM::_connect(
 
     auto edge = Edge(light, eye, omega);
 
-    float Ap = (light.A * lightBSDF.densityRev() + light.a) * edge.bGeometry * eyeBSDF.densityRev();
-    float Bp = (light.B * lightBSDF.densityRev() + _eta) * edge.bGeometry * eyeBSDF.densityRev();
-    float Cp = (eye.C * eyeBSDF.density() + eye.c) * edge.fGeometry * lightBSDF.density();
+    float Ap
+        = (light.A * lightBSDF.densityRev() + light.a * (1.0f - light.vcSpecular))
+        * edge.bGeometry * eyeBSDF.densityRev();
+
+    float Bp
+        = (light.B * lightBSDF.densityRev() + _eta * (1.0f - light.vmSpecular))
+        * edge.bGeometry * eyeBSDF.densityRev();
+
+    float Cp
+        = (eye.C * eyeBSDF.density() + eye.c * (1.0f - eye.vcSpecular))
+        * edge.fGeometry * lightBSDF.density();
 
     float weightInv = Ap + Bp + Cp + _eta * edge.fGeometry * lightBSDF.density() + 1.0f;
 
@@ -439,9 +481,15 @@ vec3 VCM::_merge(
 {
     auto eyeBSDF = _scene->queryBSDF(eye.surface, light.omega(), eye.omega());
 
-    float Ap = light.A * light.fGeometry * light.fDensity * eyeBSDF.densityRev();
-    float Bp = light.B * light.fGeometry * light.fDensity * eyeBSDF.densityRev();
-    float Cp = (eye.C * eyeBSDF.density() + eye.c) * light.fGeometry * light.fDensity;
+    float Ap
+        = light.A * light.fGeometry * light.fDensity * eyeBSDF.densityRev();
+
+    float Bp
+        = light.B * light.fGeometry * light.fDensity * eyeBSDF.densityRev();
+
+    float Cp
+        = (eye.C * eyeBSDF.density() + eye.c * (1.0f - eye.vcSpecular))
+        * light.fGeometry * light.fDensity;
 
     float weightInv
         = (Ap + Bp + Cp + _eta * light.fGeometry * light.fDensity + 1.0f)

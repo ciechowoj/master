@@ -27,7 +27,8 @@ private:
         SurfacePoint surface;
         vec3 _omega;
         vec3 throughput;
-        float specular;
+        float vcSpecular;
+        float vmSpecular;
         float a, A, B;
 
         const vec3& position() const { return surface.position(); }
@@ -40,7 +41,8 @@ private:
         SurfacePoint surface;
         vec3 _omega;
         vec3 throughput;
-        float specular;
+        float vcSpecular;
+        float vmSpecular;
         float A, B;
         float fCosTheta;
         float fDensity;
@@ -56,7 +58,8 @@ private:
         SurfacePoint surface;
         vec3 _omega;
         vec3 throughput;
-        float specular;
+        float vcSpecular;
+        float vmSpecular;
         float c, C;
 
         const vec3& position() const { return surface.position(); }
@@ -65,7 +68,7 @@ private:
         const vec3& omega() const { return _omega; }
     };
 
-    static const size_t _maxSubpath = 10240;
+    static const size_t _maxSubpath = 1024;
     const size_t _numPhotons;
     const size_t _numGather;
     const float _maxRadius;

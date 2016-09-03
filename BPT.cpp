@@ -73,7 +73,7 @@ template <class Beta> vec3 BPTBase<Beta>::_trace(
             / (bsdf.density() * roulette);
 
         eye[prv].specular = max(eye[prv].specular, bsdf.specular());
-        eye[itr].specular = max(eye[prv].specular, bsdf.specular()) * bsdf.specular();
+        eye[itr].specular = bsdf.specular();
         eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
         eye[itr].C
             = (eye[prv].C * Beta::beta(bsdf.densityRev()) + eye[prv].c * (1.0f - eye[prv].specular))
@@ -144,14 +144,13 @@ template <class Beta> void BPTBase<Beta>::_trace(
             / (bsdf.density() * roulette);
 
         path[prv].specular = max(path[prv].specular, bsdf.specular());
-        path[itr].specular = max(path[prv].specular, bsdf.specular()) * bsdf.specular();
+        path[itr].specular = bsdf.specular();
         path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
 
         path[itr].A
             = (path[prv].A
                 * Beta::beta(bsdf.densityRev())
-                + path[prv].a
-                * (1.0f - path[prv].specular))
+                + path[prv].a * (1.0f - path[prv].specular))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
 
@@ -199,8 +198,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect0(
         float c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
         float C
             = (eye.C * Beta::beta(bsdf.densityRev())
-                + eye.c
-                * (1.0f - max(eye.specular, bsdf.specular())))
+                + eye.c * (1.0f - max(eye.specular, bsdf.specular())))
             * Beta::beta(edge.bGeometry) * c;
 
         float Cp
@@ -235,11 +233,13 @@ template <class Beta> vec3 BPTBase<Beta>::_connect1(
 
     auto edge = Edge(light, eye, light.omega());
 
-    float weightInv
-        = Beta::beta(bsdf.densityRev() * edge.bGeometry / light.areaDensity())
-        + 1.0f
-        + (eye.C * Beta::beta(bsdf.density()) + eye.c * (1.0f - eye.specular))
+    float Ap = Beta::beta(bsdf.densityRev() * edge.bGeometry / light.areaDensity());
+
+    float Cp
+        = (eye.C * Beta::beta(bsdf.density()) + eye.c * (1.0f - eye.specular))
         * Beta::beta(edge.fGeometry * light.omegaDensity());
+
+    float weightInv = Ap + Cp + 1.0f;
 
     return light.radiance()
         * eye.throughput
@@ -264,12 +264,15 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     auto edge = Edge(light, eye, omega);
 
-    float weightInv
+    float Ap
         = (light.A * Beta::beta(lightBSDF.densityRev()) + light.a * (1.0f - light.specular))
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev())
-        + 1.0f
-        + (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
+
+    float Cp
+        = (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.specular))
         * Beta::beta(edge.fGeometry * lightBSDF.density());
+
+    float weightInv = Ap + Cp + 1.0f;
 
     return _scene->occluded(eye.position(), light.position())
         * light.throughput
