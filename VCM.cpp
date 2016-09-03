@@ -36,7 +36,10 @@ vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
     return _traceEye(engine, ray);
 }
 
-vec3 VCM::_traceEye(RandomEngine& engine, const Ray& ray) {
+vec3 VCM::_traceEye(
+    RandomEngine& engine,
+    const Ray& ray)
+{
     char lightRaw[_maxSubpath * sizeof(LightVertex)];
     LightVertex* light = (LightVertex*)lightRaw;
 
@@ -99,11 +102,12 @@ vec3 VCM::_traceEye(RandomEngine& engine, const Ray& ray) {
         eye[itr].vcSpecular = bsdf.specular();
         eye[itr].vmSpecular = bsdf.specular();
         eye[itr].c = 1.0f / (edge.fGeometry * bsdf.density());
+
         eye[itr].C
             = (eye[prv].C
                 * bsdf.densityRev()
                 + eye[prv].c * (1.0f - eye[prv].vcSpecular)
-                + _eta * (1.0f - eye[prv].vmSpecular))
+                + _eta)
             * edge.bGeometry
             * eye[itr].c;
 
@@ -189,7 +193,7 @@ void VCM::_traceLight(
         path[itr].B
             = (path[prv].B
                 * bsdf.densityRev()
-                + _eta * (1.0f - path[prv].vmSpecular))
+                + _eta)
             * edge.bGeometry
             * path[itr].a;
 
@@ -219,7 +223,11 @@ void VCM::_traceLight(
     }
 }
 
-void VCM::_traceLight(RandomEngine& engine, size_t& size, LightPhoton* path) {
+void VCM::_traceLight(
+    RandomEngine& engine,
+    size_t& size,
+    LightPhoton* path)
+{
     size_t itr = 0, prv = 0;
 
     LightSampleEx light = _scene->sampleLight(engine);
@@ -239,9 +247,11 @@ void VCM::_traceLight(RandomEngine& engine, size_t& size, LightPhoton* path) {
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
     path[itr].vcSpecular = 0.0f;
     path[itr].vmSpecular = 0.0f;
+
     a = 1.0f / (edge.fGeometry * light.omegaDensity());
     path[itr].A = edge.bGeometry * a / light.areaDensity();
     path[itr].B = 0.0f;
+
     path[itr].fGeometry = edge.fGeometry;
     path[itr].fDensity = light.omegaDensity();
     path[itr].fCosTheta = edge.fCosTheta;
@@ -289,7 +299,7 @@ void VCM::_traceLight(RandomEngine& engine, size_t& size, LightPhoton* path) {
         path[itr].B
             = (path[prv].B
                 * bsdf.densityRev()
-                + _eta * (1.0f - path[prv].vmSpecular))
+                + _eta)
             * edge.bGeometry * a;
 
         path[itr].fDensity = bsdf.density();
@@ -333,10 +343,11 @@ vec3 VCM::_connect0(
         auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
 
         float c = 1.0f / (edge.fGeometry * bsdf.density());
+
         float C
             = (eye.C * bsdf.densityRev()
                 + eye.c * (1.0f - max(eye.vcSpecular, bsdf.specular()))
-                + _eta * (1.0f - eye.vmSpecular))
+                + _eta)
             * edge.bGeometry * c;
 
         float Cp
@@ -358,7 +369,10 @@ vec3 VCM::_connect0(
     return radiance;
 }
 
-vec3 VCM::_connect1(RandomEngine& engine, const EyeVertex& eye) {
+vec3 VCM::_connect1(
+    RandomEngine& engine,
+    const EyeVertex& eye)
+{
     LightSampleEx light = _scene->sampleLightEx(engine, eye.position());
 
     auto bsdf = _scene->queryBSDF(eye.surface, -light.omega(), eye.omega());
@@ -370,6 +384,7 @@ vec3 VCM::_connect1(RandomEngine& engine, const EyeVertex& eye) {
     auto edge = Edge(light, eye, light.omega());
 
     float Ap = bsdf.densityRev() * edge.bGeometry / light.areaDensity();
+
     float Bp = 0.0f;
 
     float Cp
@@ -406,7 +421,7 @@ vec3 VCM::_connect(
         * edge.bGeometry * eyeBSDF.densityRev();
 
     float Bp
-        = (light.B * lightBSDF.densityRev() + _eta * (1.0f - light.vmSpecular))
+        = (light.B * lightBSDF.densityRev() + _eta)
         * edge.bGeometry * eyeBSDF.densityRev();
 
     float Cp
@@ -444,11 +459,10 @@ void VCM::_scatter(RandomEngine& engine)
 {
     vector<LightPhoton> vertices;
 
-    size_t itr = 0;
+    size_t itr = 0, size = 0;
 
     for (size_t i = 0; i < _numPhotons; ++i) {
         vertices.resize(itr + _maxSubpath);
-        size_t size = 0;
         _traceLight(engine, size, vertices.data() + itr);
         itr += size;
     }
