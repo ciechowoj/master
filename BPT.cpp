@@ -1,5 +1,6 @@
 #include <BPT.hpp>
 #include <Edge.hpp>
+#include <iostream>
 
 namespace haste {
 
@@ -135,6 +136,8 @@ template <class Beta> void BPTBase<Beta>::_trace(
         if (!isect.isPresent()) {
             break;
         }
+
+
 
         path[itr].surface = _scene->querySurface(isect);
         path[itr]._omega = -bsdf.omega();

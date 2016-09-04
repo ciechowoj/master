@@ -5,9 +5,9 @@
 
 namespace haste {
 
-class VCM : public Technique {
+template <class Beta> class VCMBase : public Technique, protected Beta {
 public:
-    VCM(
+    VCMBase(
         size_t minSubpath,
         float roulette,
         size_t numPhotons,
@@ -59,7 +59,6 @@ private:
         vec3 _omega;
         vec3 throughput;
         float vcSpecular;
-        float vmSpecular;
         float c, C;
 
         const vec3& position() const { return surface.position(); }
@@ -102,6 +101,21 @@ private:
         const EyeVertex& eye,
         const LightPhoton& light,
         float radius);
+};
+
+typedef VCMBase<FixedBeta<0>> VCM0;
+typedef VCMBase<FixedBeta<1>> VCM1;
+typedef VCMBase<FixedBeta<2>> VCM2;
+
+class VCMb : public VCMBase<VariableBeta> {
+public:
+    VCMb(
+        size_t minSubpath,
+        float roulette,
+        size_t numPhotons,
+        size_t numGather,
+        float maxRadius,
+        float beta);
 };
 
 }

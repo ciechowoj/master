@@ -338,7 +338,8 @@ Options parseArgs(int argc, char const* const* argv) {
 
         if (dict.count("--beta")) {
             if (options.technique != Options::BPT &&
-                options.technique != Options::PT) {
+                options.technique != Options::PT &&
+                options.technique != Options::VCM) {
                 options.displayHelp = true;
                 options.displayMessage = "--beta in not available for specified technique.";
                 return options;
@@ -593,12 +594,39 @@ shared<Technique> makeTechnique(Options& options) {
                 options.maxRadius);
 
         case Options::VCM:
-            return std::make_shared<VCM>(
-                options.minSubpath,
-                options.roulette,
-                options.numPhotons,
-                options.numGather,
-                options.maxRadius);
+            if (options.beta == 0.0f) {
+                return std::make_shared<VCM0>(
+                    options.minSubpath,
+                    options.roulette,
+                    options.numPhotons,
+                    options.numGather,
+                    options.maxRadius);
+            }
+            else if (options.beta == 1.0f) {
+                return std::make_shared<VCM1>(
+                    options.minSubpath,
+                    options.roulette,
+                    options.numPhotons,
+                    options.numGather,
+                    options.maxRadius);
+            }
+            else if (options.beta == 2.0f) {
+                return std::make_shared<VCM2>(
+                    options.minSubpath,
+                    options.roulette,
+                    options.numPhotons,
+                    options.numGather,
+                    options.maxRadius);
+            }
+            else {
+                return std::make_shared<VCMb>(
+                    options.minSubpath,
+                    options.roulette,
+                    options.numPhotons,
+                    options.numGather,
+                    options.maxRadius,
+                    options.beta);
+            }
 
         case Options::Viewer:
             return makeViewer(options);

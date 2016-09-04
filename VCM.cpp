@@ -1,9 +1,11 @@
+#include <iostream>
+#include <iomanip>
 #include <VCM.hpp>
 #include <Edge.hpp>
 
 namespace haste {
 
-VCM::VCM(
+template <class Beta> VCMBase<Beta>::VCMBase(
     size_t minSubpath,
     float roulette,
     size_t numPhotons,
@@ -17,7 +19,7 @@ VCM::VCM(
     , _eta(_numPhotons * pi<float>() * _maxRadius * _maxRadius)
 { }
 
-void VCM::preprocess(
+template <class Beta> void VCMBase<Beta>::preprocess(
     const shared<const Scene>& scene,
     RandomEngine& engine,
     const function<void(string, float)>& progress,
@@ -28,15 +30,15 @@ void VCM::preprocess(
     _scatter(engine);
 }
 
-string VCM::name() const {
+template <class Beta> string VCMBase<Beta>::name() const {
     return "Vertex Connection and Merging";
 }
 
-vec3 VCM::_trace(RandomEngine& engine, const Ray& ray) {
+template <class Beta> vec3 VCMBase<Beta>::_trace(RandomEngine& engine, const Ray& ray) {
     return _traceEye(engine, ray);
 }
 
-vec3 VCM::_traceEye(
+template <class Beta> vec3 VCMBase<Beta>::_traceEye(
     RandomEngine& engine,
     const Ray& ray)
 {
@@ -66,7 +68,6 @@ vec3 VCM::_traceEye(
     eye[itr]._omega = -ray.direction;
     eye[itr].throughput = vec3(1.0f);
     eye[itr].vcSpecular = 1.0f;
-    eye[itr].vmSpecular = 1.0f;
     eye[itr].c = 0;
     eye[itr].C = 0;
 
@@ -100,15 +101,16 @@ vec3 VCM::_traceEye(
 
         eye[prv].vcSpecular = max(eye[prv].vcSpecular, bsdf.specular());
         eye[itr].vcSpecular = bsdf.specular();
-        eye[itr].vmSpecular = bsdf.specular();
-        eye[itr].c = 1.0f / (edge.fGeometry * bsdf.density());
+        // eye[itr].vmSpecular = bsdf.specular();
+        eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
 
         eye[itr].C
             = (eye[prv].C
-                * bsdf.densityRev()
+                * Beta::beta(bsdf.densityRev())
                 + eye[prv].c * (1.0f - eye[prv].vcSpecular)
-                + _eta)
-            * edge.bGeometry
+                + Beta::beta(_eta)
+                    * (1.0f - bsdf.specular()))
+            * Beta::beta(edge.bGeometry)
             * eye[itr].c;
 
         ++eSize;
@@ -123,7 +125,7 @@ vec3 VCM::_traceEye(
     return radiance;
 }
 
-void VCM::_traceLight(
+template <class Beta> void VCMBase<Beta>::_traceLight(
     RandomEngine& engine,
     size_t& size,
     LightVertex* path)
@@ -146,8 +148,8 @@ void VCM::_traceLight(
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
     path[itr].vcSpecular = 0.0f;
     path[itr].vmSpecular = 0.0f;
-    path[itr].a = 1.0f / (edge.fGeometry * light.omegaDensity());
-    path[itr].A = edge.bGeometry * path[itr].a / light.areaDensity();
+    path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
+    path[itr].A = Beta::beta(edge.bGeometry) * path[itr].a / Beta::beta(light.areaDensity());
     path[itr].B = 0.0f;
 
     prv = itr;
@@ -181,20 +183,20 @@ void VCM::_traceLight(
         path[itr].vcSpecular = bsdf.specular();
         path[itr].vmSpecular = bsdf.specular();
 
-        path[itr].a = 1.0f / (edge.fGeometry * bsdf.density());
+        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
 
         path[itr].A
             = (path[prv].A
-                * bsdf.densityRev()
+                * Beta::beta(bsdf.densityRev())
                 + path[prv].a * (1.0f - path[prv].vcSpecular))
-            * edge.bGeometry
+            * Beta::beta(edge.bGeometry)
             * path[itr].a;
 
         path[itr].B
             = (path[prv].B
-                * bsdf.densityRev()
-                + _eta)
-            * edge.bGeometry
+                * Beta::beta(bsdf.densityRev())
+                + Beta::beta(_eta) * (1.0f - path[prv].vmSpecular))
+            * Beta::beta(edge.bGeometry)
             * path[itr].a;
 
         if (bsdf.specular() == 1.0f) {
@@ -223,7 +225,7 @@ void VCM::_traceLight(
     }
 }
 
-void VCM::_traceLight(
+template <class Beta> void VCMBase<Beta>::_traceLight(
     RandomEngine& engine,
     size_t& size,
     LightPhoton* path)
@@ -248,8 +250,8 @@ void VCM::_traceLight(
     path[itr].vcSpecular = 0.0f;
     path[itr].vmSpecular = 0.0f;
 
-    a = 1.0f / (edge.fGeometry * light.omegaDensity());
-    path[itr].A = edge.bGeometry * a / light.areaDensity();
+    a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
+    path[itr].A = Beta::beta(edge.bGeometry) * a / Beta::beta(light.areaDensity());
     path[itr].B = 0.0f;
 
     path[itr].fGeometry = edge.fGeometry;
@@ -288,19 +290,19 @@ void VCM::_traceLight(
         path[itr].vmSpecular = bsdf.specular();
 
         prv_a = a;
-        a = 1.0f / (edge.fGeometry * bsdf.density());
+        a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
 
         path[itr].A
             = (path[prv].A
-                * bsdf.densityRev()
+                * Beta::beta(bsdf.densityRev())
                 + prv_a * (1.0f - path[prv].vcSpecular))
-            * edge.bGeometry * a;
+            * Beta::beta(edge.bGeometry) * a;
 
         path[itr].B
             = (path[prv].B
-                * bsdf.densityRev()
-                + _eta)
-            * edge.bGeometry * a;
+                * Beta::beta(bsdf.densityRev())
+                + Beta::beta(_eta) * (1.0f - path[prv].vmSpecular))
+            * Beta::beta(edge.bGeometry) * a;
 
         path[itr].fDensity = bsdf.density();
         path[itr].fCosTheta = edge.fCosTheta;
@@ -329,7 +331,7 @@ void VCM::_traceLight(
     }
 }
 
-vec3 VCM::_connect0(
+template <class Beta> vec3 VCMBase<Beta>::_connect0(
     RandomEngine& engine,
     const EyeVertex& eye)
 {
@@ -342,17 +344,17 @@ vec3 VCM::_connect0(
         auto edge = Edge(eye, isect, bsdf.omega());
         auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
 
-        float c = 1.0f / (edge.fGeometry * bsdf.density());
+        float c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
 
         float C
-            = (eye.C * bsdf.densityRev()
+            = (eye.C * Beta::beta(bsdf.densityRev())
                 + eye.c * (1.0f - max(eye.vcSpecular, bsdf.specular()))
-                + _eta)
-            * edge.bGeometry * c;
+                + Beta::beta(_eta) * (1.0f - bsdf.specular()))
+            * Beta::beta(edge.bGeometry) * c;
 
         float Cp
-            = (C * lsdf.omegaDensity() + c * (1.0f - bsdf.specular()))
-            * lsdf.areaDensity();
+            = (C * Beta::beta(lsdf.omegaDensity()) + c * (1.0f - bsdf.specular()))
+            * Beta::beta(lsdf.areaDensity());
 
         float weightInv = Cp + 1.0f;
 
@@ -369,7 +371,7 @@ vec3 VCM::_connect0(
     return radiance;
 }
 
-vec3 VCM::_connect1(
+template <class Beta> vec3 VCMBase<Beta>::_connect1(
     RandomEngine& engine,
     const EyeVertex& eye)
 {
@@ -383,15 +385,15 @@ vec3 VCM::_connect1(
 
     auto edge = Edge(light, eye, light.omega());
 
-    float Ap = bsdf.densityRev() * edge.bGeometry / light.areaDensity();
+    float Ap = Beta::beta(bsdf.densityRev() * edge.bGeometry / light.areaDensity());
 
     float Bp = 0.0f;
 
     float Cp
-        = (eye.C * bsdf.density() + eye.c * (1.0f - eye.vcSpecular))
-        * edge.fGeometry * light.omegaDensity();
+        = (eye.C * Beta::beta(bsdf.density()) + eye.c * (1.0f - eye.vcSpecular))
+        * Beta::beta(edge.fGeometry * light.omegaDensity());
 
-    float weightInv = Ap + Bp + Cp + _eta * edge.fGeometry * light.omegaDensity() + 1.0f;
+    float weightInv = Ap + Bp + Cp + Beta::beta(_eta * edge.fGeometry * light.omegaDensity()) + 1.0f;
 
     return light.radiance()
         * eye.throughput
@@ -401,7 +403,7 @@ vec3 VCM::_connect1(
         / (light.areaDensity() * weightInv);
 }
 
-vec3 VCM::_connect(
+template <class Beta> vec3 VCMBase<Beta>::_connect(
     const EyeVertex& eye,
     const LightVertex& light)
 {
@@ -417,18 +419,18 @@ vec3 VCM::_connect(
     auto edge = Edge(light, eye, omega);
 
     float Ap
-        = (light.A * lightBSDF.densityRev() + light.a * (1.0f - light.vcSpecular))
-        * edge.bGeometry * eyeBSDF.densityRev();
+        = (light.A * Beta::beta(lightBSDF.densityRev()) + light.a * (1.0f - light.vcSpecular))
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
 
     float Bp
-        = (light.B * lightBSDF.densityRev() + _eta)
-        * edge.bGeometry * eyeBSDF.densityRev();
+        = (light.B * Beta::beta(lightBSDF.densityRev()) + Beta::beta(_eta) * (1.0f - light.vmSpecular))
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
 
     float Cp
-        = (eye.C * eyeBSDF.density() + eye.c * (1.0f - eye.vcSpecular))
-        * edge.fGeometry * lightBSDF.density();
+        = (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.vcSpecular))
+        * Beta::beta(edge.fGeometry * lightBSDF.density());
 
-    float weightInv = Ap + Bp + Cp + _eta * edge.fGeometry * lightBSDF.density() + 1.0f;
+    float weightInv = Ap + Bp + Cp + Beta::beta(_eta * edge.fGeometry * lightBSDF.density()) + 1.0f;
 
     return _scene->occluded(eye.position(), light.position())
         * light.throughput
@@ -440,7 +442,7 @@ vec3 VCM::_connect(
         / weightInv;
 }
 
-vec3 VCM::_connect(
+template <class Beta> vec3 VCMBase<Beta>::_connect(
     RandomEngine& engine,
     const EyeVertex& eye,
     size_t size,
@@ -455,7 +457,7 @@ vec3 VCM::_connect(
     return radiance;
 }
 
-void VCM::_scatter(RandomEngine& engine)
+template <class Beta> void VCMBase<Beta>::_scatter(RandomEngine& engine)
 {
     vector<LightPhoton> vertices;
 
@@ -472,7 +474,7 @@ void VCM::_scatter(RandomEngine& engine)
     _vertices = v3::HashGrid3D<LightPhoton>(move(vertices), _maxRadius);
 }
 
-vec3 VCM::_gather(
+template <class Beta> vec3 VCMBase<Beta>::_gather(
     RandomEngine& engine,
     const EyeVertex& eye)
 {
@@ -488,7 +490,7 @@ vec3 VCM::_gather(
     return radiance / float(_numPhotons);
 }
 
-vec3 VCM::_merge(
+template <class Beta> vec3 VCMBase<Beta>::_merge(
     const EyeVertex& eye,
     const LightPhoton& light,
     float radius)
@@ -496,23 +498,45 @@ vec3 VCM::_merge(
     auto eyeBSDF = _scene->queryBSDF(eye.surface, light.omega(), eye.omega());
 
     float Ap
-        = light.A * light.fGeometry * light.fDensity * eyeBSDF.densityRev();
+        = light.A * Beta::beta(light.fGeometry * light.fDensity * eyeBSDF.densityRev());
 
     float Bp
-        = light.B * light.fGeometry * light.fDensity * eyeBSDF.densityRev();
+        = light.B * Beta::beta(light.fGeometry * light.fDensity * eyeBSDF.densityRev());
 
     float Cp
-        = (eye.C * eyeBSDF.density() + eye.c * (1.0f - eye.vcSpecular))
-        * light.fGeometry * light.fDensity;
+        = (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.vcSpecular))
+        * Beta::beta(light.fGeometry * light.fDensity);
 
     float weightInv
-        = (Ap + Bp + Cp + _eta * light.fGeometry * light.fDensity + 1.0f)
-        / (_eta * light.fGeometry * light.fDensity);
+        = (Ap + Bp + Cp + Beta::beta(_eta * light.fGeometry * light.fDensity) + 1.0f)
+        / Beta::beta(_eta * light.fGeometry * light.fDensity);
 
     return light.throughput
         * eye.throughput
         * eyeBSDF.throughput()
         / (weightInv * pi<float>() * radius * radius);
 }
+
+VCMb::VCMb(
+    size_t minSubpath,
+    float roulette,
+    size_t numPhotons,
+    size_t numGather,
+    float maxRadius,
+    float beta)
+    : VCMBase<VariableBeta>(
+        minSubpath,
+        roulette,
+        numPhotons,
+        numGather,
+        maxRadius)
+{
+    VariableBeta::init(beta);
+}
+
+template class VCMBase<FixedBeta<0>>;
+template class VCMBase<FixedBeta<1>>;
+template class VCMBase<FixedBeta<2>>;
+template class VCMBase<VariableBeta>;
 
 }

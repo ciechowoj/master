@@ -148,7 +148,10 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --parallel --num-photons=100000 --max-radius=0.05
+	./build/master/master.bin models/IndirectCubeLens1.blend \
+	--VCM --num-photons=1000000 --max-radius=0.001 \
+	--reference=images/IndirectCubeLens1.512.512.10000.PT.exr \
+	--beta=1.0
 
 profile:
 	valgrind \
@@ -177,9 +180,7 @@ TEST_MODELS = \
 	models/IndirectCubeNone.blend \
 	models/IndirectCubeH25.blend \
 	models/IndirectCubeEye.blend \
-	models/IndirectCubeLens1.blend \
-	models/CornellBoxSpecular.blend \
-	models/CornellBoxDiffuse.blend
+	models/IndirectCubeLens1.blend
 
 IMAGES_512_512 = $(TEST_MODELS:models/%.blend=images/%.512.512.exr)
 IMAGES_100_ = $(IMAGES_512_512:images/%.exr=images/%.100.exr)
@@ -188,12 +189,11 @@ IMAGES_10000_ = $(IMAGES_512_512:images/%.exr=images/%.10000.exr)
 IMAGES_100000_ = $(IMAGES_512_512:images/%.exr=images/%.100000.exr)
 
 IMAGES_100 = \
-	$(IMAGES_100_:images/%.exr=images/%.PT.exr) \
-	$(IMAGES_100_:images/%.exr=images/%.BPT.exr)
+	$(IMAGES_100_:images/%.exr=images/%.VCM.exr)
+
 
 IMAGES_1000 = \
-	$(IMAGES_1000_:images/%.exr=images/%.PT.exr) \
-	$(IMAGES_1000_:images/%.exr=images/%.BPT.exr)
+	$(IMAGES_1000_:images/%.exr=images/%.VCM.exr)
 
 IMAGES_10000 = \
 	$(IMAGES_10000_:images/%.exr=images/%.PT.exr) \
