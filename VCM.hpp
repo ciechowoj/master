@@ -28,7 +28,7 @@ private:
         vec3 _omega;
         vec3 throughput;
         float vcSpecular;
-        float vmSpecular;
+        //float vmSpecular;
         float a, A, B;
 
         const vec3& position() const { return surface.position(); }
@@ -42,7 +42,7 @@ private:
         vec3 _omega;
         vec3 throughput;
         float vcSpecular;
-        float vmSpecular;
+        //float vmSpecular;
         float A, B;
         float fCosTheta;
         float fDensity;

@@ -101,15 +101,13 @@ template <class Beta> vec3 VCMBase<Beta>::_traceEye(
 
         eye[prv].vcSpecular = max(eye[prv].vcSpecular, bsdf.specular());
         eye[itr].vcSpecular = bsdf.specular();
-        // eye[itr].vmSpecular = bsdf.specular();
         eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
 
         eye[itr].C
             = (eye[prv].C
                 * Beta::beta(bsdf.densityRev())
                 + eye[prv].c * (1.0f - eye[prv].vcSpecular)
-                + Beta::beta(_eta)
-                    * (1.0f - bsdf.specular()))
+                + Beta::beta(_eta) * (1.0f - bsdf.specular()))
             * Beta::beta(edge.bGeometry)
             * eye[itr].c;
 
@@ -147,7 +145,7 @@ template <class Beta> void VCMBase<Beta>::_traceLight(
     path[itr]._omega = -light.omega();
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
     path[itr].vcSpecular = 0.0f;
-    path[itr].vmSpecular = 0.0f;
+    // path[itr].vmSpecular = 0.0f;
     path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
     path[itr].A = Beta::beta(edge.bGeometry) * path[itr].a / Beta::beta(light.areaDensity());
     path[itr].B = 0.0f;
@@ -181,7 +179,7 @@ template <class Beta> void VCMBase<Beta>::_traceLight(
 
         path[prv].vcSpecular = max(path[prv].vcSpecular, bsdf.specular());
         path[itr].vcSpecular = bsdf.specular();
-        path[itr].vmSpecular = bsdf.specular();
+        // path[itr].vmSpecular = bsdf.specular();
 
         path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
 
@@ -195,7 +193,7 @@ template <class Beta> void VCMBase<Beta>::_traceLight(
         path[itr].B
             = (path[prv].B
                 * Beta::beta(bsdf.densityRev())
-                + Beta::beta(_eta) * (1.0f - path[prv].vmSpecular))
+                + Beta::beta(_eta) * (1.0f - bsdf.specular()))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
 
@@ -248,7 +246,7 @@ template <class Beta> void VCMBase<Beta>::_traceLight(
     path[itr]._omega = -light.omega();
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
     path[itr].vcSpecular = 0.0f;
-    path[itr].vmSpecular = 0.0f;
+    // path[itr].vmSpecular = 0.0f;
 
     a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
     path[itr].A = Beta::beta(edge.bGeometry) * a / Beta::beta(light.areaDensity());
@@ -287,7 +285,7 @@ template <class Beta> void VCMBase<Beta>::_traceLight(
 
         path[prv].vcSpecular = max(path[prv].vcSpecular, bsdf.specular());
         path[itr].vcSpecular = bsdf.specular();
-        path[itr].vmSpecular = bsdf.specular();
+        // path[itr].vmSpecular = bsdf.specular();
 
         prv_a = a;
         a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
@@ -301,7 +299,7 @@ template <class Beta> void VCMBase<Beta>::_traceLight(
         path[itr].B
             = (path[prv].B
                 * Beta::beta(bsdf.densityRev())
-                + Beta::beta(_eta) * (1.0f - path[prv].vmSpecular))
+                + Beta::beta(_eta) * (1.0f - bsdf.specular()))
             * Beta::beta(edge.bGeometry) * a;
 
         path[itr].fDensity = bsdf.density();
@@ -423,7 +421,7 @@ template <class Beta> vec3 VCMBase<Beta>::_connect(
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
 
     float Bp
-        = (light.B * Beta::beta(lightBSDF.densityRev()) + Beta::beta(_eta) * (1.0f - light.vmSpecular))
+        = (light.B * Beta::beta(lightBSDF.densityRev()) + Beta::beta(_eta) * (1.0f - lightBSDF.specular()))
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
 
     float Cp

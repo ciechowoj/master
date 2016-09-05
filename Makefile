@@ -148,10 +148,10 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/IndirectCubeLens1.blend \
-	--VCM --num-photons=1000000 --max-radius=0.001 \
-	--reference=images/IndirectCubeLens1.512.512.10000.PT.exr \
-	--beta=1.0
+	./build/master/master.bin models/CornellBoxSpecular.blend \
+	--VCM --num-photons=100000 --max-radius=0.01 \
+	--reference=images/CornellBoxSpecular.512.512.10000.PT.exr \
+	--beta=4.0 --parallel
 
 profile:
 	valgrind \
