@@ -13,11 +13,12 @@ public:
         size_t cameraId) override;
 
     vec3 trace(RandomEngine& engine, Ray ray);
+    vec3 trace(RandomEngine& engine, Ray ray, const Scene& scene);
 
     string name() const override;
 
 private:
-    const size_t _minSubpath;
+    const size_t _minLength;
     const float _roulette;
 };
 
