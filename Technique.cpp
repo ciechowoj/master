@@ -66,13 +66,13 @@ void Technique::render(
     size_t cameraId)
 {
      auto trace = [&](RandomEngine& engine, Ray ray) -> vec3 {
-        return _trace(engine, ray);
+        return _traceEye(engine, ray);
     };
 
     for_each_ray(view, engine, _scene->cameras(), cameraId, trace);
 }
 
-vec3 Technique::_trace(
+vec3 Technique::_traceEye(
     RandomEngine& engine,
     const Ray& ray)
 {

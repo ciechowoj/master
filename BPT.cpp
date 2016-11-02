@@ -13,7 +13,7 @@ template <class Beta> string BPTBase<Beta>::name() const {
     return Beta::name();
 }
 
-template <class Beta> vec3 BPTBase<Beta>::_trace(
+template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     RandomEngine& engine,
     const Ray& ray)
 {
@@ -40,7 +40,7 @@ template <class Beta> vec3 BPTBase<Beta>::_trace(
     }
 
     eye[itr].surface = _scene->querySurface(isect);
-    eye[itr]._omega = -ray.direction;
+    eye[itr].omega = -ray.direction;
     eye[itr].throughput = vec3(1.0f);
     eye[itr].specular = 1.0f;
     eye[itr].c = 0;
@@ -54,16 +54,16 @@ template <class Beta> vec3 BPTBase<Beta>::_trace(
     float uniform = sampleUniform1(engine).value();
 
     while (uniform < roulette) {
-        auto bsdf = _scene->sampleBSDF(engine, eye[prv].surface, eye[prv].omega());
+        auto bsdf = _scene->sampleBSDF(engine, eye[prv].surface, eye[prv].omega);
 
-        isect = _scene->intersectMesh(eye[prv].position(), bsdf.omega());
+        isect = _scene->intersectMesh(eye[prv].surface.position(), bsdf.omega());
 
         if (!isect.isPresent()) {
             return radiance;
         }
 
         eye[itr].surface = _scene->querySurface(isect);
-        eye[itr]._omega = -bsdf.omega();
+        eye[itr].omega = -bsdf.omega();
 
         auto edge = Edge(eye[prv], eye[itr]);
 
@@ -114,7 +114,7 @@ template <class Beta> void BPTBase<Beta>::_trace(
     auto edge = Edge(light, isect);
 
     path[itr].surface = _scene->querySurface(isect);
-    path[itr]._omega = -light.omega();
+    path[itr].omega = -light.omega();
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
     path[itr].specular = 0.0f;
 
@@ -129,18 +129,16 @@ template <class Beta> void BPTBase<Beta>::_trace(
     float uniform = sampleUniform1(engine).value();
 
     while (uniform < roulette) {
-        auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega());
+        auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega);
 
-        isect = _scene->intersectMesh(path[prv].position(), bsdf.omega());
+        isect = _scene->intersectMesh(path[prv].surface.position(), bsdf.omega());
 
         if (!isect.isPresent()) {
             break;
         }
 
-
-
         path[itr].surface = _scene->querySurface(isect);
-        path[itr]._omega = -bsdf.omega();
+        path[itr].omega = -bsdf.omega();
 
         edge = Edge(path[prv], path[itr]);
 
@@ -178,7 +176,7 @@ template <class Beta> void BPTBase<Beta>::_trace(
     auto bsdf = _scene->sampleBSDF(
         engine,
         path[prv].surface,
-        path[prv].omega());
+        path[prv].omega);
 
     if (bsdf.specular() == 1.0f) {
         size = prv;
@@ -194,8 +192,8 @@ template <class Beta> vec3 BPTBase<Beta>::_connect0(
 {
     vec3 radiance = vec3(0.0f);
 
-    auto bsdf = _scene->sampleBSDF(engine, eye.surface, eye.omega());
-    RayIsect isect = _scene->intersect(eye.position(), bsdf.omega());
+    auto bsdf = _scene->sampleBSDF(engine, eye.surface, eye.omega);
+    RayIsect isect = _scene->intersect(eye.surface.position(), bsdf.omega());
 
     while (isect.isLight()) {
         auto edge = Edge(eye, isect, bsdf.omega());
@@ -231,9 +229,9 @@ template <class Beta> vec3 BPTBase<Beta>::_connect1(
     RandomEngine& engine,
     const EyeVertex& eye)
 {
-    LightSampleEx light = _scene->sampleLightEx(engine, eye.position());
+    LightSampleEx light = _scene->sampleLightEx(engine, eye.surface.position());
 
-    auto bsdf = _scene->queryBSDF(eye.surface, -light.omega(), eye.omega());
+    auto bsdf = _scene->queryBSDF(eye.surface, -light.omega(), eye.omega);
 
     if (bsdf.specular() == 1.0f) {
         return vec3(0.0f);
@@ -261,10 +259,10 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     const EyeVertex& eye,
     const LightVertex& light)
 {
-    vec3 omega = normalize(eye.position() - light.position());
+    vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
-    auto lightBSDF = _scene->queryBSDF(light.surface, light.omega(), omega);
-    auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega());
+    auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
+    auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
 
     if (eyeBSDF.specular() == 1.0f) {
         return vec3(0.0f);
@@ -282,7 +280,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     float weightInv = Ap + Cp + 1.0f;
 
-    return _scene->occluded(eye.position(), light.position())
+    return _scene->occluded(eye.surface.position(), light.surface.position())
         * light.throughput
         * lightBSDF.throughput()
         * eye.throughput

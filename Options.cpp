@@ -8,6 +8,7 @@
 #include <PT.hpp>
 #include <PhotonMapping.hpp>
 #include <VCM.hpp>
+#include <UPG.hpp>
 #include <Viewer.hpp>
 
 namespace haste {
@@ -31,7 +32,8 @@ R"(
       --BPT               Use bidirectional path tracing (balance heuristics).
       --PT                Use path tracing for rendering (this is default one).
       --PM                Use photon mapping for rendering.
-      --VCM               Use vertex connection and merging (not implemented/wip).
+      --VCM               Use vertex connection and merging.
+      --UPG               Use unbiased photon gathering [unimplemented, WIP].
       --num-photons=<n>   Use n photons. [default: 1 000 000]
       --num-gather=<n>    Use n as maximal number of gathered photons. [default: 100]
       --max-radius=<n>    Use n as maximum gather radius. [default: 0.1]
@@ -236,7 +238,8 @@ Options parseArgs(int argc, char const* const* argv) {
             dict.count("--BPT") +
             dict.count("--PT") +
             dict.count("--PM") +
-            dict.count("--VCM");
+            dict.count("--VCM") +
+            dict.count("--UPG");
 
         if (numTechniqes > 1) {
             options.displayHelp = true;
@@ -259,15 +262,20 @@ Options parseArgs(int argc, char const* const* argv) {
             options.technique = Options::VCM;
             dict.erase("--VCM");
         }
+        else if (dict.count("--UPG")) {
+            options.technique = Options::UPG;
+            dict.erase("--UPG");
+        }
         else {
             options.technique = Options::Viewer;
         }
 
         if (dict.count("--num-photons")) {
             if (options.technique != Options::PM &&
-                options.technique != Options::VCM) {
+                options.technique != Options::VCM &&
+                options.technique != Options::UPG) {
                 options.displayHelp = true;
-                options.displayMessage = "Number of photons can be specified for PM and VCM only.";
+                options.displayMessage = "Number of photons can be specified for PM, VCM and UPG.";
                 return options;
             }
             else if (!isUnsigned(dict["--num-photons"])) {
@@ -283,9 +291,10 @@ Options parseArgs(int argc, char const* const* argv) {
 
         if (dict.count("--num-gather")) {
             if (options.technique != Options::PM &&
-                options.technique != Options::VCM) {
+                options.technique != Options::VCM &&
+                options.technique != Options::UPG) {
                 options.displayHelp = true;
-                options.displayMessage = "--num-gather can be specified for PM and VCM only.";
+                options.displayMessage = "--num-gather can be specified for PM, VCM and UPG.";
                 return options;
             }
             else if (!isUnsigned(dict["--num-gather"])) {
@@ -301,9 +310,10 @@ Options parseArgs(int argc, char const* const* argv) {
 
         if (dict.count("--max-radius")) {
             if (options.technique != Options::PM &&
-                options.technique != Options::VCM) {
+                options.technique != Options::VCM &&
+                options.technique != Options::UPG) {
                 options.displayHelp = true;
-                options.displayMessage = "--max-radius can be specified for PM and VCM only.";
+                options.displayMessage = "--max-radius can be specified for PM, VCM and UPG.";
                 return options;
             }
             else if (!isReal(dict["--max-radius"])) {
@@ -320,7 +330,8 @@ Options parseArgs(int argc, char const* const* argv) {
         if (dict.count("--min-subpath")) {
             if (options.technique != Options::BPT &&
                 options.technique != Options::PT &&
-                options.technique != Options::VCM) {
+                options.technique != Options::VCM &&
+                options.technique != Options::UPG) {
                 options.displayHelp = true;
                 options.displayMessage = "--min-subpath in not available for specified technique.";
                 return options;
@@ -339,7 +350,8 @@ Options parseArgs(int argc, char const* const* argv) {
         if (dict.count("--beta")) {
             if (options.technique != Options::BPT &&
                 options.technique != Options::PT &&
-                options.technique != Options::VCM) {
+                options.technique != Options::VCM &&
+                options.technique != Options::UPG) {
                 options.displayHelp = true;
                 options.displayMessage = "--beta in not available for specified technique.";
                 return options;
@@ -358,7 +370,8 @@ Options parseArgs(int argc, char const* const* argv) {
         if (dict.count("--roulette")) {
             if (options.technique != Options::BPT &&
                 options.technique != Options::PT &&
-                options.technique != Options::VCM) {
+                options.technique != Options::VCM &&
+                options.technique != Options::UPG) {
                 options.displayHelp = true;
                 options.displayMessage = "--roulette in not available for specified technique.";
                 return options;
@@ -628,6 +641,37 @@ shared<Technique> makeTechnique(Options& options) {
                     options.beta);
             }
 
+        case Options::UPG:
+            if (options.beta == 0.0f) {
+                return std::make_shared<UPG0>(
+                    options.minSubpath,
+                    options.roulette,
+                    options.numPhotons,
+                    options.numGather);
+            }
+            else if (options.beta == 1.0f) {
+                return std::make_shared<UPG1>(
+                    options.minSubpath,
+                    options.roulette,
+                    options.numPhotons,
+                    options.numGather);
+            }
+            else if (options.beta == 2.0f) {
+                return std::make_shared<UPG2>(
+                    options.minSubpath,
+                    options.roulette,
+                    options.numPhotons,
+                    options.numGather);
+            }
+            else {
+                return std::make_shared<UPGb>(
+                    options.minSubpath,
+                    options.roulette,
+                    options.numPhotons,
+                    options.numGather,
+                    options.beta);
+            }
+
         case Options::Viewer:
             return makeViewer(options);
     }
@@ -643,6 +687,7 @@ string techniqueString(const Options& options) {
         case Options::PT: return "PT";
         case Options::PM: return "PM";
         case Options::VCM: return "VCM";
+        case Options::UPG: return "UPG";
         case Options::Viewer: return "Viewer";
         default: return "UNKNOWN";
     }

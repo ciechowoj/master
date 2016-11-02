@@ -13,35 +13,25 @@ public:
 private:
     struct LightVertex {
         SurfacePoint surface;
-        vec3 _omega;
+        vec3 omega;
         vec3 throughput;
         float specular;
         float a, A;
-
-        const vec3& position() const { return surface.position(); }
-        const vec3& normal() const { return surface.normal(); }
-        const vec3& gnormal() const { return surface.gnormal(); }
-        const vec3& omega() const { return _omega; }
     };
 
     struct EyeVertex {
         SurfacePoint surface;
-        vec3 _omega;
+        vec3 omega;
         vec3 throughput;
         float specular;
         float c, C;
-
-        const vec3& position() const { return surface.position(); }
-        const vec3& normal() const { return surface.normal(); }
-        const vec3& gnormal() const { return surface.gnormal(); }
-        const vec3& omega() const { return _omega; }
     };
 
     static const size_t _maxSubpath = 1024;
     const size_t _minSubpath;
     const float _roulette;
 
-    vec3 _trace(RandomEngine& engine, const Ray& ray) override;
+    vec3 _traceEye(RandomEngine& engine, const Ray& ray) override;
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect1(RandomEngine& engine, const EyeVertex& eye);

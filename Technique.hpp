@@ -55,7 +55,7 @@ protected:
     size_t _numSamples;
     shared<const Scene> _scene;
 
-    virtual vec3 _trace(
+    virtual vec3 _traceEye(
         RandomEngine& engine,
         const Ray& ray);
 

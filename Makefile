@@ -148,7 +148,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxSpecular.blend --PT --parallel
+	./build/master/master.bin models/CornellBoxSpecular.blend --VCM --parallel
 
 profile:
 	valgrind \
