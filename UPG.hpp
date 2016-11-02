@@ -38,22 +38,10 @@ private:
         vec3 omega;
         vec3 throughput;
         float specular;
-        float c, C;
+        float c, C, D;
     };
 
     static const size_t _maxSubpath = 1024;
-
-    static void _updateWeights(
-        EyeVertex& current,
-        const EyeVertex& previous,
-        const BSDFSample& bsdf,
-        const Edge& edge);
-
-    static void _updateWeights(
-        LightVertex& current,
-        const LightVertex& previous,
-        const BSDFSample& bsdf,
-        const Edge& edge);
 
     vec3 _traceEye(RandomEngine& engine, const Ray& ray) override;
 
