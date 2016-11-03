@@ -1,3 +1,4 @@
+#include <iostream>
 #include <UPG.hpp>
 #include <Edge.hpp>
 
@@ -126,7 +127,7 @@ vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
 
 template <class Beta> template <class Appender>
 void UPGBase<Beta>::_traceLight(RandomEngine& engine, Appender& path) {
-    size_t itr = 1, prv = 0;
+    size_t itr = path.size() + 1, prv = path.size();
 
     LightSampleEx light = _scene->sampleLight(engine);
 
@@ -279,6 +280,37 @@ float UPGBase<Beta>::_weightVM(
 }
 
 template <class Beta>
+float UPGBase<Beta>::_density(
+        RandomEngine& engine,
+        const LightVertex& light,
+        const EyeVertex& eye,
+        const BSDFQuery& eyeQuery,
+        const Edge& edge,
+        float radius) {
+    /*float L = 1000.f;
+    float N = 1.0f;
+    const auto& eyeBSDF = _scene->queryBSDF(eye.surface);
+
+    while (N < L) {
+        auto bsdfSample = eyeBSDF.sample(engine, eye.surface, eye.omega);
+
+        RayIsect isect = _scene->intersectMesh(
+            eye.surface.position(),
+            bsdfSample.omega());
+
+        float distance_sq = distance2(light.surface.position(), isect.position());
+
+        if (isect.isPresent() && distance_sq < _radius * _radius) {
+            return N;
+        }
+
+        N += 1.0f;
+    }*/
+
+    return 1.0f / (edge.bGeometry * eyeQuery.density() * pi<float>() * radius * radius);
+}
+
+template <class Beta>
 vec3 UPGBase<Beta>::_connect0(RandomEngine& engine, const EyeVertex& eye, float radius) {
     vec3 radiance = vec3(0.0f);
 
@@ -288,7 +320,7 @@ vec3 UPGBase<Beta>::_connect0(RandomEngine& engine, const EyeVertex& eye, float 
     while (isect.isLight()) {
         auto edge = Edge(eye, isect, bsdf.omega());
 
-        float eta = float(_numPhotons) * pi<float>() * radius * radius;
+        float eta = float(_numPhotons) * pi<float>() * radius * radius * 0.0f; // TODO
 
         auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
 
@@ -339,7 +371,7 @@ vec3 UPGBase<Beta>::_connect1(RandomEngine& engine, const EyeVertex& eye, float 
 
     auto edge = Edge(lightSample, eye, lightSample.omega());
 
-    float eta = float(_numPhotons) * pi<float>() * radius * radius;
+    float eta = float(_numPhotons) * pi<float>() * radius * radius * 0.0f; // TODO
 
     float Ap
         = Beta::beta(eyeBSDF.densityRev() * edge.bGeometry / lightSample.areaDensity());
@@ -426,22 +458,28 @@ vec3 UPGBase<Beta>::_gather(RandomEngine& engine, const EyeVertex& eye, float& r
         return vec3(0.0f);
     }
 
+    auto edge = Edge(isect, eye, eyeBSDF.omega());
+
     vec3 radiance = vec3(0.0f);
 
     radius = _radius;
 
     _vertices.rQuery(
         [&](const LightVertex& light) {
-            radiance += _merge(light, eye, radius);
+            radiance += _merge(engine, light, eye, radius);
         },
         isect.position(),
         radius);
 
-    return radiance;
+    return radiance / float(_numPhotons);
 }
 
 template <class Beta>
-vec3 UPGBase<Beta>::_merge(const LightVertex& light, const EyeVertex& eye, float radius) {
+vec3 UPGBase<Beta>::_merge(
+    RandomEngine& engine,
+    const LightVertex& light,
+    const EyeVertex& eye,
+    float radius) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
@@ -455,15 +493,18 @@ vec3 UPGBase<Beta>::_merge(const LightVertex& light, const EyeVertex& eye, float
 
     auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
-    return _scene->occluded(eye.surface.position(), light.surface.position())
+    float density = _density(engine, light, eye, eyeBSDF, edge, radius);
+
+    vec3 result = _scene->occluded(eye.surface.position(), light.surface.position())
         * light.throughput
         * lightBSDF.throughput()
         * eye.throughput
         * eyeBSDF.throughput()
         * edge.bCosTheta
         * edge.fGeometry
-        * weight
-        / (pi<float>() * radius * radius * float(_numPhotons));
+        * weight;
+
+    return result.x + result.y + result.z == 0.0f ? vec3(0.0f) : result * density;
 }
 
 UPGb::UPGb(

@@ -89,6 +89,11 @@ const BSDF& Scene::queryBSDF(const RayIsect& isect) const {
     return *materials.bsdfs[meshes[isect.meshId()].materialID];
 }
 
+const BSDF& Scene::queryBSDF(const SurfacePoint& surface) const {
+    runtime_assert(surface.materialId() < materials.bsdfs.size());
+    return *materials.bsdfs[surface.materialId()].get();
+}
+
 vec3 Scene::lerpNormal(const RayIsect& hit) const {
     runtime_assert(hit.meshId() < meshes.size());
 

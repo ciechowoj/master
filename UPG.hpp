@@ -73,6 +73,14 @@ private:
         const Edge& edge,
         float radius);
 
+    float _density(
+        RandomEngine& engine,
+        const LightVertex& light,
+        const EyeVertex& eye,
+        const BSDFQuery& eyeQuery,
+        const Edge& edge,
+        float radius);
+
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye, float radius);
     vec3 _connect1(RandomEngine& engine, const EyeVertex& eye, float radius);
     vec3 _connect(const LightVertex& light, const EyeVertex& eye, float radius);
@@ -85,7 +93,12 @@ private:
     void _scatter(RandomEngine& engine);
 
     vec3 _gather(RandomEngine& engine, const EyeVertex& eye, float& radius);
-    vec3 _merge(const LightVertex& light, const EyeVertex& eye, float radius);
+
+    vec3 _merge(
+        RandomEngine& engine,
+        const LightVertex& light,
+        const EyeVertex& eye,
+        float radius);
 
     const size_t _numPhotons;
     const size_t _numGather;

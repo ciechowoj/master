@@ -51,6 +51,7 @@ public:
     void buildAccelStructs(RTCDevice device);
 
     const BSDF& queryBSDF(const RayIsect& isect) const;
+    const BSDF& queryBSDF(const SurfacePoint& surface) const;
     vec3 lightExitance(const RayIsect& hit) const;
     vec3 lerpNormal(const RayIsect& hit) const;
 

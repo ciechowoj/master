@@ -22,7 +22,7 @@ struct Options {
     Action action = Render;
     size_t numPhotons = 1000000;
     size_t numGather = 100;
-    double maxRadius = 0.01;
+    double maxRadius = 0.1;
     size_t minSubpath = 5;
     double beta = 1.0f;
     double roulette = 0.6;

@@ -33,6 +33,14 @@ struct BSDFSample {
     const BSDFQuery query() const;
 };
 
+struct BSDFBoundedSample {
+    vec3 _omega;
+    float _area;
+
+    const vec3& omega() const { return _omega; }
+    float area() const { return _area; }
+};
+
 class BSDF {
 public:
     BSDF();
@@ -61,6 +69,12 @@ public:
         RandomEngine& engine,
         const vec3& omega) const = 0;
 
+    /* virtual const BSDFBoundedSample sampleBounded(
+        RandomEngine& engine,
+        const vec3& omega,
+        const vec3& target,
+        float radius) const; */
+
     virtual const BSDFSample sampleAdjoint(
         RandomEngine& engine,
         const vec3& omega) const;
@@ -69,6 +83,13 @@ public:
         RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omega) const;
+
+    /* const BSDFBoundedSample sampleBounded(
+        RandomEngine& engine,
+        const SurfacePoint& point,
+        const vec3& omega,
+        const vec3& target,
+        float radius) const; */
 
     const BSDFSample sampleAdjoint(
         RandomEngine& engine,
