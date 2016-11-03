@@ -14,13 +14,14 @@ public:
         size_t minSubpath,
         float roulette,
         size_t numPhotons,
-        size_t numGather);
+        size_t numGather,
+        float radius);
 
-
-
-
-
-
+    void preprocess(
+        const shared<const Scene>& scene,
+        RandomEngine& engine,
+        const function<void(string, float)>& progress,
+        bool parallel);
 
     string name() const override;
 
@@ -31,6 +32,10 @@ private:
         vec3 throughput;
         float specular;
         float a, A, B;
+
+        const vec3& position() const {
+            return surface.position();
+        }
     };
 
     struct EyeVertex {
@@ -52,24 +57,43 @@ private:
         RandomEngine& engine,
         fixed_vector<LightVertex, _maxSubpath>& path);
 
-    vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
-    vec3 _connect1(RandomEngine& engine, const EyeVertex& eye);
-    vec3 _connect(const LightVertex& light, const EyeVertex& eye);
+    float _weightVC(
+        const LightVertex& light,
+        const BSDFQuery& lightBSDF,
+        const EyeVertex& eye,
+        const BSDFQuery& eyeBSDF,
+        const Edge& edge,
+        float radius);
+
+    float _weightVM(
+        const LightVertex& light,
+        const BSDFQuery& lightBSDF,
+        const EyeVertex& eye,
+        const BSDFQuery& eyeBSDF,
+        const Edge& edge,
+        float radius);
+
+    vec3 _connect0(RandomEngine& engine, const EyeVertex& eye, float radius);
+    vec3 _connect1(RandomEngine& engine, const EyeVertex& eye, float radius);
+    vec3 _connect(const LightVertex& light, const EyeVertex& eye, float radius);
     vec3 _connect(
         RandomEngine& engine,
         const EyeVertex& eye,
-        const fixed_vector<LightVertex, _maxSubpath>& path);
+        const fixed_vector<LightVertex, _maxSubpath>& path,
+        float radius);
 
     void _scatter(RandomEngine& engine);
 
-    vec3 _gather(RandomEngine& engine, const EyeVertex& eye);
+    vec3 _gather(RandomEngine& engine, const EyeVertex& eye, float& radius);
     vec3 _merge(const LightVertex& light, const EyeVertex& eye, float radius);
 
     const size_t _numPhotons;
     const size_t _numGather;
     const size_t _minSubpath;
     const float _roulette;
-    const float _eta = 1.0f;
+    const float _radius;
+
+    v3::HashGrid3D<LightVertex> _vertices;
 };
 
 typedef UPGBase<FixedBeta<0>> UPG0;
@@ -83,6 +107,7 @@ public:
         float roulette,
         size_t numPhotons,
         size_t numGather,
+        float radius,
         float beta);
 };
 

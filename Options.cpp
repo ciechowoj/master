@@ -647,21 +647,24 @@ shared<Technique> makeTechnique(Options& options) {
                     options.minSubpath,
                     options.roulette,
                     options.numPhotons,
-                    options.numGather);
+                    options.numGather,
+                    options.maxRadius);
             }
             else if (options.beta == 1.0f) {
                 return std::make_shared<UPG1>(
                     options.minSubpath,
                     options.roulette,
                     options.numPhotons,
-                    options.numGather);
+                    options.numGather,
+                    options.maxRadius);
             }
             else if (options.beta == 2.0f) {
                 return std::make_shared<UPG2>(
                     options.minSubpath,
                     options.roulette,
                     options.numPhotons,
-                    options.numGather);
+                    options.numGather,
+                    options.maxRadius);
             }
             else {
                 return std::make_shared<UPGb>(
@@ -669,6 +672,7 @@ shared<Technique> makeTechnique(Options& options) {
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
+                    options.maxRadius,
                     options.beta);
             }
 
