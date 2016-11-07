@@ -6,6 +6,11 @@
 # Building
 
 Required dependencies:
+* g++
+* python-setuptools
+* libtbb-dev
+* libopenexr-dev
+* zlib1g-dev
 * OpenEXR (`apt-get install libopenexr-dev`)
 * ispc (`ispc.github.io/downloads.html`)
 
