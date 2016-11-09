@@ -3,13 +3,6 @@
 
 namespace haste {
 
-struct angular_bound_t {
-    float theta_inf, theta_sup;
-    float phi_inf, phi_sup;
-};
-
-angular_bound_t angular_bound(vec3 center, float radius);
-
 struct SurfacePoint;
 
 struct BSDFQuery {
@@ -76,11 +69,11 @@ public:
         RandomEngine& engine,
         const vec3& omega) const = 0;
 
-    /* virtual const BSDFBoundedSample sampleBounded(
+    virtual const BSDFBoundedSample sampleBounded(
         RandomEngine& engine,
         const vec3& omega,
         const vec3& target,
-        float radius) const; */
+        float radius) const;
 
     virtual const BSDFSample sampleAdjoint(
         RandomEngine& engine,
@@ -91,12 +84,12 @@ public:
         const SurfacePoint& point,
         const vec3& omega) const;
 
-    /* const BSDFBoundedSample sampleBounded(
+    const BSDFBoundedSample sampleBounded(
         RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omega,
         const vec3& target,
-        float radius) const; */
+        float radius) const;
 
     const BSDFSample sampleAdjoint(
         RandomEngine& engine,

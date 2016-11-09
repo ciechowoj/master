@@ -3,40 +3,6 @@
 
 namespace haste {
 
-
-angular_bound_t angular_bound(vec3 center, float radius) {
-    float theta_inf = 0;
-    float theta_sup = half_pi<float>();
-    float phi_inf = 0;
-    float phi_sup = two_pi<float>();
-
-    float lateral_distance_sq = center.x * center.x + center.z * center.z;
-    float distance_sq = lateral_distance_sq + center.y * center.y;
-    float radius_sq = radius * radius;
-
-    float lateral_distance = sqrt(lateral_distance_sq);
-    float distance = sqrt(distance_sq);
-
-    float theta_center = asin(lateral_distance / distance);
-    float theta_radius = asin(radius / distance);
-
-    if (lateral_distance_sq < radius_sq) {
-        theta_sup = min(half_pi<float>(), theta_center + theta_radius);
-    }
-    else if (radius_sq < distance_sq) {
-        theta_inf = theta_center - theta_radius;
-        theta_sup = min(half_pi<float>(), theta_center + theta_radius);
-
-        float phi_center = atan2(center.z, center.x);
-        float phi_radius = asin(radius / lateral_distance);
-
-        phi_inf = phi_center - phi_radius;
-        phi_sup = phi_center + phi_radius;
-    }
-
-    return { theta_inf, theta_sup, phi_inf, phi_sup };
-}
-
 const bool BSDFSample::zero() const
 {
     return _throughput.x + _throughput.y + _throughput.z == 0.0f;
@@ -115,6 +81,15 @@ const BSDFSample BSDF::sample(
     return result;
 }
 
+const BSDFBoundedSample BSDF::sampleBounded(
+    RandomEngine& engine,
+    const vec3& omega,
+    const vec3& target,
+    float radius) const
+{
+
+}
+
 const BSDFSample BSDF::sampleAdjoint(
     RandomEngine& engine,
     const vec3& omega) const
@@ -128,6 +103,24 @@ const BSDFSample BSDF::sample(
     const vec3& omega) const
 {
     BSDFSample result = sample(engine, point.toSurface(omega));
+    result._omega = point.toWorld(result.omega());
+
+    return result;
+}
+
+const BSDFBoundedSample BSDF::sampleBounded(
+        RandomEngine& engine,
+        const SurfacePoint& point,
+        const vec3& omega,
+        const vec3& target,
+        float radius) const
+{
+    BSDFBoundedSample result = sampleBounded(
+        engine,
+        point.toSurface(omega),
+        point.toSurface(target),
+        radius);
+
     result._omega = point.toWorld(result.omega());
 
     return result;

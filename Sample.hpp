@@ -14,11 +14,42 @@ public:
     vec3 random3();
     vec4 random4();
 
+    std::uint_fast32_t operator()();
+
 private:
     std::minstd_rand engine;
     RandomEngine(const RandomEngine&) = delete;
     RandomEngine& operator=(const RandomEngine&) = delete;
 };
+
+using random_generator_t = RandomEngine;
+
+struct angular_bound_t {
+    float theta_inf, theta_sup;
+    float phi_inf, phi_sup;
+};
+
+angular_bound_t angular_bound(vec3 center, float radius);
+
+
+class lambertian_bounded_distribution_t {
+public:
+    lambertian_bounded_distribution_t(angular_bound_t bound);
+
+    vec3 sample(random_generator_t& generator) const;
+    float density(vec3 sample) const;
+    float density_inv(vec3 sample) const;
+    float subarea() const;
+private:
+    float _uniform_theta_inf;
+    float _uniform_theta_sup;
+    float _uniform_phi_inf;
+    float _uniform_phi_sup;
+};
+
+
+
+
 
 struct UniformSample1 {
     float _value;

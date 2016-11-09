@@ -2,6 +2,70 @@
 
 namespace haste {
 
+angular_bound_t angular_bound(vec3 center, float radius) {
+    float theta_inf = 0;
+    float theta_sup = half_pi<float>();
+    float phi_inf = 0;
+    float phi_sup = two_pi<float>();
+
+    float lateral_distance_sq = center.x * center.x + center.z * center.z;
+    float distance_sq = lateral_distance_sq + center.y * center.y;
+    float radius_sq = radius * radius;
+
+    float lateral_distance = sqrt(lateral_distance_sq);
+    float distance = sqrt(distance_sq);
+
+    float theta_center = asin(lateral_distance / distance);
+    float theta_radius = asin(radius / distance);
+
+    if (lateral_distance_sq < radius_sq) {
+        theta_sup = min(half_pi<float>(), theta_center + theta_radius);
+    }
+    else if (radius_sq < distance_sq) {
+        theta_inf = theta_center - theta_radius;
+        theta_sup = min(half_pi<float>(), theta_center + theta_radius);
+
+        float phi_center = atan2(center.z, center.x);
+        float phi_radius = asin(radius / lateral_distance);
+
+        phi_inf = phi_center - phi_radius;
+        phi_sup = phi_center + phi_radius;
+    }
+
+    return { theta_inf, theta_sup, phi_inf, phi_sup };
+}
+
+lambertian_bounded_distribution_t::lambertian_bounded_distribution_t(angular_bound_t bound) {
+    _uniform_theta_inf = cos(bound.theta_sup) * cos(bound.theta_sup);
+    _uniform_theta_sup = cos(bound.theta_inf) * cos(bound.theta_inf);
+    _uniform_phi_inf = bound.phi_inf * one_over_pi<float>() * 0.5f;
+    _uniform_phi_sup = bound.phi_sup * one_over_pi<float>() * 0.5f;
+}
+
+vec3 lambertian_bounded_distribution_t::sample(random_generator_t& generator) const {
+    float theta_range = _uniform_theta_sup - _uniform_theta_inf;
+    float phi_range = _uniform_phi_sup - _uniform_phi_inf;
+
+    float y = sqrt(generator() * theta_range + _uniform_theta_inf);
+    float phi = two_pi<float>() * (generator() * phi_range + _uniform_phi_inf);
+    float r = sqrt(1 - y * y);
+    float x = r * cos(phi);
+    float z = r * sin(phi);
+    return { vec3(x, y, z) };
+}
+
+float lambertian_bounded_distribution_t::density(vec3 sample) const {
+    return sample.y * one_over_pi<float>();
+}
+
+float lambertian_bounded_distribution_t::density_inv(vec3 sample) const {
+    return pi<float>() / sample.y;
+}
+
+float lambertian_bounded_distribution_t::subarea() const {
+    return (_uniform_theta_sup - _uniform_theta_inf) * (_uniform_phi_sup - _uniform_phi_inf);
+}
+
 RandomEngine::RandomEngine() {
     std::random_device device;
     engine.seed(device());
@@ -34,6 +98,10 @@ vec4 RandomEngine::random4() {
         std::uniform_real_distribution<float>()(engine),
         std::uniform_real_distribution<float>()(engine),
         std::uniform_real_distribution<float>()(engine));
+}
+
+std::uint_fast32_t RandomEngine::operator()() {
+    return engine.operator()();
 }
 
 const float DiskSample1::theta() const {
