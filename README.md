@@ -14,7 +14,7 @@ Required dependencies:
 * OpenEXR (`apt-get install libopenexr-dev`)
 * ispc (`ispc.github.io/downloads.html`)
 
-Depenedencies provided as git submodules:
+Depenedencies are provided as git submodules:
 * assimp
 * embree
 * glad
@@ -23,4 +23,4 @@ Depenedencies provided as git submodules:
 * googletest
 * imgui
 
-To build project run `make` command in main directory.
+To build the project run the `make` command in the main directory.

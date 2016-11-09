@@ -3,6 +3,13 @@
 
 namespace haste {
 
+struct angular_bound_t {
+    float theta_inf, theta_sup;
+    float phi_inf, phi_sup;
+};
+
+angular_bound_t angular_bound(vec3 center, float radius);
+
 struct SurfacePoint;
 
 struct BSDFQuery {
