@@ -298,31 +298,16 @@ float UPGBase<Beta>::_density(
     while (N < L) {
         auto bsdfSample = eyeBSDF.sampleBounded(engine, omega, bound);
 
-
         bsdfSample._omega = eye.surface.toWorld(bsdfSample._omega);
-
-
-
-        // std::cout << "N: " << N << " area: " << bsdfSample._area << std::endl;
-
-
-        // std::cout << "N: " << N << " angle: " << acos(dot(bsdfSample.omega(), normalize(light.surface.position()))) << std::endl;
 
         RayIsect isect = _scene->intersectMesh(
             eye.surface.position(),
             bsdfSample.omega());
 
         if (isect.isPresent()) {
-
-            //std::cout << isect.position() << "/" << light.surface.position() << "\n";
-            // std::cout << bsdfSample._omega << " / " << normalize(isect.position() - eye.surface.position()) << "\n";
-
             float distance_sq = distance2(light.surface.position(), isect.position());
 
-            // std::cout << "N: " << N << " " << isect.isPresent() << " " << distance_sq << std::endl;
-
             if (distance_sq < radius * radius) {
-                // std::cout << "N: " << N << " area:" << bsdfSample.area() << std::endl;
                 return N / bsdfSample.area();
             }
         }
@@ -330,16 +315,6 @@ float UPGBase<Beta>::_density(
         N += 1.0f;
     }
 
-    auto bsdfSample = eyeBSDF.sampleBounded(engine, omega, bound);
-    bsdfSample._omega = eye.surface.toWorld(bsdfSample._omega);
-
-    /*std::cout << "center: " << target << " " << radius << std::endl;
-    std::cout << (vec4&)bound << std::endl;
-
-    std::cout << "N: " << N << " angle: " << acos(dot(bsdfSample.omega(), normalize(light.surface.position()))) << std::endl;*/
-
-
-    // std::cout << "N: " << N << " area:" << bsdfSample.area() << std::endl;
     return 1.0f / (edge.bGeometry * eyeQuery.density() * pi<float>() * radius * radius);
 }
 
