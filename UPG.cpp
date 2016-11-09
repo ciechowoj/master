@@ -287,26 +287,59 @@ float UPGBase<Beta>::_density(
         const BSDFQuery& eyeQuery,
         const Edge& edge,
         float radius) {
-    /*float L = 1000.f;
+    float L = 4096.f;
     float N = 1.0f;
     const auto& eyeBSDF = _scene->queryBSDF(eye.surface);
 
+    auto target = eye.surface.toSurface(light.surface.position() - eye.surface.position());
+    auto bound = angular_bound(target, radius);
+    auto omega = eye.surface.toSurface(eye.omega);
+
     while (N < L) {
-        auto bsdfSample = eyeBSDF.sample(engine, eye.surface, eye.omega);
+        auto bsdfSample = eyeBSDF.sampleBounded(engine, omega, bound);
+
+
+        bsdfSample._omega = eye.surface.toWorld(bsdfSample._omega);
+
+
+
+        // std::cout << "N: " << N << " area: " << bsdfSample._area << std::endl;
+
+
+        // std::cout << "N: " << N << " angle: " << acos(dot(bsdfSample.omega(), normalize(light.surface.position()))) << std::endl;
 
         RayIsect isect = _scene->intersectMesh(
             eye.surface.position(),
             bsdfSample.omega());
 
-        float distance_sq = distance2(light.surface.position(), isect.position());
+        if (isect.isPresent()) {
 
-        if (isect.isPresent() && distance_sq < _radius * _radius) {
-            return N;
+            //std::cout << isect.position() << "/" << light.surface.position() << "\n";
+            // std::cout << bsdfSample._omega << " / " << normalize(isect.position() - eye.surface.position()) << "\n";
+
+            float distance_sq = distance2(light.surface.position(), isect.position());
+
+            // std::cout << "N: " << N << " " << isect.isPresent() << " " << distance_sq << std::endl;
+
+            if (distance_sq < radius * radius) {
+                // std::cout << "N: " << N << " area:" << bsdfSample.area() << std::endl;
+                return N / bsdfSample.area();
+            }
         }
 
         N += 1.0f;
-    }*/
+    }
 
+    auto bsdfSample = eyeBSDF.sampleBounded(engine, omega, bound);
+    bsdfSample._omega = eye.surface.toWorld(bsdfSample._omega);
+
+    /*std::cout << "center: " << target << " " << radius << std::endl;
+    std::cout << (vec4&)bound << std::endl;
+
+    std::cout << "N: " << N << " angle: " << acos(dot(bsdfSample.omega(), normalize(light.surface.position()))) << std::endl;*/
+
+
+    // std::cout << "N: " << N << " area:" << bsdfSample.area() << std::endl;
     return 1.0f / (edge.bGeometry * eyeQuery.density() * pi<float>() * radius * radius);
 }
 

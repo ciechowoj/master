@@ -58,6 +58,19 @@ const BSDFSample DiffuseBSDF::sample(
     }
 }
 
+const BSDFBoundedSample DiffuseBSDF::sampleBounded(
+    RandomEngine& engine,
+    const vec3& omega,
+    const angular_bound_t& bound) const {
+    auto distribution = lambertian_bounded_distribution_t(bound);
+
+    BSDFBoundedSample result;
+    result._omega = distribution.sample(engine);
+    result._area = distribution.subarea();
+
+    return result;
+}
+
 BSDFSample DiffuseBSDF::scatter(
     RandomEngine& engine,
     const SurfacePoint& point,

@@ -84,10 +84,9 @@ const BSDFSample BSDF::sample(
 const BSDFBoundedSample BSDF::sampleBounded(
     RandomEngine& engine,
     const vec3& omega,
-    const vec3& target,
-    float radius) const
+    const angular_bound_t& bound) const
 {
-
+    return BSDFBoundedSample();
 }
 
 const BSDFSample BSDF::sampleAdjoint(
@@ -103,24 +102,6 @@ const BSDFSample BSDF::sample(
     const vec3& omega) const
 {
     BSDFSample result = sample(engine, point.toSurface(omega));
-    result._omega = point.toWorld(result.omega());
-
-    return result;
-}
-
-const BSDFBoundedSample BSDF::sampleBounded(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& omega,
-        const vec3& target,
-        float radius) const
-{
-    BSDFBoundedSample result = sampleBounded(
-        engine,
-        point.toSurface(omega),
-        point.toSurface(target),
-        radius);
-
     result._omega = point.toWorld(result.omega());
 
     return result;

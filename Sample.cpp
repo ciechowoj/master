@@ -12,24 +12,26 @@ angular_bound_t angular_bound(vec3 center, float radius) {
     float distance_sq = lateral_distance_sq + center.y * center.y;
     float radius_sq = radius * radius;
 
-    float lateral_distance = sqrt(lateral_distance_sq);
-    float distance = sqrt(distance_sq);
+    if (radius_sq < distance_sq) {
+        float lateral_distance = sqrt(lateral_distance_sq);
+        float distance = sqrt(distance_sq);
 
-    float theta_center = asin(lateral_distance / distance);
-    float theta_radius = asin(radius / distance);
+        float theta_center = asin(lateral_distance / distance);
+        float theta_radius = asin(radius / distance);
 
-    if (lateral_distance_sq < radius_sq) {
-        theta_sup = min(half_pi<float>(), theta_center + theta_radius);
-    }
-    else if (radius_sq < distance_sq) {
-        theta_inf = theta_center - theta_radius;
-        theta_sup = min(half_pi<float>(), theta_center + theta_radius);
+        if (lateral_distance_sq < radius_sq) {
+            theta_sup = min(half_pi<float>(), theta_center + theta_radius);
+        }
+        else if (radius_sq < distance_sq) {
+            theta_inf = theta_center - theta_radius;
+            theta_sup = min(half_pi<float>(), theta_center + theta_radius);
 
-        float phi_center = atan2(center.z, center.x);
-        float phi_radius = asin(radius / lateral_distance);
+            float phi_center = atan2(center.z, center.x);
+            float phi_radius = asin(radius / lateral_distance);
 
-        phi_inf = phi_center - phi_radius;
-        phi_sup = phi_center + phi_radius;
+            phi_inf = phi_center - phi_radius;
+            phi_sup = phi_center + phi_radius;
+        }
     }
 
     return { theta_inf, theta_sup, phi_inf, phi_sup };
@@ -46,12 +48,12 @@ vec3 lambertian_bounded_distribution_t::sample(random_generator_t& generator) co
     float theta_range = _uniform_theta_sup - _uniform_theta_inf;
     float phi_range = _uniform_phi_sup - _uniform_phi_inf;
 
-    float y = sqrt(generator() * theta_range + _uniform_theta_inf);
-    float phi = two_pi<float>() * (generator() * phi_range + _uniform_phi_inf);
+    float y = sqrt(generator.sample() * theta_range + _uniform_theta_inf);
+    float phi = two_pi<float>() * (generator.sample() * phi_range + _uniform_phi_inf);
     float r = sqrt(1 - y * y);
     float x = r * cos(phi);
     float z = r * sin(phi);
-    return { vec3(x, y, z) };
+    return vec3(x, y, z);
 }
 
 float lambertian_bounded_distribution_t::density(vec3 sample) const {

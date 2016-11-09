@@ -15,6 +15,11 @@ public:
         RandomEngine& engine,
         const vec3& omega) const override;
 
+    const BSDFBoundedSample sampleBounded(
+        RandomEngine& engine,
+        const vec3& omega,
+        const angular_bound_t& bound) const override;
+
     BSDFSample scatter(
         RandomEngine& engine,
         const SurfacePoint& point,

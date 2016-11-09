@@ -14,6 +14,9 @@ int main(int argc, char **argv) {
     Options options = parseArgs(argc, argv);
     auto status = displayHelpIfNecessary(options, "0.0.1");
 
+    runtime_assert(sin(half_pi<float>()) == 1.0f);
+    runtime_assert(asin(1.0f) == half_pi<float>());
+
     if (status.first) {
         return status.second;
     }

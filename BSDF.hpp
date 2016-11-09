@@ -72,8 +72,7 @@ public:
     virtual const BSDFBoundedSample sampleBounded(
         RandomEngine& engine,
         const vec3& omega,
-        const vec3& target,
-        float radius) const;
+        const angular_bound_t& bound) const;
 
     virtual const BSDFSample sampleAdjoint(
         RandomEngine& engine,
@@ -83,13 +82,6 @@ public:
         RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omega) const;
-
-    const BSDFBoundedSample sampleBounded(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& omega,
-        const vec3& target,
-        float radius) const;
 
     const BSDFSample sampleAdjoint(
         RandomEngine& engine,

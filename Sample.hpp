@@ -14,6 +14,8 @@ public:
     vec3 random3();
     vec4 random4();
 
+    float sample() { return random1(); }
+
     std::uint_fast32_t operator()();
 
 private:
@@ -46,10 +48,6 @@ private:
     float _uniform_phi_inf;
     float _uniform_phi_sup;
 };
-
-
-
-
 
 struct UniformSample1 {
     float _value;
