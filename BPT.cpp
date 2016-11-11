@@ -239,7 +239,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect1(
 
     auto edge = Edge(light, eye, light.omega());
 
-    float Ap = Beta::beta(bsdf.densityRev() * edge.bGeometry / light.areaDensity());
+    float Ap = Beta::beta(bsdf.density() * edge.bGeometry / light.areaDensity());
 
     float Cp
         = (eye.C * Beta::beta(bsdf.density()) + eye.c * (1.0f - eye.specular))
