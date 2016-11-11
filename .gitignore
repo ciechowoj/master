@@ -32,6 +32,7 @@
 
 build/*
 images/*
+!images/Makefile
 *.ini
 dna.txt
 *.blend1
