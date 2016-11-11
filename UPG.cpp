@@ -321,7 +321,7 @@ float UPGBase<Beta>::_density(
         N += 1.0f;
     }
 
-    return 1.0f / (edge.bGeometry * eyeQuery.density() * pi<float>() * radius * radius);
+    return 1.0f / (edge.bGeometry * eyeQuery.densityRev() * pi<float>() * radius * radius);
 }
 
 template <class Beta>
