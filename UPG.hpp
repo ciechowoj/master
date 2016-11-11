@@ -43,7 +43,7 @@ private:
         vec3 omega;
         vec3 throughput;
         float specular;
-        float c, C, D;
+        float c, C, d, D;
     };
 
     static const size_t _maxSubpath = 1024;
@@ -84,6 +84,7 @@ private:
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye, float radius);
     vec3 _connect1(RandomEngine& engine, const EyeVertex& eye, float radius);
     vec3 _connect(const LightVertex& light, const EyeVertex& eye, float radius);
+
     vec3 _connect(
         RandomEngine& engine,
         const EyeVertex& eye,
@@ -99,6 +100,8 @@ private:
         const LightVertex& light,
         const EyeVertex& eye,
         float radius);
+
+    vec3 _combine(vec3 throughput, float weight);
 
     const size_t _numPhotons;
     const size_t _numGather;

@@ -55,7 +55,7 @@ vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
 
     EyeVertex eye[2];
     size_t itr = 0, prv = 1;
-    float d = 0.0f, radius = _radius;
+    float radius = _radius;
 
     eye[itr].surface = _scene->querySurface(isect);
     eye[itr].omega = -ray.direction;
@@ -63,6 +63,7 @@ vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
     eye[itr].specular = 1.0f;
     eye[itr].c = 0;
     eye[itr].C = 0;
+    eye[itr].d = 0;
     eye[itr].D = 0;
 
     radiance += _gather(engine, eye[itr], radius);
@@ -104,14 +105,15 @@ vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
             * Beta::beta(edge.bGeometry)
             * eye[itr].c;
 
+        eye[itr].d = 1.0f;
+
         eye[itr].D
             = (eye[prv].D
                 * Beta::beta(bsdf.densityRev())
-                + d * (1.0f - bsdf.specular()))
+                + eye[prv].d * (1.0f - bsdf.specular()))
             * Beta::beta(edge.bGeometry)
             * eye[itr].c;
 
-        d = 1.0f;
 
         ++path_size;
         radiance += _gather(engine, eye[itr], radius);
@@ -148,6 +150,8 @@ void UPGBase<Beta>::_traceLight(RandomEngine& engine, Appender& path) {
     path[prv].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
     path[prv].A = Beta::beta(edge.bGeometry) * path[prv].a / Beta::beta(light.areaDensity());
     path[prv].B = 0.0f;
+
+    float b = 0.0f;
 
     float roulette = path_size < _minSubpath ? 1.0f : _roulette;
     float uniform = sampleUniform1(engine).value();
@@ -193,6 +197,8 @@ void UPGBase<Beta>::_traceLight(RandomEngine& engine, Appender& path) {
                 + (1.0f - bsdf.specular()))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
+
+        b = 1.0f;
 
         if (bsdf.specular() == 1.0f) {
             path[prv] = path[itr];
@@ -246,7 +252,7 @@ float UPGBase<Beta>::_weightVC(
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
 
     float Bp
-        = (light.B * Beta::beta(lightBSDF.densityRev()) + (1.0f - lightBSDF.specular()))
+        = light.B * Beta::beta(lightBSDF.densityRev())
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
 
     float Cp
@@ -254,12 +260,12 @@ float UPGBase<Beta>::_weightVC(
         * Beta::beta(edge.fGeometry * lightBSDF.density());
 
     float Dp
-        = (eye.D * Beta::beta(eyeBSDF.density()) + (1.0f - eyeBSDF.specular()))
+        = (eye.D * Beta::beta(eyeBSDF.density()) + eye.d * (1.0f - eyeBSDF.specular()))
         * Beta::beta(edge.fGeometry * lightBSDF.density());
 
     float weightInv
         = Ap + eta * Bp + Cp + eta * Dp
-        + Beta::beta(eta * edge.bGeometry * eyeBSDF.density()) + 1.0f;
+        + Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev()) + 1.0f;
 
     return 1.0f / weightInv;
 }
@@ -276,17 +282,17 @@ float UPGBase<Beta>::_weightVM(
 
     float weight = _weightVC(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
-    return Beta::beta(eta * edge.bGeometry * eyeBSDF.density()) * weight;
+    return Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev()) * weight;
 }
 
 template <class Beta>
 float UPGBase<Beta>::_density(
-        RandomEngine& engine,
-        const LightVertex& light,
-        const EyeVertex& eye,
-        const BSDFQuery& eyeQuery,
-        const Edge& edge,
-        float radius) {
+    RandomEngine& engine,
+    const LightVertex& light,
+    const EyeVertex& eye,
+    const BSDFQuery& eyeQuery,
+    const Edge& edge,
+    float radius) {
     float L = 4096.f;
     float N = 1.0f;
     const auto& eyeBSDF = _scene->queryBSDF(eye.surface);
@@ -328,7 +334,7 @@ vec3 UPGBase<Beta>::_connect0(RandomEngine& engine, const EyeVertex& eye, float 
     while (isect.isLight()) {
         auto edge = Edge(eye, isect, bsdf.omega());
 
-        float eta = float(_numPhotons) * pi<float>() * radius * radius * 0.0f; // TODO
+        float eta = float(_numPhotons) * pi<float>() * radius * radius;
 
         auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
 
@@ -339,27 +345,24 @@ vec3 UPGBase<Beta>::_connect0(RandomEngine& engine, const EyeVertex& eye, float 
                 + eye.c * (1.0f - max(eye.specular, bsdf.specular())))
             * Beta::beta(edge.bGeometry) * c;
 
-        float D
-            = (eye.D * Beta::beta(bsdf.densityRev())
-                + bsdf.specular())
-            * Beta::beta(edge.bGeometry) * c;
-
         float Cp
             = (C * Beta::beta(lsdf.omegaDensity()) + c * (1.0f - bsdf.specular()))
             * Beta::beta(lsdf.areaDensity());
 
         float Dp
-            = (D * Beta::beta(lsdf.omegaDensity()) + (1.0f - bsdf.specular()))
-            * Beta::beta(lsdf.areaDensity());
+            = (eye.D * Beta::beta(bsdf.densityRev()) + eye.d * (1.0f - bsdf.specular()))
+            * Beta::beta(edge.bGeometry * lsdf.omegaDensity());
 
         float weightInv = Cp + eta * Dp + 1.0f;
 
         radiance
-            += lsdf.radiance()
-            * eye.throughput
-            * bsdf.throughput()
-            * edge.bCosTheta
-            / (bsdf.density() * weightInv);
+            += _combine(
+                lsdf.radiance()
+                    * eye.throughput
+                    * bsdf.throughput()
+                    * edge.bCosTheta
+                    / bsdf.density(),
+                1.0f / weightInv);
 
         isect = _scene->intersect(isect.position(), bsdf.omega());
     }
@@ -379,31 +382,30 @@ vec3 UPGBase<Beta>::_connect1(RandomEngine& engine, const EyeVertex& eye, float 
 
     auto edge = Edge(lightSample, eye, lightSample.omega());
 
-    float eta = float(_numPhotons) * pi<float>() * radius * radius * 0.0f; // TODO
+    float eta = float(_numPhotons) * pi<float>() * radius * radius;
 
     float Ap
-        = Beta::beta(eyeBSDF.densityRev() * edge.bGeometry / lightSample.areaDensity());
-
-    float Bp = 0.0f;
+        = Beta::beta(eyeBSDF.density() * edge.bGeometry / lightSample.areaDensity());
 
     float Cp
         = (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.specular))
         * Beta::beta(edge.fGeometry * lightSample.omegaDensity());
 
     float Dp
-        = (eye.D * Beta::beta(eyeBSDF.density()) + 1.0f)
+        = (eye.D * Beta::beta(eyeBSDF.density()) + eye.d)
         * Beta::beta(edge.fGeometry * lightSample.omegaDensity());
 
     float weightInv
-        = Ap + eta * Bp + Cp + eta * Dp
-        + Beta::beta(eta * edge.bGeometry * eyeBSDF.density()) + 1.0f;
+        = Ap + Cp + eta * Dp + 1.0f;
 
-    return lightSample.radiance()
-        * eye.throughput
-        * eyeBSDF.throughput()
-        * edge.bCosTheta
-        * edge.fGeometry
-        / (lightSample.areaDensity() * weightInv);
+    return _combine(
+        lightSample.radiance()
+            * eye.throughput
+            * eyeBSDF.throughput()
+            * edge.bCosTheta
+            * edge.fGeometry
+            / lightSample.areaDensity(),
+        1.0f / weightInv);
 }
 
 template <class Beta>
@@ -421,14 +423,15 @@ vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye, flo
 
     auto weight = _weightVC(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
-    return _scene->occluded(eye.surface.position(), light.surface.position())
-        * light.throughput
-        * lightBSDF.throughput()
-        * eye.throughput
-        * eyeBSDF.throughput()
-        * edge.bCosTheta
-        * edge.fGeometry
-        * weight;
+    return _combine(
+        _scene->occluded(eye.surface.position(), light.surface.position())
+            * light.throughput
+            * lightBSDF.throughput()
+            * eye.throughput
+            * eyeBSDF.throughput()
+            * edge.bCosTheta
+            * edge.fGeometry,
+        weight);
 }
 
 template <class Beta>
@@ -466,8 +469,6 @@ vec3 UPGBase<Beta>::_gather(RandomEngine& engine, const EyeVertex& eye, float& r
         return vec3(0.0f);
     }
 
-    auto edge = Edge(isect, eye, eyeBSDF.omega());
-
     vec3 radiance = vec3(0.0f);
 
     radius = _radius;
@@ -500,8 +501,7 @@ vec3 UPGBase<Beta>::_merge(
     auto edge = Edge(light, eye, omega);
 
     auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
-
-    float density = _density(engine, light, eye, eyeBSDF, edge, radius);
+    auto density = _density(engine, light, eye, eyeBSDF, edge, radius);
 
     vec3 result = _scene->occluded(eye.surface.position(), light.surface.position())
         * light.throughput
@@ -510,9 +510,19 @@ vec3 UPGBase<Beta>::_merge(
         * eyeBSDF.throughput()
         * edge.bCosTheta
         * edge.fGeometry
-        * weight;
+        * density;
 
-    return result.x + result.y + result.z == 0.0f ? vec3(0.0f) : result * density;
+    if (result.x + result.y + result.z != 0.0f) {
+        return _combine(result, weight);
+    }
+    else {
+        return _combine(vec3(0.0f), weight);
+    }
+}
+
+template <class Beta>
+vec3 UPGBase<Beta>::_combine(vec3 throughput, float weight) {
+    return throughput * weight;
 }
 
 UPGb::UPGb(
