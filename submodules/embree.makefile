@@ -2,7 +2,8 @@
 embree.CMakeFlags = \
 	-DENABLE_STATIC_LIB=ON \
 	-DENABLE_TUTORIALS=OFF \
-	-DRTCORE_RAY_MASK=ON
+	-DRTCORE_RAY_MASK=ON \
+	-DRTCORE_TASKING_SYSTEM=INTERNAL
 
 embree.target=build/embree/libembree.a
 embree.submodule=submodules/embree/README.md
