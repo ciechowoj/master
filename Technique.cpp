@@ -2,9 +2,6 @@
 #include <GLFW/glfw3.h>
 #include <Technique.hpp>
 
-#include <tbb/parallel_for.h>
-#include <tbb/blocked_range.h>
-
 namespace haste {
 
 Technique::Technique() { }
@@ -33,17 +30,20 @@ void Technique::render(
     size_t numShadowRays = _scene->numShadowRays();
 
     if (parallel) {
-        static const size_t batch = 64;
-        auto range = tbb::blocked_range<size_t>(0, (view.yWindow() + batch - 1) / batch);
-
-        parallel_for(range, [&](const tbb::blocked_range<size_t>& range) {
+        exec2d(_threadpool, view.xWindow(), view.yWindow(), 32,
+            [&](size_t x0, size_t x1, size_t y0, size_t y1) {
             RandomEngine engine;
 
             ImageView subview = view;
 
-            size_t yBegin = view._yOffset + batch * range.begin();
-            size_t yEnd = yBegin + (range.end() - range.begin()) * batch;
-            yEnd = min(yEnd, view.yEnd());
+            size_t xBegin = view._xOffset + x0;
+            size_t xEnd = view._xOffset + x1;
+
+            size_t yBegin = view._yOffset + y0;
+            size_t yEnd = view._yOffset + y1;
+
+            subview._xOffset = xBegin;
+            subview._xWindow = xEnd - xBegin;
 
             subview._yOffset = yBegin;
             subview._yWindow = yEnd - yBegin;

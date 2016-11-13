@@ -40,7 +40,7 @@ class data_queue_t {
 
 class task_queue_t {
  public:
-  task_queue_t(size_t capacity = 56 * 2);
+  task_queue_t(size_t capacity = 1024);
   ~task_queue_t();
 
   template <class F>
@@ -59,7 +59,9 @@ class task_queue_t {
         new (dst) Closure(std::move(*(Closure*)(src)));
       };
 
-      thunk->destruct = [](char* closure) { ((Closure*)(closure))->~Closure(); };
+      thunk->destruct = [](char* closure) {
+        ((Closure*)(closure))->~Closure();
+      };
 
       thunk->move(thunk->data, (char*)&task);
     });
@@ -100,4 +102,20 @@ class threadpool_t {
   std::vector<std::thread> _threads;
   task_queue_t _queue;
 };
+
+namespace detail {
+
+void exec2d(threadpool_t&, size_t, size_t, size_t, void*,
+            void (*)(void*, size_t, size_t, size_t, size_t));
+}
+
+template <class F>
+void exec2d(threadpool_t& pool, size_t width, size_t height, size_t batch,
+            F&& task) {
+  detail::exec2d(pool, width, height, batch, &task,
+                 [](void* closure, size_t x0, size_t x1, size_t y0, size_t y1) {
+                   using Closure = typename std::decay<F>::type;
+                   (*reinterpret_cast<Closure*>(closure))(x0, x1, y0, y1);
+                 });
+}
 }

@@ -5,6 +5,7 @@
 #include <Prerequisites.hpp>
 #include <ImageView.hpp>
 #include <Scene.hpp>
+#include <threadpool.hpp>
 
 namespace haste {
 
@@ -54,6 +55,8 @@ protected:
     size_t _numShadowRays;
     size_t _numSamples;
     shared<const Scene> _scene;
+
+    threadpool_t _threadpool;
 
     virtual vec3 _traceEye(
         RandomEngine& engine,

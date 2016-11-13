@@ -32,7 +32,6 @@ CXXFLAGS = -march=native -g -O2 -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_
 
 EMBREE_LIBS = \
 	-lembree \
-	-ltbb \
 	-lsys \
 	-lsimd \
 	-llexers \
@@ -148,7 +147,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --UPG --max-radius=0.01 --parallel
+	./build/master/master.bin models/CornellBoxDiffuse.blend --BPT --parallel
 
 profile:
 	valgrind \
