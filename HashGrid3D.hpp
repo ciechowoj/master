@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <cstdint>
 
-#include <tbb/parallel_sort.h>
-
 namespace std
 {
     template<> struct hash<glm::vec3>
