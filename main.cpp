@@ -4,6 +4,13 @@
 
 #include <Application.hpp>
 
+#include <threadpool.hpp>
+#include <iostream>
+#include <chrono>
+#include <atomic>
+#include <set>
+#include <mutex>
+
 using namespace std;
 using namespace haste;
 

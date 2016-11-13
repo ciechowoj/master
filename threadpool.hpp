@@ -1,40 +1,103 @@
 #pragma once
+#include <atomic>
 #include <cstddef>
-#include <condition_variable>
-#include <functional>
-#include <mutex>
+#include <cstdlib>
 #include <thread>
 #include <vector>
-#include <atomic>
 
 namespace haste {
 
 using std::size_t;
 
+class data_queue_t {
+ public:
+  data_queue_t(size_t capacity = 1024);
+  data_queue_t(const data_queue_t&) = delete;
+  ~data_queue_t();
+
+  data_queue_t operator=(const data_queue_t&) = delete;
+
+  template <class F>
+  void push(size_t size, F&& callback) {
+    _push(size, &callback,
+          [](void* closure, char* data) { (*(F*)(closure))(data); });
+  }
+
+  template <class F>
+  void pop(F&& callback) {
+    _pop(&callback, [](void* closure, size_t size, char* data) {
+      (*(F*)(closure))(size, data);
+    });
+  }
+
+  bool empty() const;
+
+ private:
+  void _push(size_t, void*, void (*)(void*, char*));
+  void _pop(void*, void (*)(void*, size_t, char*));
+  char _impl[256];
+};
+
+class task_queue_t {
+ public:
+  task_queue_t(size_t capacity = 56 * 2);
+  ~task_queue_t();
+
+  template <class F>
+  void push(F&& task) {
+    using Closure = typename std::decay<F>::type;
+
+    constexpr size_t thunk_size =
+        sizeof(_thunk_t) - sizeof(_thunk_t::data) + sizeof(F);
+
+    _queue.push(thunk_size, [=](char* data) {
+      auto thunk = reinterpret_cast<_thunk_t*>(data);
+
+      thunk->exec = [](char* closure) { (*(Closure*)(closure))(); };
+
+      thunk->move = [](char* dst, char* src) {
+        new (dst) Closure(std::move(*(Closure*)(src)));
+      };
+
+      thunk->destruct = [](char* closure) { ((Closure*)(closure))->~Closure(); };
+
+      thunk->move(thunk->data, (char*)&task);
+    });
+  }
+
+  void exec();
+  void skip();
+  bool empty() const;
+
+ private:
+  data_queue_t _queue;
+
+  struct _thunk_t {
+    void (*exec)(char* data);
+    void (*move)(char* from, char* to);
+    void (*destruct)(char* data);
+    char data[8];
+  };
+};
+
 class threadpool_t {
-public:
+ public:
   threadpool_t();
   threadpool_t(const threadpool_t&) = delete;
   ~threadpool_t();
 
   threadpool_t& operator=(const threadpool_t&) = delete;
 
-  void run_and_wait(const std::vector<std::function<void()>>& tasks);
+  template <class F>
+  void exec(F&& task) {
+    _queue.push(task);
+  }
+
   size_t num_threads();
-private:
-  struct _thread_t {
-    std::thread thread;
-    std::condition_variable done;
-  };
 
-  std::vector<_thread_t> _threads;
-  const std::vector<std::function<void()>>* _tasks;
-  std::mutex _run_mutex;
-  std::mutex _done_mutex;
-  std::condition_variable _run;
+ private:
   std::atomic<bool> _terminate;
-  std::atomic<size_t> _offset;
+  std::vector<std::thread> _threads;
+  task_queue_t _queue;
 };
-
 }
-
