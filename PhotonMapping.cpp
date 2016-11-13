@@ -31,7 +31,7 @@ void PhotonMapping::preprocess(
     }
 
     const size_t batchSize = 1000;
-    double startTime = glfwGetTime();
+    double startTime = high_resolution_time();
 
     while (_numEmitted < _numPhotons) {
         const size_t begin = _numEmitted;
@@ -41,7 +41,7 @@ void PhotonMapping::preprocess(
         _scatterPhotons(engine, begin, end);
         _numEmitted = end;
 
-        double time = glfwGetTime();
+        double time = high_resolution_time();
         if (time - startTime < 0.033f) {
             progress("Scattering photons", float(_numEmitted) / float(_numPhotons));
             startTime = time;

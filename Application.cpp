@@ -33,7 +33,7 @@ Application::Application(const Options& options) {
         std::cout << "Using: " << _technique->name() << std::endl;
     }
 
-    _startTime = glfwGetTime();
+    _startTime = high_resolution_time();
 }
 
 Application::~Application() {
@@ -45,7 +45,7 @@ void Application::render(size_t width, size_t height, glm::vec4* data) {
         auto view = ImageView(data, width, height);
         _technique->render(view, _engine, _options.cameraId, _options.parallel);
 
-        double elapsed = glfwGetTime() - _startTime;
+        double elapsed = high_resolution_time() - _startTime;
         _saveIfRequired(view, elapsed);
         _updateQuitCond(view, elapsed);
         _printStatistics(view, elapsed, false);

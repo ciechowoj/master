@@ -149,7 +149,7 @@ void UserInterface::_updateStatistics(
         float localTimePerFrame = float(timePerFrame);
         ImGui::InputFloat("ms/frame", &localTimePerFrame);
 
-        float mainElapsed = float(glfwGetTime() - mainStart);
+        float mainElapsed = float(high_resolution_time() - mainStart);
         ImGui::InputFloat("real time [s] ", &mainElapsed);
     }
 }

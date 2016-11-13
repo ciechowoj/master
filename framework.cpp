@@ -7,6 +7,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw_gl3.h>
 #include <framework.hpp>
+#include <utility.hpp>
 
 #include <mutex>
 #include <condition_variable>
@@ -348,7 +349,7 @@ int Framework::run(size_t width, size_t height, const std::string& caption) {
 
         auto worker = std::thread([&]() {
             while (!quit) {
-                double start = glfwGetTime();
+                double start = haste::high_resolution_time();
 
                 while (!trigger) {
                     std::unique_lock<std::mutex> lock(workerMutex);
@@ -361,7 +362,7 @@ int Framework::run(size_t width, size_t height, const std::string& caption) {
                     done = true;
                 }
 
-                elapsed = glfwGetTime() - start;
+                elapsed = haste::high_resolution_time() - start;
             }
 
             quitCondition.notify_all();
@@ -411,11 +412,6 @@ int Framework::run(size_t width, size_t height, const std::string& caption) {
 }
 
 int Framework::runBatch(size_t width, size_t height) {
-    if (!glfwInit()) {
-        std::cerr << "Cannot initialize glfw." << std::endl;
-        return -1;
-    }
-
     std::vector<glm::vec4> buffer;
     buffer.resize(width * height);
     std::memset(buffer.data(), 0, buffer.size() * sizeof(glm::vec4));
@@ -424,8 +420,6 @@ int Framework::runBatch(size_t width, size_t height) {
         updateScene();
         render(width, height, buffer.data());
     }
-
-    glfwTerminate();
 
     return 0;
 }

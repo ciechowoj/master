@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <runtime_assert>
 #include <utility.hpp>
+#include <chrono>
 
 namespace haste {
 
@@ -410,6 +411,11 @@ vec3 computeRMS(const string& path0, const string& path1) {
 
 void printRMS(const string& path0, const string& path1) {
     printVec(computeRMS(path0, path1));
+}
+
+double high_resolution_time() {
+    auto duration = std::chrono::high_resolution_clock::now().time_since_epoch();
+    return std::chrono::duration_cast<std::chrono::duration<double>>(duration).count();
 }
 
 }

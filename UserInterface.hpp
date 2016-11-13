@@ -26,7 +26,7 @@ struct UserInterface {
     static const size_t pathSize = 255;
     char path[pathSize];
 
-    double mainStart = glfwGetTime();
+    double mainStart = high_resolution_time();
     string scenePath;
     string defpath = homePath() + "/";
 
