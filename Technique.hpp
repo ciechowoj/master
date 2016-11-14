@@ -43,24 +43,25 @@ public:
         const Cameras& cameras,
         size_t cameraId,
         const F& func);
-
-    template <class F> static void for_each_ray_bsdf(
-        ImageView& view,
-        RandomEngine& engine,
-        const Cameras& cameras,
-        size_t cameraId,
-        const F& func);
 protected:
     size_t _numNormalRays;
     size_t _numShadowRays;
     size_t _numSamples;
     shared<const Scene> _scene;
+    std::vector<vec3> _helper_image;
 
     threadpool_t _threadpool;
 
     virtual vec3 _traceEye(
         RandomEngine& engine,
         const Ray& ray);
+
+    void _adjust_helper_image(ImageView& view);
+    void _trace_paths(ImageView& view, RandomEngine& engine, size_t cameraId, bool parallel);
+    void _commit_helper_image(ImageView& view, bool parallel);
+    void _commit_helper_image(ImageView& view);
+
+    void _accumulate(vec3 direction, vec3 radiance);
 
 private:
     Technique(const Technique&) = delete;
