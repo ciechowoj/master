@@ -28,7 +28,7 @@ CC = gcc
 CCFLAGS = -march=native -g -O2 -w -Wall $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 CXX = g++
-CXXFLAGS = -march=native -g -O2 -w -Wall -std=c++14 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CXXFLAGS = -march=native -g -O2 -w -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \
@@ -62,11 +62,6 @@ MAIN_LIBS = $(GLFW_LIBS) $(STD_LIBS) -lglad -limgui -lgtest $(EMBREE_LIBS) -lass
 MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td
 MAIN_POST = mv -f build/master/$*.Td build/master/$*.d
 
-TEST_SOURCES = $(wildcard unit_tests/*.cpp)
-TEST_OBJECTS = $(TEST_SOURCES:%.cpp=build/master/%.o)
-TEST_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/unit_tests/$*.Td
-TEST_POST = mv -f build/master/unit_tests/$*.Td build/master/unit_tests/$*.d
-
 LIB_DEPENDENCIES = \
 	$(glfw.target) \
 	$(assimp.target) \
@@ -76,7 +71,7 @@ LIB_DEPENDENCIES = \
 	$(embree.target) \
 	$(glm.submodule)
 
-all: master unittest
+all: master
 
 include submodules/assimp.makefile
 include submodules/glfw.makefile
@@ -86,11 +81,9 @@ include submodules/imgui.makefile
 include submodules/googletest.makefile
 include submodules/glm.makefile
 
-.PHONY: all master unittest benchmark
+.PHONY: all master benchmark
 
 master: build/master/master.bin
-
-unittest: build/master/unittest.bin
 
 benchmark: \
 	build/master/benchmark.bin
@@ -103,13 +96,6 @@ build/master/master.bin: \
 	build/master/main.o
 	$(CXX) $(MAIN_OBJECTS) build/master/main.o $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/master.bin
 
-build/master/unittest.bin: \
-	$(LIB_DEPENDENCIES) \
-	Makefile \
-	$(MAIN_OBJECTS) \
-	$(TEST_OBJECTS)
-	$(CXX) $(MAIN_OBJECTS) $(TEST_OBJECTS) $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/unittest.bin
-
 build/master/benchmark.bin: \
 	$(LIB_DEPENDENCIES) \
 	Makefile \
@@ -121,14 +107,9 @@ build/master/%.o: %.cpp build/master/%.d build/master/sentinel
 	$(CXX) -c $(MAIN_DEPENDENCY_FLAGS) $(CXXFLAGS) $< -o $@
 	$(MAIN_POST)
 
-build/master/unit_tests/%.o: unit_tests/%.cpp build/master/%.d build/master/unit_tests/%.d build/master/sentinel
-	$(CXX) -c $(TEST_DEPENDENCY_FLAGS) $(CXXFLAGS) $< -o $@
-	$(MAIN_POST)
-
 build/master/sentinel:
 	mkdir -p build
 	mkdir -p build/master
-	mkdir -p build/master/unit_tests
 	touch build/master/sentinel
 
 build/master/%.d: ;
@@ -155,9 +136,6 @@ profile:
 	./build/master/master.bin \
 	models/CornellBoxDiffuse.blend \
 	--PT --max-radius=0.05 --num-photons=2000000 --parallel
-
-test: all
-	./build/master/unittest.bin
 
 clean:
 	rm -rf build/master
