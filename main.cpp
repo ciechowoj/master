@@ -2,6 +2,8 @@
 #include <pmmintrin.h>
 #include <runtime_assert>
 
+#include <unittest.hpp>
+
 #include <Application.hpp>
 
 #include <threadpool.hpp>
@@ -14,7 +16,18 @@
 using namespace std;
 using namespace haste;
 
+unittest() {
+    std::cout << "Test test!" << std::endl;
+}
+
+unittest("named test") {
+    std::cout << "Test test2!" << std::endl;
+}
+
+
 int main(int argc, char **argv) {
+    run_all_tests();
+
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
     _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 

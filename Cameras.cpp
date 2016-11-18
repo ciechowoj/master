@@ -1,5 +1,7 @@
 #include <runtime_assert>
 #include <Cameras.hpp>
+#include <unittest.hpp>
+#include <iostream>
 
 namespace haste {
 
@@ -196,4 +198,13 @@ vec2 pixel_position(vec3 direction, vec2 resolution, float fov_y) {
     return pixel_position(direction, resolution, 1.0f / resolution.y, normalized_flength_y(fov_y));
 }
 
+
+unittest() {
+    assert_true(false);
+
+    assert_almost_eq(1.0f, 1.0f);
 }
+
+}
+
+
