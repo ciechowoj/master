@@ -2,22 +2,144 @@
 #include <source_location.hpp>
 
 namespace haste {
-namespace detail {
-
-int register_test(void (*)(), int, const char*, const char* = nullptr);
-}
 
 using location_t = source_location_t;
 
+namespace detail {
+
+template <class X, class Y>
+constexpr int _same = 0;
+template <class X>
+constexpr int _same<X, X> = 1;
+
+template <class T, class X, class... Xs>
+constexpr int same = _same<T, X>* same<T, Xs...>;
+
+template <class T, class X>
+constexpr int same<T, X> = _same<T, X>;
+
+template <int N, class T, class X, class... Xs>
+struct _index {
+  static const int v = same<T, X> ? N : _index<N + 1, T, Xs...>::v;
+};
+
+template <int N, class T, class X>
+struct _index<N, T, X> {
+  static const int v = same<T, X> ? N : -1;
+};
+
+template <class T, class... Xs>
+constexpr int index = _index<0, T, Xs...>::v;
+
+template <class T>
+constexpr int erase_ivec_type =
+    index<T, char, unsigned char, signed char, short, unsigned short, int,
+          unsigned int, long, unsigned long, long long, unsigned long long>;
+
+template <class T, class = int>
+struct has_x {
+  static const int v = 0;
+};
+
+template <class T>
+struct has_x<T, decltype((void)T::x, 0)> {
+  static const int v = 1;
+};
+
+template <class T, class = int>
+struct has_y {
+  static const int v = 0;
+};
+
+template <class T>
+struct has_y<T, decltype((void)T::y, 0)> {
+  static const int v = 1;
+};
+
+template <class T, class = int>
+struct has_z {
+  static const int v = 0;
+};
+
+template <class T>
+struct has_z<T, decltype((void)T::z, 0)> {
+  static const int v = 1;
+};
+
+template <class T, class = int>
+struct has_w {
+  static const int v = 0;
+};
+
+template <class T>
+struct has_w<T, decltype((void)T::w, 0)> {
+  static const int v = 1;
+};
+
+template <class T, int X = has_x<T>::v, int Y = has_y<T>::v,
+          int Z = has_z<T>::v, int W = has_w<T>::v>
+constexpr int vec_size = X + Y + Z + W;
+
+template <class T>
+constexpr int vec_size<T, 0, 0, 0, 0> = 1;
+
+template <class T, int = has_x<T>::v>
+constexpr int fvec_type = index<T, float, double>;
+
+template <class T>
+constexpr int fvec_type<T, 1> = index<decltype(T::x), float, double>;
+
+template <class T, int = vec_size<T>, int = has_x<T>::v>
+constexpr bool is_fvec = false;
+
+template <class T, int N>
+constexpr bool is_fvec<T, N, 0> = fvec_type<T> != -1;
+
+template <class T>
+constexpr bool is_fvec<T, 1, 1> =
+    fvec_type<decltype(T::x)> != -1;
+
+template <class T>
+constexpr bool is_fvec<T, 2, 1> = fvec_type<decltype(T::x)> !=
+                                     -1 &&
+                                 same<decltype(T::x), decltype(T::y)> &&
+                                 sizeof(T) == 2 * sizeof(decltype(T::x));
+
+template <class T>
+constexpr bool is_fvec<T, 3, 1> =
+    fvec_type<decltype(T::x)> != -1 &&
+    same<decltype(T::x), decltype(T::y), decltype(T::z)> &&
+    sizeof(T) == 3 * sizeof(decltype(T::x));
+;
+
+template <class T>
+constexpr bool is_fvec<T, 4, 1> =
+    fvec_type<decltype(T::x)> != -1 &&
+    same<decltype(T::x), decltype(T::y), decltype(T::z), decltype(T::w)> &&
+    sizeof(T) == 4 * sizeof(decltype(T::x));
+;
+
+int register_test(void (*)(), int, const char*, const char* = nullptr);
+
+void assert_almost_eq(void*, void*, int, int, const location_t&);
+
+struct num_components_impl {};
+}
+
+
 void run_all_tests();
+
+#define noinline __attribute__((noinline))
 
 void assert_true(bool x, const location_t& = location_t::current());
 
-template <class A, class B>
-__attribute__((noinline)) void assert_almost_eq(const A& a, const B& b,
-                      const location_t& location = location_t::current()) {
-  assert_true(a == b, location);
+template <class T, bool = detail::is_fvec<T>>
+noinline void assert_almost_eq(
+    T a, T b, const location_t& location = location_t::current()) {
+  detail::assert_almost_eq(&a, &b, detail::vec_size<T>, detail::fvec_type<T>, location);
 }
+
+#undef noinline
 }
 
 #define unittest_1oxgaer4ai(ln, uq) uq##ln
