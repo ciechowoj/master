@@ -162,4 +162,38 @@ const mat4 Cameras::_view(size_t cameraId) const {
     return result;
 }
 
+float normalized_flength_y(float fov_y) {
+    return 1.0f / tan(fov_y * 0.5f);
+}
+
+float fov_x(float fov_y, vec2 resolution) {
+    return 0.0f;
+}
+
+vec3 ray_direction(vec2 position, vec2 resolution, float resolution_y_inv, float normalized_flength_y) {
+    float x = position.x * resolution_y_inv * 2.0f - resolution.x * resolution_y_inv;
+    float y = position.y * resolution_y_inv * 2.0f - 1.0f;
+
+    return normalize(vec3(x, y, -normalized_flength_y));
+}
+
+vec3 ray_direction(vec2 position, vec2 resolution, float fov_y) {
+    return ray_direction(position, resolution, 1.0f / resolution.y, normalized_flength_y(fov_y));
+}
+
+vec2 pixel_position(vec3 direction, vec2 resolution, float resolution_y_inv, float normalized_flength_y) {
+    float factor = normalized_flength_y / -direction.z;
+    float x = direction.x * factor;
+    float y = direction.y * factor;
+
+    y = (y + 1.0f) * resolution.y * 0.5f;
+    x = (x + resolution.x * resolution_y_inv) * resolution.y * 0.5f;
+
+    return ivec2(int(x), int(y));
+}
+
+vec2 pixel_position(vec3 direction, vec2 resolution, float fov_y) {
+    return pixel_position(direction, resolution, 1.0f / resolution.y, normalized_flength_y(fov_y));
+}
+
 }

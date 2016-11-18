@@ -94,6 +94,7 @@ private:
     void _scatter(RandomEngine& engine);
 
     vec3 _gather(RandomEngine& engine, const EyeVertex& eye, float& radius);
+    // vec3 _gather_t1(RandomEngine& engine, const EyeVertex& eye, float& radius, rect_t subimage);
 
     vec3 _merge(
         RandomEngine& engine,

@@ -73,4 +73,8 @@ private:
     const mat4 _view(size_t cameraId) const;
 };
 
+
+ivec2 pixel_location(vec3 direction, float fovy, float aspect, ivec2 resolution);
+
+
 }

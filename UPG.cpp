@@ -57,6 +57,19 @@ vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
     size_t itr = 0, prv = 1;
     float radius = _radius;
 
+    /*eye[itr].surface = _scene->querySurface(isect);
+    eye[itr].omega = vec3(0.0f, 0.0f, -1.0f);
+    eye[itr].throughput = eye.direction;
+    eye[itr].specular = 1.0f;
+    eye[itr].c = 0;
+    eye[itr].C = 0;
+    eye[itr].d = 0;
+    eye[itr].D = 0;
+
+    radiance += _gather(engine, eye[itr], radius);
+    // radiance += _connect(engine, eye[itr], light_path, radius);
+    std::swap(itr, prv); */
+
     eye[itr].surface = _scene->querySurface(isect);
     eye[itr].omega = -ray.direction;
     eye[itr].throughput = vec3(1.0f);
