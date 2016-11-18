@@ -14,10 +14,10 @@ unittest() {
   static_assert(!is_fvec<ivec4>, "");
   static_assert(is_fvec<vec4>, "");
 
-  static_assert(has_x<vec2>::v == 1, "");
-  static_assert(has_x<vec3>::v == 1, "");
-  static_assert(has_x<ivec2>::v == 1, "");
-  static_assert(!has_x<int>::v, "");
+  static_assert(has_x<vec2> == 1, "");
+  static_assert(has_x<vec3> == 1, "");
+  static_assert(has_x<ivec2> == 1, "");
+  static_assert(!has_x<int>, "");
 
   static_assert(vec_size<float> == 1, "");
   static_assert(vec_size<int> == 1, "");
@@ -122,6 +122,14 @@ void assert_true(bool x, const location_t& location) {
   }
 }
 
+void assert_false(bool x, const location_t& location) {
+  if (x) {
+    std::printf("%s:%u: assertion failed\n", location.file_name(),
+                location.line());
+    std::fflush(stdout);
+  }
+}
+
 unsigned ulp_dist(float a, float b) {
   union conv_t {
     float f;
@@ -147,6 +155,8 @@ bool almost_eq(float a, float b) {
 unittest() {
   assert_true(ulp_dist(0.0f, -0.0f) == 0);
   assert_true(ulp_dist(1.0000001f, 1.0000002f) != 0);
+  assert_false(almost_eq(1.0f, -1.0f));
+  assert_true(almost_eq(1.0f, 1.0f));
 }
 
 void print_vector(float* v, int s) {

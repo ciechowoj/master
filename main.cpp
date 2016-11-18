@@ -17,13 +17,9 @@ using namespace std;
 using namespace haste;
 
 unittest() {
-    std::cout << "Test test!" << std::endl;
+    assert_almost_eq(sin(half_pi<float>()), 1.0f);
+    assert_almost_eq(asin(1.0f), half_pi<float>());
 }
-
-unittest("named test") {
-    std::cout << "Test test2!" << std::endl;
-}
-
 
 int main(int argc, char **argv) {
     run_all_tests();
@@ -33,9 +29,6 @@ int main(int argc, char **argv) {
 
     Options options = parseArgs(argc, argv);
     auto status = displayHelpIfNecessary(options, "0.0.1");
-
-    runtime_assert(sin(half_pi<float>()) == 1.0f);
-    runtime_assert(asin(1.0f) == half_pi<float>());
 
     if (status.first) {
         return status.second;

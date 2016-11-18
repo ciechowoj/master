@@ -37,73 +37,55 @@ constexpr int erase_ivec_type =
           unsigned int, long, unsigned long, long long, unsigned long long>;
 
 template <class T, class = int>
-struct has_x {
-  static const int v = 0;
-};
+constexpr int has_x = 0;
 
 template <class T>
-struct has_x<T, decltype((void)T::x, 0)> {
-  static const int v = 1;
-};
+constexpr int has_x<T, decltype((void)T::x, 0)> = 1;
 
 template <class T, class = int>
-struct has_y {
-  static const int v = 0;
-};
+constexpr int has_y = 0;
 
 template <class T>
-struct has_y<T, decltype((void)T::y, 0)> {
-  static const int v = 1;
-};
+constexpr int has_y<T, decltype((void)T::y, 0)> = 1;
 
 template <class T, class = int>
-struct has_z {
-  static const int v = 0;
-};
+constexpr int has_z = 0;
 
 template <class T>
-struct has_z<T, decltype((void)T::z, 0)> {
-  static const int v = 1;
-};
+constexpr int has_z<T, decltype((void)T::z, 0)> = 1;
 
 template <class T, class = int>
-struct has_w {
-  static const int v = 0;
-};
+constexpr int has_w = 0;
 
 template <class T>
-struct has_w<T, decltype((void)T::w, 0)> {
-  static const int v = 1;
-};
+constexpr int has_w<T, decltype((void)T::w, 0)> = 1;
 
-template <class T, int X = has_x<T>::v, int Y = has_y<T>::v,
-          int Z = has_z<T>::v, int W = has_w<T>::v>
+template <class T, int X = has_x<T>, int Y = has_y<T>, int Z = has_z<T>,
+          int W = has_w<T>>
 constexpr int vec_size = X + Y + Z + W;
 
 template <class T>
 constexpr int vec_size<T, 0, 0, 0, 0> = 1;
 
-template <class T, int = has_x<T>::v>
+template <class T, int = has_x<T>>
 constexpr int fvec_type = index<T, float, double>;
 
 template <class T>
 constexpr int fvec_type<T, 1> = index<decltype(T::x), float, double>;
 
-template <class T, int = vec_size<T>, int = has_x<T>::v>
+template <class T, int = vec_size<T>, int = has_x<T>>
 constexpr bool is_fvec = false;
 
 template <class T, int N>
 constexpr bool is_fvec<T, N, 0> = fvec_type<T> != -1;
 
 template <class T>
-constexpr bool is_fvec<T, 1, 1> =
-    fvec_type<decltype(T::x)> != -1;
+constexpr bool is_fvec<T, 1, 1> = fvec_type<decltype(T::x)> != -1;
 
 template <class T>
-constexpr bool is_fvec<T, 2, 1> = fvec_type<decltype(T::x)> !=
-                                     -1 &&
-                                 same<decltype(T::x), decltype(T::y)> &&
-                                 sizeof(T) == 2 * sizeof(decltype(T::x));
+constexpr bool is_fvec<T, 2, 1> = fvec_type<decltype(T::x)> != -1 &&
+                                  same<decltype(T::x), decltype(T::y)> &&
+                                  sizeof(T) == 2 * sizeof(decltype(T::x));
 
 template <class T>
 constexpr bool is_fvec<T, 3, 1> =
@@ -126,17 +108,18 @@ void assert_almost_eq(void*, void*, int, int, const location_t&);
 struct num_components_impl {};
 }
 
-
 void run_all_tests();
 
 #define noinline __attribute__((noinline))
 
 void assert_true(bool x, const location_t& = location_t::current());
+void assert_false(bool x, const location_t& = location_t::current());
 
 template <class T, bool = detail::is_fvec<T>>
 noinline void assert_almost_eq(
     T a, T b, const location_t& location = location_t::current()) {
-  detail::assert_almost_eq(&a, &b, detail::vec_size<T>, detail::fvec_type<T>, location);
+  detail::assert_almost_eq(&a, &b, detail::vec_size<T>, detail::fvec_type<T>,
+                           location);
 }
 
 #undef noinline
