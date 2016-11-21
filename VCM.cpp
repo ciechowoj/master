@@ -444,8 +444,6 @@ template <class Beta> vec3 VCMBase<Beta>::_connect(
     size_t size,
     const LightVertex* path)
 {
-    return vec3(0.0f);
-
     vec3 radiance = _connect0(engine, eye) + _connect1(engine, eye);
 
     for (size_t i = 0; i < size; ++i) {

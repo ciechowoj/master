@@ -10,10 +10,6 @@
 
 namespace haste {
 
-
-
-// inline vec3 direction_to_view_space(const camera_t& camera, vec3 direction) { }
-
 struct render_context_t {
     mat3 view_to_world_mat3;
     mat3 world_to_view_mat3;
@@ -22,12 +18,9 @@ struct render_context_t {
     float resolution_y_inv;
     float focal_length_y;
 
-
     RandomEngine* engine;
-    // camera_t camera;
     vec2 pixel_position;
 };
-
 
 class Technique {
 public:

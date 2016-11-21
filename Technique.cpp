@@ -203,5 +203,4 @@ void Technique::_for_each_ray(
     }
 }
 
-
 }
