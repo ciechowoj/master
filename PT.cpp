@@ -7,14 +7,14 @@ PathTracing::PathTracing(size_t minSubpath, float roulette)
 
 void PathTracing::render(
     ImageView& view,
-    RandomEngine& engine,
+    render_context_t& context,
     size_t cameraId)
 {
-    auto trace = [&](RandomEngine& engine, Ray ray) -> vec3 {
-        return this->trace(engine, ray);
+    auto trace = [&](render_context_t& context, Ray ray) -> vec3 {
+        return this->trace(*context.engine, ray);
     };
 
-    for_each_ray(view, engine, _scene->cameras(), cameraId, trace);
+    for_each_ray(view, context, _scene->cameras(), cameraId, trace);
 }
 
 vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {

@@ -6,7 +6,7 @@
 
 #include <BPT.hpp>
 #include <PT.hpp>
-#include <PhotonMapping.hpp>
+// #include <PhotonMapping.hpp>
 #include <VCM.hpp>
 #include <UPG.hpp>
 #include <Viewer.hpp>
@@ -600,11 +600,11 @@ shared<Technique> makeTechnique(Options& options) {
                 options.minSubpath,
                 options.roulette);
 
-        case Options::PM:
+        /* case Options::PM:
             return std::make_shared<PhotonMapping>(
                 options.numPhotons,
                 options.numGather,
-                options.maxRadius);
+                options.maxRadius); */
 
         case Options::VCM:
             if (options.beta == 0.0f) {

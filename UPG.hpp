@@ -48,7 +48,7 @@ private:
 
     static const size_t _maxSubpath = 1024;
 
-    vec3 _traceEye(RandomEngine& engine, const Ray& ray) override;
+    vec3 _traceEye(render_context_t& context, const Ray& ray) override;
 
     template <class Appender>
     void _traceLight(RandomEngine& engine, Appender& path);
@@ -94,7 +94,6 @@ private:
     void _scatter(RandomEngine& engine);
 
     vec3 _gather(RandomEngine& engine, const EyeVertex& eye, float& radius);
-    // vec3 _gather_t1(RandomEngine& engine, const EyeVertex& eye, float& radius, rect_t subimage);
 
     vec3 _merge(
         RandomEngine& engine,

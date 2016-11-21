@@ -6,8 +6,28 @@
 #include <ImageView.hpp>
 #include <Scene.hpp>
 #include <threadpool.hpp>
+#include <mutex>
 
 namespace haste {
+
+struct camera_t {
+    mat4 view;
+    mat4 view_inv;
+    vec2 resolution;
+    float resolution_y_inv;
+    float normalized_focal_length_y;
+
+
+};
+
+inline vec3 direction_to_view_space(const camera_t& camera, vec3 direction) { }
+
+struct render_context_t {
+    RandomEngine* engine;
+    camera_t camera;
+    vec2 pixel_position;
+};
+
 
 class Technique {
 public:
@@ -22,13 +42,13 @@ public:
 
     virtual void render(
         ImageView& view,
-        RandomEngine& engine,
+        render_context_t& context,
         size_t cameraId,
         bool parallel);
 
     virtual void render(
         ImageView& view,
-        RandomEngine& engine,
+        render_context_t& context,
         size_t cameraId);
 
     virtual string name() const = 0;
@@ -39,7 +59,7 @@ public:
 
     template <class F> static void for_each_ray(
         ImageView& view,
-        RandomEngine& engine,
+        render_context_t& context,
         const Cameras& cameras,
         size_t cameraId,
         const F& func);
@@ -49,19 +69,20 @@ protected:
     size_t _numSamples;
     shared<const Scene> _scene;
     std::vector<vec3> _helper_image;
+    std::mutex _helper_mutex;
 
     threadpool_t _threadpool;
 
     virtual vec3 _traceEye(
-        RandomEngine& engine,
+        render_context_t& context,
         const Ray& ray);
 
     void _adjust_helper_image(ImageView& view);
-    void _trace_paths(ImageView& view, RandomEngine& engine, size_t cameraId, bool parallel);
+    void _trace_paths(ImageView& view, render_context_t& context, size_t cameraId, bool parallel);
     void _commit_helper_image(ImageView& view, bool parallel);
     void _commit_helper_image(ImageView& view);
 
-    void _accumulate(vec3 direction, vec3 radiance);
+    vec3 _accumulate(render_context_t& context, vec3 radiance, vec3 direction);
 
 private:
     Technique(const Technique&) = delete;
@@ -70,7 +91,7 @@ private:
 
 template <class F> inline void Technique::for_each_ray(
     ImageView& view,
-    RandomEngine& engine,
+    render_context_t& context,
     const Cameras& cameras,
     size_t cameraId,
     const F& func)
@@ -94,7 +115,7 @@ template <class F> inline void Technique::for_each_ray(
     auto shoot = [&](float x, float y) -> Ray {
         return cameras.shoot(
             cameraId,
-            engine,
+            *context.engine,
             widthInv,
             heightInv,
             aspect,
@@ -105,7 +126,7 @@ template <class F> inline void Technique::for_each_ray(
     for (int y = yBegin; y < yEnd; ++y) {
         for (int x = xBegin; x < xEnd; ++x) {
             const Ray ray = shoot(float(x), float(y));
-            vec3 radiance = func(engine, ray);
+            vec3 radiance = func(context, ray);
             float cumulative = radiance.x + radiance.y + radiance.z;
             view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
         }
@@ -115,7 +136,7 @@ template <class F> inline void Technique::for_each_ray(
         if (y < yEnd) {
             for (int x = rXBegin; x > rXEnd; --x) {
                 const Ray ray = shoot(float(x), float(y));
-                vec3 radiance = func(engine, ray);
+                vec3 radiance = func(context, ray);
                 float cumulative = radiance.x + radiance.y + radiance.z;
                 view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
             }

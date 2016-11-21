@@ -43,7 +43,11 @@ Application::~Application() {
 void Application::render(size_t width, size_t height, glm::vec4* data) {
     if (_preprocessed) {
         auto view = ImageView(data, width, height);
-        _technique->render(view, _engine, _options.cameraId, _options.parallel);
+
+        render_context_t context;
+        context.engine = &_engine;
+
+        _technique->render(view, context, _options.cameraId, _options.parallel);
 
         double elapsed = high_resolution_time() - _startTime;
         _saveIfRequired(view, elapsed);

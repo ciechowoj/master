@@ -9,7 +9,7 @@ public:
 
     void render(
         ImageView& view,
-        RandomEngine& engine,
+        render_context_t& context,
         size_t cameraId) override;
 
     vec3 trace(RandomEngine& engine, Ray ray);

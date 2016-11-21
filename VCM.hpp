@@ -66,7 +66,7 @@ private:
 
     v3::HashGrid3D<LightPhoton> _vertices;
 
-    vec3 _traceEye(RandomEngine& engine, const Ray& ray) override;
+    vec3 _traceEye(render_context_t& context, const Ray& ray) override;
     void _traceLight(RandomEngine& engine, size_t& size, LightVertex* path);
     void _traceLight(RandomEngine& engine, size_t& size, LightPhoton* path);
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);

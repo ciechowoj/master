@@ -36,7 +36,9 @@ string UPGBase<Beta>::name() const {
 }
 
 template <class Beta>
-vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
+vec3 UPGBase<Beta>::_traceEye(
+    render_context_t& context,
+    const Ray& ray) {
     vec3 radiance = vec3(0.0f);
 
     RayIsect isect = _scene->intersect(ray.origin, ray.direction);
@@ -51,7 +53,7 @@ vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
     }
 
     fixed_vector<LightVertex, _maxSubpath> light_path;
-    _traceLight(engine, light_path);
+    _traceLight(*context.engine, light_path);
 
     EyeVertex eye[2];
     size_t itr = 0, prv = 1;
@@ -66,8 +68,8 @@ vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
     eye[itr].d = 0;
     eye[itr].D = 0;
 
-    radiance += _gather(engine, eye[itr], radius);
-    // radiance += _connect(engine, eye[itr], light_path, radius);
+    radiance += _gather(*context.engine, eye[itr], radius);
+    // radiance += _connect(*context.engine, eye[itr], light_path, radius);
     std::swap(itr, prv); */
 
     eye[itr].surface = _scene->querySurface(isect);
@@ -79,16 +81,16 @@ vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
     eye[itr].d = 0;
     eye[itr].D = 0;
 
-    radiance += _gather(engine, eye[itr], radius);
-    radiance += _connect(engine, eye[itr], light_path, radius);
+    radiance += _gather(*context.engine, eye[itr], radius);
+    radiance += _connect(*context.engine, eye[itr], light_path, radius);
     std::swap(itr, prv);
 
     size_t path_size = 2;
     float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-    float uniform = sampleUniform1(engine).value();
+    float uniform = sampleUniform1(*context.engine).value();
 
     while (uniform < roulette) {
-        auto bsdf = _scene->sampleBSDF(engine, eye[prv].surface, eye[prv].omega);
+        auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
         isect = _scene->intersectMesh(eye[prv].surface.position(), bsdf.omega());
 
@@ -129,12 +131,12 @@ vec3 UPGBase<Beta>::_traceEye(RandomEngine& engine, const Ray& ray) {
 
 
         ++path_size;
-        radiance += _gather(engine, eye[itr], radius);
-        radiance += _connect(engine, eye[itr], light_path, radius);
+        radiance += _gather(*context.engine, eye[itr], radius);
+        radiance += _connect(*context.engine, eye[itr], light_path, radius);
         std::swap(itr, prv);
 
         roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        uniform = sampleUniform1(engine).value();
+        uniform = sampleUniform1(*context.engine).value();
     }
 
     return radiance;

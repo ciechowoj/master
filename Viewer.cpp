@@ -12,7 +12,7 @@ Viewer::Viewer(const vector<vec4>& data, size_t width, size_t height) {
 
 void Viewer::render(
     ImageView& view,
-    RandomEngine& engine,
+    render_context_t& context,
     size_t cameraId,
     bool parallel)
 {

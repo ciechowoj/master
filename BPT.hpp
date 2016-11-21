@@ -31,7 +31,7 @@ private:
     const size_t _minSubpath;
     const float _roulette;
 
-    vec3 _traceEye(RandomEngine& engine, const Ray& ray) override;
+    vec3 _traceEye(render_context_t& context, const Ray& ray) override;
     void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect1(RandomEngine& engine, const EyeVertex& eye);

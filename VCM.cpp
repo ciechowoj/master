@@ -35,7 +35,7 @@ template <class Beta> string VCMBase<Beta>::name() const {
 }
 
 template <class Beta> vec3 VCMBase<Beta>::_traceEye(
-    RandomEngine& engine,
+    render_context_t& context,
     const Ray& ray)
 {
     char lightRaw[_maxSubpath * sizeof(LightVertex)];
@@ -43,7 +43,7 @@ template <class Beta> vec3 VCMBase<Beta>::_traceEye(
 
     size_t lSize = 0;
 
-    _traceLight(engine, lSize, light);
+    _traceLight(*context.engine, lSize, light);
 
     vec3 radiance = vec3(0.0f);
     EyeVertex eye[2];
@@ -67,16 +67,16 @@ template <class Beta> vec3 VCMBase<Beta>::_traceEye(
     eye[itr].c = 0;
     eye[itr].C = 0;
 
-    radiance += _connect(engine, eye[itr], lSize, light);
-    radiance += _gather(engine, eye[itr]);
+    radiance += _connect(*context.engine, eye[itr], lSize, light);
+    radiance += _gather(*context.engine, eye[itr]);
     std::swap(itr, prv);
 
     size_t eSize = 2;
     float roulette = eSize < _minSubpath ? 1.0f : _roulette;
-    float uniform = sampleUniform1(engine).value();
+    float uniform = sampleUniform1(*context.engine).value();
 
     while (uniform < roulette) {
-        auto bsdf = _scene->sampleBSDF(engine, eye[prv].surface, eye[prv].omega);
+        auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
         isect = _scene->intersectMesh(eye[prv].surface.position(), bsdf.omega());
 
@@ -108,12 +108,12 @@ template <class Beta> vec3 VCMBase<Beta>::_traceEye(
             * eye[itr].c;
 
         ++eSize;
-        radiance += _connect(engine, eye[itr], lSize, light);
-        radiance += _gather(engine, eye[itr]);
+        radiance += _connect(*context.engine, eye[itr], lSize, light);
+        radiance += _gather(*context.engine, eye[itr]);
         std::swap(itr, prv);
 
         roulette = eSize < _minSubpath ? 1.0f : _roulette;
-        uniform = sampleUniform1(engine).value();
+        uniform = sampleUniform1(*context.engine).value();
     }
 
     return radiance;

@@ -21,6 +21,28 @@ unittest() {
     assert_almost_eq(asin(1.0f), half_pi<float>());
 }
 
+unittest() {
+    // default constructed matrix is identity matrix
+    assert_almost_eq(mat4() * vec4(1.0f, 2.0f, 3.0f, 4.0f), vec4(1.0f, 2.0f, 3.0f, 4.0f));
+
+    // matrix indexing is column major
+    mat4 m;
+    m[0] = vec4(1.0f, 1.0f, 0.0f, 0.0f);
+
+    // 1 0 0 0
+    // 1 1 0 0
+    // 0 0 1 0
+    // 0 0 0 1
+    // ^
+
+    assert_almost_eq(m * vec4(1.0f), vec4(1.0f, 2.0f, 1.0f, 1.0f));
+
+
+
+
+
+}
+
 int main(int argc, char **argv) {
     run_all_tests();
 
