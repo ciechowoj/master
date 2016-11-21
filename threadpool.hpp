@@ -85,6 +85,7 @@ class task_queue_t {
 class threadpool_t {
  public:
   threadpool_t();
+  threadpool_t(size_t num_threads);
   threadpool_t(const threadpool_t&) = delete;
   ~threadpool_t();
 

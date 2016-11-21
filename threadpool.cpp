@@ -1,8 +1,8 @@
 #include <condition_variable>
+#include <iostream>
 #include <mutex>
 #include <stdexcept>
 #include <threadpool.hpp>
-#include <iostream>
 
 namespace haste {
 
@@ -150,12 +150,17 @@ void task_queue_t::skip() {
 
 bool task_queue_t::empty() const { return _queue.empty(); }
 
-threadpool_t::threadpool_t() {
+size_t default_num_cores() {
   size_t num_cores = std::thread::hardware_concurrency();
+  return num_cores == 0 ? 4 : num_cores;
+}
 
-  if (num_cores == 0) num_cores = 4;
+threadpool_t::threadpool_t()
+  : threadpool_t(default_num_cores()) {
+}
 
-  _threads = std::vector<std::thread>(num_cores);
+threadpool_t::threadpool_t(size_t num_threads) {
+  _threads = std::vector<std::thread>(num_threads);
 
   _terminate = false;
 
