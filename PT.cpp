@@ -5,52 +5,36 @@ namespace haste {
 PathTracing::PathTracing(size_t minSubpath, float roulette, size_t num_threads)
     : Technique(num_threads), _minLength(minSubpath), _roulette(roulette) { }
 
-void PathTracing::render(
-    ImageView& view,
-    render_context_t& context,
-    size_t cameraId)
-{
-    auto trace = [&](render_context_t& context, Ray ray) -> vec3 {
-        return this->trace(*context.engine, ray);
-    };
-
-    for_each_ray(view, context, _scene->cameras(), cameraId, trace);
-}
-
-vec3 PathTracing::trace(RandomEngine& engine, Ray ray) {
-    return trace(engine, ray, *_scene);
-}
-
-vec3 PathTracing::trace(RandomEngine& engine, Ray ray, const Scene& scene) {
+vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
     vec3 throughput = vec3(1.0f);
     vec3 radiance = vec3(0.0f);
     float specular = 1.0f;
     int bounce = 0;
 
     while (true) {
-        RayIsect isect = scene.intersect(ray.origin, ray.direction);
+        RayIsect isect = _scene->intersect(ray.origin, ray.direction);
 
         while (isect.isLight()) {
             if (specular == 1.0f) {
-                radiance += throughput * scene.queryRadiance(isect, -ray.direction);
+                radiance += throughput * _scene->queryRadiance(isect, -ray.direction);
             }
 
             ray.origin = isect.position();
-            isect = scene.intersect(ray.origin, ray.direction);
+            isect = _scene->intersect(ray.origin, ray.direction);
         }
 
         if (!isect.isPresent()) {
             break;
         }
 
-        const BSDF& bsdf = scene.queryBSDF(isect);
-        SurfacePoint surface = scene.querySurface(isect);
+        const BSDF& bsdf = _scene->queryBSDF(isect);
+        SurfacePoint surface = _scene->querySurface(isect);
 
-        vec3 lightSample = scene.sampleDirectLightMixed(engine, surface, -ray.direction, bsdf);
+        vec3 lightSample = _scene->sampleDirectLightMixed(*context.engine, surface, -ray.direction, bsdf);
 
         radiance += lightSample * throughput;
 
-        BSDFSample bsdfSample = bsdf.sample(engine, surface, -ray.direction);
+        BSDFSample bsdfSample = bsdf.sample(*context.engine, surface, -ray.direction);
 
         specular = bsdfSample.specular();
 
@@ -63,7 +47,7 @@ vec3 PathTracing::trace(RandomEngine& engine, Ray ray, const Scene& scene) {
 
         float threshold = bounce > _minLength ? _roulette : 1.0f;
 
-        if (threshold < scene.sampler.sample()) {
+        if (threshold < _scene->sampler.sample()) {
             break;
         }
 

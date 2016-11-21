@@ -44,10 +44,7 @@ void Application::render(size_t width, size_t height, glm::vec4* data) {
     if (_preprocessed) {
         auto view = ImageView(data, width, height);
 
-        render_context_t context;
-        context.engine = &_engine;
-
-        _technique->render(view, context, _options.cameraId);
+        _technique->render(view, _engine, _options.cameraId);
 
         double elapsed = high_resolution_time() - _startTime;
         _saveIfRequired(view, elapsed);

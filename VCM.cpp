@@ -38,7 +38,7 @@ template <class Beta> string VCMBase<Beta>::name() const {
 
 template <class Beta> vec3 VCMBase<Beta>::_traceEye(
     render_context_t& context,
-    const Ray& ray)
+    Ray ray)
 {
     char lightRaw[_maxSubpath * sizeof(LightVertex)];
     LightVertex* light = (LightVertex*)lightRaw;

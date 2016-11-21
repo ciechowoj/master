@@ -22,9 +22,20 @@ void Technique::preprocess(
 
 void Technique::render(
     ImageView& view,
-    render_context_t& context,
+    RandomEngine& engine,
     size_t cameraId)
 {
+    auto& cameras = _scene->cameras();
+
+    render_context_t context;
+    context.view_to_world_mat3 = cameras.view_to_world_mat3(cameraId);
+    context.world_to_view_mat3 = cameras.world_to_view_mat3(cameraId);
+    context.camera_position = cameras.position(cameraId);
+    context.resolution = vec2(view.width(), view.height());
+    context.resolution_y_inv = 1.0f / context.resolution.y;
+    context.focal_length_y = cameras.focal_length_y(cameraId, context.resolution.x / context.resolution.y);
+    context.engine = &engine;
+
     size_t numNormalRays = _scene->numNormalRays();
     size_t numShadowRays = _scene->numShadowRays();
 
@@ -39,7 +50,7 @@ void Technique::render(
 
 vec3 Technique::_traceEye(
     render_context_t& context,
-    const Ray& ray)
+    Ray ray)
 {
     return vec3(1.0f, 0.0f, 1.0f);
 }
@@ -80,7 +91,7 @@ void Technique::_trace_paths(
             return _traceEye(context, ray);
         };
 
-        for_each_ray(subview, local_context, _scene->cameras(), cameraId, trace);
+        _for_each_ray(subview, local_context);
     });
 }
 
@@ -119,13 +130,13 @@ vec3 Technique::_accumulate(
     render_context_t& context,
     vec3 radiance,
     vec3 direction) {
-    vec3 view_direction = direction_to_view_space(context.camera, direction);
+    vec3 view_direction = context.world_to_view_mat3 * direction;
 
     vec2 position = pixel_position(
         view_direction,
-        context.camera.resolution,
-        context.camera.resolution_y_inv,
-        context.camera.normalized_focal_length_y);
+        context.resolution,
+        context.resolution_y_inv,
+        context.focal_length_y);
 
     vec2 position_floor = floor(position);
 
@@ -133,15 +144,62 @@ vec3 Technique::_accumulate(
         return radiance;
     }
     else if (0 <= position_floor.x &&
-        position_floor.x < context.camera.resolution.x &&
+        position_floor.x < context.resolution.x &&
         0 <= position_floor.y &&
-        position_floor.y < context.camera.resolution.y) {
+        position_floor.y < context.resolution.y) {
         ivec2 iposition = ivec2(position_floor);
-        int width = int(context.camera.resolution.x);
+        int width = int(context.resolution.x);
 
         std::unique_lock<std::mutex> lock(_helper_mutex);
         _helper_image[iposition.y * width + iposition.x] += radiance;
         return vec3(0.0f);
+    }
+}
+
+void Technique::_for_each_ray(
+    ImageView& view,
+    render_context_t& context)
+{
+    const int xBegin = int(view.xBegin());
+    const int xEnd = int(view.xEnd());
+    const int rXBegin = int(xEnd - 1);
+    const int rXEnd = int(xBegin - 1);
+    const int yBegin = int(view.yBegin());
+    const int yEnd = int(view.yEnd());
+
+    runtime_assert(0 <= xBegin && xEnd <= view.width());
+    runtime_assert(0 <= yBegin && yEnd <= view.height());
+
+    auto shoot = [&](float x, float y) -> Ray {
+        vec2 position = vec2(x, y) + sampleUniform2(*context.engine).value();
+
+        vec3 direction = ray_direction(
+            position,
+            context.resolution,
+            context.resolution_y_inv,
+            context.focal_length_y);
+
+        return { context.camera_position, context.view_to_world_mat3 * direction };
+    };
+
+    for (int y = yBegin; y < yEnd; ++y) {
+        for (int x = xBegin; x < xEnd; ++x) {
+            const Ray ray = shoot(float(x), float(y));
+            vec3 radiance = _traceEye(context, ray);
+            float cumulative = radiance.x + radiance.y + radiance.z;
+            view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
+        }
+
+        ++y;
+
+        if (y < yEnd) {
+            for (int x = rXBegin; x > rXEnd; --x) {
+                const Ray ray = shoot(float(x), float(y));
+                vec3 radiance = _traceEye(context, ray);
+                float cumulative = radiance.x + radiance.y + radiance.z;
+                view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
+            }
+        }
     }
 }
 

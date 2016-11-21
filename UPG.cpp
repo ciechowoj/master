@@ -40,7 +40,7 @@ string UPGBase<Beta>::name() const {
 template <class Beta>
 vec3 UPGBase<Beta>::_traceEye(
     render_context_t& context,
-    const Ray& ray) {
+    Ray ray) {
     vec3 radiance = vec3(0.0f);
 
     RayIsect isect = _scene->intersect(ray.origin, ray.direction);

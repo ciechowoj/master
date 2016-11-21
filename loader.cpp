@@ -345,6 +345,7 @@ Cameras loadCameras(const aiScene* scene) {
 
     for (size_t i = 0; i < scene->mNumCameras; ++i) {
         auto camera = scene->mCameras[i];
+
         cameras.addCameraFovX(
             toString(camera->mName),
             toVec3(camera->mPosition),

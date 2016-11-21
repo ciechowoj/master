@@ -33,27 +33,13 @@ public:
     const float far(size_t cameraId) const;
     const float fovx(size_t cameraId, float aspect) const;
     const float fovy(size_t cameraId, float aspect) const;
-    const mat4 view(size_t cameraId) const;
     const mat4 proj(size_t cameraId, float aspect) const;
 
-    const Ray shoot(
-        size_t cameraId,
-        const vec2& uniform,
-        float widthInv,
-        float heightInv,
-        float aspect,
-        float x,
-        float y) const;
-
-    const Ray shoot(
-        size_t cameraId,
-        RandomEngine& engine,
-        float widthInv,
-        float heightInv,
-        float aspect,
-        float x,
-        float y) const;
-
+    const mat4 view_to_world_mat4(size_t camera_id) const;
+    const mat4 world_to_view_mat4(size_t camera_id) const;
+    const mat3 view_to_world_mat3(size_t camera_id) const;
+    const mat3 world_to_view_mat3(size_t camera_id) const;
+    const float focal_length_y(size_t camera_id, float aspect) const;
 private:
     struct Desc {
         vec3 position;
@@ -67,7 +53,6 @@ private:
 
     vector<string> _names;
     vector<Desc> _descs;
-    vector<mat4> _views;
     vector<float> _focals;
 
     const mat4 _view(size_t cameraId) const;

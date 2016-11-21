@@ -12,7 +12,7 @@ public:
 
     void render(
         ImageView& view,
-        render_context_t& context,
+        RandomEngine& engine,
         size_t cameraId) override;
 
     string name() const override;

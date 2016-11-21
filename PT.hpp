@@ -7,13 +7,7 @@ class PathTracing : public Technique {
 public:
     PathTracing(size_t minSubpath, float roulette, size_t num_threads);
 
-    void render(
-        ImageView& view,
-        render_context_t& context,
-        size_t cameraId) override;
-
-    vec3 trace(RandomEngine& engine, Ray ray);
-    vec3 trace(RandomEngine& engine, Ray ray, const Scene& scene);
+    vec3 _traceEye(render_context_t& context, Ray ray) override;
 
     string name() const override;
 

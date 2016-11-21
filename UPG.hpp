@@ -49,7 +49,7 @@ private:
 
     static const size_t _maxSubpath = 1024;
 
-    vec3 _traceEye(render_context_t& context, const Ray& ray) override;
+    vec3 _traceEye(render_context_t& context, Ray ray) override;
 
     template <class Appender>
     void _traceLight(RandomEngine& engine, Appender& path);

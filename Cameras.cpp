@@ -20,7 +20,6 @@ size_t Cameras::addCameraFovX(const string& name, const vec3& position,
   desc.far = far;
 
   _descs.push_back(desc);
-  _views.push_back(_view(_names.size() - 1));
 
   float focalInv = tan(fovx * 0.5f);
 
@@ -89,59 +88,30 @@ const float Cameras::fovy(size_t cameraId, float aspect) const {
   return isnan(_descs[cameraId].fovx) ? yfovy : xfovy;
 }
 
-const mat4 Cameras::view(size_t cameraId) const {
-  runtime_assert(cameraId < _names.size());
-
-  return _views[cameraId];
-}
-
 const mat4 Cameras::proj(size_t cameraId, float aspect) const {
   const float fovy = this->fovy(cameraId, aspect);
   return perspective(fovy, aspect, near(cameraId), far(cameraId));
 }
 
-const Ray Cameras::shoot(size_t cameraId, const vec2& uniform, float widthInv,
-                         float heightInv, float aspect, float x,
-                         float y) const {
-  runtime_assert(cameraId < _names.size());
-
-  float sx = (x + uniform.x) * widthInv * 2.0f - 1.f;
-  float sy = (y + uniform.y) * heightInv * 2.0f - 1.f;
-
-  float focal = _focals[cameraId];
-  const mat4& view = this->view(cameraId);
-
-  vec3 direction = normalize(vec3(sx * aspect, sy, -focal));
-
-  return {view[3].xyz(), view * vec4(direction, 0.0f)};
+const mat4 Cameras::view_to_world_mat4(size_t camera_id) const {
+  return inverse(world_to_view_mat4(camera_id));
 }
 
-const Ray Cameras::shoot(size_t cameraId, RandomEngine& engine, float widthInv,
-                         float heightInv, float aspect, float x,
-                         float y) const {
-  runtime_assert(cameraId < _names.size());
-
-  auto uniform = sampleUniform2(engine);
-  return shoot(cameraId, uniform.value(), widthInv, heightInv, aspect, x, y);
+const mat4 Cameras::world_to_view_mat4(size_t camera_id) const {
+  auto desc = _descs[camera_id];
+  return glm::lookAt(desc.position, desc.position + desc.direction, desc.up);
 }
 
-const mat4 Cameras::_view(size_t cameraId) const {
-  vec3 y = up(cameraId);
-  vec3 z = -direction(cameraId);
-  vec3 x = cross(y, z);
-  y = cross(z, x);
+const mat3 Cameras::view_to_world_mat3(size_t camera_id) const {
+  return inverse(world_to_view_mat3(camera_id));
+}
 
-  x = normalize(x);
-  y = normalize(y);
-  z = normalize(z);
+const mat3 Cameras::world_to_view_mat3(size_t camera_id) const {
+  return transpose(inverse(mat3(world_to_view_mat4(camera_id))));
+}
 
-  mat4 result;
-  result[0] = vec4(x, 0.0f);
-  result[1] = vec4(y, 0.0f);
-  result[2] = vec4(z, 0.0f);
-  result[3] = vec4(position(cameraId), 1.0f);
-
-  return result;
+const float Cameras::focal_length_y(size_t camera_id, float aspect) const {
+  return normalized_flength_y(fovy(camera_id, aspect));
 }
 
 float normalized_flength_y(float fov_y) { return 1.0f / tan(fov_y * 0.5f); }
