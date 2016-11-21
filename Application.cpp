@@ -47,7 +47,7 @@ void Application::render(size_t width, size_t height, glm::vec4* data) {
         render_context_t context;
         context.engine = &_engine;
 
-        _technique->render(view, context, _options.cameraId, _options.parallel);
+        _technique->render(view, context, _options.cameraId);
 
         double elapsed = high_resolution_time() - _startTime;
         _saveIfRequired(view, elapsed);

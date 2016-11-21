@@ -1,10 +1,10 @@
 #include <runtime_assert>
-#include <GLFW/glfw3.h>
 #include <Technique.hpp>
 
 namespace haste {
 
-Technique::Technique() { }
+Technique::Technique(size_t num_threads)
+    : _threadpool(num_threads) { }
 
 Technique::~Technique() { }
 
@@ -23,31 +23,18 @@ void Technique::preprocess(
 void Technique::render(
     ImageView& view,
     render_context_t& context,
-    size_t cameraId,
-    bool parallel)
+    size_t cameraId)
 {
     size_t numNormalRays = _scene->numNormalRays();
     size_t numShadowRays = _scene->numShadowRays();
 
     _adjust_helper_image(view);
-    _trace_paths(view, context, cameraId, parallel);
-    _commit_helper_image(view, parallel);
+    _trace_paths(view, context, cameraId);
+    _commit_helper_image(view);
 
     _numNormalRays += _scene->numNormalRays() - numNormalRays;
     _numShadowRays += _scene->numShadowRays() - numShadowRays;
     _numSamples = size_t(view.last().w);
-}
-
-void Technique::render(
-    ImageView& view,
-    render_context_t& context,
-    size_t cameraId)
-{
-     auto trace = [&](render_context_t& context, Ray ray) -> vec3 {
-        return _traceEye(context, ray);
-    };
-
-    for_each_ray(view, context, _scene->cameras(), cameraId, trace);
 }
 
 vec3 Technique::_traceEye(
@@ -68,75 +55,64 @@ void Technique::_adjust_helper_image(ImageView& view) {
 void Technique::_trace_paths(
     ImageView& view,
     render_context_t& context,
-    size_t cameraId,
-    bool parallel) {
-    if (parallel) {
-        exec2d(_threadpool, view.xWindow(), view.yWindow(), 32,
-            [&](size_t x0, size_t x1, size_t y0, size_t y1) {
-            render_context_t local_context = context;
-            RandomEngine engine;
-            local_context.engine = &engine;
+    size_t cameraId) {
+    exec2d(_threadpool, view.xWindow(), view.yWindow(), 32,
+        [&](size_t x0, size_t x1, size_t y0, size_t y1) {
+        render_context_t local_context = context;
+        RandomEngine engine;
+        local_context.engine = &engine;
 
-            ImageView subview = view;
+        ImageView subview = view;
 
-            size_t xBegin = view._xOffset + x0;
-            size_t xEnd = view._xOffset + x1;
+        size_t xBegin = view._xOffset + x0;
+        size_t xEnd = view._xOffset + x1;
 
-            size_t yBegin = view._yOffset + y0;
-            size_t yEnd = view._yOffset + y1;
+        size_t yBegin = view._yOffset + y0;
+        size_t yEnd = view._yOffset + y1;
 
-            subview._xOffset = xBegin;
-            subview._xWindow = xEnd - xBegin;
+        subview._xOffset = xBegin;
+        subview._xWindow = xEnd - xBegin;
 
-            subview._yOffset = yBegin;
-            subview._yWindow = yEnd - yBegin;
+        subview._yOffset = yBegin;
+        subview._yWindow = yEnd - yBegin;
 
-            render(subview, local_context, cameraId);
-        });
-    }
-    else {
-        render(view, context, cameraId);
-    }
-}
+        auto trace = [&](render_context_t& context, Ray ray) -> vec3 {
+            return _traceEye(context, ray);
+        };
 
-void Technique::_commit_helper_image(ImageView& view, bool parallel) {
-    if (parallel) {
-        exec2d(_threadpool, view.xWindow(), view.yWindow(), 32,
-            [&](size_t x0, size_t x1, size_t y0, size_t y1) {
-            ImageView subview = view;
-
-            size_t xBegin = view._xOffset + x0;
-            size_t xEnd = view._xOffset + x1;
-
-            size_t yBegin = view._yOffset + y0;
-            size_t yEnd = view._yOffset + y1;
-
-            subview._xOffset = xBegin;
-            subview._xWindow = xEnd - xBegin;
-
-            subview._yOffset = yBegin;
-            subview._yWindow = yEnd - yBegin;
-
-            _commit_helper_image(subview);
-        });
-    }
-    else {
-        _commit_helper_image(view);
-    }
+        for_each_ray(subview, local_context, _scene->cameras(), cameraId, trace);
+    });
 }
 
 void Technique::_commit_helper_image(ImageView& view) {
-    for (size_t y = view.yBegin(); y < view.yEnd(); ++y) {
-        vec4* dst_begin = view.data() + y * view.width() + view.xBegin();
-        vec4* dst_end = dst_begin + view.xWindow();
-        vec3* src_itr = _helper_image.data() + y * view.width() + view.xBegin();
+    exec2d(_threadpool, view.xWindow(), view.yWindow(), 128,
+        [&](size_t x0, size_t x1, size_t y0, size_t y1) {
+        ImageView subview = view;
 
-        for (vec4* dst_itr = dst_begin; dst_itr < dst_end; ++dst_itr) {
-            *dst_itr += vec4(*src_itr, 0.0f);
-            *src_itr = vec3(0.0f);
-            ++src_itr;
+        size_t xBegin = view._xOffset + x0;
+        size_t xEnd = view._xOffset + x1;
+
+        size_t yBegin = view._yOffset + y0;
+        size_t yEnd = view._yOffset + y1;
+
+        subview._xOffset = xBegin;
+        subview._xWindow = xEnd - xBegin;
+
+        subview._yOffset = yBegin;
+        subview._yWindow = yEnd - yBegin;
+
+        for (size_t y = subview.yBegin(); y < subview.yEnd(); ++y) {
+            vec4* dst_begin = subview.data() + y * subview.width() + subview.xBegin();
+            vec4* dst_end = dst_begin + subview.xWindow();
+            vec3* src_itr = _helper_image.data() + y * subview.width() + subview.xBegin();
+
+            for (vec4* dst_itr = dst_begin; dst_itr < dst_end; ++dst_itr) {
+                *dst_itr += vec4(*src_itr, 0.0f);
+                *src_itr = vec3(0.0f);
+                ++src_itr;
+            }
         }
-    }
+    });
 }
 
 vec3 Technique::_accumulate(

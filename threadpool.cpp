@@ -155,11 +155,9 @@ size_t default_num_cores() {
   return num_cores == 0 ? 4 : num_cores;
 }
 
-threadpool_t::threadpool_t()
-  : threadpool_t(default_num_cores()) {
-}
-
 threadpool_t::threadpool_t(size_t num_threads) {
+  num_threads = num_threads == 0 ? default_num_cores() : num_threads;
+
   _threads = std::vector<std::thread>(num_threads);
 
   _terminate = false;

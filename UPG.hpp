@@ -15,7 +15,8 @@ public:
         float roulette,
         size_t numPhotons,
         size_t numGather,
-        float radius);
+        float radius,
+        size_t numThreads);
 
     void preprocess(
         const shared<const Scene>& scene,
@@ -124,7 +125,8 @@ public:
         size_t numPhotons,
         size_t numGather,
         float radius,
-        float beta);
+        float beta,
+        size_t numThreads);
 };
 
 }

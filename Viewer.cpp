@@ -4,7 +4,8 @@
 
 namespace haste {
 
-Viewer::Viewer(const vector<vec4>& data, size_t width, size_t height) {
+Viewer::Viewer(const vector<vec4>& data, size_t width, size_t height)
+    : Technique(1) {
     _data = data;
     _width = width;
     _height = height;
@@ -13,8 +14,7 @@ Viewer::Viewer(const vector<vec4>& data, size_t width, size_t height) {
 void Viewer::render(
     ImageView& view,
     render_context_t& context,
-    size_t cameraId,
-    bool parallel)
+    size_t cameraId)
 {
     view.copyFrom(_data, _width, _height);
     std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(33));

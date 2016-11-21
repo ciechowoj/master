@@ -450,7 +450,7 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--parallel")) {
-            options.parallel = true;
+            options.numThreads = 0;
             dict.erase("--parallel");
         }
 
@@ -580,25 +580,27 @@ shared<Technique> makeTechnique(Options& options) {
     switch (options.technique) {
         case Options::BPT:
             if (options.beta == 0.0f) {
-                return std::make_shared<BPT0>(options.minSubpath, options.roulette);
+                return std::make_shared<BPT0>(options.minSubpath, options.roulette, options.numThreads);
             }
             else if (options.beta == 1.0f) {
-                return std::make_shared<BPT1>(options.minSubpath, options.roulette);
+                return std::make_shared<BPT1>(options.minSubpath, options.roulette, options.numThreads);
             }
             else if (options.beta == 2.0f) {
-                return std::make_shared<BPT2>(options.minSubpath, options.roulette);
+                return std::make_shared<BPT2>(options.minSubpath, options.roulette, options.numThreads);
             }
             else {
                 return std::make_shared<BPTb>(
                     options.minSubpath,
                     options.roulette,
-                    options.beta);
+                    options.beta,
+                    options.numThreads);
             }
 
         case Options::PT:
             return std::make_shared<PathTracing>(
                 options.minSubpath,
-                options.roulette);
+                options.roulette,
+                options.numThreads);
 
         /* case Options::PM:
             return std::make_shared<PhotonMapping>(
@@ -613,7 +615,8 @@ shared<Technique> makeTechnique(Options& options) {
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
-                    options.maxRadius);
+                    options.maxRadius,
+                    options.numThreads);
             }
             else if (options.beta == 1.0f) {
                 return std::make_shared<VCM1>(
@@ -621,7 +624,8 @@ shared<Technique> makeTechnique(Options& options) {
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
-                    options.maxRadius);
+                    options.maxRadius,
+                    options.numThreads);
             }
             else if (options.beta == 2.0f) {
                 return std::make_shared<VCM2>(
@@ -629,7 +633,8 @@ shared<Technique> makeTechnique(Options& options) {
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
-                    options.maxRadius);
+                    options.maxRadius,
+                    options.numThreads);
             }
             else {
                 return std::make_shared<VCMb>(
@@ -638,7 +643,8 @@ shared<Technique> makeTechnique(Options& options) {
                     options.numPhotons,
                     options.numGather,
                     options.maxRadius,
-                    options.beta);
+                    options.beta,
+                    options.numThreads);
             }
 
         case Options::UPG:
@@ -648,7 +654,8 @@ shared<Technique> makeTechnique(Options& options) {
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
-                    options.maxRadius);
+                    options.maxRadius,
+                    options.numThreads);
             }
             else if (options.beta == 1.0f) {
                 return std::make_shared<UPG1>(
@@ -656,7 +663,8 @@ shared<Technique> makeTechnique(Options& options) {
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
-                    options.maxRadius);
+                    options.maxRadius,
+                    options.numThreads);
             }
             else if (options.beta == 2.0f) {
                 return std::make_shared<UPG2>(
@@ -664,7 +672,8 @@ shared<Technique> makeTechnique(Options& options) {
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
-                    options.maxRadius);
+                    options.maxRadius,
+                    options.numThreads);
             }
             else {
                 return std::make_shared<UPGb>(
@@ -673,7 +682,8 @@ shared<Technique> makeTechnique(Options& options) {
                     options.numPhotons,
                     options.numGather,
                     options.maxRadius,
-                    options.beta);
+                    options.beta,
+                    options.numThreads);
             }
 
         case Options::Viewer:

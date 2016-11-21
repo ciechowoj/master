@@ -10,8 +10,10 @@ template <class Beta> VCMBase<Beta>::VCMBase(
     float roulette,
     size_t numPhotons,
     size_t numGather,
-    float maxRadius)
-    : _minSubpath(minSubpath)
+    float maxRadius,
+    size_t num_threads)
+    : Technique(num_threads)
+    , _minSubpath(minSubpath)
     , _roulette(roulette)
     , _numPhotons(numPhotons)
     , _numGather(numGather)
@@ -519,13 +521,15 @@ VCMb::VCMb(
     size_t numPhotons,
     size_t numGather,
     float maxRadius,
-    float beta)
+    float beta,
+    size_t num_threads)
     : VCMBase<VariableBeta>(
         minSubpath,
         roulette,
         numPhotons,
         numGather,
-        maxRadius)
+        maxRadius,
+        num_threads)
 {
     VariableBeta::init(beta);
 }

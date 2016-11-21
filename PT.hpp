@@ -5,7 +5,7 @@ namespace haste {
 
 class PathTracing : public Technique {
 public:
-    PathTracing(size_t minSubpath, float roulette);
+    PathTracing(size_t minSubpath, float roulette, size_t num_threads);
 
     void render(
         ImageView& view,

@@ -2,8 +2,8 @@
 
 namespace haste {
 
-PathTracing::PathTracing(size_t minSubpath, float roulette)
-    : _minLength(minSubpath), _roulette(roulette) { }
+PathTracing::PathTracing(size_t minSubpath, float roulette, size_t num_threads)
+    : Technique(num_threads), _minLength(minSubpath), _roulette(roulette) { }
 
 void PathTracing::render(
     ImageView& view,

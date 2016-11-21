@@ -30,7 +30,7 @@ struct Options {
     bool quiet = false;
     size_t numSamples = 0;
     double numSeconds = 0.0;
-    bool parallel = false;
+    size_t numThreads = 1;
     bool reload = true;
     size_t snapshot = 0;
     size_t cameraId = 0;

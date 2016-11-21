@@ -12,7 +12,8 @@ public:
         float roulette,
         size_t numPhotons,
         size_t numGather,
-        float maxRadius);
+        float maxRadius,
+        size_t num_threads);
 
     void preprocess(
         const shared<const Scene>& scene,
@@ -103,7 +104,8 @@ public:
         size_t numPhotons,
         size_t numGather,
         float maxRadius,
-        float beta);
+        float beta,
+        size_t num_threads);
 };
 
 }

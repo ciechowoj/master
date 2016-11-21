@@ -10,8 +10,10 @@ UPGBase<Beta>::UPGBase(
     float roulette,
     size_t numPhotons,
     size_t numGather,
-    float radius)
-    : _minSubpath(minSubpath)
+    float radius,
+    size_t num_threads)
+    : Technique(num_threads)
+    , _minSubpath(minSubpath)
     , _roulette(roulette)
     , _numPhotons(numPhotons)
     , _numGather(numGather)
@@ -546,13 +548,15 @@ UPGb::UPGb(
     size_t numPhotons,
     size_t numGather,
     float radius,
-    float beta)
+    float beta,
+    size_t num_threads)
     : UPGBase<VariableBeta>(
         minSubpath,
         roulette,
         numPhotons,
         radius,
-        numGather)
+        numGather,
+        num_threads)
 {
     VariableBeta::init(beta);
 }

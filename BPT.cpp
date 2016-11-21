@@ -4,8 +4,9 @@
 
 namespace haste {
 
-template <class Beta> BPTBase<Beta>::BPTBase(size_t minSubpath, float roulette)
-    : _minSubpath(minSubpath)
+template <class Beta> BPTBase<Beta>::BPTBase(size_t minSubpath, float roulette, size_t num_threads)
+    : Technique(num_threads)
+    , _minSubpath(minSubpath)
     , _roulette(roulette)
 { }
 
@@ -305,8 +306,8 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     return radiance;
 }
 
-BPTb::BPTb(size_t minSubpath, float roulette, float beta)
-    : BPTBase<VariableBeta>(minSubpath, roulette)
+BPTb::BPTb(size_t minSubpath, float roulette, float beta, size_t num_threads)
+    : BPTBase<VariableBeta>(minSubpath, roulette, num_threads)
 {
     VariableBeta::init(beta);
 }

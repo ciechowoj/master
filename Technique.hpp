@@ -31,7 +31,7 @@ struct render_context_t {
 
 class Technique {
 public:
-    Technique();
+    Technique(size_t num_threads);
     virtual ~Technique();
 
     virtual void preprocess(
@@ -39,12 +39,6 @@ public:
         RandomEngine& engine,
         const function<void(string, float)>& progress,
         bool parallel = false);
-
-    virtual void render(
-        ImageView& view,
-        render_context_t& context,
-        size_t cameraId,
-        bool parallel);
 
     virtual void render(
         ImageView& view,
@@ -78,8 +72,7 @@ protected:
         const Ray& ray);
 
     void _adjust_helper_image(ImageView& view);
-    void _trace_paths(ImageView& view, render_context_t& context, size_t cameraId, bool parallel);
-    void _commit_helper_image(ImageView& view, bool parallel);
+    void _trace_paths(ImageView& view, render_context_t& context, size_t cameraId);
     void _commit_helper_image(ImageView& view);
 
     vec3 _accumulate(render_context_t& context, vec3 radiance, vec3 direction);

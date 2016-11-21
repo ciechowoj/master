@@ -13,8 +13,7 @@ public:
     void render(
         ImageView& view,
         render_context_t& context,
-        size_t cameraId,
-        bool parallel) override;
+        size_t cameraId) override;
 
     string name() const override;
 
