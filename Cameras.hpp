@@ -71,4 +71,7 @@ vec2 pixel_position(vec3 direction, vec2 resolution, float resolution_y_inv,
 
 vec2 pixel_position(vec3 direction, vec2 resolution, float fov_y);
 
+mat3 camera_tangent_space(const mat4& world_to_view_mat4);
+vec3 camera_position(const mat4& world_to_view_mat4);
+
 }

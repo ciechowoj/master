@@ -17,8 +17,14 @@ using namespace std;
 using namespace haste;
 
 unittest() {
+    // check if everything is configured well
     assert_almost_eq(sin(half_pi<float>()), 1.0f);
     assert_almost_eq(asin(1.0f), half_pi<float>());
+
+    assert_true(std::isinf(1.0f / 0.0f));
+    assert_false(std::isnan(1.0f / 1.0f));
+    assert_true(std::isnan(0.0f / 0.0f));
+    assert_true(std::isnan(-0.0f / 0.0f));
 }
 
 unittest() {
@@ -36,15 +42,11 @@ unittest() {
     // ^
 
     assert_almost_eq(m * vec4(1.0f), vec4(1.0f, 2.0f, 1.0f, 1.0f));
-
-
-
-
-
 }
 
 int main(int argc, char **argv) {
-    run_all_tests();
+    if (!run_all_tests())
+        return 1;
 
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
     _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);

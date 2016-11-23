@@ -34,84 +34,102 @@ unittest() {
   static_assert(index<int, float, double, int> == 2, "");
   static_assert(index<int, float, double, int, bool> == 2, "");
 }
+}
+
+using ulong_t = unsigned long long;
+
+struct context_t {
+  ulong_t num_failed = 0;
+  bool passed = true;
+
+  void reset() { passed = true; }
+
+  void assert_failed() { passed = false; }
+};
 
 struct trigger_t {
-  trigger_t();
+  trigger_t() = default;
   trigger_t(trigger_t&&) = delete;
   ~trigger_t();
 
-  static trigger_t& enlist(void (*)(), int, const char*);
+  trigger_t& enlist(void (*)(), int, const char*);
 
-  char _impl[32];
+  using test_t = void (*)();
+  test_t* _tests = nullptr;
+  ulong_t _capacity = 0;
+  ulong_t _size = 0;
+
+  static thread_local context_t* context;
 };
 
-int register_test(void (*test)(), int line, const char* file, const char*) {
-  trigger_t::enlist(test, line, file);
-  return -1;
-}
+thread_local context_t* trigger_t::context = nullptr;
 
 namespace {
 trigger_t& instance() {
   static trigger_t instance;
   return instance;
 }
+
+context_t* context_instance() { return instance().context; }
 }
 
-using ulong_t = unsigned long long;
+namespace detail {
 
-struct trigger_impl_t {
-  using test_t = void (*)();
-  test_t* tests = nullptr;
-  ulong_t capacity = 0;
-  ulong_t size = 0;
-};
-
-trigger_t::trigger_t() {
-  static_assert(sizeof(trigger_impl_t) <= sizeof(_impl), "assertion failed");
-  new (_impl) trigger_impl_t();
+int register_test(void (*test)(), int line, const char* file, const char*) {
+  instance().enlist(test, line, file);
+  return -1;
+}
 }
 
-trigger_t::~trigger_t() {
-  auto impl = reinterpret_cast<trigger_impl_t*>(_impl);
-  delete[] impl->tests;
-  impl->~trigger_impl_t();
-}
+trigger_t::~trigger_t() { delete[] _tests; }
 
 trigger_t& trigger_t::enlist(void (*test)(), int, const char*) {
-  auto& instance = detail::instance();
-  auto impl = reinterpret_cast<trigger_impl_t*>(instance._impl);
-
-  if (impl->size == impl->capacity) {
-    auto capacity = impl->capacity * 2;
+  if (_size == _capacity) {
+    auto capacity = _capacity * 2;
     capacity = capacity < 16 ? 16 : capacity;
 
-    auto tests = new trigger_impl_t::test_t[capacity];
+    auto tests = new test_t[capacity];
 
-    for (ulong_t i = 0; i < impl->size; ++i) {
-      tests[i] = impl->tests[i];
+    for (ulong_t i = 0; i < _size; ++i) {
+      tests[i] = _tests[i];
     }
 
-    delete[] impl->tests;
+    delete[] _tests;
 
-    impl->tests = tests;
-    impl->capacity = capacity;
+    _tests = tests;
+    _capacity = capacity;
   }
 
-  impl->tests[impl->size] = test;
-  ++impl->size;
+  _tests[_size] = test;
+  ++_size;
 
-  return instance;
+  return *this;
 }
-}
 
-void run_all_tests() {
-  using namespace ::haste::detail;
+bool run_all_tests() {
+  auto& trigger = instance();
 
-  auto impl = reinterpret_cast<trigger_impl_t*>(detail::instance()._impl);
+  std::printf("Running %llu unittest...\n", trigger._size);
 
-  for (ulong_t i = 0; i < impl->size; ++i) {
-    impl->tests[i]();
+  context_t context;
+  trigger.context = &context;
+
+  for (ulong_t i = 0; i < trigger._size; ++i) {
+    context.reset();
+    trigger._tests[i]();
+    if (!context.passed) {
+      ++context.num_failed;
+    }
   }
+
+  if (context.num_failed) {
+    printf("%llu tests failed.\n", context.num_failed);
+  }
+  else {
+    printf("All tests succeeded.\n");
+  }
+
+  return context.num_failed == 0;
 }
 
 void assert_true(bool x, const location_t& location) {
@@ -119,6 +137,8 @@ void assert_true(bool x, const location_t& location) {
     std::printf("%s:%u: assertion failed\n", location.file_name(),
                 location.line());
     std::fflush(stdout);
+
+    context_instance()->assert_failed();
   }
 }
 
@@ -127,6 +147,8 @@ void assert_false(bool x, const location_t& location) {
     std::printf("%s:%u: assertion failed\n", location.file_name(),
                 location.line());
     std::fflush(stdout);
+
+    context_instance()->assert_failed();
   }
 }
 
@@ -183,13 +205,15 @@ void assert_almost_eq(void* a, void* b, int size, int type,
 
     for (int i = 0; i < size; ++i) {
       if (!almost_eq(fa[i], fb[i])) {
-        std::printf("%s:%u: assert_almost_eq(",
-                    location.file_name(), location.line());
+        std::printf("%s:%u: assert_almost_eq(", location.file_name(),
+                    location.line());
 
         print_vector(fa, size);
         std::printf(", ");
         print_vector(fb, size);
         std::printf(") failed\n");
+
+        context_instance()->assert_failed();
 
         return;
       }
@@ -200,5 +224,4 @@ void assert_almost_eq(void* a, void* b, int size, int type,
   }
 }
 }
-
 }

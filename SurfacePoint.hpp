@@ -35,4 +35,9 @@ struct SurfacePoint {
     const vec3 toSurface(const vec3& world) const { return world * _tangent; }
 };
 
+inline SurfacePoint camera_surface(const mat4& world_to_view_mat4) {
+    return SurfacePoint();
+}
+
+
 }

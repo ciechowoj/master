@@ -108,7 +108,7 @@ void assert_almost_eq(void*, void*, int, int, const location_t&);
 struct num_components_impl {};
 }
 
-void run_all_tests();
+bool run_all_tests();
 
 #define noinline __attribute__((noinline))
 

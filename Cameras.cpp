@@ -149,6 +149,19 @@ vec2 pixel_position(vec3 direction, vec2 resolution, float fov_y) {
                         normalized_flength_y(fov_y));
 }
 
+mat3 camera_tangent_space(const mat4& world_to_view_mat4) {
+  mat3 result;
+  result[0] = world_to_view_mat4[1].xyz();
+  result[1] = world_to_view_mat4[2].xyz();
+  result[2] = world_to_view_mat4[0].xyz();
+  return result;
+}
+
+vec3 camera_position(const mat4& world_to_view_mat4) {
+  vec4 position = inverse(world_to_view_mat4) * vec4(0.0f, 0.0f, 0.0f, 1.0f);
+  return position.xyz() / position.w;
+}
+
 unittest() {
   vec2 resolution = vec2(800.0f, 600.0f);
   float fov_y = half_pi<float>();
@@ -159,4 +172,21 @@ unittest() {
 
   assert_almost_eq(expected, actual);
 }
+
+unittest() {
+  vec3 position = vec3(1.f, 3.f, 2.f);
+  vec3 direction = vec3(0.0f, 0.0f, -1.0f);
+  vec3 up = vec3(0.0f, 1.0f, 0.0f);
+
+  mat4 view = glm::lookAt(position, position + direction, up);
+
+  assert_almost_eq(camera_position(view), position);
+
+  mat3 tangent = camera_tangent_space(view);
+
+  assert_almost_eq(tangent[0], vec3(0.0f, 1.0f, 0.0f));
+  assert_almost_eq(tangent[1], vec3(0.0f, 0.0f, 1.0f));
+  assert_almost_eq(tangent[2], vec3(1.0f, 0.0f, 0.0f));
+}
+
 }
