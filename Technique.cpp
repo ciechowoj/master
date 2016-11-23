@@ -1,3 +1,4 @@
+#include <unittest.hpp>
 #include <runtime_assert>
 #include <Technique.hpp>
 
@@ -53,6 +54,51 @@ vec3 Technique::_traceEye(
     Ray ray)
 {
     return vec3(1.0f, 0.0f, 1.0f);
+}
+
+SurfacePoint Technique::_camera_surface(render_context_t& context) {
+    SurfacePoint result;
+    result._position = context.camera_position;
+    result._tangent[0] = context.view_to_world_mat3[1];
+    result._tangent[1] = context.view_to_world_mat3[2];
+    result._tangent[2] = context.view_to_world_mat3[0];
+    result._materialId = 0;
+}
+
+unittest() {
+    vec3 position = vec3(1.f, 3.f, 2.f);
+    vec3 direction = vec3(1.0f, 0.0f, 10.0f);
+    vec3 up = vec3(0.0f, 1.0f, 0.0f);
+
+    mat3 view_to_world = inverse(glm::lookAt(position, position + direction, up));
+
+    vec3 direction_normalized = normalize(direction);
+    vec3 tangent_normalized = normalize(cross(direction, up));
+
+    mat3 tangent;
+    tangent[0] = view_to_world[1];
+    tangent[1] = view_to_world[2];
+    tangent[2] = view_to_world[0];
+
+    assert_almost_eq(tangent[0], vec3(0.0f, 1.0f, 0.0f));
+    assert_almost_eq(tangent[1], -direction_normalized);
+    assert_almost_eq(tangent[2], tangent_normalized);
+}
+
+vec3 Technique::_camera_direction(render_context_t& context) {
+    return context.world_to_view_mat3[2];
+}
+
+unittest() {
+    vec3 position = vec3(1.f, 1.f, 1.f);
+    vec3 direction = vec3(1.0f, 2.0f, 3.0f);
+    vec3 up = vec3(0.0f, 1.0f, 0.0f);
+
+    mat3 view_to_world = inverse(glm::lookAt(position, position + direction, up));
+
+    vec3 direction_normalized = normalize(direction);
+
+    assert_almost_eq(view_to_world[2], -direction_normalized);
 }
 
 void Technique::_adjust_helper_image(ImageView& view) {

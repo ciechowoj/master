@@ -47,13 +47,6 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     eye[itr].c = 0;
     eye[itr].C = 0;
 
-    eye[itr].surface = _scene->querySurface(isect);
-    eye[itr].omega = -ray.direction;
-    eye[itr].throughput = vec3(1.0f);
-    eye[itr].specular = 1.0f;
-    eye[itr].c = 0;
-    eye[itr].C = 0;
-
     radiance += _connect(*context.engine, eye[itr], lSize, light);
     std::swap(itr, prv);
 
