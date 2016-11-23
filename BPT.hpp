@@ -1,4 +1,5 @@
 #pragma once
+#include <fixed_vector.hpp>
 #include <Technique.hpp>
 #include <Beta.hpp>
 
@@ -28,11 +29,12 @@ private:
     };
 
     static const size_t _maxSubpath = 1024;
+    using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
     const size_t _minSubpath;
     const float _roulette;
 
     vec3 _traceEye(render_context_t& context, Ray ray) override;
-    void _trace(RandomEngine& engine, size_t& size, LightVertex* path);
+    void _traceLight(RandomEngine& engine, light_path_t& path);
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect1(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light);
@@ -40,8 +42,7 @@ private:
     vec3 _connect(
         RandomEngine& engine,
         const EyeVertex& eye,
-        size_t size,
-        const LightVertex* path);
+        const light_path_t& path);
 };
 
 typedef BPTBase<FixedBeta<0>> BPT0;

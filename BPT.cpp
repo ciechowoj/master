@@ -18,12 +18,9 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     render_context_t& context,
     Ray ray)
 {
-    char lightRaw[_maxSubpath * sizeof(LightVertex)];
-    LightVertex* light = (LightVertex*)lightRaw;
+    light_path_t light_path;
 
-    size_t lSize = 0;
-
-    _trace(*context.engine, lSize, light);
+    _traceLight(*context.engine, light_path);
 
     vec3 radiance = vec3(0.0f);
     EyeVertex eye[2];
@@ -47,11 +44,11 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     eye[itr].c = 0;
     eye[itr].C = 0;
 
-    radiance += _connect(*context.engine, eye[itr], lSize, light);
+    radiance += _connect(*context.engine, eye[itr], light_path);
     std::swap(itr, prv);
 
-    size_t eSize = 2;
-    float roulette = eSize < _minSubpath ? 1.0f : _roulette;
+    size_t path_size = 2;
+    float roulette = path_size < _minSubpath ? 1.0f : _roulette;
     float uniform = sampleUniform1(*context.engine).value();
 
     while (uniform < roulette) {
@@ -85,48 +82,43 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
             * Beta::beta(edge.bGeometry)
             * eye[itr].c;
 
-        ++eSize;
-        radiance += _connect(*context.engine, eye[itr], lSize, light);
+        ++path_size;
+        radiance += _connect(*context.engine, eye[itr], light_path);
         std::swap(itr, prv);
 
-        roulette = eSize < _minSubpath ? 1.0f : _roulette;
+        roulette = path_size < _minSubpath ? 1.0f : _roulette;
         uniform = sampleUniform1(*context.engine).value();
     }
 
     return radiance;
 }
 
-template <class Beta> void BPTBase<Beta>::_trace(
+template <class Beta> void BPTBase<Beta>::_traceLight(
     RandomEngine& engine,
-    size_t& size,
-    LightVertex* path)
+    light_path_t& path)
 {
-    size_t itr = 0, prv = 0;
+    size_t itr = path.size() + 1, prv = path.size();
 
     LightSampleEx light = _scene->sampleLight(engine);
 
     RayIsect isect = _scene->intersectMesh(light.position(), light.omega());
 
     if (!isect.isPresent()) {
-        size = 0;
         return;
     }
 
     auto edge = Edge(light, isect);
 
-    path[itr].surface = _scene->querySurface(isect);
-    path[itr].omega = -light.omega();
-    path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
-    path[itr].specular = 0.0f;
+    size_t path_size = 2;
+    path.emplace_back();
+    path[prv].surface = _scene->querySurface(isect);
+    path[prv].omega = -light.omega();
+    path[prv].throughput = light.radiance() * edge.bCosTheta / light.density();
+    path[prv].specular = 0.0f;
+    path[prv].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
+    path[prv].A = Beta::beta(edge.bGeometry) * path[prv].a / Beta::beta(light.areaDensity());
 
-    path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
-    path[itr].A = Beta::beta(edge.bGeometry) * path[itr].a / Beta::beta(light.areaDensity());
-
-    prv = itr;
-    ++itr;
-
-    size_t lSize = 2;
-    float roulette = lSize < _minSubpath ? 1.0f : _roulette;
+    float roulette = path_size < _minSubpath ? 1.0f : _roulette;
     float uniform = sampleUniform1(engine).value();
 
     while (uniform < roulette) {
@@ -137,6 +129,9 @@ template <class Beta> void BPTBase<Beta>::_trace(
         if (!isect.isPresent()) {
             break;
         }
+
+        ++path_size;
+        path.emplace_back();
 
         path[itr].surface = _scene->querySurface(isect);
         path[itr].omega = -bsdf.omega();
@@ -163,14 +158,14 @@ template <class Beta> void BPTBase<Beta>::_trace(
 
         if (bsdf.specular() == 1.0f) {
             path[prv] = path[itr];
+            path.pop_back();
         }
         else {
             prv = itr;
             ++itr;
         }
 
-        ++lSize;
-        roulette = lSize < _minSubpath ? 1.0f : _roulette;
+        roulette = path_size < _minSubpath ? 1.0f : _roulette;
         uniform = sampleUniform1(engine).value();
     }
 
@@ -180,10 +175,7 @@ template <class Beta> void BPTBase<Beta>::_trace(
         path[prv].omega);
 
     if (bsdf.specular() == 1.0f) {
-        size = prv;
-    }
-    else {
-        size = prv + 1;
+        path.pop_back();
     }
 }
 
@@ -240,7 +232,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect1(
 
     auto edge = Edge(light, eye, light.omega());
 
-    float Ap = Beta::beta(bsdf.density() * edge.bGeometry / light.areaDensity());
+    float Ap = Beta::beta(bsdf.densityRev() * edge.bGeometry / light.areaDensity());
 
     float Cp
         = (eye.C * Beta::beta(bsdf.density()) + eye.c * (1.0f - eye.specular))
@@ -294,12 +286,11 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 template <class Beta> vec3 BPTBase<Beta>::_connect(
     RandomEngine& engine,
     const EyeVertex& eye,
-    size_t size,
-    const LightVertex* path)
+    const light_path_t& path)
 {
     vec3 radiance = _connect0(engine, eye) + _connect1(engine, eye);
 
-    for (size_t i = 0; i < size; ++i) {
+    for (size_t i = 0; i < path.size(); ++i) {
         radiance += _connect(eye, path[i]);
     }
 
