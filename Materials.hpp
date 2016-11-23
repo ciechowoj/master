@@ -8,8 +8,6 @@ namespace haste {
 
 template <class T> using unique = std::unique_ptr<T>;
 
-
-
 struct SurfacePoint;
 struct Photon;
 
@@ -22,9 +20,6 @@ using Material = size_t;
 class Materials {
 public:
     vector<string> names;
-    vector<vec3> diffuses;
-    vector<vec3> emissives;
-    vector<vec3> speculars;
     vector<unique<BSDF>> bsdfs;
 
     size_t numMaterials() const {
