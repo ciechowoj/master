@@ -320,7 +320,7 @@ bool isEmissive(const aiScene* scene, size_t meshID) {
     return emissive(material) != vec3(0.0f);
 }
 
-AreaLights loadAreaLights(const aiScene* scene) {
+AreaLights loadAreaLights(const aiScene* scene, Materials& materials) {
     AreaLights result;
 
     for (size_t i = 0; i < scene->mNumLights; ++i) {
@@ -329,11 +329,15 @@ AreaLights loadAreaLights(const aiScene* scene) {
 
             result.addLight(
                 toString(light->mName),
+                materials.bsdfs.size(),
                 toVec3(light->mPosition),
                 normalize(toVec3(light->mDirection)),
                 normalize(toVec3(light->mUp)),
                 toVec3(light->mColorDiffuse),
                 toVec2(light->mSize));
+
+            materials.names.push_back(toString(light->mName));
+            materials.bsdfs.push_back(unique<BSDF>(new LightBSDF(toVec3(light->mColorDiffuse))));
         }
     }
 
@@ -454,16 +458,12 @@ shared<Scene> loadScene(string path) {
         }
     }
 
-    AreaLights lights = loadAreaLights(scene);
-
     Materials materials;
 
     for (size_t i = 0; i < scene->mNumMaterials; ++i) {
         const aiMaterial* material = scene->mMaterials[i];
 
         materials.names.push_back(name(scene->mMaterials[i]));
-        materials.diffuses.push_back(diffuse(scene->mMaterials[i]));
-        materials.speculars.push_back(specular(scene->mMaterials[i]));
 
         if (property<bool>(material, "$mat.blend.transparency.use")) {
             float ior = property<float>(material, "$mat.blend.transparency.ior");
@@ -474,9 +474,11 @@ shared<Scene> loadScene(string path) {
             materials.bsdfs.push_back(unique<BSDF>(new ReflectionBSDF()));
         }
         else {
-            materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(materials.diffuses.back())));
+            materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(diffuse(scene->mMaterials[i]))));
         }
     }
+
+    AreaLights lights = loadAreaLights(scene, materials);
 
     shared<Scene> result = make_shared<Scene>(
         loadCameras(scene),

@@ -1,4 +1,4 @@
-#include <unittest.hpp>
+#include <unittest>
 #include <runtime_assert>
 #include <Technique.hpp>
 
@@ -132,10 +132,6 @@ void Technique::_trace_paths(
 
         subview._yOffset = yBegin;
         subview._yWindow = yEnd - yBegin;
-
-        auto trace = [&](render_context_t& context, Ray ray) -> vec3 {
-            return _traceEye(context, ray);
-        };
 
         _for_each_ray(subview, local_context);
     });

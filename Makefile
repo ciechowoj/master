@@ -56,7 +56,7 @@ STD_LIBS = \
 
 MAIN_HEADERS = $(wildcard *.hpp)
 MAIN_SOURCES := $(wildcard *.cpp)
-MAIN_SOURCES := $(filter-out main.cpp benchmark.cpp, $(MAIN_SOURCES))
+MAIN_SOURCES := $(filter-out main.cpp benchmark.cpp unittest.cpp, $(MAIN_SOURCES))
 MAIN_OBJECTS = $(MAIN_SOURCES:%.cpp=build/master/%.o)
 MAIN_LIBS = $(GLFW_LIBS) $(STD_LIBS) -lglad -limgui -lgtest $(EMBREE_LIBS) -lassimp -lz
 MAIN_DEPENDENCY_FLAGS = -MT $@ -MMD -MP -MF build/master/$*.Td

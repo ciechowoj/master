@@ -1,7 +1,7 @@
 #include <Cameras.hpp>
 #include <iostream>
 #include <runtime_assert>
-#include <unittest.hpp>
+#include <unittest>
 
 namespace haste {
 

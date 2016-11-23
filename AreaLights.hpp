@@ -40,10 +40,12 @@ struct LightSample {
 struct LightSampleEx {
     vec3 _position;
     vec3 _normal;
+    vec3 _tangent;
     vec3 _radiance; // with respect to omega
     vec3 _omega;
     float _areaDensity;
     float _omegaDensity;
+    uint32_t _materialId;
 
     const vec3& position() const { return _position; }
     const vec3& normal() const { return _normal; }
@@ -54,6 +56,7 @@ struct LightSampleEx {
     const float densityInv() const { return 1.0f / density(); }
     const float areaDensity() const { return _areaDensity; };
     const float omegaDensity() const { return _omegaDensity; };
+    const SurfacePoint surface() const;
 };
 
 struct LSDFQuery {
@@ -72,6 +75,7 @@ public:
 
     const size_t addLight(
         const string& name,
+        uint32_t _materialId,
         const vec3& position,
         const vec3& direction,
         const vec3& up,
@@ -129,12 +133,13 @@ public:
     };
 
     vector<string> _names;
+    vector<uint32_t> _materialIds;
     vector<Shape> _shapes;
     vector<vec2> _sizes;
     vector<vec3> _exitances;
     vector<float> _weights;
-    float _totalPower;
-    float _totalArea;
+    float _totalPower = 0.0f;
+    float _totalArea = 0.0f;
 
     void _updateSampler();
     const size_t _sampleLight(RandomEngine& engine) const;

@@ -147,4 +147,26 @@ const BSDFQuery DeltaBSDF::queryAdjoint(
     return query;
 }
 
+const BSDFSample LightBSDF::sample(
+    RandomEngine& engine,
+    const vec3& omega) const {
+    return BSDFSample();
+}
+
+const BSDFQuery LightBSDF::query(
+    const vec3& incident,
+    const vec3& outgoing) const {
+    BSDFQuery query;
+
+    query._throughput = outgoing.y > 0.0f ? _radiance : vec3(0.0f);
+
+    query._density = outgoing.y > 0.0f
+        ? outgoing.y * one_over_pi<float>()
+        : 0.0f;
+
+    query._densityRev = 0.0f;
+
+    return query;
+}
+
 }

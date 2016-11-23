@@ -3,6 +3,8 @@
 
 namespace haste {
 
+error
+
 using location_t = source_location_t;
 
 namespace detail {
@@ -124,18 +126,3 @@ noinline void assert_almost_eq(
 
 #undef noinline
 }
-
-#define unittest_1oxgaer4ai(ln, uq) uq##ln
-
-#define unittest_9w3krm934b(ln, uq, ...)                                      \
-  namespace {                                                                 \
-  struct unittest_1oxgaer4ai(ln, uq) {                                        \
-    static void run();                                                        \
-  };                                                                          \
-  }                                                                           \
-  const int unittest_1oxgaer4ai(ln, uq##_t) = ::haste::detail::register_test( \
-      unittest_1oxgaer4ai(ln, uq)::run, ln, __VA_ARGS__);                     \
-  void unittest_1oxgaer4ai(ln, uq)::run()
-
-#define unittest(...) \
-  unittest_9w3krm934b(__LINE__, unittest_sgv1fsnhkn, __FILE__ __VA_ARGS__)

@@ -2,7 +2,7 @@
 #include <pmmintrin.h>
 #include <runtime_assert>
 
-#include <unittest.hpp>
+#include <unittest>
 
 #include <Application.hpp>
 

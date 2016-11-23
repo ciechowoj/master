@@ -23,12 +23,25 @@ namespace haste {
 // v1 ************************************** v2
 //
 
+const SurfacePoint LightSampleEx::surface() const {
+    SurfacePoint point;
+
+    point._position = _position;
+    point._tangent[0] = normalize(cross(_tangent, _normal));
+    point._tangent[1] = _normal;
+    point._tangent[2] = _tangent;
+    point._materialId = _materialId;
+
+    return point;
+}
+
 void AreaLights::init(const Intersector* intersector) {
     _intersector = intersector;
 }
 
 const size_t AreaLights::addLight(
     const string& name,
+    uint32_t materialId,
     const vec3& position,
     const vec3& direction,
     const vec3& up,
@@ -38,6 +51,7 @@ const size_t AreaLights::addLight(
     size_t lightId = _names.size();
 
     _names.push_back(name);
+    _materialIds.push_back(materialId);
 
     Shape shape;
     shape.position = position;
@@ -151,11 +165,13 @@ LightSampleEx AreaLights::sample(
 
     LightSampleEx result;
     result._position = _samplePosition(lightId, engine);
-    result._normal = lightNormal(lightId);
+    result._normal = _shapes[lightId].direction;
+    result._tangent = _shapes[lightId].up;
     result._omega = toWorld(lightId, sample.omega());
     result._radiance = lightRadiance(lightId);
     result._areaDensity = _weights[lightId] / lightArea(lightId);
     result._omegaDensity = sample.density();
+    result._materialId = _materialIds[lightId];
 
     return result;
 }

@@ -1,0 +1,40 @@
+#pragma once
+
+#define unittest_1oxgaer4ai(ln, uq) uq##ln
+
+#ifdef UNITTEST
+#include <unittest.hpp>
+
+#define unittest_9w3krm934b(ln, uq, ...)                                      \
+  namespace {                                                                 \
+  struct unittest_1oxgaer4ai(ln, uq) {                                        \
+    static void run();                                                        \
+  };                                                                          \
+  }                                                                           \
+  const int unittest_1oxgaer4ai(ln, uq##_t) = ::haste::detail::register_test( \
+      unittest_1oxgaer4ai(ln, uq)::run, ln, __VA_ARGS__);                     \
+  void unittest_1oxgaer4ai(ln, uq)::run()
+
+#else
+
+#define unittest_9w3krm934b(ln, uq, ...)                                      \
+  namespace {                                                                 \
+  struct unittest_1oxgaer4ai(ln, uq) {                                        \
+    static void run();                                                        \
+  };                                                                          \
+  }                                                                           \
+  void unittest_1oxgaer4ai(ln, uq)::run()
+
+namespace haste {
+
+template <class... T> inline void assert_true(T...) { }
+template <class... T> inline void assert_false(T...) { }
+template <class... T> inline void assert_almost_eq(T...) { }
+template <class... T> inline bool run_all_tests(T...) { return true; }
+
+}
+
+#endif
+
+#define unittest(...) \
+  unittest_9w3krm934b(__LINE__, unittest_sgv1fsnhkn, __FILE__ __VA_ARGS__)
