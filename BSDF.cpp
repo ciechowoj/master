@@ -1,3 +1,4 @@
+#include <runtime_assert>
 #include <BSDF.hpp>
 #include <Scene.hpp>
 
@@ -147,9 +148,14 @@ const BSDFQuery DeltaBSDF::queryAdjoint(
     return query;
 }
 
+LightBSDF::LightBSDF(vec3 radiance)
+    : _radiance(radiance * one_over_pi<float>()) {
+}
+
 const BSDFSample LightBSDF::sample(
     RandomEngine& engine,
     const vec3& omega) const {
+    runtime_assert(false);
     return BSDFSample();
 }
 
@@ -164,7 +170,30 @@ const BSDFQuery LightBSDF::query(
         ? outgoing.y * one_over_pi<float>()
         : 0.0f;
 
-    query._densityRev = 0.0f;
+    query._densityRev = incident.y > 0.0f
+        ? incident.y * one_over_pi<float>()
+        : 0.0f;
+
+    return query;
+}
+
+const BSDFSample CameraBSDF::sample(
+    RandomEngine& engine,
+    const vec3& omega) const {
+    runtime_assert(false);
+    return BSDFSample();
+}
+
+const BSDFQuery CameraBSDF::query(
+    const vec3& incident,
+    const vec3& outgoing) const {
+    BSDFQuery query;
+
+    query._throughput = vec3(1.0f);
+
+    query._density = 1.0f;
+
+    query._densityRev = 1.0f;
 
     return query;
 }

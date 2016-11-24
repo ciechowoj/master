@@ -311,9 +311,6 @@ template <class Stream> Stream& operator<<(
         // TEXFLAGS(t,n)
 }
 
-
-
-
 bool isEmissive(const aiScene* scene, size_t meshID) {
     size_t materialID = scene->mMeshes[meshID]->mMaterialIndex;
     auto material = scene->mMaterials[materialID];
@@ -424,7 +421,7 @@ Mesh aiMeshToMesh(const aiMesh* mesh) {
     }
 
     result.name = mesh->mName.C_Str();
-    result.materialID = mesh->mMaterialIndex;
+    result.materialID = mesh->mMaterialIndex + 1;
 
     return result;
 }
@@ -459,6 +456,9 @@ shared<Scene> loadScene(string path) {
     }
 
     Materials materials;
+
+    materials.names.push_back("camera");
+    materials.bsdfs.push_back(unique<BSDF>(new CameraBSDF()));
 
     for (size_t i = 0; i < scene->mNumMaterials; ++i) {
         const aiMaterial* material = scene->mMaterials[i];
