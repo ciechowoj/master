@@ -44,14 +44,14 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     eye[itr].c = 0;
     eye[itr].C = 0;
 
-    radiance += _connect(*context.engine, eye[itr], light_path);
     std::swap(itr, prv);
 
     size_t path_size = 2;
-    float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-    float uniform = sampleUniform1(*context.engine).value();
 
-    while (uniform < roulette) {
+
+    while (true) {
+        radiance += _connect(*context.engine, eye[prv], light_path);
+
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
         isect = _scene->intersectMesh(eye[prv].surface.position(), bsdf.omega());
@@ -69,7 +69,7 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
             = eye[prv].throughput
             * bsdf.throughput()
             * edge.bCosTheta
-            / (bsdf.density() * roulette);
+            / bsdf.density();
 
         eye[prv].specular = max(eye[prv].specular, bsdf.specular());
         eye[itr].specular = bsdf.specular();
@@ -82,12 +82,18 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
             * Beta::beta(edge.bGeometry)
             * eye[itr].c;
 
-        ++path_size;
-        radiance += _connect(*context.engine, eye[itr], light_path);
         std::swap(itr, prv);
 
-        roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        uniform = sampleUniform1(*context.engine).value();
+        float roulette = path_size < _minSubpath ? 1.0f : _roulette;
+        float uniform = sampleUniform1(*context.engine).value();
+
+        if (roulette < uniform) {
+            return radiance;
+        }
+        else {
+            eye[prv].throughput /= roulette;
+            ++path_size;
+        }
     }
 
     return radiance;
@@ -311,6 +317,10 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     return radiance;
 }
+
+
+
+
 
 BPTb::BPTb(size_t minSubpath, float roulette, float beta, size_t num_threads)
     : BPTBase<VariableBeta>(minSubpath, roulette, num_threads)
