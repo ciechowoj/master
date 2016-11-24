@@ -48,7 +48,6 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
 
     size_t path_size = 2;
 
-
     while (true) {
         radiance += _connect(*context.engine, eye[prv], light_path);
 
@@ -109,8 +108,8 @@ template <class Beta> void BPTBase<Beta>::_traceLight(
 
     path.emplace_back();
     path[prv].surface = light.surface();
-    path[prv].omega = light.omega();
-    path[prv].throughput = vec3(1.0f) / light.areaDensity();
+    path[prv].omega = light.surface().normal();
+    path[prv].throughput = light.radiance() / light.areaDensity();
     path[prv].specular = 0.0f;
     path[prv].a = 1.0f / Beta::beta(light.areaDensity());
     path[prv].A = 0.0f;
