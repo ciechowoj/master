@@ -169,9 +169,10 @@ void Technique::_commit_helper_image(ImageView& view) {
 }
 
 vec3 Technique::_accumulate(
-    render_context_t& context,
-    vec3 radiance,
-    vec3 direction) {
+        render_context_t& context,
+        vec3 direction,
+        void* closure,
+        vec3 (*callback)(void*)) {
     vec3 view_direction = context.world_to_view_mat3 * direction;
 
     vec2 position = pixel_position(
@@ -180,21 +181,18 @@ vec3 Technique::_accumulate(
         context.resolution_y_inv,
         context.focal_length_y);
 
-    vec2 position_floor = floor(position);
+    if (0 <= position.x &&
+        position.x < context.resolution.x &&
+        0 <= position.y &&
+        position.y < context.resolution.y) {
 
-    if (position == context.pixel_position) {
-        return radiance;
-    }
-    else if (0 <= position_floor.x &&
-        position_floor.x < context.resolution.x &&
-        0 <= position_floor.y &&
-        position_floor.y < context.resolution.y) {
-        ivec2 iposition = ivec2(position_floor);
+        ivec2 iposition = ivec2(position);
         int width = int(context.resolution.x);
 
         std::unique_lock<std::mutex> lock(_helper_mutex);
-        _helper_image[iposition.y * width + iposition.x] += radiance;
-        return vec3(0.0f);
+        _helper_image[iposition.y * width + iposition.x] += callback(closure);
+
+        return vec3(0.0f, 0.0f, 0.0f);
     }
 }
 

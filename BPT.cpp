@@ -36,6 +36,15 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
         return radiance;
     }
 
+    eye[itr].surface = _camera_surface(context);
+    eye[itr].omega = -ray.direction;
+    eye[itr].throughput = vec3(1.0f);
+    eye[itr].specular = 0.0f;
+    eye[itr].c = 0;
+    eye[itr].C = 0;
+
+    radiance += _connect_eye(context, eye[itr], light_path);
+
     eye[itr].surface = _scene->querySurface(isect);
     eye[itr].omega = -ray.direction;
     eye[itr].throughput = vec3(1.0f);
@@ -43,12 +52,14 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     eye[itr].c = 0;
     eye[itr].C = 0;
 
+    radiance += _connect_light_eye(context, eye[itr]);
+
     std::swap(itr, prv);
 
     size_t path_size = 2;
 
     while (true) {
-        radiance += _connect(*context.engine, eye[prv], light_path);
+        radiance += _connect(eye[prv], light_path);
 
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
@@ -203,28 +214,9 @@ template <class Beta> void BPTBase<Beta>::_traceLight(
     }
 }
 
-template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
-    if (!eye.surface.is_light()) {
-        return vec3(0.0f);
-    }
-
-    auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
-
-    float Cp
-        = (eye.C * Beta::beta(lsdf.omegaDensity()) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(lsdf.areaDensity());
-
-    float weightInv = Cp + 1.0f;
-
-    return lsdf.radiance()
-        * eye.throughput
-        / weightInv;
-}
-
 template <class Beta> vec3 BPTBase<Beta>::_connect(
     const EyeVertex& eye,
-    const LightVertex& light)
-{
+    const LightVertex& light) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
@@ -256,11 +248,26 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
         / weightInv;
 }
 
-template <class Beta> vec3 BPTBase<Beta>::_connect(
-    RandomEngine& engine,
-    const EyeVertex& eye,
-    const light_path_t& path)
-{
+template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
+    if (!eye.surface.is_light()) {
+        return vec3(0.0f);
+    }
+
+    auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
+
+    float Cp
+        = (eye.C * Beta::beta(lsdf.omegaDensity()) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(lsdf.areaDensity());
+
+    float weightInv = Cp + 1.0f;
+
+    return lsdf.radiance()
+        * eye.throughput
+        / weightInv;
+}
+
+template <class Beta>
+vec3 BPTBase<Beta>::_connect(const EyeVertex& eye, const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
     for (size_t i = 0; i < path.size(); ++i) {
@@ -269,6 +276,28 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     return radiance;
 }
+
+template <class Beta>
+vec3 BPTBase<Beta>::_connect_light_eye(
+    render_context_t& context,
+    const EyeVertex& eye) {
+    return _accumulate(
+        context,
+        -eye.omega,
+        [&] { return _connect_light(eye); });
+}
+
+template <class Beta>
+vec3 BPTBase<Beta>::_connect_eye(
+    render_context_t& context,
+    const EyeVertex& eye,
+    const light_path_t& path) {
+    return _accumulate(
+        context,
+        -eye.omega,
+        [&] { return _connect(eye, path); });
+}
+
 
 BPTb::BPTb(size_t minSubpath, float roulette, float beta, size_t num_threads)
     : BPTBase<VariableBeta>(minSubpath, roulette, num_threads)

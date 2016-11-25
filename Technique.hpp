@@ -17,6 +17,7 @@ struct render_context_t {
     vec2 resolution;
     float resolution_y_inv;
     float focal_length_y;
+    int32_t camera_id;
 
     RandomEngine* engine;
     vec2 pixel_position;
@@ -62,7 +63,23 @@ protected:
     void _trace_paths(ImageView& view, render_context_t& context, size_t cameraId);
     void _commit_helper_image(ImageView& view);
 
-    vec3 _accumulate(render_context_t& context, vec3 radiance, vec3 direction);
+    template <class F>
+    vec3 _accumulate(
+        render_context_t& context,
+        vec3 direction,
+        F&& callback) {
+        return _accumulate(
+            context,
+            direction,
+            &callback,
+            [](void* closure) -> vec3 { return (*(F*)closure)(); });
+    }
+
+    vec3 _accumulate(
+        render_context_t& context,
+        vec3 direction,
+        void* closure,
+        vec3 (*)(void*));
 
     void _for_each_ray(
         ImageView& view,
