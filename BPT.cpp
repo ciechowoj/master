@@ -1,6 +1,5 @@
 #include <BPT.hpp>
 #include <Edge.hpp>
-#include <iostream>
 
 namespace haste {
 
@@ -222,82 +221,9 @@ template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
         / weightInv;
 }
 
-template <class Beta> vec3 BPTBase<Beta>::_connect0(
-    RandomEngine& engine,
-    const EyeVertex& eye)
-{
-    vec3 radiance = vec3(0.0f);
-
-    auto bsdf = _scene->sampleBSDF(engine, eye.surface, eye.omega);
-    RayIsect isect = _scene->intersect(eye.surface.position(), bsdf.omega());
-
-    while (isect.isLight()) {
-        auto edge = Edge(eye, isect, bsdf.omega());
-        auto lsdf = _scene->queryLSDF(isect, -bsdf.omega());
-
-        float c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
-
-        float C
-            = (eye.C * Beta::beta(bsdf.densityRev())
-                + eye.c * (1.0f - max(eye.specular, bsdf.specular())))
-            * Beta::beta(edge.bGeometry) * c;
-
-        float Cp
-            = (C * Beta::beta(lsdf.omegaDensity()) + c * (1.0f - bsdf.specular()))
-            * Beta::beta(lsdf.areaDensity());
-
-        float weightInv = Cp + 1.0f;
-
-        radiance
-            += lsdf.radiance()
-            * eye.throughput
-            * bsdf.throughput()
-            * edge.bCosTheta
-            / (bsdf.density() * weightInv);
-
-        isect = _scene->intersect(isect.position(), bsdf.omega());
-    }
-
-    return radiance;
-}
-
-template <class Beta> vec3 BPTBase<Beta>::_connect1(
-    RandomEngine& engine,
-    const EyeVertex& eye,
-    const LightVertex& vertex)
-{
-    LightSampleEx light = _scene->sampleLightEx(engine, eye.surface.position());
-
-    auto eyeBSDF = _scene->queryBSDF(eye.surface, -light.omega(), eye.omega);
-
-    if (eyeBSDF.specular() == 1.0f) {
-        return vec3(0.0f);
-    }
-
-    auto edge = Edge(light, eye, light.omega());
-
-    float Ap = Beta::beta(eyeBSDF.densityRev() * edge.bGeometry / light.areaDensity());
-
-    float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(edge.fGeometry * light.omegaDensity());
-
-    float weightInv = Ap + Cp + 1.0f;
-
-    return
-        1.0f / light.areaDensity()
-        * light.radiance()
-        * eye.throughput
-        * eyeBSDF.throughput()
-        * edge.bCosTheta
-        * edge.fGeometry
-        / weightInv;
-}
-
 template <class Beta> vec3 BPTBase<Beta>::_connect(
     const EyeVertex& eye,
-    const LightVertex& light,
-    size_t num)
+    const LightVertex& light)
 {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
@@ -335,10 +261,10 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     const EyeVertex& eye,
     const light_path_t& path)
 {
-    vec3 radiance = vec3(0.0f); // _connect0(engine, eye);
+    vec3 radiance = vec3(0.0f);
 
     for (size_t i = 0; i < path.size(); ++i) {
-        radiance += _connect(eye, path[i], i);
+        radiance += _connect(eye, path[i]);
     }
 
     return radiance;
