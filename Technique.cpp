@@ -1,6 +1,7 @@
 #include <unittest>
 #include <runtime_assert>
 #include <Technique.hpp>
+#include <iostream>
 
 namespace haste {
 
@@ -62,7 +63,8 @@ SurfacePoint Technique::_camera_surface(render_context_t& context) {
     result._tangent[0] = context.view_to_world_mat3[1];
     result._tangent[1] = context.view_to_world_mat3[2];
     result._tangent[2] = context.view_to_world_mat3[0];
-    result._materialId = 0;
+    result._materialId = -1;
+    return result;
 }
 
 unittest() {
@@ -227,7 +229,7 @@ void Technique::_for_each_ray(
             const Ray ray = shoot(float(x), float(y));
             vec3 radiance = _traceEye(context, ray);
             float cumulative = radiance.x + radiance.y + radiance.z;
-            view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
+            view.absAt(x, y) += std::isfinite(cumulative) ? vec4(vec3(0.0f), 1.0f) : vec4(0.0f);
         }
 
         ++y;
@@ -237,7 +239,7 @@ void Technique::_for_each_ray(
                 const Ray ray = shoot(float(x), float(y));
                 vec3 radiance = _traceEye(context, ray);
                 float cumulative = radiance.x + radiance.y + radiance.z;
-                view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
+                view.absAt(x, y) += std::isfinite(cumulative) ? vec4(vec3(0.0f), 1.0f) : vec4(0.0f);
             }
         }
     }

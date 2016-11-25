@@ -1,5 +1,6 @@
 #include <BPT.hpp>
 #include <Edge.hpp>
+#include <iostream>
 
 namespace haste {
 
@@ -52,14 +53,14 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     eye[itr].c = 0;
     eye[itr].C = 0;
 
-    radiance += _connect_light_eye(context, eye[itr]);
+    // radiance += _connect_light_eye(context, eye[itr]);
 
     std::swap(itr, prv);
 
     size_t path_size = 2;
 
     while (true) {
-        radiance += _connect(eye[prv], light_path);
+        // radiance += _connect(eye[prv], light_path);
 
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
@@ -292,10 +293,18 @@ vec3 BPTBase<Beta>::_connect_eye(
     render_context_t& context,
     const EyeVertex& eye,
     const light_path_t& path) {
-    return _accumulate(
-        context,
-        -eye.omega,
-        [&] { return _connect(eye, path); });
+    vec3 radiance = vec3(0.0f);
+
+    for (size_t i = 0; i < path.size(); ++i) {
+        vec3 omega = path[i].surface.position() - eye.surface.position();
+
+        radiance += _accumulate(
+            context,
+            omega,
+            [&] { return _connect(eye, path); });
+    }
+
+    return radiance;
 }
 
 
