@@ -45,7 +45,7 @@ struct LightSampleEx {
     vec3 _omega;
     float _areaDensity;
     float _omegaDensity;
-    uint32_t _materialId;
+    int32_t _materialId;
 
     const vec3& position() const { return _position; }
     const vec3& normal() const { return _normal; }
@@ -75,7 +75,7 @@ public:
 
     const size_t addLight(
         const string& name,
-        uint32_t _materialId,
+        int32_t _materialId,
         const vec3& position,
         const vec3& direction,
         const vec3& up,
@@ -118,6 +118,8 @@ public:
         size_t lightId,
         const vec3& omega) const;
 
+    const mat3 light_to_world_mat3(size_t lightId) const;
+
     const bool castShadow() const override;
     const bool usesQuads() const override;
     const size_t numQuads() const override;
@@ -133,7 +135,7 @@ public:
     };
 
     vector<string> _names;
-    vector<uint32_t> _materialIds;
+    vector<int32_t> _materialIds;
     vector<Shape> _shapes;
     vector<vec2> _sizes;
     vector<vec3> _exitances;

@@ -86,12 +86,12 @@ void Scene::buildAccelStructs(RTCDevice device) {
 
 const BSDF& Scene::queryBSDF(const RayIsect& isect) const {
     runtime_assert(isect.meshId() < meshes.size());
-    return *materials.bsdfs[meshes[isect.meshId()].materialID];
+    return *materials.bsdfs[meshes[isect.meshId()].materialID + materials.lights_offset];
 }
 
 const BSDF& Scene::queryBSDF(const SurfacePoint& surface) const {
-    runtime_assert(surface.materialId() < materials.bsdfs.size());
-    return *materials.bsdfs[surface.materialId()].get();
+    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
+    return *materials.bsdfs[surface.materialId() + materials.lights_offset].get();
 }
 
 vec3 Scene::lerpNormal(const RayIsect& hit) const {
@@ -106,32 +106,43 @@ vec3 Scene::lerpNormal(const RayIsect& hit) const {
 }
 
 SurfacePoint Scene::querySurface(const RayIsect& isect) const {
-    runtime_assert(isect.meshId() < meshes.size());
+    if (isect.isLight()) {
+        SurfacePoint point;
 
-    const float w = 1.f - isect.u - isect.v;
-    auto& mesh = meshes[isect.meshId()];
+        point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
+        point._tangent = lights.light_to_world_mat3(isect.primId());
+        point._materialId = int32_t(isect.primId()) - materials.lights_offset;
 
-    SurfacePoint point;
-    point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
+        return point;
+    }
+    else {
+        runtime_assert(isect.meshId() < meshes.size());
 
-    point._tangent[0] =
-        normalize(w * mesh.bitangents[mesh.indices[isect.primID * 3 + 0]] +
-        isect.u * mesh.bitangents[mesh.indices[isect.primID * 3 + 1]] +
-        isect.v * mesh.bitangents[mesh.indices[isect.primID * 3 + 2]]);
+        const float w = 1.f - isect.u - isect.v;
+        auto& mesh = meshes[isect.meshId()];
 
-    point._tangent[1] =
-        normalize(w * mesh.normals[mesh.indices[isect.primID * 3 + 0]] +
-        isect.u * mesh.normals[mesh.indices[isect.primID * 3 + 1]] +
-        isect.v * mesh.normals[mesh.indices[isect.primID * 3 + 2]]);
+        SurfacePoint point;
+        point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
 
-    point._tangent[2] =
-        normalize(w * mesh.tangents[mesh.indices[isect.primID * 3 + 0]] +
-        isect.u * mesh.tangents[mesh.indices[isect.primID * 3 + 1]] +
-        isect.v * mesh.tangents[mesh.indices[isect.primID * 3 + 2]]);
+        point._tangent[0] =
+            normalize(w * mesh.bitangents[mesh.indices[isect.primID * 3 + 0]] +
+            isect.u * mesh.bitangents[mesh.indices[isect.primID * 3 + 1]] +
+            isect.v * mesh.bitangents[mesh.indices[isect.primID * 3 + 2]]);
 
-    point._materialId = mesh.materialID;
+        point._tangent[1] =
+            normalize(w * mesh.normals[mesh.indices[isect.primID * 3 + 0]] +
+            isect.u * mesh.normals[mesh.indices[isect.primID * 3 + 1]] +
+            isect.v * mesh.normals[mesh.indices[isect.primID * 3 + 2]]);
 
-    return point;
+        point._tangent[2] =
+            normalize(w * mesh.tangents[mesh.indices[isect.primID * 3 + 0]] +
+            isect.u * mesh.tangents[mesh.indices[isect.primID * 3 + 1]] +
+            isect.v * mesh.tangents[mesh.indices[isect.primID * 3 + 2]]);
+
+        point._materialId = mesh.materialID;
+
+        return point;
+    }
 }
 
 vec3 Scene::queryRadiance(const RayIsect& isect) const {
@@ -166,14 +177,22 @@ const LSDFQuery Scene::queryLSDF(
     return lights.queryLSDF(isect.primId(), omega);
 }
 
+const LSDFQuery Scene::queryLSDF(
+    const SurfacePoint& surface,
+    const vec3& omega) const
+{
+    runtime_assert(surface.materialId() < 0);
+    return lights.queryLSDF(surface.materialId() + materials.lights_offset, omega);
+}
+
 const BSDFSample Scene::sampleBSDF(
     RandomEngine& engine,
     const SurfacePoint& surface,
     const vec3& omega) const
 {
-    runtime_assert(surface.materialId() < materials.bsdfs.size());
+    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
 
-    auto bsdf = materials.bsdfs[surface.materialId()].get();
+    auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
     return bsdf->sample(engine, surface, omega);
 }
 
@@ -182,9 +201,9 @@ const BSDFSample Scene::sampleAdjointBSDF(
     const SurfacePoint& surface,
     const vec3& omega) const
 {
-    runtime_assert(surface.materialId() < materials.bsdfs.size());
+    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
 
-    auto bsdf = materials.bsdfs[surface.materialId()].get();
+    auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
     return bsdf->sampleAdjoint(engine, surface, omega);
 }
 
@@ -193,9 +212,9 @@ const BSDFQuery Scene::queryBSDF(
     const vec3& incident,
     const vec3& outgoing) const
 {
-    runtime_assert(surface.materialId() < materials.bsdfs.size());
+    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
 
-    auto bsdf = materials.bsdfs[surface.materialId()].get();
+    auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
     return bsdf->query(surface, incident, outgoing);
 }
 
@@ -204,9 +223,9 @@ const BSDFQuery Scene::queryAdjointBSDF(
     const vec3& incident,
     const vec3& outgoing) const
 {
-    runtime_assert(surface.materialId() < materials.bsdfs.size());
+    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
 
-    auto bsdf = materials.bsdfs[surface.materialId()].get();
+    auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
     return bsdf->queryAdjoint(surface, incident, outgoing);
 }
 

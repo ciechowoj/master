@@ -320,13 +320,15 @@ bool isEmissive(const aiScene* scene, size_t meshID) {
 AreaLights loadAreaLights(const aiScene* scene, Materials& materials) {
     AreaLights result;
 
+    materials.lights_offset = scene->mNumLights + 1;
+
     for (size_t i = 0; i < scene->mNumLights; ++i) {
         if (scene->mLights[i]->mType == aiLightSource_AREA) {
             auto light = scene->mLights[i];
 
             result.addLight(
                 toString(light->mName),
-                materials.bsdfs.size(),
+                int32_t(materials.bsdfs.size()) - materials.lights_offset,
                 toVec3(light->mPosition),
                 normalize(toVec3(light->mDirection)),
                 normalize(toVec3(light->mUp)),
@@ -421,7 +423,7 @@ Mesh aiMeshToMesh(const aiMesh* mesh) {
     }
 
     result.name = mesh->mName.C_Str();
-    result.materialID = mesh->mMaterialIndex + 1;
+    result.materialID = mesh->mMaterialIndex;
 
     return result;
 }
@@ -443,6 +445,13 @@ shared<Scene> loadScene(string path) {
         throw std::runtime_error("Cannot load \"" + path + "\" scene.");
     }
 
+    Materials materials;
+
+    AreaLights lights = loadAreaLights(scene, materials);
+
+    materials.names.push_back("camera");
+    materials.bsdfs.push_back(unique<BSDF>(new CameraBSDF()));
+
     vector<Mesh> meshes;
     vector<size_t> emissive;
 
@@ -454,11 +463,6 @@ shared<Scene> loadScene(string path) {
             meshes.push_back(aiMeshToMesh(scene->mMeshes[i]));
         }
     }
-
-    Materials materials;
-
-    materials.names.push_back("camera");
-    materials.bsdfs.push_back(unique<BSDF>(new CameraBSDF()));
 
     for (size_t i = 0; i < scene->mNumMaterials; ++i) {
         const aiMaterial* material = scene->mMaterials[i];
@@ -477,8 +481,6 @@ shared<Scene> loadScene(string path) {
             materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(diffuse(scene->mMaterials[i]))));
         }
     }
-
-    AreaLights lights = loadAreaLights(scene, materials);
 
     shared<Scene> result = make_shared<Scene>(
         loadCameras(scene),

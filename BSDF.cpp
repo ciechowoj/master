@@ -164,7 +164,7 @@ const BSDFQuery LightBSDF::query(
     const vec3& outgoing) const {
     BSDFQuery query;
 
-    query._throughput = outgoing.y > 0.0f ? vec3(abs(incident.y)) : vec3(0.0f);
+    query._throughput = outgoing.y > 0.0f ? vec3(1.0f) : vec3(0.0f);
 
     query._density = outgoing.y > 0.0f
         ? outgoing.y * one_over_pi<float>()

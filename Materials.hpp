@@ -9,16 +9,10 @@ namespace haste {
 template <class T> using unique = std::unique_ptr<T>;
 
 struct SurfacePoint;
-struct Photon;
-
-enum BSDFType {
-    BDSFType
-};
-
-using Material = size_t;
 
 class Materials {
 public:
+    int32_t lights_offset = 0;
     vector<string> names;
     vector<unique<BSDF>> bsdfs;
 
@@ -29,8 +23,6 @@ public:
     const string& name(size_t index) const {
     	return names[index];
     }
-
-    const BSDF& queryBSDF(Material material) const;
 };
 
 }

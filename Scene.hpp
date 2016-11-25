@@ -74,6 +74,10 @@ public:
         const RayIsect& isect,
         const vec3& omega) const;
 
+    const LSDFQuery queryLSDF(
+        const SurfacePoint& surface,
+        const vec3& omega) const;
+
     const RayIsect intersect(
         const vec3& origin,
         const vec3& direction) const override;

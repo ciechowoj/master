@@ -41,7 +41,7 @@ void AreaLights::init(const Intersector* intersector) {
 
 const size_t AreaLights::addLight(
     const string& name,
-    uint32_t materialId,
+    int32_t materialId,
     const vec3& position,
     const vec3& direction,
     const vec3& up,
@@ -240,6 +240,18 @@ LSDFQuery AreaLights::queryLSDF(
     result._areaDensity = _weights[lightId] / lightArea(lightId);
     result._omegaDensity = abs(cosTheta) * one_over_pi<float>();
     return result;
+}
+
+const mat3 AreaLights::light_to_world_mat3(size_t lightId) const {
+    const vec3 up = _shapes[lightId].up;
+    const vec3 left = normalize(cross(up, _shapes[lightId].direction));
+
+    mat3 light_to_world;
+    light_to_world[0] = left;
+    light_to_world[1] = _shapes[lightId].direction;
+    light_to_world[2] = up;
+
+    return light_to_world;
 }
 
 const bool AreaLights::castShadow() const {

@@ -38,6 +38,7 @@ private:
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye);
     vec3 _connect1(RandomEngine& engine, const EyeVertex& eye, const LightVertex& light);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light, size_t num);
+    vec3 _connect_light(const EyeVertex& eye);
 
     vec3 _connect(
         RandomEngine& engine,

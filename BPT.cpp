@@ -53,33 +53,42 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
 
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
-        isect = _scene->intersectMesh(eye[prv].surface.position(), bsdf.omega());
+        while (true) {
+            isect = _scene->intersect(isect.position(), bsdf.omega());
 
-        if (!isect.isPresent()) {
-            return radiance;
+            if (!isect.isPresent()) {
+                return radiance;
+            }
+
+            eye[itr].surface = _scene->querySurface(isect);
+            eye[itr].omega = -bsdf.omega();
+
+            auto edge = Edge(eye[prv], eye[itr]);
+
+            eye[itr].throughput
+                = eye[prv].throughput
+                * bsdf.throughput()
+                * edge.bCosTheta
+                / bsdf.density();
+
+            eye[prv].specular = max(eye[prv].specular, bsdf.specular());
+            eye[itr].specular = bsdf.specular();
+            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
+
+            eye[itr].C
+                = (eye[prv].C
+                    * Beta::beta(bsdf.densityRev())
+                    + eye[prv].c * (1.0f - eye[prv].specular))
+                * Beta::beta(edge.bGeometry)
+                * eye[itr].c;
+
+            if (isect.isLight()) {
+                radiance += _connect_light(eye[itr]);
+            }
+            else {
+                break;
+            }
         }
-
-        eye[itr].surface = _scene->querySurface(isect);
-        eye[itr].omega = -bsdf.omega();
-
-        auto edge = Edge(eye[prv], eye[itr]);
-
-        eye[itr].throughput
-            = eye[prv].throughput
-            * bsdf.throughput()
-            * edge.bCosTheta
-            / bsdf.density();
-
-        eye[prv].specular = max(eye[prv].specular, bsdf.specular());
-        eye[itr].specular = bsdf.specular();
-        eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
-
-        eye[itr].C
-            = (eye[prv].C
-                * Beta::beta(bsdf.densityRev())
-                + eye[prv].c * (1.0f - eye[prv].specular))
-            * Beta::beta(edge.bGeometry)
-            * eye[itr].c;
 
         std::swap(itr, prv);
 
@@ -108,7 +117,7 @@ template <class Beta> void BPTBase<Beta>::_traceLight(
 
     path.emplace_back();
     path[prv].surface = light.surface();
-    path[prv].omega = light.surface().normal();
+    path[prv].omega = vec3(0.0f);
     path[prv].throughput = light.radiance() / light.areaDensity();
     path[prv].specular = 0.0f;
     path[prv].a = 1.0f / Beta::beta(light.areaDensity());
@@ -193,6 +202,24 @@ template <class Beta> void BPTBase<Beta>::_traceLight(
     if (bsdf.specular() == 1.0f) {
         path.pop_back();
     }
+}
+
+template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
+    if (!eye.surface.is_light()) {
+        return vec3(0.0f);
+    }
+
+    auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
+
+    float Cp
+        = (eye.C * Beta::beta(lsdf.omegaDensity()) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(lsdf.areaDensity());
+
+    float weightInv = Cp + 1.0f;
+
+    return lsdf.radiance()
+        * eye.throughput
+        / weightInv;
 }
 
 template <class Beta> vec3 BPTBase<Beta>::_connect0(
@@ -308,7 +335,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     const EyeVertex& eye,
     const light_path_t& path)
 {
-    vec3 radiance = _connect0(engine, eye);
+    vec3 radiance = vec3(0.0f); // _connect0(engine, eye);
 
     for (size_t i = 0; i < path.size(); ++i) {
         radiance += _connect(eye, path[i], i);
@@ -316,10 +343,6 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     return radiance;
 }
-
-
-
-
 
 BPTb::BPTb(size_t minSubpath, float roulette, float beta, size_t num_threads)
     : BPTBase<VariableBeta>(minSubpath, roulette, num_threads)
