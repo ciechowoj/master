@@ -128,7 +128,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxSpecular.blend --BPT --reference=/home/wojciech/SingleAreaLight.1468.exr --parallel
+	./build/master/master.bin models/CornellBoxSpecular.blend --BPT --parallel
 
 profile:
 	valgrind \

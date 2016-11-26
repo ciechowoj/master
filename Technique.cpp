@@ -140,7 +140,7 @@ void Technique::_trace_paths(
 }
 
 void Technique::_commit_images(ImageView& view) {
-    exec2d(_threadpool, view.xWindow(), view.yWindow(), 128,
+    exec_in_bands(_threadpool, view.xWindow(), view.yWindow(), 128,
         [&](size_t x0, size_t x1, size_t y0, size_t y1) {
         ImageView subview = view;
 

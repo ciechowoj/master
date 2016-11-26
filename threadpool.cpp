@@ -217,5 +217,34 @@ void exec2d(threadpool_t& pool, size_t width, size_t height, size_t batch,
   std::unique_lock<std::mutex> lock(mutex);
   condition.wait(lock, [&] { return counter == num_cells; });
 }
+
+void exec_in_bands(threadpool_t& pool, size_t width, size_t height,
+                   size_t batch, void* closure,
+                   void (*callback)(void*, size_t, size_t, size_t, size_t)) {
+  size_t num_rows = (height + batch - 1) / batch;
+  size_t num_cells = num_rows;
+
+  std::mutex mutex;
+  std::condition_variable condition;
+  std::atomic<size_t> counter(0);
+
+  for (size_t row = 0; row < num_rows; ++row) {
+    pool.exec([=, &mutex, &counter, &condition] {
+      size_t x0 = 0;
+      size_t x1 = width;
+      size_t y0 = row * batch;
+      size_t y1 = std::min(height, y0 + batch);
+      callback(closure, x0, x1, y0, y1);
+
+      if (counter.fetch_add(1) == num_cells - 1) {
+        std::unique_lock<std::mutex> lock(mutex);
+        condition.notify_one();
+      }
+    });
+  }
+
+  std::unique_lock<std::mutex> lock(mutex);
+  condition.wait(lock, [&] { return counter == num_cells; });
+}
 }
 }

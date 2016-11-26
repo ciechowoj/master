@@ -107,6 +107,9 @@ namespace detail {
 
 void exec2d(threadpool_t&, size_t, size_t, size_t, void*,
             void (*)(void*, size_t, size_t, size_t, size_t));
+
+void exec_in_bands(threadpool_t&, size_t, size_t, size_t, void*,
+                   void (*)(void*, size_t, size_t, size_t, size_t));
 }
 
 template <class F>
@@ -117,5 +120,16 @@ void exec2d(threadpool_t& pool, size_t width, size_t height, size_t batch,
                    using Closure = typename std::decay<F>::type;
                    (*reinterpret_cast<Closure*>(closure))(x0, x1, y0, y1);
                  });
+}
+
+template <class F>
+void exec_in_bands(threadpool_t& pool, size_t width, size_t height,
+                   size_t batch, F&& task) {
+  detail::exec_in_bands(
+      pool, width, height, batch, &task,
+      [](void* closure, size_t x0, size_t x1, size_t y0, size_t y1) {
+        using Closure = typename std::decay<F>::type;
+        (*reinterpret_cast<Closure*>(closure))(x0, x1, y0, y1);
+      });
 }
 }
