@@ -17,6 +17,7 @@ struct render_context_t {
     vec2 resolution;
     float resolution_y_inv;
     float focal_length_y;
+    float focal_factor_y;
     int32_t camera_id;
 
     RandomEngine* engine;

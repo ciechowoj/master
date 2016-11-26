@@ -35,6 +35,7 @@ void Technique::render(
     context.resolution = vec2(view.width(), view.height());
     context.resolution_y_inv = 1.0f / context.resolution.y;
     context.focal_length_y = cameras.focal_length_y(cameraId, context.resolution.x / context.resolution.y);
+    context.focal_factor_y = context.focal_length_y * context.focal_length_y * 0.25f;
     context.engine = &engine;
 
     size_t numNormalRays = _scene->numNormalRays();

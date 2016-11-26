@@ -285,15 +285,13 @@ vec3 BPTBase<Beta>::_connect_eye(
     const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    float foc_sq = context.focal_length_y * context.focal_length_y * 0.25;
-
     for (size_t i = 1; i < path.size(); ++i) {
         vec3 omega = path[i].surface.position() - eye.surface.position();
 
         radiance += _accumulate(
             context,
             omega,
-            [&] { return _connect(eye, path[i]) * foc_sq; });
+            [&] { return _connect(eye, path[i]) * context.focal_factor_y; });
     }
 
     return radiance;
