@@ -128,7 +128,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/SingleAreaLight.blend --BPT --beta=0 --reference=/home/wojciech/SingleAreaLight.1010.exr --parallel
+	./build/master/master.bin models/CornellBoxDiffuse.blend --BPT --beta=0 --reference=/home/wojciech/SingleAreaLight.1468.exr --parallel
 
 profile:
 	valgrind \
