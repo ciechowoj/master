@@ -16,7 +16,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 
         while (isect.isLight()) {
             if (specular == 1.0f) {
-                radiance += throughput * _scene->queryRadiance(isect, -ray.direction);
+                // radiance += throughput * _scene->queryRadiance(isect, -ray.direction);
             }
 
             ray.origin = isect.position();

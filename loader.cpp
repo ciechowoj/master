@@ -354,7 +354,7 @@ Cameras loadCameras(const aiScene* scene) {
             toVec3(camera->mPosition),
             normalize(toVec3(camera->mLookAt)),
             normalize(toVec3(camera->mUp)),
-            camera->mHorizontalFOV,
+            camera->mHorizontalFOV * 2.0f,
             camera->mClipPlaneNear,
             camera->mClipPlaneFar);
     }

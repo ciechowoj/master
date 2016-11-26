@@ -26,6 +26,15 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     EyeVertex eye[2];
     size_t itr = 0, prv = 1;
 
+    eye[itr].surface = _camera_surface(context);
+    eye[itr].omega = -ray.direction;
+    eye[itr].throughput = vec3(1.0f);
+    eye[itr].specular = 0.0f;
+    eye[itr].c = 0;
+    eye[itr].C = 0;
+
+    // radiance += _connect_eye(context, eye[itr], light_path);
+
     RayIsect isect = _scene->intersect(ray.origin, ray.direction);
 
     while (isect.isLight()) {
@@ -37,30 +46,19 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
         return radiance;
     }
 
-    eye[itr].surface = _camera_surface(context);
-    eye[itr].omega = -ray.direction;
-    eye[itr].throughput = vec3(1.0f);
-    eye[itr].specular = 0.0f;
-    eye[itr].c = 0;
-    eye[itr].C = 0;
-
-    radiance += _connect_eye(context, eye[itr], light_path);
-
     eye[itr].surface = _scene->querySurface(isect);
     eye[itr].omega = -ray.direction;
     eye[itr].throughput = vec3(1.0f);
-    eye[itr].specular = 1.0f;
-    eye[itr].c = 0;
+    eye[itr].specular = 0.0f;
+    eye[itr].c = 1;
     eye[itr].C = 0;
-
-    // radiance += _connect_light_eye(context, eye[itr]);
 
     std::swap(itr, prv);
 
     size_t path_size = 2;
 
     while (true) {
-        // radiance += _connect(eye[prv], light_path);
+        radiance += _connect(eye[prv], light_path);
 
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
@@ -237,13 +235,15 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
         = (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.specular))
         * Beta::beta(edge.fGeometry * lightBSDF.density());
 
-    float weightInv = Ap + Cp + 1.0f;
+    float weightInv = 1.0f; // Ap + Cp + 1.0f;
+
+    // std::cout << "eyeBSDF.throughput(): " << eyeBSDF.throughput() << std::endl;
 
     return _scene->occluded(eye.surface.position(), light.surface.position())
-        * light.throughput
-        * lightBSDF.throughput()
-        * eye.throughput
-        * eyeBSDF.throughput()
+        * light.throughput // const
+        * lightBSDF.throughput() // const
+        * eye.throughput // const
+        * eyeBSDF.throughput() // const
         * edge.bCosTheta
         * edge.fGeometry
         / weightInv;
@@ -295,13 +295,13 @@ vec3 BPTBase<Beta>::_connect_eye(
     const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    for (size_t i = 0; i < path.size(); ++i) {
+    for (size_t i = 1; i < path.size(); ++i) {
         vec3 omega = path[i].surface.position() - eye.surface.position();
 
         radiance += _accumulate(
             context,
             omega,
-            [&] { return _connect(eye, path); });
+            [&] { return _connect(eye, path[i]); });
     }
 
     return radiance;

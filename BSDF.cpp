@@ -1,6 +1,7 @@
 #include <runtime_assert>
 #include <BSDF.hpp>
 #include <Scene.hpp>
+#include <iostream>
 
 namespace haste {
 
@@ -189,11 +190,11 @@ const BSDFQuery CameraBSDF::query(
     const vec3& outgoing) const {
     BSDFQuery query;
 
-    query._throughput = vec3(1.0f);
+    query._throughput = vec3(1.0f) / vec3(incident.y * incident.y); // / vec3(-incident.y);
 
     query._density = 1.0f;
 
-    query._densityRev = 1.0f;
+    query._densityRev = 0.0f;
 
     return query;
 }

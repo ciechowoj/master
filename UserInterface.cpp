@@ -53,6 +53,8 @@ void UserInterface::update(
 
     _updateComputeAverage();
 
+    ImGui::InputVec("center", &centerValue);
+
     ImGui::SliderFloat("brightness", &brightness, 0.0f, 50.0f);
 
     size_t offset = min(100, int(maxErrors.size()));

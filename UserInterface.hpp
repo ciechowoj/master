@@ -37,6 +37,7 @@ struct UserInterface {
 
     bool computeAverage = true;
     vec3 averageValue = vec3(0.0f);
+    vec3 centerValue = vec3(0.0f);
 
     UserInterface(
         string scenePath,

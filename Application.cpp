@@ -84,7 +84,11 @@ void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, s
         }
 
         _ui->averageValue /= float(size);
+        size_t center = height / 2 * width + width / 2;
+        _ui->centerValue = src[center].rgb() / src[center].a;
     }
+
+    // if (_ui->compute)
 
     if (_reference.size() == 0) {
         Framework::postproc(dst, src, width, height);
