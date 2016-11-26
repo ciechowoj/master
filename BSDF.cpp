@@ -1,7 +1,6 @@
 #include <runtime_assert>
 #include <BSDF.hpp>
 #include <Scene.hpp>
-#include <iostream>
 
 namespace haste {
 

@@ -50,8 +50,9 @@ protected:
     size_t _numShadowRays;
     size_t _numSamples;
     shared<const Scene> _scene;
-    std::vector<vec3> _helper_image;
-    std::mutex _helper_mutex;
+    std::vector<vec3> _eye_image;
+    std::vector<vec3> _light_image;
+    std::mutex _light_mutex;
 
     threadpool_t _threadpool;
 
@@ -61,7 +62,7 @@ protected:
 
     void _adjust_helper_image(ImageView& view);
     void _trace_paths(ImageView& view, render_context_t& context, size_t cameraId);
-    void _commit_helper_image(ImageView& view);
+    void _commit_images(ImageView& view);
 
     template <class F>
     vec3 _accumulate(

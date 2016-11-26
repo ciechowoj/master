@@ -1,5 +1,4 @@
 #include <Cameras.hpp>
-#include <iostream>
 #include <runtime_assert>
 #include <unittest>
 

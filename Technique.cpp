@@ -1,7 +1,6 @@
 #include <unittest>
 #include <runtime_assert>
 #include <Technique.hpp>
-#include <iostream>
 
 namespace haste {
 
@@ -38,26 +37,12 @@ void Technique::render(
     context.focal_length_y = cameras.focal_length_y(cameraId, context.resolution.x / context.resolution.y);
     context.engine = &engine;
 
-    // std::cout << "context.focal_length_y = " << context.focal_length_y << std::endl;
-
-    // std::cout << "fovx: " << cameras.fovx(cameraId, context.resolution.x / context.resolution.y) << std::endl;
-    // std::cout << "fovy: " << cameras.fovy(cameraId, context.resolution.x / context.resolution.y) << std::endl;
-
-    /*float fovy = cameras.fovy(cameraId, context.resolution.x / context.resolution.y);
-    float area = 4 * asin(sin(half / 2) * sin(fovy / 2));
-
-    std::cout << "area: " << area << std::endl;
-
-    float fraction = area / (4 * pi<float>());
-
-    std::cout << "fraction: " << 1.0f / fraction << std::endl;*/
-
     size_t numNormalRays = _scene->numNormalRays();
     size_t numShadowRays = _scene->numShadowRays();
 
     _adjust_helper_image(view);
     _trace_paths(view, context, cameraId);
-    _commit_helper_image(view);
+    _commit_images(view);
 
     _numNormalRays += _scene->numNormalRays() - numNormalRays;
     _numShadowRays += _scene->numShadowRays() - numShadowRays;
@@ -120,8 +105,9 @@ unittest() {
 void Technique::_adjust_helper_image(ImageView& view) {
     size_t view_size = view.width() * view.height();
 
-    if (_helper_image.size() != view_size) {
-        _helper_image.resize(view_size, vec3(0.0f));
+    if (_light_image.size() != view_size) {
+        _light_image.resize(view_size, vec3(0.0f));
+        _eye_image.resize(view_size, vec3(0.0f));
     }
 }
 
@@ -153,7 +139,7 @@ void Technique::_trace_paths(
     });
 }
 
-void Technique::_commit_helper_image(ImageView& view) {
+void Technique::_commit_images(ImageView& view) {
     exec2d(_threadpool, view.xWindow(), view.yWindow(), 128,
         [&](size_t x0, size_t x1, size_t y0, size_t y1) {
         ImageView subview = view;
@@ -173,17 +159,22 @@ void Technique::_commit_helper_image(ImageView& view) {
         for (size_t y = subview.yBegin(); y < subview.yEnd(); ++y) {
             vec4* dst_begin = subview.data() + y * subview.width() + subview.xBegin();
             vec4* dst_end = dst_begin + subview.xWindow();
-            vec3* src_itr = _helper_image.data() + y * subview.width() + subview.xBegin();
+            vec3* light_itr = _light_image.data() + y * subview.width() + subview.xBegin();
+            vec3* eye_itr = _eye_image.data() + y * subview.width() + subview.xBegin();
 
             for (vec4* dst_itr = dst_begin; dst_itr < dst_end; ++dst_itr) {
-                if (std::isfinite(src_itr->x + src_itr->y + src_itr->z)) {
-                    *dst_itr += vec4(*src_itr, 0.0f);
+                float check_numeric_errors =
+                    light_itr->x + light_itr->y + light_itr->z +
+                    eye_itr->x + eye_itr->y + eye_itr->z;
+
+                if (std::isfinite(check_numeric_errors)) {
+                    *dst_itr += vec4(*light_itr + *eye_itr, 1.0f);
                 }
-                else {
-                    *dst_itr += vec4(0.0f, 0.0f, 0.0f, -1.0f);
-                }
-                *src_itr = vec3(0.0f);
-                ++src_itr;
+
+                *light_itr = vec3(0.0f);
+                *eye_itr = vec3(0.0f);
+                ++light_itr;
+                ++eye_itr;
             }
         }
     });
@@ -210,8 +201,8 @@ vec3 Technique::_accumulate(
         ivec2 iposition = ivec2(position);
         int width = int(context.resolution.x);
 
-        std::unique_lock<std::mutex> lock(_helper_mutex);
-        _helper_image[iposition.y * width + iposition.x] += callback(closure);
+        std::unique_lock<std::mutex> lock(_light_mutex);
+        _light_image[iposition.y * width + iposition.x] += callback(closure);
 
         return vec3(0.0f, 0.0f, 0.0f);
     }
@@ -246,9 +237,7 @@ void Technique::_for_each_ray(
     for (int y = yBegin; y < yEnd; ++y) {
         for (int x = xBegin; x < xEnd; ++x) {
             const Ray ray = shoot(float(x), float(y));
-            vec3 radiance = _traceEye(context, ray);
-            float cumulative = radiance.x + radiance.y + radiance.z;
-            view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
+            _eye_image[y * view.width() + x] += _traceEye(context, ray);
         }
 
         ++y;
@@ -256,9 +245,7 @@ void Technique::_for_each_ray(
         if (y < yEnd) {
             for (int x = rXBegin; x > rXEnd; --x) {
                 const Ray ray = shoot(float(x), float(y));
-                vec3 radiance = _traceEye(context, ray);
-                float cumulative = radiance.x + radiance.y + radiance.z;
-                view.absAt(x, y) += std::isfinite(cumulative) ? vec4(radiance, 1.0f) : vec4(0.0f);
+                _eye_image[y * view.width() + x] += _traceEye(context, ray);
             }
         }
     }

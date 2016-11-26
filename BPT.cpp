@@ -1,6 +1,5 @@
 #include <BPT.hpp>
 #include <Edge.hpp>
-#include <iostream>
 
 namespace haste {
 
@@ -224,9 +223,9 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
     auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
 
-    if (eyeBSDF.specular() == 1.0f) {
+    /*if (eyeBSDF.specular() == 1.0f) {
         // return vec3(0.0f);
-    }
+    }*/
 
     auto edge = Edge(light, eye, omega);
 
