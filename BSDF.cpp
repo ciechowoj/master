@@ -190,11 +190,11 @@ const BSDFQuery CameraBSDF::query(
     const vec3& outgoing) const {
     BSDFQuery query;
 
-    query._throughput = vec3(0.25f) / vec3(pow(incident.y * incident.y, 2));
+    query._throughput = 1.0f / vec3(pow(incident.y * incident.y, 2));
 
-    query._density = 1.0f;
+    query._density = 0.0f;
 
-    query._densityRev = 0.0f;
+    query._densityRev = 1.0f;
 
     return query;
 }

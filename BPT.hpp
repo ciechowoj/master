@@ -39,8 +39,6 @@ private:
 
     vec3 _connect_light(const EyeVertex& eye);
     vec3 _connect(const EyeVertex& eye, const light_path_t& path);
-
-    vec3 _connect_light_eye(render_context_t& context, const EyeVertex& eye);
     vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const light_path_t& path);
 };
 

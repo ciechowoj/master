@@ -26,14 +26,14 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     EyeVertex eye[2];
     size_t itr = 0, prv = 1;
 
-    eye[itr].surface = _camera_surface(context);
-    eye[itr].omega = -ray.direction;
-    eye[itr].throughput = vec3(1.0f);
-    eye[itr].specular = 0.0f;
-    eye[itr].c = 0;
-    eye[itr].C = 0;
+    eye[prv].surface = _camera_surface(context);
+    eye[prv].omega = -ray.direction;
+    eye[prv].throughput = vec3(1.0f);
+    eye[prv].specular = 0.0f;
+    eye[prv].c = 0;
+    eye[prv].C = 0;
 
-    radiance += _connect_eye(context, eye[itr], light_path);
+    radiance += _connect_eye(context, eye[prv], light_path);
 
     RayIsect isect = _scene->intersect(ray.origin, ray.direction);
 
@@ -48,9 +48,12 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
 
     eye[itr].surface = _scene->querySurface(isect);
     eye[itr].omega = -ray.direction;
+
+    auto edge = Edge(eye[prv], eye[itr]);
+
     eye[itr].throughput = vec3(1.0f);
     eye[itr].specular = 0.0f;
-    eye[itr].c = 1.0f;
+    eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
     eye[itr].C = 0;
 
     std::swap(itr, prv);
@@ -222,7 +225,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
 
     if (eyeBSDF.specular() == 1.0f) {
-        return vec3(0.0f);
+        // return vec3(0.0f);
     }
 
     auto edge = Edge(light, eye, omega);
@@ -237,13 +240,11 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     float weightInv = Ap + Cp + 1.0f;
 
-    // std::cout << "eyeBSDF.throughput(): " << eyeBSDF.throughput() << std::endl;
-
     return _scene->occluded(eye.surface.position(), light.surface.position())
-        * light.throughput // const
-        * lightBSDF.throughput() // const
-        * eye.throughput // const
-        * eyeBSDF.throughput() // const
+        * light.throughput
+        * lightBSDF.throughput()
+        * eye.throughput
+        * eyeBSDF.throughput()
         * edge.bCosTheta
         * edge.fGeometry
         / weightInv;
@@ -279,23 +280,13 @@ vec3 BPTBase<Beta>::_connect(const EyeVertex& eye, const light_path_t& path) {
 }
 
 template <class Beta>
-vec3 BPTBase<Beta>::_connect_light_eye(
-    render_context_t& context,
-    const EyeVertex& eye) {
-    return _accumulate(
-        context,
-        -eye.omega,
-        [&] { return _connect_light(eye); });
-}
-
-template <class Beta>
 vec3 BPTBase<Beta>::_connect_eye(
     render_context_t& context,
     const EyeVertex& eye,
     const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    float foc_sq = context.focal_length_y * context.focal_length_y;
+    float foc_sq = context.focal_length_y * context.focal_length_y * 0.25;
 
     for (size_t i = 1; i < path.size(); ++i) {
         vec3 omega = path[i].surface.position() - eye.surface.position();
