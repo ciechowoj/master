@@ -9,7 +9,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
     vec3 throughput = vec3(1.0f);
     vec3 radiance = vec3(0.0f);
     float specular = 1.0f;
-    int bounce = 0;
+    unsigned bounce = 0;
 
     while (true) {
         RayIsect isect = _scene->intersect(ray.origin, ray.direction);

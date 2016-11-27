@@ -13,11 +13,11 @@ template <class Beta> VCMBase<Beta>::VCMBase(
     float maxRadius,
     size_t num_threads)
     : Technique(num_threads)
-    , _minSubpath(minSubpath)
-    , _roulette(roulette)
     , _numPhotons(numPhotons)
     , _numGather(numGather)
     , _maxRadius(maxRadius)
+    , _minSubpath(minSubpath)
+    , _roulette(roulette)
     , _eta(_numPhotons * pi<float>() * _maxRadius * _maxRadius)
 { }
 

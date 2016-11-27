@@ -254,10 +254,6 @@ Options parseArgs(int argc, char const* const* argv) {
             options.technique = Options::PT;
             dict.erase("--PT");
         }
-        else if (dict.count("--PM")) {
-            options.technique = Options::PM;
-            dict.erase("--PM");
-        }
         else if (dict.count("--VCM")) {
             options.technique = Options::VCM;
             dict.erase("--VCM");
@@ -271,8 +267,7 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--num-photons")) {
-            if (options.technique != Options::PM &&
-                options.technique != Options::VCM &&
+            if (options.technique != Options::VCM &&
                 options.technique != Options::UPG) {
                 options.displayHelp = true;
                 options.displayMessage = "Number of photons can be specified for PM, VCM and UPG.";
@@ -290,8 +285,7 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--num-gather")) {
-            if (options.technique != Options::PM &&
-                options.technique != Options::VCM &&
+            if (options.technique != Options::VCM &&
                 options.technique != Options::UPG) {
                 options.displayHelp = true;
                 options.displayMessage = "--num-gather can be specified for PM, VCM and UPG.";
@@ -309,8 +303,7 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--max-radius")) {
-            if (options.technique != Options::PM &&
-                options.technique != Options::VCM &&
+            if (options.technique != Options::VCM &&
                 options.technique != Options::UPG) {
                 options.displayHelp = true;
                 options.displayMessage = "--max-radius can be specified for PM, VCM and UPG.";
@@ -602,12 +595,6 @@ shared<Technique> makeTechnique(Options& options) {
                 options.roulette,
                 options.numThreads);
 
-        /* case Options::PM:
-            return std::make_shared<PhotonMapping>(
-                options.numPhotons,
-                options.numGather,
-                options.maxRadius); */
-
         case Options::VCM:
             if (options.beta == 0.0f) {
                 return std::make_shared<VCM0>(
@@ -686,7 +673,7 @@ shared<Technique> makeTechnique(Options& options) {
                     options.numThreads);
             }
 
-        case Options::Viewer:
+        default:
             return makeViewer(options);
     }
 }
@@ -699,7 +686,6 @@ string techniqueString(const Options& options) {
     switch (options.technique) {
         case Options::BPT: return "BPT";
         case Options::PT: return "PT";
-        case Options::PM: return "PM";
         case Options::VCM: return "VCM";
         case Options::UPG: return "UPG";
         case Options::Viewer: return "Viewer";

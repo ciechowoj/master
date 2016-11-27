@@ -13,10 +13,10 @@ UPGBase<Beta>::UPGBase(
     float radius,
     size_t num_threads)
     : Technique(num_threads)
-    , _minSubpath(minSubpath)
-    , _roulette(roulette)
     , _numPhotons(numPhotons)
     , _numGather(numGather)
+    , _minSubpath(minSubpath)
+    , _roulette(roulette)
     , _radius(radius)
 { }
 
@@ -168,8 +168,6 @@ void UPGBase<Beta>::_traceLight(RandomEngine& engine, Appender& path) {
     path[prv].A = Beta::beta(edge.bGeometry) * path[prv].a / Beta::beta(light.areaDensity());
     path[prv].B = 0.0f;
 
-    float b = 0.0f;
-
     float roulette = path_size < _minSubpath ? 1.0f : _roulette;
     float uniform = sampleUniform1(engine).value();
 
@@ -214,8 +212,6 @@ void UPGBase<Beta>::_traceLight(RandomEngine& engine, Appender& path) {
                 + (1.0f - bsdf.specular()))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
-
-        b = 1.0f;
 
         if (bsdf.specular() == 1.0f) {
             path[prv] = path[itr];

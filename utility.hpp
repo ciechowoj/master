@@ -68,29 +68,6 @@ string fixedPath(string base, string scene, int samples);
 pair<string, string> splitext(string path);
 size_t getmtime(const string& path);
 
-void renderPoints(
-    vector<vec4>& image,
-    size_t width,
-    const vector<vec3>& points,
-    const vec3& color,
-    const mat4& proj);
-
-void renderPoints(
-    vector<vec4>& image,
-    size_t width,
-    const vector<vec3>& points,
-    const vec3& color,
-    const vec3& origin);
-
-void renderPoints(
-    vector<vec4>& image,
-    size_t width,
-    const vector<vec3>& points,
-    const vec3& color,
-    float theta,
-    float phi,
-    float radius);
-
 vec3 computeAVG(const string& path);
 void printAVG(const string& path);
 

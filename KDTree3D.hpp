@@ -190,7 +190,7 @@ private:
     vector<T> _data;
     BitfieldVector<2> _flags;
 
-    size_t query_k(
+    void query_k(
         QueryKState& state,
         size_t begin,
         size_t end) const

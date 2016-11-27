@@ -103,7 +103,7 @@ void UserInterface::_displayRadiance(
             << "]"
             << " W/(m*m*sr)";
 
-        ImGui::SetTooltip(stream.str().c_str());
+        ImGui::SetTooltip("%s", stream.str().c_str());
     }
 }
 

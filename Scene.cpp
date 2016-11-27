@@ -11,9 +11,9 @@ Scene::Scene(
     vector<Mesh>&& meshes,
     AreaLights&& areaLights)
     : _cameras(cameras)
-    , materials(move(materials))
     , meshes(move(meshes))
     , lights(move(areaLights))
+    , materials(move(materials))
 {
     rtcScene = nullptr;
 
@@ -90,7 +90,7 @@ const BSDF& Scene::queryBSDF(const RayIsect& isect) const {
 }
 
 const BSDF& Scene::queryBSDF(const SurfacePoint& surface) const {
-    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
+    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
     return *materials.bsdfs[surface.materialId() + materials.lights_offset].get();
 }
 
@@ -190,7 +190,7 @@ const BSDFSample Scene::sampleBSDF(
     const SurfacePoint& surface,
     const vec3& omega) const
 {
-    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
+    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
 
     auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
     return bsdf->sample(engine, surface, omega);
@@ -201,7 +201,7 @@ const BSDFSample Scene::sampleAdjointBSDF(
     const SurfacePoint& surface,
     const vec3& omega) const
 {
-    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
+    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
 
     auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
     return bsdf->sampleAdjoint(engine, surface, omega);
@@ -212,7 +212,7 @@ const BSDFQuery Scene::queryBSDF(
     const vec3& incident,
     const vec3& outgoing) const
 {
-    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
+    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
 
     auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
     return bsdf->query(surface, incident, outgoing);
@@ -223,7 +223,7 @@ const BSDFQuery Scene::queryAdjointBSDF(
     const vec3& incident,
     const vec3& outgoing) const
 {
-    runtime_assert(surface.materialId() + materials.lights_offset < materials.bsdfs.size());
+    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
 
     auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
     return bsdf->queryAdjoint(surface, incident, outgoing);

@@ -207,6 +207,8 @@ vec3 Technique::_accumulate(
 
         return vec3(0.0f, 0.0f, 0.0f);
     }
+
+    return vec3(0.0f, 0.0f, 0.0f);
 }
 
 void Technique::_for_each_ray(
@@ -220,8 +222,8 @@ void Technique::_for_each_ray(
     const int yBegin = int(view.yBegin());
     const int yEnd = int(view.yEnd());
 
-    runtime_assert(0 <= xBegin && xEnd <= view.width());
-    runtime_assert(0 <= yBegin && yEnd <= view.height());
+    runtime_assert(0 <= xBegin && xEnd <= (int)view.width());
+    runtime_assert(0 <= yBegin && yEnd <= (int)view.height());
 
     auto shoot = [&](float x, float y) -> Ray {
         vec2 position = vec2(x, y) + sampleUniform2(*context.engine).value();

@@ -26,7 +26,7 @@ void draw_fullscreen_quad(
     const std::vector<glm::vec4>& image,
     float scale);
 
-int loop(GLFWwindow* window, const std::function<void(int, int, float&, void*)>& loop);
+void loop(GLFWwindow* window, const std::function<void(int, int, float&, void*)>& loop);
 
 class Framework {
 public:

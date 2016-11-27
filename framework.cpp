@@ -289,7 +289,7 @@ int run(
     return 0;
 }
 
-int loop(GLFWwindow* window, const std::function<void(int, int, float&, void*)>& loop) {
+void loop(GLFWwindow* window, const std::function<void(int, int, float&, void*)>& loop) {
     while (!glfwWindowShouldClose(window)) {
         window_context_t* context = (window_context_t*)glfwGetWindowUserPointer(window);
         glViewport(0, 0, context->texture_width, context->texture_height);
@@ -335,7 +335,7 @@ int Framework::run(size_t width, size_t height, const std::string& caption) {
         _window = window;
 
         std::vector<glm::vec4> buffer;
-        std::atomic<size_t> bufferWidth, bufferHeight;
+        std::atomic<int> bufferWidth, bufferHeight;
         std::atomic<bool> trigger, done, quit;
         std::atomic<double> elapsed;
         std::mutex workerMutex;
