@@ -118,10 +118,8 @@ template <class Beta> vec3 BPTBase<Beta>::_traceEye(
     return radiance;
 }
 
-template <class Beta> void BPTBase<Beta>::_traceLight(
-    RandomEngine& engine,
-    light_path_t& path)
-{
+template <class Beta>
+void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     size_t itr = path.size() + 1, prv = path.size();
 
     LightSampleEx light = _scene->sampleLight(engine);

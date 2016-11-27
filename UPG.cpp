@@ -54,7 +54,7 @@ vec3 UPGBase<Beta>::_traceEye(
         return radiance;
     }
 
-    fixed_vector<LightVertex, _maxSubpath> light_path;
+    light_path_t light_path;
     _traceLight(*context.engine, light_path);
 
     EyeVertex eye[2];
@@ -144,11 +144,23 @@ vec3 UPGBase<Beta>::_traceEye(
     return radiance;
 }
 
-template <class Beta> template <class Appender>
+template <class Beta> template <bool First, class Appender>
 void UPGBase<Beta>::_traceLight(RandomEngine& engine, Appender& path) {
-    size_t itr = path.size() + 1, prv = path.size();
+    size_t itr = path.size(), prv = path.size();
 
     LightSampleEx light = _scene->sampleLight(engine);
+
+    if (First) {
+        path.emplace_back();
+        path[itr].surface = light.surface();
+        path[itr].omega = vec3(0.0f);
+        path[itr].throughput = light.radiance() / light.areaDensity();
+        path[itr].specular = 0.0f;
+        path[itr].a = 1.0f / Beta::beta(light.areaDensity());
+        path[itr].A = 0.0f;
+        path[itr].B = 0.0f;
+        ++itr;
+    }
 
     RayIsect isect = _scene->intersectMesh(light.position(), light.omega());
 
@@ -158,16 +170,19 @@ void UPGBase<Beta>::_traceLight(RandomEngine& engine, Appender& path) {
 
     auto edge = Edge(light, isect);
 
-    size_t path_size = 2;
     path.emplace_back();
-    path[prv].surface = _scene->querySurface(isect);
-    path[prv].omega = -light.omega();
-    path[prv].throughput = light.radiance() * edge.bCosTheta / light.density();
-    path[prv].specular = 0.0f;
-    path[prv].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
-    path[prv].A = Beta::beta(edge.bGeometry) * path[prv].a / Beta::beta(light.areaDensity());
-    path[prv].B = 0.0f;
+    path[itr].surface = _scene->querySurface(isect);
+    path[itr].omega = -light.omega();
+    path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
+    path[itr].specular = 0.0f;
+    path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
+    path[itr].A = Beta::beta(edge.bGeometry) * path[itr].a / Beta::beta(light.areaDensity());
+    path[itr].B = 0.0f;
 
+    prv = itr;
+    ++itr;
+
+    size_t path_size = 2;
     float roulette = path_size < _minSubpath ? 1.0f : _roulette;
     float uniform = sampleUniform1(engine).value();
 
@@ -240,17 +255,17 @@ template <class Beta>
 void UPGBase<Beta>::_traceLight(
     RandomEngine& engine,
     vector<LightVertex>& path) {
-    _traceLight<vector<LightVertex>>(engine, path);
+    _traceLight<false, vector<LightVertex>>(engine, path);
 }
 
 template <class Beta>
 void UPGBase<Beta>::_traceLight(
     RandomEngine& engine,
-    fixed_vector<LightVertex, _maxSubpath>& path) {
-    _traceLight<fixed_vector<LightVertex, _maxSubpath>>(engine, path);
+    light_path_t& path) {
+    _traceLight<true, light_path_t>(engine, path);
 }
 
-template <class Beta>
+template <class Beta> template <bool SkipDirectVM>
 float UPGBase<Beta>::_weightVC(
     const LightVertex& light,
     const BSDFQuery& lightBSDF,
@@ -259,6 +274,8 @@ float UPGBase<Beta>::_weightVC(
     const Edge& edge,
     float radius) {
     float eta = float(_numPhotons) * pi<float>() * radius * radius;
+
+    float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
 
     float Ap
         = (light.A * Beta::beta(lightBSDF.densityRev()) + light.a * (1.0f - light.specular))
@@ -278,7 +295,7 @@ float UPGBase<Beta>::_weightVC(
 
     float weightInv
         = Ap + eta * Bp + Cp + eta * Dp
-        + Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev()) + 1.0f;
+        + Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev() * skip_direct_vm) + 1.0f;
 
     return 1.0f / weightInv;
 }
@@ -293,7 +310,7 @@ float UPGBase<Beta>::_weightVM(
     float radius) {
     float eta = float(_numPhotons) * pi<float>() * radius * radius;
 
-    float weight = _weightVC(light, lightBSDF, eye, eyeBSDF, edge, radius);
+    float weight = _weightVC<false>(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
     return Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev()) * weight;
 }
@@ -383,45 +400,7 @@ vec3 UPGBase<Beta>::_connect0(RandomEngine& engine, const EyeVertex& eye, float 
     return radiance;
 }
 
-template <class Beta>
-vec3 UPGBase<Beta>::_connect1(RandomEngine& engine, const EyeVertex& eye, float radius) {
-    LightSampleEx lightSample = _scene->sampleLightEx(engine, eye.surface.position());
-
-    auto eyeBSDF = _scene->queryBSDF(eye.surface, -lightSample.omega(), eye.omega);
-
-    if (eyeBSDF.specular() == 1.0f) {
-        return vec3(0.0f);
-    }
-
-    auto edge = Edge(lightSample, eye, lightSample.omega());
-
-    float eta = float(_numPhotons) * pi<float>() * radius * radius;
-
-    float Ap
-        = Beta::beta(eyeBSDF.density() * edge.bGeometry / lightSample.areaDensity());
-
-    float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(edge.fGeometry * lightSample.omegaDensity());
-
-    float Dp
-        = (eye.D * Beta::beta(eyeBSDF.density()) + eye.d)
-        * Beta::beta(edge.fGeometry * lightSample.omegaDensity());
-
-    float weightInv
-        = Ap + Cp + eta * Dp + 1.0f;
-
-    return _combine(
-        lightSample.radiance()
-            * eye.throughput
-            * eyeBSDF.throughput()
-            * edge.bCosTheta
-            * edge.fGeometry
-            / lightSample.areaDensity(),
-        1.0f / weightInv);
-}
-
-template <class Beta>
+template <class Beta> template <bool SkipDirectVM>
 vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye, float radius) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
@@ -434,7 +413,7 @@ vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye, flo
 
     auto edge = Edge(light, eye, omega);
 
-    auto weight = _weightVC(light, lightBSDF, eye, eyeBSDF, edge, radius);
+    auto weight = _weightVC<SkipDirectVM>(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
     return _combine(
         _scene->occluded(eye.surface.position(), light.surface.position())
@@ -451,12 +430,14 @@ template <class Beta>
 vec3 UPGBase<Beta>::_connect(
     RandomEngine& engine,
     const EyeVertex& eye,
-    const fixed_vector<LightVertex, _maxSubpath>& path,
+    const light_path_t& path,
     float radius) {
-    vec3 radiance = _connect0(engine, eye, radius) + _connect1(engine, eye, radius);
+    vec3 radiance = _connect0(engine, eye, radius); // + _connect1(engine, eye, radius);
 
-    for (size_t i = 0; i < path.size(); ++i) {
-        radiance += _connect(path[i], eye, radius);
+    radiance += _connect<true>(path[0], eye, radius);
+
+    for (size_t i = 1; i < path.size(); ++i) {
+        radiance += _connect<false>(path[i], eye, radius);
     }
 
     return radiance;

@@ -48,17 +48,18 @@ private:
     };
 
     static const size_t _maxSubpath = 1024;
+    using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
 
     vec3 _traceEye(render_context_t& context, Ray ray) override;
 
-    template <class Appender>
+    template <bool First, class Appender>
     void _traceLight(RandomEngine& engine, Appender& path);
     void _traceLight(RandomEngine& engine, vector<LightVertex>& path);
     void _traceLight(
         RandomEngine& engine,
-        fixed_vector<LightVertex, _maxSubpath>& path);
+        light_path_t& path);
 
-    float _weightVC(
+    template <bool SkipDirectVM> float _weightVC(
         const LightVertex& light,
         const BSDFQuery& lightBSDF,
         const EyeVertex& eye,
@@ -83,13 +84,14 @@ private:
         float radius);
 
     vec3 _connect0(RandomEngine& engine, const EyeVertex& eye, float radius);
-    vec3 _connect1(RandomEngine& engine, const EyeVertex& eye, float radius);
+
+    template <bool SkipDirectVM>
     vec3 _connect(const LightVertex& light, const EyeVertex& eye, float radius);
 
     vec3 _connect(
         RandomEngine& engine,
         const EyeVertex& eye,
-        const fixed_vector<LightVertex, _maxSubpath>& path,
+        const light_path_t& path,
         float radius);
 
     void _scatter(RandomEngine& engine);
