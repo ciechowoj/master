@@ -38,10 +38,15 @@ string UPGBase<Beta>::name() const {
 }
 
 template <class Beta>
-vec3 UPGBase<Beta>::_traceEye(
-    render_context_t& context,
-    Ray ray) {
+vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
+    float radius = _radius;
+    light_path_t light_path;
+
+    _traceLight(*context.engine, light_path);
+
     vec3 radiance = vec3(0.0f);
+    EyeVertex eye[2];
+    size_t itr = 0, prv = 1;
 
     RayIsect isect = _scene->intersect(ray.origin, ray.direction);
 
@@ -54,26 +59,6 @@ vec3 UPGBase<Beta>::_traceEye(
         return radiance;
     }
 
-    light_path_t light_path;
-    _traceLight(*context.engine, light_path);
-
-    EyeVertex eye[2];
-    size_t itr = 0, prv = 1;
-    float radius = _radius;
-
-    /*eye[itr].surface = _scene->querySurface(isect);
-    eye[itr].omega = vec3(0.0f, 0.0f, -1.0f);
-    eye[itr].throughput = eye.direction;
-    eye[itr].specular = 1.0f;
-    eye[itr].c = 0;
-    eye[itr].C = 0;
-    eye[itr].d = 0;
-    eye[itr].D = 0;
-
-    radiance += _gather(*context.engine, eye[itr], radius);
-    // radiance += _connect(*context.engine, eye[itr], light_path, radius);
-    std::swap(itr, prv); */
-
     eye[itr].surface = _scene->querySurface(isect);
     eye[itr].omega = -ray.direction;
     eye[itr].throughput = vec3(1.0f);
@@ -83,15 +68,14 @@ vec3 UPGBase<Beta>::_traceEye(
     eye[itr].d = 0;
     eye[itr].D = 0;
 
-    radiance += _gather(*context.engine, eye[itr], radius);
-    radiance += _connect(*context.engine, eye[itr], light_path, radius);
     std::swap(itr, prv);
 
     size_t path_size = 2;
-    float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-    float uniform = sampleUniform1(*context.engine).value();
 
-    while (uniform < roulette) {
+    while (true) {
+        radiance += _gather(*context.engine, eye[prv], radius);
+        radiance += _connect(*context.engine, eye[prv], light_path, radius);
+
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
         isect = _scene->intersectMesh(eye[prv].surface.position(), bsdf.omega());
@@ -109,7 +93,7 @@ vec3 UPGBase<Beta>::_traceEye(
             = eye[prv].throughput
             * bsdf.throughput()
             * edge.bCosTheta
-            / (bsdf.density() * roulette);
+            / bsdf.density();
 
         eye[prv].specular = max(eye[prv].specular, bsdf.specular());
         eye[itr].specular = bsdf.specular();
@@ -131,14 +115,18 @@ vec3 UPGBase<Beta>::_traceEye(
             * Beta::beta(edge.bGeometry)
             * eye[itr].c;
 
-
-        ++path_size;
-        radiance += _gather(*context.engine, eye[itr], radius);
-        radiance += _connect(*context.engine, eye[itr], light_path, radius);
         std::swap(itr, prv);
 
-        roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        uniform = sampleUniform1(*context.engine).value();
+        float roulette = path_size < _minSubpath ? 1.0f : _roulette;
+        float uniform = sampleUniform1(*context.engine).value();
+
+        if (roulette < uniform) {
+            return radiance;
+        }
+        else {
+            eye[prv].throughput /= roulette;
+            ++path_size;
+        }
     }
 
     return radiance;
