@@ -144,4 +144,21 @@ public:
         size_t numThreads);
 };
 
+using VCM0 = UPGBase<FixedBeta<0>, GatherMode::Biased>;
+using VCM1 = UPGBase<FixedBeta<1>, GatherMode::Biased>;
+using VCM2 = UPGBase<FixedBeta<2>, GatherMode::Biased>;
+
+class VCMb : public UPGBase<VariableBeta, GatherMode::Biased> {
+public:
+    VCMb(
+        size_t minSubpath,
+        float roulette,
+        size_t numPhotons,
+        size_t numGather,
+        float radius,
+        float beta,
+        size_t numThreads);
+};
+
+
 }

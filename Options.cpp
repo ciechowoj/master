@@ -6,8 +6,6 @@
 
 #include <BPT.hpp>
 #include <PT.hpp>
-// #include <PhotonMapping.hpp>
-#include <VCM.hpp>
 #include <UPG.hpp>
 #include <Viewer.hpp>
 

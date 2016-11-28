@@ -524,10 +524,9 @@ vec3 UPGBase<Beta, Mode>::_merge(
         * eye.throughput
         * eyeBSDF.throughput()
         * edge.bCosTheta
-        * edge.fGeometry
-        * density;
+        * edge.fGeometry;
 
-    return _combine(result, weight);
+    return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
 }
 
 template <class Beta, GatherMode Mode>
@@ -552,10 +551,9 @@ vec3 UPGBase<Beta, Mode>::_merge(
         * eye.throughput
         * eyeBSDF.throughput()
         * edge.bCosTheta
-        * edge.fGeometry
-        * density;
+        * edge.fGeometry;
 
-    return _combine(result, weight);
+    return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
 }
 
 template <class Beta, GatherMode Mode>
@@ -577,8 +575,7 @@ UPGb::UPGb(
         numPhotons,
         radius,
         numGather,
-        num_threads)
-{
+        num_threads) {
     VariableBeta::init(beta);
 }
 
@@ -586,5 +583,28 @@ template class UPGBase<FixedBeta<0>, GatherMode::Unbiased>;
 template class UPGBase<FixedBeta<1>, GatherMode::Unbiased>;
 template class UPGBase<FixedBeta<2>, GatherMode::Unbiased>;
 template class UPGBase<VariableBeta, GatherMode::Unbiased>;
+
+VCMb::VCMb(
+    size_t minSubpath,
+    float roulette,
+    size_t numPhotons,
+    size_t numGather,
+    float radius,
+    float beta,
+    size_t num_threads)
+    : UPGBase<VariableBeta, GatherMode::Biased>(
+        minSubpath,
+        roulette,
+        numPhotons,
+        radius,
+        numGather,
+        num_threads) {
+    VariableBeta::init(beta);
+}
+
+template class UPGBase<FixedBeta<0>, GatherMode::Biased>;
+template class UPGBase<FixedBeta<1>, GatherMode::Biased>;
+template class UPGBase<FixedBeta<2>, GatherMode::Biased>;
+template class UPGBase<VariableBeta, GatherMode::Biased>;
 
 }
