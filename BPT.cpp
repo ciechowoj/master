@@ -14,8 +14,7 @@ template <class Beta> string BPTBase<Beta>::name() const {
 }
 
 template <class Beta>
-vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray)
-{
+vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     light_path_t light_path;
 
     _traceLight(*context.engine, light_path);

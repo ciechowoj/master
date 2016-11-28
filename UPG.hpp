@@ -8,7 +8,12 @@ namespace haste {
 
 struct Edge;
 
-template <class Beta> class UPGBase : public Technique, protected Beta {
+enum class GatherMode {
+    Unbiased,
+    Biased,
+};
+
+template <class Beta, GatherMode Mode> class UPGBase : public Technique, protected Beta {
 public:
     UPGBase(
         size_t minSubpath,
@@ -83,16 +88,17 @@ private:
         const Edge& edge,
         float radius);
 
-    vec3 _connect0(RandomEngine& engine, const EyeVertex& eye, float radius);
+    vec3 _connect_light(const EyeVertex& eye, float radius);
 
     template <bool SkipDirectVM>
     vec3 _connect(const LightVertex& light, const EyeVertex& eye, float radius);
 
     vec3 _connect(
-        RandomEngine& engine,
         const EyeVertex& eye,
         const light_path_t& path,
         float radius);
+
+    vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const light_path_t& path, float radius);
 
     void _scatter(RandomEngine& engine);
 
@@ -102,6 +108,13 @@ private:
         RandomEngine& engine,
         const LightVertex& light,
         const EyeVertex& eye,
+        float radius);
+
+    vec3 _merge(
+        RandomEngine& engine,
+        const LightVertex& light,
+        const EyeVertex& eye,
+        const BSDFQuery& eyeBSDF,
         float radius);
 
     vec3 _combine(vec3 throughput, float weight);
@@ -115,11 +128,11 @@ private:
     v3::HashGrid3D<LightVertex> _vertices;
 };
 
-typedef UPGBase<FixedBeta<0>> UPG0;
-typedef UPGBase<FixedBeta<1>> UPG1;
-typedef UPGBase<FixedBeta<2>> UPG2;
+using UPG0 = UPGBase<FixedBeta<0>, GatherMode::Unbiased>;
+using UPG1 = UPGBase<FixedBeta<1>, GatherMode::Unbiased>;
+using UPG2 = UPGBase<FixedBeta<2>, GatherMode::Unbiased>;
 
-class UPGb : public UPGBase<VariableBeta> {
+class UPGb : public UPGBase<VariableBeta, GatherMode::Unbiased> {
 public:
     UPGb(
         size_t minSubpath,
