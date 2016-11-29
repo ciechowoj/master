@@ -2,9 +2,7 @@
 
 namespace haste {
 
-const BSDFSample ReflectionBSDF::sample(
-    RandomEngine& engine,
-    const vec3& omega) const
+const BSDFSample ReflectionBSDF::sample(RandomEngine& engine, vec3 omega) const
 {
     BSDFSample sample;
     sample._throughput = vec3(1.0f, 1.0f, 1.0f) / omega.y;

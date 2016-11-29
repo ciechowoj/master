@@ -27,7 +27,7 @@ public:
         const shared<const Scene>& scene,
         RandomEngine& engine,
         const function<void(string, float)>& progress,
-        bool parallel);
+        bool parallel) override;
 
     string name() const override;
 

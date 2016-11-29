@@ -4,27 +4,11 @@
 
 namespace haste {
 
-const bool BSDFSample::zero() const
-{
-    return _throughput.x + _throughput.y + _throughput.z == 0.0f;
-}
-
-const BSDFQuery BSDFSample::query() const
-{
-    BSDFQuery query;
-    query.throughput = throughput();
-    query.density = density();
-    query.densityRev = densityRev();
-    return query;
-}
-
 BSDF::BSDF() { }
 
 BSDF::~BSDF() { }
 
-const BSDFQuery BSDF::query(
-        const vec3& incident,
-        const vec3& outgoing) const
+const BSDFQuery BSDF::query(vec3 incident, vec3 outgoing) const
 {
     BSDFQuery query;
 
@@ -43,17 +27,14 @@ const BSDFQuery BSDF::query(
     return query;
 }
 
-const BSDFQuery BSDF::query(
-    const SurfacePoint& point,
-    const vec3& incident,
-    const vec3& outgoing) const
+const BSDFQuery BSDF::query(const SurfacePoint& point, vec3 incident, vec3 outgoing) const
 {
     return query(point.toSurface(incident), point.toSurface(outgoing));
 }
 
 const BSDFSample BSDF::sample(
     RandomEngine& engine,
-    const vec3& omega) const
+    vec3 omega) const
 {
     auto hemisphere = sampleCosineHemisphere1(engine);
 
@@ -69,7 +50,7 @@ const BSDFSample BSDF::sample(
 
 const BSDFBoundedSample BSDF::sampleBounded(
     RandomEngine& engine,
-    const vec3& omega,
+    vec3 omega,
     const angular_bound_t& bound) const
 {
     return BSDFBoundedSample();
@@ -78,7 +59,7 @@ const BSDFBoundedSample BSDF::sampleBounded(
 const BSDFSample BSDF::sample(
     RandomEngine& engine,
     const SurfacePoint& point,
-    const vec3& omega) const
+    vec3 omega) const
 {
     BSDFSample result = sample(engine, point.toSurface(omega));
     result._omega = point.toWorld(result.omega());
@@ -86,9 +67,7 @@ const BSDFSample BSDF::sample(
     return result;
 }
 
-const BSDFQuery DeltaBSDF::query(
-    const vec3& incident,
-    const vec3& outgoing) const
+const BSDFQuery DeltaBSDF::query(vec3 incident, vec3 outgoing) const
 {
     BSDFQuery query;
     query.throughput = vec3(0.0f);
@@ -98,21 +77,16 @@ const BSDFQuery DeltaBSDF::query(
     return query;
 }
 
-
 LightBSDF::LightBSDF(vec3 radiance)
     : _radiance(radiance * one_over_pi<float>()) {
 }
 
-const BSDFSample LightBSDF::sample(
-    RandomEngine& engine,
-    const vec3& omega) const {
+const BSDFSample LightBSDF::sample(RandomEngine& engine, vec3 omega) const {
     runtime_assert(false);
     return BSDFSample();
 }
 
-const BSDFQuery LightBSDF::query(
-    const vec3& incident,
-    const vec3& outgoing) const {
+const BSDFQuery LightBSDF::query(vec3 incident, vec3 outgoing) const {
     BSDFQuery query;
 
     query.throughput = outgoing.y > 0.0f ? vec3(1.0f) : vec3(0.0f);
@@ -128,16 +102,12 @@ const BSDFQuery LightBSDF::query(
     return query;
 }
 
-const BSDFSample CameraBSDF::sample(
-    RandomEngine& engine,
-    const vec3& omega) const {
+const BSDFSample CameraBSDF::sample(RandomEngine& engine, vec3 omega) const {
     runtime_assert(false);
     return BSDFSample();
 }
 
-const BSDFQuery CameraBSDF::query(
-    const vec3& incident,
-    const vec3& outgoing) const {
+const BSDFQuery CameraBSDF::query(vec3 incident, vec3 outgoing) const {
     BSDFQuery query;
 
     query.throughput = 1.0f / vec3(pow(incident.y * incident.y, 2));

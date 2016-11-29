@@ -7,9 +7,7 @@ DiffuseBSDF::DiffuseBSDF(const vec3& diffuse)
     : _diffuse(diffuse) {
 }
 
-const BSDFQuery DiffuseBSDF::query(
-    const vec3& incident,
-    const vec3& outgoing) const
+const BSDFQuery DiffuseBSDF::query(vec3 incident, vec3 outgoing) const
 {
     BSDFQuery query;
 
@@ -28,9 +26,7 @@ const BSDFQuery DiffuseBSDF::query(
     return query;
 }
 
-const BSDFSample DiffuseBSDF::sample(
-    RandomEngine& engine,
-    const vec3& omega) const
+const BSDFSample DiffuseBSDF::sample(RandomEngine& engine, vec3 omega) const
 {
     if (omega.y < 0.0f)
     {
@@ -60,7 +56,7 @@ const BSDFSample DiffuseBSDF::sample(
 
 const BSDFBoundedSample DiffuseBSDF::sampleBounded(
     RandomEngine& engine,
-    const vec3& omega,
+    vec3 omega,
     const angular_bound_t& bound) const {
     auto distribution = lambertian_bounded_distribution_t(bound);
 

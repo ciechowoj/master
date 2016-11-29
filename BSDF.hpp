@@ -13,8 +13,8 @@ struct BSDFQuery {
 };
 
 struct BSDFSample {
-    vec3 _throughput;
     vec3 _omega;
+    vec3 _throughput;
     float _density;
     float _densityRev;
     float _specular;
@@ -24,8 +24,8 @@ struct BSDFSample {
     const float density() const { return _density; }
     const float densityRev() const { return _densityRev; }
     const float specular() const { return _specular; }
-    const bool zero() const;
-    const BSDFQuery query() const;
+
+
 };
 
 struct BSDFBoundedSample {
@@ -42,28 +42,26 @@ public:
 
     virtual ~BSDF();
 
-    virtual const BSDFQuery query(
-        const vec3& incident,
-        const vec3& outgoing) const;
+    virtual const BSDFQuery query(vec3 incident, vec3 outgoing) const;
 
     const BSDFQuery query(
         const SurfacePoint& point,
-        const vec3& incident,
-        const vec3& outgoing) const;
+        vec3 incident,
+        vec3 outgoing) const;
 
     virtual const BSDFSample sample(
         RandomEngine& engine,
-        const vec3& omega) const = 0;
+        vec3 omega) const = 0;
 
     virtual const BSDFBoundedSample sampleBounded(
         RandomEngine& engine,
-        const vec3& omega,
+        vec3 omega,
         const angular_bound_t& bound) const;
 
     const BSDFSample sample(
         RandomEngine& engine,
         const SurfacePoint& point,
-        const vec3& omega) const;
+        vec3 omega) const;
 
     BSDF(const BSDF&) = delete;
     BSDF& operator=(const BSDF&) = delete;
@@ -71,9 +69,7 @@ public:
 
 class DeltaBSDF : public BSDF {
 public:
-    virtual const BSDFQuery query(
-        const vec3& incident,
-        const vec3& outgoing) const;
+    const BSDFQuery query(vec3 incident, vec3 outgoing) const override;
 };
 
 class LightBSDF : public BSDF {
@@ -82,11 +78,9 @@ public:
 
     const BSDFSample sample(
         RandomEngine& engine,
-        const vec3& omega) const override;
+        vec3 omega) const override;
 
-    const BSDFQuery query(
-        const vec3& incident,
-        const vec3& outgoing) const override;
+    const BSDFQuery query(vec3 incident, vec3 outgoing) const override;
 
 private:
     vec3 _radiance;
@@ -94,13 +88,8 @@ private:
 
 class CameraBSDF : public BSDF {
 public:
-    const BSDFSample sample(
-        RandomEngine& engine,
-        const vec3& omega) const override;
-
-    const BSDFQuery query(
-        const vec3& incident,
-        const vec3& outgoing) const override;
+    const BSDFSample sample(RandomEngine& engine, vec3 omega) const override;
+    const BSDFQuery query(vec3 incident, vec3 outgoing) const override;
 
 };
 

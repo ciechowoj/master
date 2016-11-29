@@ -10,9 +10,7 @@ TransmissionBSDF::TransmissionBSDF(
     this->internalIOR = internalIOR;
 }
 
-const BSDFSample TransmissionBSDF::sample(
-    RandomEngine& engine,
-    const vec3& reflected) const
+const BSDFSample TransmissionBSDF::sample(RandomEngine& engine, vec3 reflected) const
 {
     vec3 omega;
 

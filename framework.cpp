@@ -302,7 +302,7 @@ void loop(GLFWwindow* window, const std::function<void(int, int, float&, void*)>
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, context->pixel_buffer_id);
         void* pointer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
 
-        float scale;
+        float scale = 0.0f;
 
         if (pointer) {
             loop(context->texture_width, context->texture_height, scale, pointer);

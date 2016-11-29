@@ -55,6 +55,7 @@ void Application::render(size_t width, size_t height, glm::vec4* data) {
         _technique->preprocess(_scene, _engine, [](string, float) {});
         _printStatistics(ImageView(), 0.0f, true);
         _preprocessed = true;
+        _startTime = high_resolution_time();
     }
 }
 
