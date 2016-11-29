@@ -27,11 +27,10 @@ R"(
     Options:
       -h --help           Show this screen.
       --version           Show version.
-      --BPT               Use bidirectional path tracing (balance heuristics).
       --PT                Use path tracing for rendering (this is default one).
-      --PM                Use photon mapping for rendering.
+      --BPT               Use bidirectional path tracing (balance heuristics).
       --VCM               Use vertex connection and merging.
-      --UPG               Use unbiased photon gathering [unimplemented, WIP].
+      --UPG               Use unbiased photon gathering.
       --num-photons=<n>   Use n photons. [default: 1 000 000]
       --num-gather=<n>    Use n as maximal number of gathered photons. [default: 100]
       --max-radius=<n>    Use n as maximum gather radius. [default: 0.1]

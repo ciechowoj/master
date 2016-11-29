@@ -11,7 +11,7 @@ using std::string;
 template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
-    enum Technique { BPT, PT, VCM, UPG, Viewer };
+    enum Technique { PT, BPT, VCM, UPG, Viewer };
     enum Action { Render, AVG, RMS };
 
     string input0;
