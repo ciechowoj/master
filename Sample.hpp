@@ -33,7 +33,6 @@ struct angular_bound_t {
 
 angular_bound_t angular_bound(vec3 center, float radius);
 
-
 class lambertian_bounded_distribution_t {
 public:
     lambertian_bounded_distribution_t(angular_bound_t bound);
