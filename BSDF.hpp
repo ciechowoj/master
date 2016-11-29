@@ -6,15 +6,10 @@ namespace haste {
 struct SurfacePoint;
 
 struct BSDFQuery {
-    vec3 _throughput;
-    float _density;
-    float _densityRev;
-
-    const vec3& throughput() const { return _throughput; }
-    const float density() const { return _density; }
-    const float densityRev() const { return _densityRev; }
-    const float specular() const { return 1.0f - ceil(_density); }
-    const bool zero() const;
+    vec3 throughput = vec3(0.0f);
+    float density = 0.0f;
+    float densityRev = 0.0f;
+    float specular = 0.0f;
 };
 
 struct BSDFSample {

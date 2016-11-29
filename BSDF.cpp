@@ -12,9 +12,9 @@ const bool BSDFSample::zero() const
 const BSDFQuery BSDFSample::query() const
 {
     BSDFQuery query;
-    query._throughput = throughput();
-    query._density = density();
-    query._densityRev = densityRev();
+    query.throughput = throughput();
+    query.density = density();
+    query.densityRev = densityRev();
     return query;
 }
 
@@ -28,15 +28,15 @@ const BSDFQuery BSDF::query(
 {
     BSDFQuery query;
 
-    query._throughput = incident.y > 0.0f && outgoing.y > 0.0f
+    query.throughput = incident.y > 0.0f && outgoing.y > 0.0f
         ? vec3(1.0f, 0.0f, 1.0f) * one_over_pi<float>()
         : vec3(0.0f);
 
-    query._density = outgoing.y > 0.0f
+    query.density = outgoing.y > 0.0f
         ? outgoing.y * one_over_pi<float>()
         : 0.0f;
 
-    query._densityRev = incident.y > 0.0f
+    query.densityRev = incident.y > 0.0f
         ? incident.y * one_over_pi<float>()
         : 0.0f;
 
@@ -131,9 +131,9 @@ const BSDFQuery DeltaBSDF::query(
     const vec3& outgoing) const
 {
 	BSDFQuery query;
-    query._throughput = vec3(0.0f);
-    query._density = 0.0f;
-    query._densityRev = 0.0f;
+    query.throughput = vec3(0.0f);
+    query.density = 0.0f;
+    query.densityRev = 0.0f;
     return query;
 }
 
@@ -142,9 +142,9 @@ const BSDFQuery DeltaBSDF::queryAdjoint(
     const vec3& outgoing) const
 {
 	BSDFQuery query;
-    query._throughput = vec3(0.0f);
-    query._density = 0.0f;
-    query._densityRev = 0.0f;
+    query.throughput = vec3(0.0f);
+    query.density = 0.0f;
+    query.densityRev = 0.0f;
     return query;
 }
 
@@ -164,13 +164,13 @@ const BSDFQuery LightBSDF::query(
     const vec3& outgoing) const {
     BSDFQuery query;
 
-    query._throughput = outgoing.y > 0.0f ? vec3(1.0f) : vec3(0.0f);
+    query.throughput = outgoing.y > 0.0f ? vec3(1.0f) : vec3(0.0f);
 
-    query._density = outgoing.y > 0.0f
+    query.density = outgoing.y > 0.0f
         ? outgoing.y * one_over_pi<float>()
         : 0.0f;
 
-    query._densityRev = incident.y > 0.0f
+    query.densityRev = incident.y > 0.0f
         ? incident.y * one_over_pi<float>()
         : 0.0f;
 
@@ -189,11 +189,11 @@ const BSDFQuery CameraBSDF::query(
     const vec3& outgoing) const {
     BSDFQuery query;
 
-    query._throughput = 1.0f / vec3(pow(incident.y * incident.y, 2));
+    query.throughput = 1.0f / vec3(pow(incident.y * incident.y, 2));
 
-    query._density = 0.0f;
+    query.density = 0.0f;
 
-    query._densityRev = 1.0f;
+    query.densityRev = 1.0f;
 
     return query;
 }

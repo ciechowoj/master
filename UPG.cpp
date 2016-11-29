@@ -292,24 +292,24 @@ float UPGBase<Beta, Mode>::_weightVC(
     float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
 
     float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev()) + light.a * (1.0f - light.specular))
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
+        = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Bp
-        = light.B * Beta::beta(lightBSDF.densityRev())
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
+        = light.B * Beta::beta(lightBSDF.densityRev)
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(edge.fGeometry * lightBSDF.density());
+        = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float Dp
-        = (eye.D * Beta::beta(eyeBSDF.density()) + eye.d * (1.0f - eyeBSDF.specular()))
-        * Beta::beta(edge.fGeometry * lightBSDF.density());
+        = (eye.D * Beta::beta(eyeBSDF.density) + eye.d * (1.0f - eyeBSDF.specular))
+        * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float weightInv
         = Ap + eta * Bp + Cp + eta * Dp
-        + Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev() * skip_direct_vm) + 1.0f;
+        + Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev * skip_direct_vm) + 1.0f;
 
     return 1.0f / weightInv;
 }
@@ -326,7 +326,7 @@ float UPGBase<Beta, Mode>::_weightVM(
 
     float weight = _weightVC<false>(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
-    return Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev()) * weight;
+    return Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev) * weight;
 }
 
 template <class Beta, GatherMode Mode>
@@ -371,7 +371,7 @@ float UPGBase<Beta, Mode>::_density(
         return INFINITY;
     }
     else {
-        return 1.0f / (edge.bGeometry * eyeQuery.densityRev() * pi<float>() * radius * radius);
+        return 1.0f / (edge.bGeometry * eyeQuery.densityRev * pi<float>() * radius * radius);
     }
 }
 
@@ -413,9 +413,9 @@ vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& ey
     vec3 radiance = _combine(
         _scene->occluded(eye.surface.position(), light.surface.position())
             * light.throughput
-            * lightBSDF.throughput()
+            * lightBSDF.throughput
             * eye.throughput
-            * eyeBSDF.throughput()
+            * eyeBSDF.throughput
             * edge.bCosTheta
             * edge.fGeometry,
         weight);
@@ -490,9 +490,9 @@ vec3 UPGBase<Beta, Mode>::_gather(RandomEngine& engine, const EyeVertex& eye, fl
             }
             else {
                 BSDFQuery query;
-                query._throughput = eyeBSDF.throughput();
-                query._density = eyeBSDF.densityRev();
-                query._densityRev = eyeBSDF.density();
+                query.throughput = eyeBSDF.throughput();
+                query.density = eyeBSDF.densityRev();
+                query.densityRev = eyeBSDF.density();
                 radiance += _merge(engine, light, eye, query, radius);
             }
         },
@@ -520,9 +520,9 @@ vec3 UPGBase<Beta, Mode>::_merge(
 
     vec3 result = _scene->occluded(eye.surface.position(), light.surface.position())
         * light.throughput
-        * lightBSDF.throughput()
+        * lightBSDF.throughput
         * eye.throughput
-        * eyeBSDF.throughput()
+        * eyeBSDF.throughput
         * edge.bCosTheta
         * edge.fGeometry;
 
@@ -547,9 +547,9 @@ vec3 UPGBase<Beta, Mode>::_merge(
 
     vec3 result = _scene->occluded(eye.surface.position(), light.surface.position())
         * light.throughput
-        * lightBSDF.throughput()
+        * lightBSDF.throughput
         * eye.throughput
-        * eyeBSDF.throughput()
+        * eyeBSDF.throughput
         * edge.bCosTheta
         * edge.fGeometry;
 

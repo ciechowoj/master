@@ -226,20 +226,20 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     auto edge = Edge(light, eye, omega);
 
     float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev()) + light.a * (1.0f - light.specular))
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev());
+        = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density()) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(edge.fGeometry * lightBSDF.density());
+        = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float weightInv = Ap + Cp + 1.0f;
 
     return _scene->occluded(eye.surface.position(), light.surface.position())
         * light.throughput
-        * lightBSDF.throughput()
+        * lightBSDF.throughput
         * eye.throughput
-        * eyeBSDF.throughput()
+        * eyeBSDF.throughput
         * edge.bCosTheta
         * edge.fGeometry
         / weightInv;

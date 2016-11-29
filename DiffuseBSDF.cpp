@@ -13,15 +13,15 @@ const BSDFQuery DiffuseBSDF::query(
 {
     BSDFQuery query;
 
-    query._throughput = incident.y > 0.0f && outgoing.y > 0.0f
+    query.throughput = incident.y > 0.0f && outgoing.y > 0.0f
         ? _diffuse * one_over_pi<float>()
         : vec3(0.0f);
 
-    query._density = outgoing.y > 0.0f
+    query.density = outgoing.y > 0.0f
         ? outgoing.y * one_over_pi<float>()
         : 0.0f;
 
-    query._densityRev = incident.y > 0.0f
+    query.densityRev = incident.y > 0.0f
         ? incident.y * one_over_pi<float>()
         : 0.0f;
 

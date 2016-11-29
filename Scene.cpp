@@ -359,7 +359,7 @@ const vec3 Scene::sampleDirectLightArea(
 
     return
         lightSample.radiance() *
-        bsdf.query(point, -lightSample.omega(), omegaR).throughput() *
+        bsdf.query(point, -lightSample.omega(), omegaR).throughput *
         distSqInv *
         fCosTheta *
         bCosTheta *
@@ -400,13 +400,13 @@ const vec3 Scene::sampleDirectLightMixed(
 
     vec3 lightRadiance =
         lightSample.radiance() *
-        bsdf.query(surface, -lightSample.omega(), omega).throughput() *
+        bsdf.query(surface, -lightSample.omega(), omega).throughput *
         bCosTheta;
 
     float lightDensity = lightSample.density() / (fCosTheta * distSqInv);
 
     // combine
-    float bsdfDensity2 = bsdf.query(surface, -lightSample.omega(), omega).densityRev();
+    float bsdfDensity2 = bsdf.query(surface, -lightSample.omega(), omega).densityRev;
     float lightDensity2 = lights.density(surface.position(), bsdfSample.omega());
 
     vec3 bsdfThroughput = bsdfRadiance / bsdfDensity;
