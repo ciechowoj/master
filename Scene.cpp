@@ -196,17 +196,6 @@ const BSDFSample Scene::sampleBSDF(
     return bsdf->sample(engine, surface, omega);
 }
 
-const BSDFSample Scene::sampleAdjointBSDF(
-    RandomEngine& engine,
-    const SurfacePoint& surface,
-    const vec3& omega) const
-{
-    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
-
-    auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
-    return bsdf->sampleAdjoint(engine, surface, omega);
-}
-
 const BSDFQuery Scene::queryBSDF(
     const SurfacePoint& surface,
     const vec3& incident,
@@ -216,17 +205,6 @@ const BSDFQuery Scene::queryBSDF(
 
     auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
     return bsdf->query(surface, incident, outgoing);
-}
-
-const BSDFQuery Scene::queryAdjointBSDF(
-    const SurfacePoint& surface,
-    const vec3& incident,
-    const vec3& outgoing) const
-{
-    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
-
-    auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
-    return bsdf->queryAdjoint(surface, incident, outgoing);
 }
 
 const RayIsect Scene::intersect(

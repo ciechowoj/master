@@ -20,11 +20,6 @@ public:
         const vec3& omega,
         const angular_bound_t& bound) const override;
 
-    BSDFSample scatter(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& omega) const override;
-
 private:
     vec3 _diffuse;
 };

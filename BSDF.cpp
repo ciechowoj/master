@@ -43,27 +43,12 @@ const BSDFQuery BSDF::query(
     return query;
 }
 
-const BSDFQuery BSDF::queryAdjoint(
-    const vec3& incident,
-    const vec3& outgoing) const
-{
-    return query(incident, outgoing);
-}
-
 const BSDFQuery BSDF::query(
     const SurfacePoint& point,
     const vec3& incident,
     const vec3& outgoing) const
 {
     return query(point.toSurface(incident), point.toSurface(outgoing));
-}
-
-const BSDFQuery BSDF::queryAdjoint(
-    const SurfacePoint& point,
-    const vec3& incident,
-    const vec3& outgoing) const
-{
-    return queryAdjoint(point.toSurface(incident), point.toSurface(outgoing));
 }
 
 const BSDFSample BSDF::sample(
@@ -90,13 +75,6 @@ const BSDFBoundedSample BSDF::sampleBounded(
     return BSDFBoundedSample();
 }
 
-const BSDFSample BSDF::sampleAdjoint(
-    RandomEngine& engine,
-    const vec3& omega) const
-{
-    return sample(engine, omega);
-}
-
 const BSDFSample BSDF::sample(
     RandomEngine& engine,
     const SurfacePoint& point,
@@ -108,45 +86,18 @@ const BSDFSample BSDF::sample(
     return result;
 }
 
-const BSDFSample BSDF::sampleAdjoint(
-    RandomEngine& engine,
-    const SurfacePoint& point,
-    const vec3& omega) const
-{
-    BSDFSample result = sampleAdjoint(engine, point.toSurface(omega));
-    result._omega = point.toWorld(result.omega());
-    return result;
-}
-
-BSDFSample BSDF::scatter(
-    RandomEngine& engine,
-    const SurfacePoint& point,
-    const vec3& omega) const
-{
-    return sample(engine, point, omega);
-}
-
 const BSDFQuery DeltaBSDF::query(
     const vec3& incident,
     const vec3& outgoing) const
 {
-	BSDFQuery query;
+    BSDFQuery query;
     query.throughput = vec3(0.0f);
     query.density = 0.0f;
     query.densityRev = 0.0f;
+    query.specular = 1.0f;
     return query;
 }
 
-const BSDFQuery DeltaBSDF::queryAdjoint(
-    const vec3& incident,
-    const vec3& outgoing) const
-{
-	BSDFQuery query;
-    query.throughput = vec3(0.0f);
-    query.density = 0.0f;
-    query.densityRev = 0.0f;
-    return query;
-}
 
 LightBSDF::LightBSDF(vec3 radiance)
     : _radiance(radiance * one_over_pi<float>()) {

@@ -46,16 +46,7 @@ public:
         const vec3& incident,
         const vec3& outgoing) const;
 
-    virtual const BSDFQuery queryAdjoint(
-        const vec3& incident,
-        const vec3& outgoing) const;
-
     const BSDFQuery query(
-        const SurfacePoint& point,
-        const vec3& incident,
-        const vec3& outgoing) const;
-
-    const BSDFQuery queryAdjoint(
         const SurfacePoint& point,
         const vec3& incident,
         const vec3& outgoing) const;
@@ -69,21 +60,7 @@ public:
         const vec3& omega,
         const angular_bound_t& bound) const;
 
-    virtual const BSDFSample sampleAdjoint(
-        RandomEngine& engine,
-        const vec3& omega) const;
-
     const BSDFSample sample(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& omega) const;
-
-    const BSDFSample sampleAdjoint(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& omega) const;
-
-    virtual BSDFSample scatter(
         RandomEngine& engine,
         const SurfacePoint& point,
         const vec3& omega) const;
@@ -95,10 +72,6 @@ public:
 class DeltaBSDF : public BSDF {
 public:
     virtual const BSDFQuery query(
-        const vec3& incident,
-        const vec3& outgoing) const;
-
-    virtual const BSDFQuery queryAdjoint(
         const vec3& incident,
         const vec3& outgoing) const;
 };

@@ -13,10 +13,6 @@ public:
         RandomEngine& engine,
         const vec3& omega) const override;
 
-    const BSDFSample sampleAdjoint(
-        RandomEngine& engine,
-        const vec3& omega) const override;
-
 private:
     float externalOverInternalIOR;
     float internalIOR;

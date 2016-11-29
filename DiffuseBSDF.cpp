@@ -71,37 +71,4 @@ const BSDFBoundedSample DiffuseBSDF::sampleBounded(
     return result;
 }
 
-BSDFSample DiffuseBSDF::scatter(
-    RandomEngine& engine,
-    const SurfacePoint& point,
-    const vec3& omega) const
-{
-    const float inv3 = 1.0f / 3.0f;
-
-    float diffuseAvg = (_diffuse.x + _diffuse.y + _diffuse.z) * inv3;
-
-    if (sampleUniform1(engine).value() < diffuseAvg) {
-        auto hemisphere = sampleCosineHemisphere1(engine);
-
-        BSDFSample sample;
-        sample._throughput = _diffuse / diffuseAvg;
-        sample._omega = point.toWorld(hemisphere.omega());
-        sample._density = hemisphere.density();
-        sample._densityRev = dot(point.normal(), omega) * one_over_pi<float>();
-        sample._specular = 0.0f;
-
-        return sample;
-    }
-    else {
-        BSDFSample sample;
-        sample._throughput = vec3(0.0f);
-        sample._omega = vec3(0.0f);
-        sample._density = 0;
-        sample._densityRev = 0;
-        sample._specular = 0.0f;
-
-        return sample;
-    }
-}
-
 }
