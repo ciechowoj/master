@@ -10,13 +10,8 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
   BSDFQuery query;
 
   vec3 reflected = vec3(-incident.x, incident.y, -incident.z);
-  vec3 reflected_rev = vec3(-outgoing.x, outgoing.y, -outgoing.z);
-
   float cos_alpha = clamp(dot(outgoing, reflected), 0.0f, 1.0f);
-  float cos_alpha_rev = clamp(dot(incident, reflected_rev), 0.0f, 1.0f);
-
   float cos_alpha_pow = pow(cos_alpha, _power);
-  float cos_alpha_rev_pow = pow(cos_alpha_rev, _power);
 
   float same_side = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
   const float half_over_pi = 0.5f * one_over_pi<float>();
@@ -24,9 +19,9 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
   vec3 diffuse = _diffuse * one_over_pi<float>();
   vec3 specular = _specular * (_power + 2.0f) * half_over_pi * cos_alpha_pow;
 
-  query.throughput = same_side * (diffuse + specular);
   query.density = (_power + 1.0f) * half_over_pi * cos_alpha_pow;
-  query.densityRev = (_power + 1.0f) * half_over_pi * cos_alpha_rev_pow;
+  query.densityRev = query.density;
+  query.throughput = same_side * (diffuse + specular);
 
   return query;
 }
@@ -34,8 +29,8 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
 vec3 sample_phong(random_generator_t& generator, vec3 omega, float power) {
   mat3 refl_to_surf;
   refl_to_surf[1] = vec3(-omega.x, omega.y, -omega.z);
-  refl_to_surf[2] = normalize(vec3(0.0f, 1.0f, 0.0f) -
-                              refl_to_surf[1].y * refl_to_surf[1]);
+  refl_to_surf[2] =
+      normalize(vec3(0.0f, 1.0f, 0.0f) - refl_to_surf[1].y * refl_to_surf[1]);
   refl_to_surf[0] = normalize(cross(refl_to_surf[1], refl_to_surf[2]));
 
   float y = pow(generator.sample(), 1.0f / (power + 1.0f));

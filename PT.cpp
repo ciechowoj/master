@@ -1,6 +1,5 @@
 #include <PT.hpp>
 #include <Edge.hpp>
-#include <iostream>
 
 namespace haste {
 
@@ -54,7 +53,6 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
                 * edge.bCosTheta
                 / bsdf.density();
 
-            // eye[prv].specular = max(eye[prv].specular, bsdf.specular());
             eye[prv].specular = bsdf.specular();
             eye[itr].density = eye[prv].density * edge.fGeometry * bsdf.density();
 
@@ -90,7 +88,9 @@ vec3 PathTracing::_connect_light(const EyeVertex& eye, const EyeVertex& light) {
     if (eye.specular == 1.0f)
         weightInv = 1.0f;
 
-    return lsdf.radiance() * light.throughput / weightInv;
+    vec3 result = lsdf.radiance() * light.throughput / weightInv;
+
+    return result;
 }
 
 vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
@@ -107,7 +107,7 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
 
     float weightInv = eyeBSDF.densityRev * edge.bGeometry / light.areaDensity() + 1.0f;
 
-    return _scene->occluded(eye.surface.position(), light.position())
+    vec3 result = _scene->occluded(eye.surface.position(), light.position())
         * light.radiance()
         / light.areaDensity()
         * eye.throughput
@@ -115,6 +115,8 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
         * edge.bCosTheta
         * edge.fGeometry
         / weightInv;
+
+    return result;
 }
 
 string PathTracing::name() const {
