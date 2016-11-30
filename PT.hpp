@@ -12,7 +12,18 @@ public:
     string name() const override;
 
 private:
-    const size_t _minLength;
+		struct EyeVertex {
+        SurfacePoint surface;
+        vec3 omega;
+        vec3 throughput;
+        float specular;
+        float density;
+    };
+
+    vec3 _connect_light(const EyeVertex& eye, const EyeVertex& light);
+    vec3 _connect(render_context_t& context, const EyeVertex& eye);
+
+    const size_t _minSubpath;
     const float _roulette;
 };
 
