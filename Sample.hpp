@@ -26,12 +26,18 @@ private:
 
 using random_generator_t = RandomEngine;
 
+struct bounding_sphere_t {
+    vec3 center;
+    float radius;
+};
+
 struct angular_bound_t {
     float theta_inf, theta_sup;
     float phi_inf, phi_sup;
 };
 
 angular_bound_t angular_bound(vec3 center, float radius);
+angular_bound_t angular_bound(bounding_sphere_t sphere);
 
 class lambertian_bounded_distribution_t {
 public:

@@ -35,7 +35,7 @@ const SurfacePoint LightSampleEx::surface() const {
     return point;
 }
 
-void AreaLights::init(const Intersector* intersector) {
+void AreaLights::init(const Intersector* intersector, bounding_sphere_t sphere) {
     _intersector = intersector;
 }
 
@@ -120,20 +120,6 @@ const vec3 AreaLights::toWorld(size_t lightId, const vec3& omega) const {
     return matrix * omega;
 }
 
-Photon AreaLights::emit(RandomEngine& engine) const {
-    size_t lightId = _sampleLight(engine);
-    vec3 position = _samplePosition(lightId, engine);
-
-    Photon result;
-    result.position = position;
-    result.direction = toWorld(lightId, sampleCosineHemisphere1(engine).omega());
-    result.power = _exitances[lightId];
-    float length1 = 1.f / (result.power.x + result.power.y + result.power.z);
-    result.power = result.power * length1;
-
-    return result;
-}
-
 const float AreaLights::density(
     const vec3& position,
     const vec3& direction) const
@@ -194,29 +180,6 @@ LightSample AreaLights::sample(
     result._radiance *=
         _intersector->occluded(result.position(), position) *
         (cosTheta > 0.0f ? 1.0f : 0.0f);
-
-    return result;
-}
-
-LightSampleEx AreaLights::sampleEx(
-    RandomEngine& engine,
-    const vec3& position) const
-{
-    size_t lightId = _sampleLight(engine);
-
-    LightSampleEx result;
-    result._position = _samplePosition(lightId, engine);
-    result._normal = _shapes[lightId].direction;
-    result._radiance = lightRadiance(lightId);
-    result._omega = normalize(position - result._position);
-    result._areaDensity = _weights[lightId] / lightArea(lightId);
-    result._omegaDensity = dot(result.omega(), result.normal()) * one_over_pi<float>();
-
-    float cosTheta = result._omegaDensity;
-    float signum = (cosTheta > 0.0f ? 1.0f : 0.0f);
-
-    result._radiance *= _intersector->occluded(result.position(), position) * signum;
-    result._omegaDensity *= signum;
 
     return result;
 }

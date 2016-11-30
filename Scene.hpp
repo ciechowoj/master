@@ -62,10 +62,6 @@ public:
         RandomEngine& engine,
         const vec3& position) const;
 
-    LightSampleEx sampleLightEx(
-        RandomEngine& engine,
-        const vec3& position) const;
-
     vec3 queryRadiance(
         const RayIsect& isect,
         const vec3& omega) const;
@@ -129,7 +125,12 @@ public:
         const vec3& omega,
         const BSDF& bsdf) const;
 
+    bounding_sphere_t bounding_sphere() const;
+
 private:
+    bounding_sphere_t _bounding_sphere; // = bounding_sphere_t(0.0f);
+    bounding_sphere_t _compute_bounding_sphere() const;
+
     mutable std::atomic<size_t> _numIntersectRays;
     mutable std::atomic<size_t> _numOccludedRays;
 

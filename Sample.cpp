@@ -37,6 +37,10 @@ angular_bound_t angular_bound(vec3 center, float radius) {
     return { theta_inf, theta_sup, phi_inf, phi_sup };
 }
 
+angular_bound_t angular_bound(bounding_sphere_t sphere) {
+    return angular_bound(sphere.center, sphere.radius);
+}
+
 lambertian_bounded_distribution_t::lambertian_bounded_distribution_t(angular_bound_t bound) {
     _uniform_theta_inf = cos(bound.theta_sup) * cos(bound.theta_sup);
     _uniform_theta_sup = cos(bound.theta_inf) * cos(bound.theta_inf);

@@ -7,20 +7,6 @@
 
 namespace haste {
 
-struct Photon {
-    vec3 position;
-    vec3 direction;
-    vec3 power;
-
-    float operator[](size_t index) const {
-        return position[index];
-    }
-
-    float& operator[](size_t index) {
-        return position[index];
-    }
-};
-
 struct LightSample {
     vec3 _position;
     vec3 _normal;
@@ -71,7 +57,7 @@ struct LSDFQuery {
 
 class AreaLights : public Geometry {
 public:
-    void init(const Intersector* intersector);
+    void init(const Intersector* intersector, bounding_sphere_t sphere);
 
     const size_t addLight(
         const string& name,
@@ -93,8 +79,6 @@ public:
 
     const vec3 toWorld(size_t lightId, const vec3& omega) const;
 
-    Photon emit(RandomEngine& engine) const;
-
     const float density(
         const vec3& position,
         const vec3& direction) const;
@@ -103,10 +87,6 @@ public:
         RandomEngine& engine) const;
 
     LightSample sample(
-        RandomEngine& engine,
-        const vec3& position) const;
-
-    LightSampleEx sampleEx(
         RandomEngine& engine,
         const vec3& position) const;
 

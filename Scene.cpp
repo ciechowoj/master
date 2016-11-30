@@ -19,8 +19,6 @@ Scene::Scene(
 
     _numIntersectRays = 0;
     _numOccludedRays = 0;
-
-    lights.init(this);
 }
 
 unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
@@ -81,6 +79,8 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
 void Scene::buildAccelStructs(RTCDevice device) {
     if (rtcScene == nullptr) {
         updateRTCScene(rtcScene, device, *this);
+        _bounding_sphere = _compute_bounding_sphere();
+        lights.init(this, _bounding_sphere);
     }
 }
 
@@ -154,13 +154,6 @@ LightSample Scene::sampleLight(
     const vec3& position) const
 {
     return lights.sample(engine, position);
-}
-
-LightSampleEx Scene::sampleLightEx(
-    RandomEngine& engine,
-    const vec3& position) const
-{
-    return lights.sampleEx(engine, position);
 }
 
 vec3 Scene::queryRadiance(
@@ -402,6 +395,32 @@ const vec3 Scene::sampleDirectLightMixed(
     return
         bsdfThroughput * bsdfWeight +
         lightThroughput * lightWeight;
+}
+
+
+bounding_sphere_t Scene::_compute_bounding_sphere() const {
+    bounding_sphere_t result = { vec3(0.0f), 0.0f };
+    size_t num_vertices = 0.0;
+
+    for (auto&& mesh : meshes) {
+        for (auto&& vertex : mesh.vertices) {
+            result.center += vertex;
+        }
+
+        num_vertices += mesh.vertices.size();
+    }
+
+    result.center /= static_cast<float>(num_vertices);
+
+    for (auto&& mesh : meshes) {
+        for (auto&& vertex : mesh.vertices) {
+            result.radius = glm::max(result.radius, glm::distance2(result.center, vertex));
+        }
+    }
+
+    result.radius = glm::sqrt(result.radius);
+
+    return result;
 }
 
 }
