@@ -45,7 +45,7 @@ vec3 sample_phong(random_generator_t& generator, vec3 omega, float power) {
   float x = r * cos(phi);
   float z = r * sin(phi);
 
-  return vec3(x, y, z) * refl_to_surf;
+  return refl_to_surf * vec3(x, y, z);
 }
 
 const BSDFSample PhongBSDF::sample(RandomEngine& engine, vec3 omega) const {

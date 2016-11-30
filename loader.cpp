@@ -8,6 +8,7 @@
 #include <loader.hpp>
 
 #include <DiffuseBSDF.hpp>
+#include <PhongBSDF.hpp>
 #include <ReflectionBSDF.hpp>
 #include <TransmissionBSDF.hpp>
 
@@ -281,34 +282,6 @@ template <class Stream> Stream& operator<<(
     }
 
     return stream;
-
-//    return stream
-//        << "aiMaterial { "
-//        << "name = " << name(&material) << ", "
-//        << "COLOR_DIFFUSE = " << diffuse(&material) << ", "
-//        << "COLOR_SPECULAR = " << specular(&material) << ", "
-//        << "COLOR_AMBIENT = " << ambient(&material) << ", "
-//        << "COLOR_EMISSIVE = " << emissive(&material) << ", "
-//        << "COLOR_TRANSPARENT = " << transparent(&material) << ", "
-//        // << "WIREFRAME = " << wireframe(&material) << ", "
-//        << "TWOSIDED = " << twosided(&material) << ", "
-//        << "SHADING_MODEL = " << shadingModel(&material) << ", "
-//        << "BLEND_FUNC = " << blendFunc(&material) << ", "
-//        << "OPACITY = " << opacity(&material) << ", "
-//        << "SHININESS = " << shininess(&material) << ", "
-//        << "SHININESS_STRENGTH = " << shininessStrength(&material) << ", "
-//        << "REFRACTI = " << refracti(&material) << " }";
-// #define AI_MATKEY_REFLECTIVITY "$mat.reflectivity",0,0
-// #define AI_MATKEY_COLOR_REFLECTIVE "$clr.reflective",0,0
-        // TEXTURE(t,n)
-        // TEXBLEND(t,n)
-        // TEXOP(t,n)
-        // MAPPING(t,n)
-        // UVWSRC(t,n)
-        // MAPPINGMODE_U(t,n)
-        // MAPPINGMODE_V(t,n)
-        // TEXMAP_AXIS(t,n)
-        // TEXFLAGS(t,n)
 }
 
 bool isEmissive(const aiScene* scene, size_t meshID) {
@@ -477,8 +450,15 @@ shared<Scene> loadScene(string path) {
         else if (property<bool>(material, "$mat.blend.mirror.use")) {
             materials.bsdfs.push_back(unique<BSDF>(new ReflectionBSDF()));
         }
+        else if (specular(material) == vec3(0.0f)) {
+            materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(diffuse(material))));
+        }
         else {
-            materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(diffuse(scene->mMaterials[i]))));
+            materials.bsdfs.push_back(
+                unique<BSDF>(new PhongBSDF(
+                    diffuse(material),
+                    specular(material),
+                    shininess(material))));
         }
     }
 
