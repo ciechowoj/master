@@ -120,29 +120,6 @@ const vec3 AreaLights::toWorld(size_t lightId, const vec3& omega) const {
     return matrix * omega;
 }
 
-const float AreaLights::density(
-    const vec3& position,
-    const vec3& direction) const
-{
-    runtime_assert(_intersector != nullptr);
-
-    auto isect = _intersector->intersect(position, direction);
-
-    while (isect.isLight()) {
-        const auto lightId = isect.primId();
-        const float cosTheta = -dot(direction, _shapes[lightId].direction);
-
-        if (cosTheta > 0.0f) {
-            return _weights[isect.primId()] * distance2(position, isect.position())
-                / (lightArea(lightId) * cosTheta);
-        }
-
-        isect = _intersector->intersect(isect.position(), direction);
-    }
-
-    return 0.0f;
-}
-
 LightSampleEx AreaLights::sample(
     RandomEngine& engine) const
 {

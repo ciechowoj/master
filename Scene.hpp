@@ -107,24 +107,6 @@ public:
         const vec3& incident,
         const vec3& outgoing) const;
 
-    const vec3 sampleDirectLightAngle(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& omegaR,
-        const BSDF& bsdf) const;
-
-    const vec3 sampleDirectLightArea(
-        RandomEngine& engine,
-        const SurfacePoint& point,
-        const vec3& omegaR,
-        const BSDF& bsdf) const;
-
-    const vec3 sampleDirectLightMixed(
-        RandomEngine& engine,
-        const SurfacePoint& surface,
-        const vec3& omega,
-        const BSDF& bsdf) const;
-
     bounding_sphere_t bounding_sphere() const;
 
 private:

@@ -79,10 +79,6 @@ public:
 
     const vec3 toWorld(size_t lightId, const vec3& omega) const;
 
-    const float density(
-        const vec3& position,
-        const vec3& direction) const;
-
     LightSampleEx sample(
         RandomEngine& engine) const;
 
