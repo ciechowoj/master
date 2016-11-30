@@ -12,8 +12,8 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
   vec3 reflected = vec3(-incident.x, incident.y, -incident.z);
   vec3 reflected_rev = vec3(-outgoing.x, outgoing.y, -outgoing.z);
 
-  float cos_alpha = dot(outgoing, reflected);
-  float cos_alpha_rev = dot(incident, reflected_rev);
+  float cos_alpha = clamp(dot(outgoing, reflected), 0.0f, 1.0f);
+  float cos_alpha_rev = clamp(dot(incident, reflected_rev), 0.0f, 1.0f);
 
   float cos_alpha_pow = pow(cos_alpha, _power);
   float cos_alpha_rev_pow = pow(cos_alpha_rev, _power);
