@@ -34,7 +34,7 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
 vec3 sample_phong(random_generator_t& generator, vec3 omega, float power) {
   mat3 refl_to_surf;
   refl_to_surf[1] = vec3(-omega.x, omega.y, -omega.z);
-  refl_to_surf[2] = normalize(vec3(0.0f, omega.y < 0.0f ? -1.0f : 1.0f, 0.0f) -
+  refl_to_surf[2] = normalize(vec3(0.0f, 1.0f, 0.0f) -
                               refl_to_surf[1].y * refl_to_surf[1]);
   refl_to_surf[0] = normalize(cross(refl_to_surf[1], refl_to_surf[2]));
 

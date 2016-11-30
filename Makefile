@@ -128,7 +128,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxSpecular.blend --BPT --parallel # --num-photons=1000000 # --max-radius=0.0000001
+	./build/master/master.bin models/CornellBoxPhong.blend --PT --parallel
 
 profile:
 	valgrind \
