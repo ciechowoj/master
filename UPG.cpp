@@ -182,11 +182,12 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
         return;
     }
 
-    auto edge = Edge(light, isect);
-
     path.emplace_back();
     path[itr].surface = _scene->querySurface(isect);
     path[itr].omega = -light.omega();
+
+    auto edge = Edge(path[prv], path[itr]);
+
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
     path[itr].specular = 0.0f;
     path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
@@ -453,7 +454,13 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
         radiance += _accumulate(
             context,
             omega,
-            [&] { return _connect<true>(path[i], eye, radius) * context.focal_factor_y; });
+            [&] {
+                float correct_normal =
+                    abs(dot(path[i].omega, path[i].surface.normal())
+                    / dot(path[i].omega, path[i].surface.gnormal));
+
+                return _connect<true>(path[i], eye, radius) * context.focal_factor_y * correct_normal;
+            });
     }
 
     return radiance;

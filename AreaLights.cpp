@@ -31,6 +31,7 @@ const SurfacePoint LightSampleEx::surface() const {
     point._tangent[1] = _normal;
     point._tangent[2] = _tangent;
     point._materialId = _materialId;
+    point.gnormal = _normal;
 
     return point;
 }

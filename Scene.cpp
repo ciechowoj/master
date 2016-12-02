@@ -112,6 +112,7 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
         point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
         point._tangent = lights.light_to_world_mat3(isect.primId());
         point._materialId = int32_t(isect.primId()) - materials.lights_offset;
+        point.gnormal = point._tangent[1];
 
         return point;
     }
@@ -140,6 +141,8 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
             isect.v * mesh.tangents[mesh.indices[isect.primID * 3 + 2]]);
 
         point._materialId = mesh.materialID;
+
+        point.gnormal = isect.gnormal();
 
         return point;
     }

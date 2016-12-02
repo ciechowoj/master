@@ -7,6 +7,7 @@ using std::uint32_t;
 
 struct SurfacePoint {
     vec3 _position;
+    vec3 gnormal;
     mat3 _tangent;
     int32_t _materialId = 0;
 
@@ -29,7 +30,6 @@ struct SurfacePoint {
     const vec3& normal() const { return _tangent[1]; }
     const vec3& tangent() const { return _tangent[2]; }
     const vec3& bitangent() const { return _tangent[0]; }
-    const vec3& gnormal() const { return _tangent[1]; }
     int32_t materialId() const { return _materialId; }
     const vec3 toWorld(const vec3& surface) const { return _tangent * surface; }
     const vec3 toSurface(const vec3& world) const { return world * _tangent; }

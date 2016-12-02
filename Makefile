@@ -128,7 +128,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/MetalRings.blend --BPT --parallel
+	./build/master/master.bin models/CornellBoxPhong.blend --UPG --reference=/home/wojciech/test.ext
 
 profile:
 	valgrind \
