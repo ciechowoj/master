@@ -110,7 +110,7 @@ const BSDFSample CameraBSDF::sample(RandomEngine& engine, vec3 omega) const {
 const BSDFQuery CameraBSDF::query(vec3 incident, vec3 outgoing) const {
     BSDFQuery query;
 
-    query.throughput = 1.0f / vec3(pow(incident.y * incident.y, 2));
+    query.throughput = (incident.y < 0.0f ? 1.0f : 0.0f) / vec3(pow(incident.y, 4));
 
     query.density = 0.0f;
 
