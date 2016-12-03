@@ -1,8 +1,8 @@
 
-MASTER=master
+MASTER=../master
 SAMPLES=10000
 
-PREFIX=nohup timeout 2h
+PREFIX=timeout 2h
 
 BLEND_FILES = ../models/CornellBoxDiffuse.blend ../models/CornellBoxSpecular.blend ../models/FurnaceTest.blend
 # BLEND_FILES = $(wildcard ../models/*.blend)
