@@ -2,10 +2,9 @@
 MASTER=master
 SAMPLES=10000
 
-# PREFIX=nohop timeout 1h
-PREFIX=
+PREFIX=nohup timeout 2h
 
-BLEND_FILES = ../models/CornellBoxDiffuse.blend ../models/FurnaceTest.blend
+BLEND_FILES = ../models/CornellBoxDiffuse.blend ../models/CornellBoxSpecular.blend ../models/FurnaceTest.blend
 # BLEND_FILES = $(wildcard ../models/*.blend)
 EXR_FILES = \
 	$(BLEND_FILES:../models/%.blend=%.PT.exr) \
@@ -16,16 +15,16 @@ EXR_FILES = \
 # $(info $(EXR_FILES))
 
 %.PT.exr: ../models/%.blend ../PT.hpp ../PT.cpp
-	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --parallel --PT
+	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --PT
 
-%.BPT.exr: %.blend ../BPT.hpp ../BPT.cpp
-	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --parallel --BPT
+%.BPT.exr: ../models/%.blend ../BPT.hpp ../BPT.cpp
+	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --BPT
 
-%.VCM.exr: %.blend ../UPG.hpp ../UPG.cpp
-	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --parallel --VCM
+%.VCM.exr: ../models/%.blend ../UPG.hpp ../UPG.cpp
+	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --VCM
 
-%.UPG.exr: %.blend ../UPG.hpp ../UPG.cpp
-	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --parallel --UPG
+%.UPG.exr: ../models/%.blend ../UPG.hpp ../UPG.cpp
+	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --UPG
 
 .PHONY: all
 

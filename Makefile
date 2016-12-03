@@ -128,7 +128,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/FurnaceTest.blend --PT --parallel
+	./build/master/master.bin models/FurnaceTest.blend --UPG --parallel
 
 profile:
 	valgrind \

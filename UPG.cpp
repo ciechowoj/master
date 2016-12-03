@@ -34,7 +34,7 @@ void UPGBase<Beta, Mode>::preprocess(
 
 template <class Beta, GatherMode Mode>
 string UPGBase<Beta, Mode>::name() const {
-    return "Unbiased Photon Gathering";
+    return Mode == GatherMode::Unbiased ? "Unbiased Photon Gathering" : "Vertex Connection and Merging";
 }
 
 template <class Beta, GatherMode Mode>
