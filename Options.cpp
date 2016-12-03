@@ -590,6 +590,7 @@ shared<Technique> makeTechnique(Options& options) {
             return std::make_shared<PathTracing>(
                 options.minSubpath,
                 options.roulette,
+                options.beta,
                 options.numThreads);
 
         case Options::VCM:

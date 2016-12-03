@@ -3,8 +3,8 @@
 
 namespace haste {
 
-PathTracing::PathTracing(size_t minSubpath, float roulette, size_t num_threads)
-    : Technique(num_threads), _minSubpath(minSubpath), _roulette(roulette) { }
+PathTracing::PathTracing(size_t minSubpath, float roulette, float beta, size_t num_threads)
+    : Technique(num_threads), _minSubpath(minSubpath), _roulette(roulette), _beta(beta) { }
 
 vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
     vec3 radiance = vec3(0.0f);
@@ -57,7 +57,13 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
             eye[itr].density = eye[prv].density * edge.fGeometry * bsdf.density();
 
             if (isect.isLight()) {
-                radiance += _connect_light(eye[prv], eye[itr]);
+                auto lsdf = _scene->queryLSDF(eye[itr].surface, eye[itr].omega);
+                float weightInv = lsdf.areaDensity() / (edge.fGeometry * bsdf.density()) + 1.0f;
+
+                if (bsdf.specular() == 1.0f)
+                    weightInv = 1.0f;
+
+                radiance += lsdf.radiance() * eye[itr].throughput / weightInv;
             }
             else {
                 break;
