@@ -4,7 +4,12 @@ SAMPLES=10000
 
 PREFIX=timeout 2h
 
-BLEND_FILES = ../models/CornellBoxDiffuse.blend ../models/CornellBoxSpecular.blend ../models/FurnaceTest.blend
+BLEND_FILES = \
+	../models/CornellBoxDiffuse.blend \
+	../models/CornellBoxSpecular.blend \
+	../models/FurnaceTest.blend \
+	../models/MetalRings.blend
+
 # BLEND_FILES = $(wildcard ../models/*.blend)
 EXR_FILES = \
 	$(BLEND_FILES:../models/%.blend=%.PT.exr) \
