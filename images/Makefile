@@ -11,11 +11,10 @@ BLEND_FILES = \
 	../models/MetalRings.blend
 
 # BLEND_FILES = $(wildcard ../models/*.blend)
-EXR_FILES = \
-	$(BLEND_FILES:../models/%.blend=%.PT.exr) \
-	$(BLEND_FILES:../models/%.blend=%.BPT.exr) \
-	$(BLEND_FILES:../models/%.blend=%.VCM.exr) \
-	$(BLEND_FILES:../models/%.blend=%.UPG.exr)
+PT_EXR_FILES = $(BLEND_FILES:../models/%.blend=%.PT.exr)
+BPT_EXR_FILES = $(BLEND_FILES:../models/%.blend=%.BPT.exr)
+VCM_EXR_FILES = $(BLEND_FILES:../models/%.blend=%.VCM.exr)
+UPG_EXR_FILES = $(BLEND_FILES:../models/%.blend=%.UPG.exr)
 
 # $(info $(EXR_FILES))
 
@@ -31,7 +30,14 @@ EXR_FILES = \
 %.UPG.exr: ../models/%.blend ../UPG.hpp ../UPG.cpp
 	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --UPG
 
-.PHONY: all
+.PHONY: all pt bpt vcm upg
 
-all: $(EXR_FILES)
+pt: $(PT_EXR_FILES)
 
+bpt: $(BPT_EXR_FILES)
+
+vcm: $(VCM_EXR_FILES)
+
+upg: $(UPG_EXR_FILES)
+
+all: pt bpt vcm upg
