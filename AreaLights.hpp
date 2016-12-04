@@ -7,7 +7,7 @@
 
 namespace haste {
 
-struct LightSampleEx {
+struct LightSample {
     SurfacePoint surface;
     vec3 _radiance;
     vec3 _omega;
@@ -18,7 +18,7 @@ struct LightSampleEx {
     const vec3& normal() const { return surface.normal(); }
     const vec3& gnormal() const { return surface.gnormal; }
     const vec3& radiance() const { return _radiance; }
-    const vec3& omega() const { return _omega; } // outgoing from light
+    const vec3& omega() const { return _omega; }
     const float density() const { return _areaDensity * _omegaDensity; }
     const float densityInv() const { return 1.0f / density(); }
     const float areaDensity() const { return _areaDensity; };
@@ -59,7 +59,7 @@ public:
 
     const vec3 toWorld(size_t lightId, const vec3& omega) const;
 
-    LightSampleEx sample(
+    LightSample sample(
         RandomEngine& engine) const;
 
     vec3 queryRadiance(

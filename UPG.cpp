@@ -158,7 +158,7 @@ template <class Beta, GatherMode Mode> template <bool First, class Appender>
 void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
     size_t itr = path.size(), prv = path.size();
 
-    LightSampleEx light = _scene->sampleLight(engine);
+    LightSample light = _scene->sampleLight(engine);
 
     if (First) {
         path.emplace_back();

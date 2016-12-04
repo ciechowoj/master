@@ -90,7 +90,7 @@ public:
 
     mutable UniformSampler sampler;
 
-    const LightSampleEx sampleLight(
+    const LightSample sampleLight(
         RandomEngine& engine) const;
 
     const BSDFSample sampleBSDF(

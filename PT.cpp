@@ -100,7 +100,7 @@ vec3 PathTracing::_connect_light(const EyeVertex& eye, const EyeVertex& light) {
 }
 
 vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
-    LightSampleEx light = _scene->sampleLight(*context.engine);
+    LightSample light = _scene->sampleLight(*context.engine);
     vec3 omega = normalize(eye.surface.position() - light.position());
 
     if (dot(omega, light.normal()) < 0.0f) {

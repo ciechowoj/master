@@ -275,7 +275,7 @@ const size_t Scene::numRays() const {
     return _numIntersectRays + _numOccludedRays;
 }
 
-const LightSampleEx Scene::sampleLight(
+const LightSample Scene::sampleLight(
         RandomEngine& engine) const
 {
     return lights.sample(engine);

@@ -121,13 +121,13 @@ const vec3 AreaLights::toWorld(size_t lightId, const vec3& omega) const {
     return matrix * omega;
 }
 
-LightSampleEx AreaLights::sample(
+LightSample AreaLights::sample(
     RandomEngine& engine) const
 {
     size_t lightId = _sampleLight(engine);
     auto sample = sampleCosineHemisphere1(engine);
 
-    LightSampleEx result;
+    LightSample result;
     result.surface._position = _samplePosition(lightId, engine);
     result.surface._tangent[1] = _shapes[lightId].direction;
     result.surface._tangent[2] = _shapes[lightId].up;
