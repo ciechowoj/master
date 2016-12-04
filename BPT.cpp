@@ -123,7 +123,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     LightSampleEx light = _scene->sampleLight(engine);
 
     path.emplace_back();
-    path[prv].surface = light.surface();
+    path[prv].surface = light.surface;
     path[prv].omega = path[prv].surface.normal();
     path[prv].throughput = light.radiance() / light.areaDensity();
     path[prv].specular = 0.0f;

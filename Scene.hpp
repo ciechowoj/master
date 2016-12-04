@@ -58,10 +58,6 @@ public:
     vec3 queryRadiance(const RayIsect& isect) const;
     SurfacePoint querySurface(const RayIsect& isect) const;
 
-    LightSample sampleLight(
-        RandomEngine& engine,
-        const vec3& position) const;
-
     vec3 queryRadiance(
         const RayIsect& isect,
         const vec3& omega) const;

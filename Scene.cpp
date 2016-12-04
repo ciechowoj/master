@@ -152,13 +152,6 @@ vec3 Scene::queryRadiance(const RayIsect& isect) const {
     return lights.lightRadiance(isect.primId());
 }
 
-LightSample Scene::sampleLight(
-    RandomEngine& engine,
-    const vec3& position) const
-{
-    return lights.sample(engine, position);
-}
-
 vec3 Scene::queryRadiance(
     const RayIsect& isect,
     const vec3& omega) const

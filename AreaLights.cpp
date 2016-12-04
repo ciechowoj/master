@@ -23,7 +23,7 @@ namespace haste {
 // v1 ************************************** v2
 //
 
-const SurfacePoint LightSampleEx::surface() const {
+/* const SurfacePoint LightSampleEx::surface() const {
     SurfacePoint point;
 
     point._position = _position;
@@ -34,7 +34,7 @@ const SurfacePoint LightSampleEx::surface() const {
     point.gnormal = _normal;
 
     return point;
-}
+}*/
 
 void AreaLights::init(const Intersector* intersector, bounding_sphere_t sphere) {
     _intersector = intersector;
@@ -128,36 +128,18 @@ LightSampleEx AreaLights::sample(
     auto sample = sampleCosineHemisphere1(engine);
 
     LightSampleEx result;
-    result._position = _samplePosition(lightId, engine);
-    result._normal = _shapes[lightId].direction;
-    result._tangent = _shapes[lightId].up;
+    result.surface._position = _samplePosition(lightId, engine);
+    result.surface._tangent[1] = _shapes[lightId].direction;
+    result.surface._tangent[2] = _shapes[lightId].up;
+    result.surface._tangent[0] = normalize(cross(_shapes[lightId].up, _shapes[lightId].direction));
+
+    result.surface.gnormal = _shapes[lightId].direction;
+    result.surface._materialId = _materialIds[lightId];
+
     result._omega = toWorld(lightId, sample.omega());
     result._radiance = lightRadiance(lightId);
     result._areaDensity = _weights[lightId] / lightArea(lightId);
     result._omegaDensity = sample.density();
-    result._materialId = _materialIds[lightId];
-
-    return result;
-}
-
-LightSample AreaLights::sample(
-    RandomEngine& engine,
-    const vec3& position) const
-{
-    size_t lightId = _sampleLight(engine);
-
-    LightSample result;
-    result._position = _samplePosition(lightId, engine);
-    result._normal = _shapes[lightId].direction;
-    result._radiance = lightRadiance(lightId);
-    result._omega = normalize(position - result._position);
-    result._density = _weights[lightId] / lightArea(lightId);
-
-    float cosTheta = dot(result.omega(), result.normal());
-
-    result._radiance *=
-        _intersector->occluded(result.position(), position) *
-        (cosTheta > 0.0f ? 1.0f : 0.0f);
 
     return result;
 }

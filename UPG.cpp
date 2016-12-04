@@ -1,4 +1,3 @@
-#include <iostream>
 #include <UPG.hpp>
 #include <Edge.hpp>
 
@@ -57,10 +56,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].d = 0;
     eye[prv].D = 0;
 
-    // radiance += _gather_eye(context, eye[prv], radius);
     radiance += _connect_eye(context, eye[prv], light_path, radius);
-
-    // return radiance;
 
     RayIsect isect = _scene->intersect(ray.origin, ray.direction);
 
@@ -166,7 +162,7 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
 
     if (First) {
         path.emplace_back();
-        path[itr].surface = light.surface();
+        path[itr].surface = light.surface;
         path[itr].omega = vec3(0.0f);
         path[itr].throughput = light.radiance() / light.areaDensity();
         path[itr].specular = 0.0f;
@@ -186,7 +182,7 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
     path[itr].surface = _scene->querySurface(isect);
     path[itr].omega = -light.omega();
 
-    auto edge = Edge(path[prv], path[itr]);
+    auto edge = Edge(light, path[itr]);
 
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
     path[itr].specular = 0.0f;
