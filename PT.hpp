@@ -12,7 +12,7 @@ public:
     string name() const override;
 
 private:
-		struct EyeVertex {
+	struct EyeVertex {
         SurfacePoint surface;
         vec3 omega;
         vec3 throughput;

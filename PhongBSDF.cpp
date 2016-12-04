@@ -1,10 +1,11 @@
 #include <PhongBSDF.hpp>
 #include <SurfacePoint.hpp>
+#include <iostream>
 
 namespace haste {
 
 PhongBSDF::PhongBSDF(vec3 diffuse, vec3 specular, float power)
-    : _diffuse(diffuse), _specular(specular), _power(power) {}
+    : _diffuse(diffuse), _specular(specular), _power(power), _clamped_power(clamp(power, 0.0f, 92.0f)) {}
 
 const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
   BSDFQuery query;
@@ -12,6 +13,7 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
   vec3 reflected = vec3(-incident.x, incident.y, -incident.z);
   float cos_alpha = clamp(dot(outgoing, reflected), 0.0f, 1.0f);
   float cos_alpha_pow = pow(cos_alpha, _power);
+  float clamp_cos_alpha_pow = pow(cos_alpha, _clamped_power);
 
   float same_side = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
   const float half_over_pi = 0.5f * one_over_pi<float>();
@@ -19,7 +21,7 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
   vec3 diffuse = _diffuse * one_over_pi<float>();
   vec3 specular = _specular * (_power + 2.0f) * half_over_pi * cos_alpha_pow;
 
-  query.density = (_power + 1.0f) * half_over_pi * cos_alpha_pow;
+  query.density = (_clamped_power + 1.0f) * half_over_pi * clamp_cos_alpha_pow;
   query.densityRev = query.density;
   query.throughput = same_side * (diffuse + specular);
 
@@ -45,9 +47,9 @@ vec3 sample_phong(random_generator_t& generator, vec3 omega, float power) {
 
 const BSDFSample PhongBSDF::sample(RandomEngine& engine, vec3 omega) const {
   BSDFSample sample;
-  sample._omega = sample_phong(engine, omega, _power);
+  sample._omega = sample_phong(engine, omega, _clamped_power);
   BSDFQuery query = PhongBSDF::query(omega, sample._omega);
-  sample._throughput = query.throughput;
+  sample._throughput = query.throughput * (query.density < FLT_EPSILON ? 0.0f : 1.0f);
   sample._density = query.density;
   sample._densityRev = query.densityRev;
   sample._specular = query.specular;

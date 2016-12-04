@@ -19,6 +19,7 @@ private:
     vec3 _diffuse;
     vec3 _specular;
     float _power;
+    float _clamped_power;
 };
 
 }
