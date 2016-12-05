@@ -19,16 +19,16 @@ UPG_EXR_FILES = $(BLEND_FILES:../models/%.blend=%.UPG.exr)
 # $(info $(EXR_FILES))
 
 %.PT.exr: ../models/%.blend ../PT.hpp ../PT.cpp
-	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --PT
+	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --PT --snapshot=1000
 
 %.BPT.exr: ../models/%.blend ../BPT.hpp ../BPT.cpp
-	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --BPT
+	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --BPT --snapshot=1000
 
 %.VCM.exr: ../models/%.blend ../UPG.hpp ../UPG.cpp
-	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --VCM
+	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --VCM --max-radius=0.01 --snapshot=1000
 
 %.UPG.exr: ../models/%.blend ../UPG.hpp ../UPG.cpp
-	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --UPG
+	$(PREFIX) $(MASTER) $< --output=$@ --num-samples=$(SAMPLES) --batch --parallel --UPG --max-radius=0.01 --snapshot=1000
 
 .PHONY: all pt bpt vcm upg
 
