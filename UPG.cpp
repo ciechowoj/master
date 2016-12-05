@@ -1,5 +1,6 @@
 #include <UPG.hpp>
 #include <Edge.hpp>
+#include <iostream>
 
 namespace haste {
 
@@ -494,9 +495,6 @@ vec3 UPGBase<Beta, Mode>::_merge(
 
     auto edge = Edge(light, eye, omega);
 
-    auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
-    auto density = _density(engine, light, eye, eyeBSDF, edge, radius);
-
     vec3 result = _scene->occluded(eye.surface.position(), light.surface.position())
         * light.throughput
         * lightBSDF.throughput
@@ -505,7 +503,14 @@ vec3 UPGBase<Beta, Mode>::_merge(
         * edge.bCosTheta
         * edge.fGeometry;
 
-    return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
+    if (l1Norm(result) < FLT_EPSILON) {
+        return vec3(0.0f);
+    }
+    else {
+        auto density = _density(engine, light, eye, eyeBSDF, edge, radius);
+        auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
+        return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
+    }
 }
 
 template <class Beta, GatherMode Mode>

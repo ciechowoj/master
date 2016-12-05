@@ -75,6 +75,11 @@ public:
         const vec3& direction) const override;
 
     const RayIsect intersect(
+        const vec3& origin,
+        const vec3& direction,
+        float bound) const override;
+
+    const RayIsect intersect(
         const Ray& ray) const;
 
     const float occluded(const vec3& origin,

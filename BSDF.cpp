@@ -86,7 +86,8 @@ float BSDF::gathering_density(
         if (cos_alpha < dot(sample.omega, target_normalized)) {
             RayIsect isect = intersector->intersectMesh(
                 surface.position(),
-                surface.toWorld(sample.omega));
+                surface.toWorld(sample.omega),
+                target_length + target.radius);
 
             if (isect.isPresent()) {
 
