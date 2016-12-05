@@ -2,7 +2,7 @@
 MASTER=../master
 SAMPLES=10000
 
-PREFIX=timeout 2h
+PREFIX=
 
 BLEND_FILES = \
 	../models/CornellBoxDiffuse.blend \
