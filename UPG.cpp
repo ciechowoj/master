@@ -341,24 +341,25 @@ float UPGBase<Beta, Mode>::_density(
 
         const auto& eyeBSDF = _scene->queryBSDF(eye.surface);
 
-        auto target = eye.surface.toSurface(light.surface.position() - eye.surface.position());
-        auto bound = angular_bound(target, radius);
         auto omega = eye.surface.toSurface(eye.omega);
 
-        while (N < L) {
-            auto bsdfSample = eyeBSDF.sampleBounded(engine, omega, bound);
+        bounding_sphere_t target;
+        target.center = eye.surface.toSurface(light.surface.position() - eye.surface.position());
+        target.radius = radius;
 
-            bsdfSample._omega = eye.surface.toWorld(bsdfSample._omega);
+        while (N < L) {
+            auto sample = eyeBSDF.sample_bounded(engine, target, omega);
+            sample.omega = eye.surface.toWorld(sample.omega);
 
             RayIsect isect = _scene->intersectMesh(
                 eye.surface.position(),
-                bsdfSample.omega());
+                sample.omega);
 
             if (isect.isPresent()) {
                 float distance_sq = distance2(light.surface.position(), isect.position());
 
                 if (distance_sq < radius * radius) {
-                    return N / bsdfSample.area();
+                    return N / sample.adjust;
                 }
             }
 

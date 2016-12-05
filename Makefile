@@ -128,7 +128,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --UPG --parallel --num-photons=100000 --max-radius=0.01
+	./build/master/master.bin models/CornellBoxDiffuse.blend --UPG --parallel --max-radius=0.001
 
 profile:
 	valgrind \

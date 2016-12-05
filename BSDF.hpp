@@ -29,11 +29,8 @@ struct BSDFSample {
 };
 
 struct BSDFBoundedSample {
-    vec3 _omega;
-    float _area;
-
-    const vec3& omega() const { return _omega; }
-    float area() const { return _area; }
+    vec3 omega;
+    float adjust;
 };
 
 class BSDF {
@@ -53,14 +50,14 @@ public:
         RandomEngine& engine,
         vec3 omega) const = 0;
 
-    virtual const BSDFBoundedSample sampleBounded(
-        RandomEngine& engine,
-        vec3 omega,
-        const angular_bound_t& bound) const;
-
     const BSDFSample sample(
         RandomEngine& engine,
         const SurfacePoint& point,
+        vec3 omega) const;
+
+    virtual BSDFBoundedSample sample_bounded(
+        random_generator_t& generator,
+        bounding_sphere_t target,
         vec3 omega) const;
 
     BSDF(const BSDF&) = delete;

@@ -48,14 +48,6 @@ const BSDFSample BSDF::sample(
     return result;
 }
 
-const BSDFBoundedSample BSDF::sampleBounded(
-    RandomEngine& engine,
-    vec3 omega,
-    const angular_bound_t& bound) const
-{
-    return BSDFBoundedSample();
-}
-
 const BSDFSample BSDF::sample(
     RandomEngine& engine,
     const SurfacePoint& point,
@@ -65,6 +57,13 @@ const BSDFSample BSDF::sample(
     result._omega = point.toWorld(result.omega());
 
     return result;
+}
+
+BSDFBoundedSample BSDF::sample_bounded(
+    random_generator_t& generator,
+    bounding_sphere_t target,
+    vec3 omega) const {
+    return BSDFBoundedSample();
 }
 
 const BSDFQuery DeltaBSDF::query(vec3 incident, vec3 outgoing) const

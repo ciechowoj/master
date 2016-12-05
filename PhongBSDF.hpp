@@ -11,15 +11,16 @@ public:
 
     const BSDFSample sample(RandomEngine& engine, vec3 omega) const override;
 
-    const BSDFBoundedSample sampleBounded(
-        RandomEngine& engine, vec3 omega,
-        const angular_bound_t& bound) const override;
+    BSDFBoundedSample sample_bounded(
+        random_generator_t& generator,
+        bounding_sphere_t target,
+        vec3 omega) const override;
 
 private:
     vec3 _diffuse;
     vec3 _specular;
     float _power;
-    float _clamped_power;
+    float _kdiffuse;
 };
 
 }

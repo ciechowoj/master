@@ -41,6 +41,16 @@ angular_bound_t angular_bound(bounding_sphere_t sphere) {
     return angular_bound(sphere.center, sphere.radius);
 }
 
+vec3 sample_lambert(random_generator_t& generator, vec3 omega) {
+    float y = sqrt(generator.sample()) * (omega.y > 0.0f ? 1.0f : -1.0f);
+    float r = sqrt(1.0f - y * y);
+    float phi = generator.sample() * 2.0f * pi<float>();
+    float x = r * cos(phi);
+    float z = r * sin(phi);
+
+    return vec3(x, y, z);
+}
+
 lambertian_bounded_distribution_t::lambertian_bounded_distribution_t(angular_bound_t bound) {
     _uniform_theta_inf = cos(bound.theta_sup) * cos(bound.theta_sup);
     _uniform_theta_sup = cos(bound.theta_inf) * cos(bound.theta_inf);
