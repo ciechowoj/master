@@ -64,6 +64,49 @@ BSDFBoundedSample BSDF::sample_bounded(
     return BSDFBoundedSample();
 }
 
+float BSDF::gathering_density(
+    random_generator_t& generator,
+    const Intersector* intersector,
+    const SurfacePoint& surface,
+    bounding_sphere_t target,
+    vec3 omega) const {
+    const float L = 16777216.0f;
+    float N = 1.0f;
+
+    omega = surface.toSurface(omega);
+    target.center = surface.toSurface(target.center - surface.position());
+
+    float target_length = length(target.center);
+    vec3 target_normalized = target.center / target_length;
+    float cos_alpha = target_length / sqrt(target_length * target_length + target.radius * target.radius) - FLT_EPSILON;
+
+    while (N < L) {
+        auto sample = sample_bounded(generator, target, omega);
+
+        if (cos_alpha < dot(sample.omega, target_normalized)) {
+            RayIsect isect = intersector->intersectMesh(
+                surface.position(),
+                surface.toWorld(sample.omega));
+
+            if (isect.isPresent()) {
+
+                vec3 tentative = surface.toSurface(isect.position() - surface.position());
+
+                float distance_sq = distance2(target.center, tentative);
+
+                if (distance_sq < target.radius * target.radius) {
+                    return N / sample.adjust;
+                }
+            }
+        }
+
+        N += 1.0f;
+    }
+
+    return INFINITY;
+}
+
+
 const BSDFQuery DeltaBSDF::query(vec3 incident, vec3 outgoing) const
 {
     BSDFQuery query;

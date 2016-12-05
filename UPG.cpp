@@ -336,37 +336,12 @@ float UPGBase<Beta, Mode>::_density(
     float radius) {
 
     if (Mode == GatherMode::Unbiased) {
-        float L = 16777216.0f;
-        float N = 1.0f;
-
-        const auto& eyeBSDF = _scene->queryBSDF(eye.surface);
-
-        auto omega = eye.surface.toSurface(eye.omega);
-
-        bounding_sphere_t target;
-        target.center = eye.surface.toSurface(light.surface.position() - eye.surface.position());
-        target.radius = radius;
-
-        while (N < L) {
-            auto sample = eyeBSDF.sample_bounded(engine, target, omega);
-            sample.omega = eye.surface.toWorld(sample.omega);
-
-            RayIsect isect = _scene->intersectMesh(
-                eye.surface.position(),
-                sample.omega);
-
-            if (isect.isPresent()) {
-                float distance_sq = distance2(light.surface.position(), isect.position());
-
-                if (distance_sq < radius * radius) {
-                    return N / sample.adjust;
-                }
-            }
-
-            N += 1.0f;
-        }
-
-        return INFINITY;
+        return _scene->queryBSDF(eye.surface).gathering_density(
+            engine,
+            _scene.get(),
+            eye.surface,
+            { light.surface.position(), radius },
+            eye.omega);
     }
     else {
         return 1.0f / (edge.bGeometry * eyeQuery.densityRev * pi<float>() * radius * radius);

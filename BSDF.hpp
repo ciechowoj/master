@@ -53,6 +53,13 @@ public:
         bounding_sphere_t target,
         vec3 omega) const;
 
+    virtual float gathering_density(
+        random_generator_t& generator,
+        const Intersector* Intersector,
+        const SurfacePoint& surface,
+        bounding_sphere_t target,
+        vec3 omega) const;
+
     BSDF(const BSDF&) = delete;
     BSDF& operator=(const BSDF&) = delete;
 };
