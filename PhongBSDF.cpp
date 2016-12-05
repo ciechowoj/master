@@ -69,15 +69,15 @@ vec3 sample_phong(random_generator_t& generator, vec3 omega, float power) {
 
 const BSDFSample PhongBSDF::sample(RandomEngine& engine, vec3 omega) const {
   BSDFSample sample;
-  sample._omega = engine.sample() < _kdiffuse
+  sample.omega = engine.sample() < _kdiffuse
                       ? sample_lambert(engine, omega)
                       : sample_phong(engine, omega, _power);
 
-  BSDFQuery query = PhongBSDF::query(omega, sample._omega);
-  sample._throughput = query.throughput;
-  sample._density = query.density;
-  sample._densityRev = query.densityRev;
-  sample._specular = query.specular;
+  BSDFQuery query = PhongBSDF::query(omega, sample.omega);
+  sample.throughput = query.throughput;
+  sample.density = query.density;
+  sample.densityRev = query.densityRev;
+  sample.specular = query.specular;
 
   return sample;
 }

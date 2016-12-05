@@ -1,5 +1,6 @@
 #pragma once
 #include <Sample.hpp>
+#include <Intersector.hpp>
 
 namespace haste {
 
@@ -13,19 +14,11 @@ struct BSDFQuery {
 };
 
 struct BSDFSample {
-    vec3 _omega;
-    vec3 _throughput;
-    float _density;
-    float _densityRev;
-    float _specular;
-
-    const vec3& throughput() const { return _throughput; }
-    const vec3& omega() const { return _omega; }
-    const float density() const { return _density; }
-    const float densityRev() const { return _densityRev; }
-    const float specular() const { return _specular; }
-
-
+    vec3 omega = vec3(0.0f);
+    vec3 throughput = vec3(0.0f);
+    float density = 0.0f;
+    float densityRev = 0.0f;
+    float specular = 0.0f;
 };
 
 struct BSDFBoundedSample {

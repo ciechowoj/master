@@ -22,11 +22,11 @@ const BSDFQuery DiffuseBSDF::query(vec3 incident, vec3 outgoing) const {
 
 const BSDFSample DiffuseBSDF::sample(RandomEngine& engine, vec3 omega) const {
   BSDFSample sample;
-  sample._throughput = _diffuse * one_over_pi<float>();
-  sample._omega = sample_lambert(engine, omega);
-  sample._density = abs(sample._omega.y * one_over_pi<float>());
-  sample._densityRev = abs(omega.y * one_over_pi<float>());
-  sample._specular = 0.0f;
+  sample.throughput = _diffuse * one_over_pi<float>();
+  sample.omega = sample_lambert(engine, omega);
+  sample.density = abs(sample.omega.y * one_over_pi<float>());
+  sample.densityRev = abs(omega.y * one_over_pi<float>());
+  sample.specular = 0.0f;
 
   return sample;
 }

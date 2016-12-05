@@ -36,31 +36,31 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
         while (true) {
-            isect = _scene->intersect(isect.position(), bsdf.omega());
+            isect = _scene->intersect(isect.position(), bsdf.omega);
 
             if (!isect.isPresent()) {
                 return radiance;
             }
 
             eye[itr].surface = _scene->querySurface(isect);
-            eye[itr].omega = -bsdf.omega();
+            eye[itr].omega = -bsdf.omega;
 
             auto edge = Edge(eye[prv], eye[itr]);
 
             eye[itr].throughput
                 = eye[prv].throughput
-                * bsdf.throughput()
+                * bsdf.throughput
                 * edge.bCosTheta
-                / bsdf.density();
+                / bsdf.density;
 
-            eye[prv].specular = bsdf.specular();
-            eye[itr].density = eye[prv].density * edge.fGeometry * bsdf.density();
+            eye[prv].specular = bsdf.specular;
+            eye[itr].density = eye[prv].density * edge.fGeometry * bsdf.density;
 
             if (isect.isLight()) {
                 auto lsdf = _scene->queryLSDF(eye[itr].surface, eye[itr].omega);
-                float weightInv = lsdf.areaDensity() / (edge.fGeometry * bsdf.density()) + 1.0f;
+                float weightInv = lsdf.areaDensity() / (edge.fGeometry * bsdf.density) + 1.0f;
 
-                if (bsdf.specular() == 1.0f)
+                if (bsdf.specular == 1.0f)
                     weightInv = 1.0f;
 
                 radiance += lsdf.radiance() * eye[itr].throughput / weightInv;

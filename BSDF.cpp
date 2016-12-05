@@ -37,11 +37,11 @@ const BSDFSample BSDF::sample(
     vec3 omega) const
 {
     BSDFSample sample;
-    sample._throughput = vec3(1.0f, 0.0f, 1.0f) * one_over_pi<float>();
-    sample._omega = sample_lambert(engine, omega);
-    sample._density = abs(sample._omega.y * one_over_pi<float>());
-    sample._densityRev = abs(omega.y * one_over_pi<float>());
-    sample._specular = 0.0f;
+    sample.throughput = vec3(1.0f, 0.0f, 1.0f) * one_over_pi<float>();
+    sample.omega = sample_lambert(engine, omega);
+    sample.density = abs(sample.omega.y * one_over_pi<float>());
+    sample.densityRev = abs(omega.y * one_over_pi<float>());
+    sample.specular = 0.0f;
 
     return sample;
 }
@@ -52,7 +52,7 @@ const BSDFSample BSDF::sample(
     vec3 omega) const
 {
     BSDFSample result = sample(engine, point.toSurface(omega));
-    result._omega = point.toWorld(result.omega());
+    result.omega = point.toWorld(result.omega);
 
     return result;
 }

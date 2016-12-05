@@ -92,30 +92,30 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
         while (true) {
-            isect = _scene->intersect(isect.position(), bsdf.omega());
+            isect = _scene->intersect(isect.position(), bsdf.omega);
 
             if (!isect.isPresent()) {
                 return radiance;
             }
 
             eye[itr].surface = _scene->querySurface(isect);
-            eye[itr].omega = -bsdf.omega();
+            eye[itr].omega = -bsdf.omega;
 
             auto edge = Edge(eye[prv], eye[itr]);
 
             eye[itr].throughput
                 = eye[prv].throughput
-                * bsdf.throughput()
+                * bsdf.throughput
                 * edge.bCosTheta
-                / bsdf.density();
+                / bsdf.density;
 
-            eye[prv].specular = max(eye[prv].specular, bsdf.specular());
-            eye[itr].specular = bsdf.specular();
-            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
+            eye[prv].specular = max(eye[prv].specular, bsdf.specular);
+            eye[itr].specular = bsdf.specular;
+            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
             eye[itr].C
                 = (eye[prv].C
-                    * Beta::beta(bsdf.densityRev())
+                    * Beta::beta(bsdf.densityRev)
                     + eye[prv].c * (1.0f - eye[prv].specular))
                 * Beta::beta(edge.bGeometry)
                 * eye[itr].c;
@@ -124,8 +124,8 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
             eye[itr].D
                 = (eye[prv].D
-                    * Beta::beta(bsdf.densityRev())
-                    + eye[prv].d * (1.0f - bsdf.specular()))
+                    * Beta::beta(bsdf.densityRev)
+                    + eye[prv].d * (1.0f - bsdf.specular))
                 * Beta::beta(edge.bGeometry)
                 * eye[itr].c;
 
@@ -200,7 +200,7 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
     while (uniform < roulette) {
         auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega);
 
-        isect = _scene->intersectMesh(path[prv].surface.position(), bsdf.omega());
+        isect = _scene->intersectMesh(path[prv].surface.position(), bsdf.omega);
 
         if (!isect.isPresent()) {
             break;
@@ -210,36 +210,36 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
         path.emplace_back();
 
         path[itr].surface = _scene->querySurface(isect);
-        path[itr].omega = -bsdf.omega();
+        path[itr].omega = -bsdf.omega;
 
         edge = Edge(path[prv], path[itr]);
 
         path[itr].throughput
             = path[prv].throughput
-            * bsdf.throughput()
+            * bsdf.throughput
             * edge.bCosTheta
-            / (bsdf.density() * roulette);
+            / (bsdf.density * roulette);
 
-        path[prv].specular = max(path[prv].specular, bsdf.specular());
-        path[itr].specular = bsdf.specular();
+        path[prv].specular = max(path[prv].specular, bsdf.specular);
+        path[itr].specular = bsdf.specular;
 
-        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density());
+        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
         path[itr].A
             = (path[prv].A
-                * Beta::beta(bsdf.densityRev())
+                * Beta::beta(bsdf.densityRev)
                 + path[prv].a * (1.0f - path[prv].specular))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
 
         path[itr].B
             = (path[prv].B
-                * Beta::beta(bsdf.densityRev())
-                + (1.0f - bsdf.specular()))
+                * Beta::beta(bsdf.densityRev)
+                + (1.0f - bsdf.specular))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
 
-        if (bsdf.specular() == 1.0f) {
+        if (bsdf.specular == 1.0f) {
             path[prv] = path[itr];
             path.pop_back();
         }
@@ -257,7 +257,7 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
         path[prv].surface,
         path[prv].omega);
 
-    if (bsdf.specular() == 1.0f) {
+    if (bsdf.specular == 1.0f) {
         path.pop_back();
     }
 }
@@ -477,7 +477,7 @@ void UPGBase<Beta, Mode>::_scatter(RandomEngine& engine) {
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_gather(RandomEngine& engine, const EyeVertex& eye, float& radius) {
     auto eyeBSDF = _scene->sampleBSDF(engine, eye.surface, eye.omega);
-    RayIsect isect = _scene->intersectMesh(eye.surface.position(), eyeBSDF.omega());
+    RayIsect isect = _scene->intersectMesh(eye.surface.position(), eyeBSDF.omega);
 
     if (!isect.isPresent()) {
         return vec3(0.0f);
@@ -494,9 +494,9 @@ vec3 UPGBase<Beta, Mode>::_gather(RandomEngine& engine, const EyeVertex& eye, fl
             }
             else {
                 BSDFQuery query;
-                query.throughput = eyeBSDF.throughput();
-                query.density = eyeBSDF.densityRev();
-                query.densityRev = eyeBSDF.density();
+                query.throughput = eyeBSDF.throughput;
+                query.density = eyeBSDF.densityRev;
+                query.densityRev = eyeBSDF.density;
                 radiance += _merge(engine, light, eye, query, radius);
             }
         },

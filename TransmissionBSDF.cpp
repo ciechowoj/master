@@ -30,11 +30,11 @@ const BSDFSample TransmissionBSDF::sample(RandomEngine& engine, vec3 reflected) 
     }
 
     BSDFSample result;
-    result._throughput = vec3(1.0f, 1.0f, 1.0f) / abs(omega.y);
-    result._omega = omega;
-    result._density = 1.0f;
-    result._densityRev = 1.0f;
-    result._specular = 1.0f;
+    result.throughput = vec3(1.0f, 1.0f, 1.0f) / abs(omega.y);
+    result.omega = omega;
+    result.density = 1.0f;
+    result.densityRev = 1.0f;
+    result.specular = 1.0f;
 
     return result;
 }
