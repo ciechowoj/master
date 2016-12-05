@@ -36,16 +36,14 @@ const BSDFSample BSDF::sample(
     RandomEngine& engine,
     vec3 omega) const
 {
-    auto hemisphere = sampleCosineHemisphere1(engine);
+    BSDFSample sample;
+    sample._throughput = vec3(1.0f, 0.0f, 1.0f) * one_over_pi<float>();
+    sample._omega = sample_lambert(engine, omega);
+    sample._density = abs(sample._omega.y * one_over_pi<float>());
+    sample._densityRev = abs(omega.y * one_over_pi<float>());
+    sample._specular = 0.0f;
 
-    BSDFSample result;
-    result._throughput = vec3(1.f, 0.f, 1.f) * one_over_pi<float>();
-    result._omega = hemisphere.omega();
-    result._density = hemisphere.density();
-    result._densityRev = abs(omega.y * one_over_pi<float>());
-    result._specular = 0.0f;
-
-    return result;
+    return sample;
 }
 
 const BSDFSample BSDF::sample(
