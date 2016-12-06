@@ -78,9 +78,9 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[itr].throughput = vec3(1.0f);
     eye[itr].specular = 0.0f;
     eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
-    eye[itr].C = 0;
+    eye[itr].C = 0.0f;
     eye[itr].d = 0.0f;
-    eye[itr].D = 0;
+    eye[itr].D = 0.0f;
 
     std::swap(itr, prv);
 

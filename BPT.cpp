@@ -51,7 +51,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     eye[itr].throughput = vec3(1.0f);
     eye[itr].specular = 0.0f;
     eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
-    eye[itr].C = 0;
+    eye[itr].C = 0.0f;
 
     std::swap(itr, prv);
 
@@ -140,7 +140,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     path[itr].surface = _scene->querySurface(isect);
     path[itr].omega = -light.omega();
 
-    auto edge = Edge(path[prv], path[itr]);
+    auto edge = Edge(light, path[itr]);
 
     path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
     path[itr].specular = 0.0f;
