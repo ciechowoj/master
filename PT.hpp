@@ -20,7 +20,6 @@ private:
         float density;
     };
 
-    vec3 _connect_light(const EyeVertex& eye, const EyeVertex& light);
     vec3 _connect(render_context_t& context, const EyeVertex& eye);
 
     const size_t _minSubpath;

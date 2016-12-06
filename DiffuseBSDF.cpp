@@ -6,27 +6,27 @@ namespace haste {
 DiffuseBSDF::DiffuseBSDF(const vec3& diffuse) : _diffuse(diffuse) {}
 
 const BSDFQuery DiffuseBSDF::query(vec3 incident, vec3 outgoing) const {
+  float same_size = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
+
   BSDFQuery query;
-
-  query.throughput = incident.y > 0.0f && outgoing.y > 0.0f
-                         ? _diffuse * one_over_pi<float>()
-                         : vec3(0.0f);
-
-  query.density = outgoing.y > 0.0f ? outgoing.y * one_over_pi<float>() : 0.0f;
-
-  query.densityRev =
-      incident.y > 0.0f ? incident.y * one_over_pi<float>() : 0.0f;
+  query.throughput = _diffuse * one_over_pi<float>() * same_size;
+  query.density = abs(outgoing.y * one_over_pi<float>()) * same_size;
+  query.densityRev = abs(incident.y * one_over_pi<float>()) * same_size;
+  query.specular = 0.0f;
 
   return query;
 }
 
 const BSDFSample DiffuseBSDF::sample(RandomEngine& engine, vec3 omega) const {
   BSDFSample sample;
-  sample.throughput = _diffuse * one_over_pi<float>();
   sample.omega = sample_lambert(engine, omega);
-  sample.density = abs(sample.omega.y * one_over_pi<float>());
-  sample.densityRev = abs(omega.y * one_over_pi<float>());
-  sample.specular = 0.0f;
+
+  BSDFQuery query = this->query(omega, sample.omega);
+
+  sample.throughput = query.throughput;
+  sample.density = query.density;
+  sample.densityRev = query.densityRev;
+  sample.specular = query.specular;
 
   return sample;
 }
