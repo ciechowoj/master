@@ -128,7 +128,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/TestCase0.blend --PT --parallel # --beta=0 --reference=/home/wojciech/PT.exr # --beta=0 --max-radius=0.000000001
+	./build/master/master.bin models/TestCase1.blend --PT --parallel # --beta=0 --reference=/home/wojciech/PT.exr # --beta=0 --max-radius=0.000000001
 
 profile:
 	valgrind \

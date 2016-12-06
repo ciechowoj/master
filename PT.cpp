@@ -31,7 +31,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
     size_t path_size = 2;
 
     while (true) {
-        // radiance += _connect(context, eye[prv]);
+        radiance += _connect(context, eye[prv]);
 
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
@@ -62,8 +62,6 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 
                 if (bsdf.specular == 1.0f)
                     weightInv = 1.0f;
-
-                weightInv = 1.0f;
 
                 radiance += lsdf.radiance() * eye[itr].throughput / weightInv;
             }
@@ -101,7 +99,7 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
 
     auto edge = Edge(light, eye, omega);
 
-    float weightInv = 1.0f; // eyeBSDF.densityRev * edge.bGeometry / light.areaDensity() + 1.0f;
+    float weightInv = eyeBSDF.densityRev * edge.bGeometry / light.areaDensity() + 1.0f;
 
     return _scene->occluded(eye.surface.position(), light.position())
         * light.radiance()
