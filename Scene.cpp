@@ -203,7 +203,7 @@ const RayIsect Scene::intersect(
     RayIsect rtcRay;
     (*(vec3*)rtcRay.org) = origin;
     (*(vec3*)rtcRay.dir) = direction;
-    rtcRay.tnear = 0.00001f;
+    rtcRay.tnear = 0.0001f;
     rtcRay.tfar = INFINITY;
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
@@ -225,7 +225,7 @@ const RayIsect Scene::intersect(
     RayIsect rtcRay;
     (*(vec3*)rtcRay.org) = origin;
     (*(vec3*)rtcRay.dir) = direction;
-    rtcRay.tnear = 0.00001f;
+    rtcRay.tnear = 0.0001f;
     rtcRay.tfar = bound;
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
