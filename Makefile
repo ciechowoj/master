@@ -127,7 +127,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --PT --parallel --max-path=2
+	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --parallel --max-radius=0.0001 --beta=2
 
 profile:
 	valgrind \
