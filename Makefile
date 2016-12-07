@@ -117,7 +117,6 @@ build/master/%.d: ;
 -include $(MAIN_OBJECTS:build/master/%.o=build/master/%.d)
 -include build/master/main.d
 -include build/master/benchmark.d
--include $(TEST_OBJECTS:build/master/unit_tests/%.o=build/master/unit_tests/%.d)
 
 build/imgui/sentinel:
 	mkdir -p build
@@ -128,7 +127,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --PT --parallel
+	./build/master/master.bin models/CornellBoxDiffuse.blend --PT --parallel --max-path=2
 
 profile:
 	valgrind \
