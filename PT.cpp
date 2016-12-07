@@ -3,10 +3,11 @@
 
 namespace haste {
 
-PathTracing::PathTracing(size_t minSubpath, float roulette, float beta,
-                         size_t num_threads)
+PathTracing::PathTracing(size_t min_subpath, float roulette, float beta,
+                         size_t max_path, size_t num_threads)
     : Technique(num_threads),
-      _minSubpath(minSubpath),
+      _min_subpath(min_subpath),
+      _max_path(max_path),
       _roulette(roulette),
       _beta(beta) {}
 
@@ -17,12 +18,12 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 
   RayIsect isect = _scene->intersect(ray.origin, ray.direction);
 
-  while (isect.isLight()) {
+  while (isect.isLight() && _max_path > 0) {
     radiance += _scene->queryRadiance(isect, -ray.direction);
     isect = _scene->intersect(isect.position(), ray.direction);
   }
 
-  if (!isect.isPresent()) {
+  if (!isect.isPresent() || _max_path < 2) {
     return radiance;
   }
 
@@ -34,7 +35,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 
   size_t path_size = 2;
 
-  while (true) {
+  while (path_size <= _max_path) {
     radiance += _connect(context, eye[prv]);
 
     auto bsdf =
@@ -74,7 +75,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 
     std::swap(itr, prv);
 
-    float roulette = path_size < _minSubpath ? 1.0f : _roulette;
+    float roulette = path_size < _min_subpath ? 1.0f : _roulette;
     float uniform = sampleUniform1(*context.engine).value();
 
     if (roulette < uniform) {

@@ -337,6 +337,23 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
+        if (dict.count("--max-path")) {
+            if (options.technique != Options::PT) {
+                options.displayHelp = true;
+                options.displayMessage = "--max-path in not available for specified technique.";
+                return options;
+            }
+            else if (!isUnsigned(dict["--max-path"])) {
+                options.displayHelp = true;
+                options.displayMessage = "Invalid value for --max-path.";
+                return options;
+            }
+            else {
+                options.maxPath = atoi(dict["--max-path"].c_str());
+                dict.erase("--max-path");
+            }
+        }
+
         if (dict.count("--beta")) {
             if (options.technique != Options::BPT &&
                 options.technique != Options::PT &&
@@ -591,6 +608,7 @@ shared<Technique> makeTechnique(Options& options) {
                 options.minSubpath,
                 options.roulette,
                 options.beta,
+                options.maxPath,
                 options.numThreads);
 
         case Options::VCM:
