@@ -345,8 +345,6 @@ Mesh aiMeshToMesh(const aiMesh* mesh) {
     if (mesh->mBitangents == nullptr ||
         mesh->mTangents == nullptr) {
         result.indices.resize(mesh->mNumFaces * 3);
-        result.bitangents.resize(mesh->mNumFaces * 3);
-        result.normals.resize(mesh->mNumFaces * 3);
         result.tangents.resize(mesh->mNumFaces * 3);
         result.vertices.resize(mesh->mNumFaces * 3);
 
@@ -356,31 +354,29 @@ Mesh aiMeshToMesh(const aiMesh* mesh) {
             for (size_t k = 0; k < 3; ++k) {
                 unsigned index = mesh->mFaces[j].mIndices[k];
                 result.indices[j * 3 + k] = j * 3 + k;
-                result.normals[j * 3 + k] = toVec3(mesh->mNormals[index]);
+                result.tangents[j * 3 + k][1] = toVec3(mesh->mNormals[index]);
                 result.vertices[j * 3 + k] = toVec3(mesh->mVertices[index]);
             }
 
             vec3 edge = result.vertices[j * 3 + 1] - result.vertices[j * 3 + 0];
 
             for (size_t k = 0; k < 3; ++k) {
-                vec3 normal = result.normals[j * 3 + k];
+                vec3 normal = result.tangents[j * 3 + k][1];
                 vec3 tangent = normalize(edge - dot(normal, edge) * normal);
                 vec3 bitangent = normalize(cross(normal, tangent));
-                result.bitangents[j * 3 + k] = bitangent;
-                result.tangents[j * 3 + k] = tangent;
+                result.tangents[j * 3 + k][2] = bitangent;
+                result.tangents[j * 3 + k][0] = tangent;
             }
         }
     }
     else {
-        result.bitangents.resize(mesh->mNumVertices);
-        result.normals.resize(mesh->mNumVertices);
         result.tangents.resize(mesh->mNumVertices);
         result.vertices.resize(mesh->mNumVertices);
 
         for (size_t j = 0; j < mesh->mNumVertices; ++j) {
-            result.bitangents[j] = toVec3(mesh->mBitangents[j]);
-            result.normals[j] = toVec3(mesh->mNormals[j]);
-            result.tangents[j] = toVec3(mesh->mTangents[j]);
+            result.tangents[j][0] = toVec3(mesh->mTangents[j]);
+            result.tangents[j][1] = toVec3(mesh->mNormals[j]);
+            result.tangents[j][2] = toVec3(mesh->mBitangents[j]);
             result.vertices[j] = toVec3(mesh->mVertices[j]);
         }
 

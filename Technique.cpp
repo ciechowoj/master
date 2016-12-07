@@ -203,8 +203,9 @@ vec3 Technique::_accumulate(
         ivec2 iposition = ivec2(position);
         int width = int(context.resolution.x);
 
+        vec3 result = callback(closure);
         std::unique_lock<std::mutex> lock(_light_mutex);
-        _light_image[iposition.y * width + iposition.x] += callback(closure);
+        _light_image[iposition.y * width + iposition.x] += result;
 
         return vec3(0.0f, 0.0f, 0.0f);
     }

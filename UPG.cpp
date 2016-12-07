@@ -1,6 +1,5 @@
 #include <UPG.hpp>
 #include <Edge.hpp>
-#include <iostream>
 
 namespace haste {
 

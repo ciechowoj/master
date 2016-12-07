@@ -78,7 +78,10 @@ float BSDF::gathering_density(
 
     float target_length = length(target.center);
     vec3 target_normalized = target.center / target_length;
-    float cos_alpha = target_length / sqrt(target_length * target_length + target.radius * target.radius) - FLT_EPSILON;
+    float cos_alpha
+        = target_length > (target.radius * 2.0f + FLT_EPSILON)
+        ? target_length / sqrt(target_length * target_length + target.radius * target.radius) - FLT_EPSILON
+        : -2.0f;
 
     while (N < L) {
         auto sample = sample_bounded(generator, target, omega);
@@ -90,12 +93,12 @@ float BSDF::gathering_density(
                 target_length + target.radius);
 
             if (isect.isPresent()) {
-
                 vec3 tentative = surface.toSurface(isect.position() - surface.position());
 
                 float distance_sq = distance2(target.center, tentative);
 
                 if (distance_sq < target.radius * target.radius) {
+
                     return N / sample.adjust;
                 }
             }

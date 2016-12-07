@@ -94,17 +94,6 @@ const BSDF& Scene::queryBSDF(const SurfacePoint& surface) const {
     return *materials.bsdfs[surface.materialId() + materials.lights_offset].get();
 }
 
-vec3 Scene::lerpNormal(const RayIsect& hit) const {
-    runtime_assert(hit.meshId() < meshes.size());
-
-    const float w = 1.f - hit.u - hit.v;
-    auto& mesh = meshes[hit.meshId()];
-
-    return w * mesh.normals[mesh.indices[hit.primID * 3 + 0]] +
-         hit.u * mesh.normals[mesh.indices[hit.primID * 3 + 1]] +
-         hit.v * mesh.normals[mesh.indices[hit.primID * 3 + 2]];
-}
-
 SurfacePoint Scene::querySurface(const RayIsect& isect) const {
     if (isect.isLight()) {
         SurfacePoint point;
@@ -122,27 +111,39 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
         const float w = 1.f - isect.u - isect.v;
         auto& mesh = meshes[isect.meshId()];
 
+        const mat3& t0 = mesh.tangents[mesh.indices[isect.primID * 3 + 0]];
+        const mat3& t1 = mesh.tangents[mesh.indices[isect.primID * 3 + 1]];
+        const mat3& t2 = mesh.tangents[mesh.indices[isect.primID * 3 + 2]];
+
         SurfacePoint point;
         point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
 
-        point._tangent[0] =
-            normalize(w * mesh.bitangents[mesh.indices[isect.primID * 3 + 0]] +
-            isect.u * mesh.bitangents[mesh.indices[isect.primID * 3 + 1]] +
-            isect.v * mesh.bitangents[mesh.indices[isect.primID * 3 + 2]]);
+        point._tangent = w * t0 + isect.u * t1 + isect.v * t2;
 
-        point._tangent[1] =
-            normalize(w * mesh.normals[mesh.indices[isect.primID * 3 + 0]] +
-            isect.u * mesh.normals[mesh.indices[isect.primID * 3 + 1]] +
-            isect.v * mesh.normals[mesh.indices[isect.primID * 3 + 2]]);
+        point._tangent[0]
+            = point._tangent[0]
+            - dot(point._tangent[0], point._tangent[1]) * point._tangent[1];
 
-        point._tangent[2] =
-            normalize(w * mesh.tangents[mesh.indices[isect.primID * 3 + 0]] +
-            isect.u * mesh.tangents[mesh.indices[isect.primID * 3 + 1]] +
-            isect.v * mesh.tangents[mesh.indices[isect.primID * 3 + 2]]);
+        point._tangent[0] = normalize(point._tangent[0]);
 
-        point._materialId = mesh.materialID;
+        point._tangent[2]
+            = point._tangent[2]
+            - dot(point._tangent[2], point._tangent[1]) * point._tangent[1]
+            - dot(point._tangent[2], point._tangent[0]) * point._tangent[0];
+
+        point._tangent[2] = normalize(point._tangent[2]);
 
         point.gnormal = isect.gnormal();
+
+        point._tangent[1]
+            = point._tangent[1]
+            * (dot(isect.omega(), point._tangent[1]) < 0.0f ? -1.0f : 1.0f);
+
+        point.gnormal
+            = point.gnormal
+            * (dot(isect.omega(), point.gnormal) < 0.0f ? -1.0f : 1.0f);
+
+        point._materialId = mesh.materialID;
 
         return point;
     }

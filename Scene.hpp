@@ -28,9 +28,7 @@ struct Mesh {
     unsigned materialID;
     vector<int> indices;
     vector<vec3> vertices;
-    vector<vec3> normals;
-    vector<vec3> tangents;
-    vector<vec3> bitangents;
+    vector<mat3> tangents;
 };
 
 class Scene : public Intersector {
@@ -52,8 +50,6 @@ public:
 
     const BSDF& queryBSDF(const RayIsect& isect) const;
     const BSDF& queryBSDF(const SurfacePoint& surface) const;
-    vec3 lightExitance(const RayIsect& hit) const;
-    vec3 lerpNormal(const RayIsect& hit) const;
 
     vec3 queryRadiance(const RayIsect& isect) const;
     SurfacePoint querySurface(const RayIsect& isect) const;
