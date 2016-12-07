@@ -119,7 +119,8 @@ private:
 
     vec3 _combine(vec3 throughput, float weight);
 
-    const size_t _numPhotons;
+    const size_t _num_photons;
+    size_t _num_scattered;
     const size_t _numGather;
     const size_t _minSubpath;
     const float _roulette;

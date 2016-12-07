@@ -12,7 +12,8 @@ UPGBase<Beta, Mode>::UPGBase(
     float radius,
     size_t num_threads)
     : Technique(num_threads)
-    , _numPhotons(numPhotons)
+    , _num_photons(numPhotons)
+    , _num_scattered(0)
     , _numGather(numGather)
     , _minSubpath(minSubpath)
     , _roulette(roulette)
@@ -284,7 +285,7 @@ float UPGBase<Beta, Mode>::_weightVC(
     const BSDFQuery& eyeBSDF,
     const Edge& edge,
     float radius) {
-    float eta = float(_numPhotons) * pi<float>() * radius * radius;
+    float eta = Beta::beta(float(_num_scattered) * pi<float>() * radius * radius);
 
     float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
 
@@ -306,7 +307,7 @@ float UPGBase<Beta, Mode>::_weightVC(
 
     float weightInv
         = Ap + eta * Bp + Cp + eta * Dp
-        + Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev * skip_direct_vm) + 1.0f;
+        + eta * Beta::beta(edge.bGeometry * eyeBSDF.densityRev * skip_direct_vm) + 1.0f;
 
     return 1.0f / weightInv;
 }
@@ -319,11 +320,11 @@ float UPGBase<Beta, Mode>::_weightVM(
     const BSDFQuery& eyeBSDF,
     const Edge& edge,
     float radius) {
-    float eta = float(_numPhotons) * pi<float>() * radius * radius;
+    float eta = Beta::beta(float(_num_scattered) * pi<float>() * radius * radius);
 
     float weight = _weightVC<false>(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
-    return Beta::beta(eta * edge.bGeometry * eyeBSDF.densityRev) * weight;
+    return eta * Beta::beta(edge.bGeometry * eyeBSDF.densityRev) * weight;
 }
 
 template <class Beta, GatherMode Mode>
@@ -354,7 +355,7 @@ vec3 UPGBase<Beta, Mode>::_connect_light(const EyeVertex& eye, float radius) {
         return vec3(0.0f);
     }
 
-    float eta = float(_numPhotons) * pi<float>() * radius * radius;
+    float eta = Beta::beta(float(_num_scattered) * pi<float>() * radius * radius);
 
     auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
 
@@ -442,8 +443,9 @@ template <class Beta, GatherMode Mode>
 void UPGBase<Beta, Mode>::_scatter(RandomEngine& engine) {
     vector<LightVertex> vertices;
 
-    for (size_t i = 0; i < _numPhotons; ++i) {
+    while (vertices.size() < _num_photons) {
         _traceLight(engine, vertices);
+        ++_num_scattered;
     }
 
     _vertices = v3::HashGrid3D<LightVertex>(move(vertices), _radius);
@@ -478,7 +480,7 @@ vec3 UPGBase<Beta, Mode>::_gather(RandomEngine& engine, const EyeVertex& eye, fl
         isect.position(),
         radius);
 
-    return radiance / float(_numPhotons);
+    return radiance / float(_num_scattered);
 }
 
 template <class Beta, GatherMode Mode>
@@ -556,8 +558,8 @@ UPGb::UPGb(
         minSubpath,
         roulette,
         numPhotons,
-        radius,
         numGather,
+        radius,
         num_threads) {
     VariableBeta::init(beta);
 }
@@ -579,8 +581,8 @@ VCMb::VCMb(
         minSubpath,
         roulette,
         numPhotons,
-        radius,
         numGather,
+        radius,
         num_threads) {
     VariableBeta::init(beta);
 }
