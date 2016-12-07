@@ -60,8 +60,9 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 
       if (isect.isLight()) {
         auto lsdf = _scene->queryLSDF(eye[itr].surface, eye[itr].omega);
-        float weightInv =
-            lsdf.areaDensity() / (edge.fGeometry * bsdf.density) + 1.0f;
+        float weightInv = pow(lsdf.areaDensity(), _beta) /
+                              pow(edge.fGeometry * bsdf.density, _beta) +
+                          1.0f;
 
         if (bsdf.specular == 1.0f) weightInv = 1.0f;
 
@@ -99,8 +100,9 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
 
   auto edge = Edge(light, eye, omega);
 
-  float weightInv =
-      eyeBSDF.densityRev * edge.bGeometry / light.areaDensity() + 1.0f;
+  float weightInv = pow(eyeBSDF.densityRev * edge.bGeometry, _beta) /
+                        pow(light.areaDensity(), _beta) +
+                    1.0f;
 
   return _scene->occluded(eye.surface.position(), light.position()) *
          light.radiance() / light.areaDensity() * eye.throughput *

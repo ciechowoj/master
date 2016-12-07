@@ -24,6 +24,7 @@ struct Options {
     size_t numGather = 100;
     double maxRadius = 0.001;
     size_t minSubpath = 5;
+    size_t maxPath = SIZE_MAX;
     double beta = 1.0f;
     double roulette = 0.6;
     bool batch = false;
