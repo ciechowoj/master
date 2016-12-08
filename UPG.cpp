@@ -509,6 +509,7 @@ vec3 UPGBase<Beta, Mode>::_merge(
     }
     else {
         auto density = _density(engine, light, eye, eyeBSDF, edge, radius);
+
         auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
         return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
     }
@@ -528,15 +529,14 @@ vec3 UPGBase<Beta, Mode>::_merge(
     auto edge = Edge(light, eye, omega);
 
     auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
-    auto density = _density(engine, light, eye, eyeBSDF, edge, radius);
+    auto density = 1.0f / (eyeBSDF.densityRev * pi<float>() * radius * radius);
 
-    vec3 result = _scene->occluded(eye.surface.position(), light.surface.position())
+    vec3 result = _scene->occluded(light.surface.position(), eye.surface.position())
         * light.throughput
         * lightBSDF.throughput
         * eye.throughput
         * eyeBSDF.throughput
-        * edge.bCosTheta
-        * edge.fGeometry;
+        * edge.fCosTheta;
 
     return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
 }

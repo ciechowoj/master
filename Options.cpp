@@ -196,6 +196,23 @@ Options parseRmsArgs(int argc, char const* const* argv) {
     return options;
 }
 
+Options parseSubArgs(int argc, char const* const* argv) {
+    Options options;
+
+    if (argc != 5) {
+        options.displayHelp = true;
+        options.displayMessage = "Input files are required.";
+    }
+    else {
+        options.action = Options::SUB;
+        options.output = argv[2];
+        options.input0 = argv[3];
+        options.input1 = argv[4];
+    }
+
+    return options;
+}
+
 Options parseArgs(int argc, char const* const* argv) {
     if (1 < argc) {
         if (1 < argc && argv[1] == string("avg")) {
@@ -203,6 +220,9 @@ Options parseArgs(int argc, char const* const* argv) {
         }
         else if (1 < argc && argv[1] == string("rms")) {
             return parseRmsArgs(argc, argv);
+        }
+        else if (1 < argc && argv[1] == string("sub")) {
+            return parseSubArgs(argc, argv);
         }
     }
 

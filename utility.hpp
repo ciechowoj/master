@@ -73,7 +73,7 @@ void printAVG(const string& path);
 
 vec3 computeRMS(const string& path0, const string& path1);
 void printRMS(const string& path0, const string& path1);
-
+void subtract(const string& result, const string& path0, const string& path1);
 
 double high_resolution_time();
 

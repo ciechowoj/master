@@ -310,6 +310,27 @@ vec3 computeRMS(const string& path0, const string& path1) {
     return sqrt(result / float(data0.size()));
 }
 
+void subtract(const string& result, const string& path0, const string& path1) {
+    vector<vec3> data0, data1, data2;
+    size_t width0, height0, width1, height1;
+
+    loadEXR(path0, width0, height0, data0);
+    loadEXR(path1, width1, height1, data1);
+
+    if (data0.size() != data1.size()) {
+        throw std::runtime_error(
+            "Sizes of '" + path0 + "' and '" + path1 + "' doesn't match.");
+    }
+
+    data2.resize(data0.size());
+
+    for (size_t i = 0; i < data0.size(); ++i) {
+        data2[i] = data0[i] - data1[i];
+    }
+
+    saveEXR(result, width0, height0, data2.data());
+}
+
 void printRMS(const string& path0, const string& path1) {
     printVec(computeRMS(path0, path1));
 }

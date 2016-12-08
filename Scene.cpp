@@ -247,8 +247,8 @@ const float Scene::occluded(
     RTCRay rtcRay;
     (*(vec3*)rtcRay.org) = origin;
     (*(vec3*)rtcRay.dir) = target - origin;
-    rtcRay.tnear = 0.00001f;
-    rtcRay.tfar = 0.99999f;
+    rtcRay.tnear = 0.0001f;
+    rtcRay.tfar =  0.9999f;
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
