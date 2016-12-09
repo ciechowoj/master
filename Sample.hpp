@@ -39,18 +39,30 @@ struct angular_bound_t {
 angular_bound_t angular_bound(vec3 center, float radius);
 angular_bound_t angular_bound(bounding_sphere_t sphere);
 
-struct sample_lambert_bounded_result_t {
-    vec3 omega;
+struct direction_sample_t {
+    vec3 direction;
     float adjust;
 };
 
-vec3 sample_lambert(random_generator_t& generator, vec3 omega);
-sample_lambert_bounded_result_t sample_lambert_bounded(
+mat3 reflection_to_surface(vec3 reflection);
+
+direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega);
+
+direction_sample_t sample_lambert(
     random_generator_t& generator,
     vec3 omega,
     bounding_sphere_t& sphere);
 
+direction_sample_t sample_phong(
+    random_generator_t& generator,
+    vec3 omega,
+    float power);
 
+direction_sample_t sample_phong(
+    random_generator_t& generator,
+    vec3 omega,
+    float power,
+    bounding_sphere_t& sphere);
 
 class lambertian_bounded_distribution_t {
 public:

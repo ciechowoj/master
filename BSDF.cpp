@@ -38,7 +38,7 @@ const BSDFSample BSDF::sample(
 {
     BSDFSample sample;
     sample.throughput = vec3(1.0f, 0.0f, 1.0f) * one_over_pi<float>();
-    sample.omega = sample_lambert(engine, omega);
+    sample.omega = sample_lambert(engine, omega).direction;
     sample.density = abs(sample.omega.y * one_over_pi<float>());
     sample.densityRev = abs(omega.y * one_over_pi<float>());
     sample.specular = 0.0f;

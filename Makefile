@@ -127,9 +127,8 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend \
-	--UPG --max-radius=0.001 --parallel --resolution=512x512 \
-	--reference=/home/wojciech/CornellBoxDiffuse.512.512.5461.PT.indirect.exr
+	./build/master/master.bin models/TestCase3.blend \
+	--PT --parallel --resolution=512x512
 
 profile:
 	valgrind \

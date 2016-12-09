@@ -6,12 +6,12 @@ namespace haste {
 DiffuseBSDF::DiffuseBSDF(const vec3& diffuse) : _diffuse(diffuse) {}
 
 const BSDFQuery DiffuseBSDF::query(vec3 incident, vec3 outgoing) const {
-  float same_size = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
+  float same_side = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
 
   BSDFQuery query;
-  query.throughput = _diffuse * one_over_pi<float>() * same_size;
-  query.density = abs(outgoing.y * one_over_pi<float>()) * same_size;
-  query.densityRev = abs(incident.y * one_over_pi<float>()) * same_size;
+  query.throughput = _diffuse * one_over_pi<float>() * same_side;
+  query.density = abs(outgoing.y * one_over_pi<float>()) * same_side;
+  query.densityRev = abs(incident.y * one_over_pi<float>()) * same_side;
   query.specular = 0.0f;
 
   return query;
@@ -19,7 +19,7 @@ const BSDFQuery DiffuseBSDF::query(vec3 incident, vec3 outgoing) const {
 
 const BSDFSample DiffuseBSDF::sample(RandomEngine& engine, vec3 omega) const {
   BSDFSample sample;
-  sample.omega = sample_lambert(engine, omega);
+  sample.omega = sample_lambert(engine, omega).direction;
 
   BSDFQuery query = this->query(omega, sample.omega);
 

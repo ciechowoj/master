@@ -22,8 +22,8 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
   float same_side = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
 
   // diffuse
-  float diffuse_density = outgoing.y * one_over_pi<float>();
-  float diffuse_density_rev = incident.y * one_over_pi<float>();
+  float diffuse_density = abs(outgoing.y * one_over_pi<float>());
+  float diffuse_density_rev = abs(incident.y * one_over_pi<float>());
 
   vec3 diffuse = _diffuse * one_over_pi<float>();
 
@@ -34,44 +34,31 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
   float cos_alpha_pow = pow(cos_alpha, _power);
 
   float specular_density = (_power + 1.0f) * half_over_pi * cos_alpha_pow;
+  float specular_density_rev = specular_density;
 
   vec3 specular = _specular * (_power + 2.0f) * half_over_pi * cos_alpha_pow;
 
   BSDFQuery query;
 
-  query.density = specular_density * specular_density_factor +
-                  diffuse_density * diffuse_density_factor;
+  query.density = same_side * (specular_density * specular_density_factor +
+                               diffuse_density * diffuse_density_factor);
 
-  query.densityRev = specular_density * specular_density_factor +
-                     diffuse_density_rev * diffuse_density_factor;
+  query.densityRev =
+      same_side * (specular_density_rev * specular_density_factor +
+                   diffuse_density_rev * diffuse_density_factor);
 
   query.throughput = same_side * (diffuse + specular);
 
+  query.specular = 0.0f;
+
   return query;
-}
-
-vec3 sample_phong(random_generator_t& generator, vec3 omega, float power) {
-  mat3 refl_to_surf;
-  refl_to_surf[1] = vec3(-omega.x, omega.y, -omega.z);
-  refl_to_surf[2] =
-      normalize(vec3(0.0f, 1.0f, 0.0f) - refl_to_surf[1].y * refl_to_surf[1]);
-  refl_to_surf[0] = normalize(cross(refl_to_surf[1], refl_to_surf[2]));
-
-  float y = pow(generator.sample(), 1.0f / (power + 1.0f));
-  float r = sqrt(1.0f - y * y);
-
-  float phi = generator.sample() * 2.0f * pi<float>();
-  float x = r * cos(phi);
-  float z = r * sin(phi);
-
-  return refl_to_surf * vec3(x, y, z);
 }
 
 const BSDFSample PhongBSDF::sample(RandomEngine& engine, vec3 omega) const {
   BSDFSample sample;
   sample.omega = engine.sample() < _kdiffuse
-                      ? sample_lambert(engine, omega)
-                      : sample_phong(engine, omega, _power);
+                     ? sample_lambert(engine, omega).direction
+                     : sample_phong(engine, omega, _power).direction;
 
   BSDFQuery query = PhongBSDF::query(omega, sample.omega);
   sample.throughput = query.throughput;
@@ -83,8 +70,8 @@ const BSDFSample PhongBSDF::sample(RandomEngine& engine, vec3 omega) const {
 }
 
 BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
-                                       bounding_sphere_t target,
-                                       vec3 omega) const {
+                                            bounding_sphere_t target,
+                                            vec3 omega) const {
   auto bound = angular_bound(target);
   auto distribution = lambertian_bounded_distribution_t(bound);
 
