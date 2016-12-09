@@ -228,7 +228,7 @@ void Technique::_for_each_ray(
     runtime_assert(0 <= yBegin && yEnd <= (int)view.height());
 
     auto shoot = [&](float x, float y) -> Ray {
-        vec2 position = vec2(x, y) + sampleUniform2(*context.engine).value();
+        vec2 position = vec2(x + context.engine->sample(), y + context.engine->sample());
 
         vec3 direction = ray_direction(
             position,

@@ -239,8 +239,8 @@ const size_t AreaLights::_sampleLight(RandomEngine& engine) const {
 }
 
 const vec3 AreaLights::_samplePosition(size_t lightId, RandomEngine& engine) const {
-    auto uniform =
-        (sampleUniform2(engine).value() - vec2(0.5f)) * _sizes[lightId];
+    auto sample = vec2(engine.sample(), engine.sample());
+    auto uniform = (sample - vec2(0.5f)) * _sizes[lightId];
 
     const vec3 up = _shapes[lightId].up;
     const vec3 left = normalize(cross(up, _shapes[lightId].direction));

@@ -76,7 +76,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
     std::swap(itr, prv);
 
     float roulette = path_size < _min_subpath ? 1.0f : _roulette;
-    float uniform = sampleUniform1(*context.engine).value();
+    float uniform = context.engine->sample();
 
     if (roulette < uniform) {
       return radiance;

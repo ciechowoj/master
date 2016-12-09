@@ -102,7 +102,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
         std::swap(itr, prv);
 
         float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        float uniform = sampleUniform1(*context.engine).value();
+        float uniform = context.engine->sample();
 
         if (roulette < uniform) {
             return radiance;
@@ -152,7 +152,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
 
     size_t path_size = 2;
     float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-    float uniform = sampleUniform1(engine).value();
+    float uniform = engine.sample();
 
     while (uniform < roulette) {
         auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega);
@@ -199,7 +199,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
         }
 
         roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        uniform = sampleUniform1(engine).value();
+        uniform = engine.sample();
     }
 
     auto bsdf = _scene->sampleBSDF(
