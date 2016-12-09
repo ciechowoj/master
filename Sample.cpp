@@ -59,13 +59,46 @@ direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega) {
   return {vec3(x, y, z), 1.0f};
 }
 
+direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
+                                  bounding_sphere_t sphere) {
+  auto bound = angular_bound(sphere);
+
+  auto uniform_theta_inf = cos(bound.theta_sup) * cos(bound.theta_sup);
+  auto uniform_theta_sup = cos(bound.theta_inf) * cos(bound.theta_inf);
+  auto uniform_phi_inf = bound.phi_inf * one_over_pi<float>() * 0.5f;
+  auto uniform_phi_sup = bound.phi_sup * one_over_pi<float>() * 0.5f;
+
+  auto theta_range = uniform_theta_sup - uniform_theta_inf;
+  auto phi_range = uniform_phi_sup - uniform_phi_inf;
+  float adjust = theta_range * phi_range;
+
+  float y = sqrt(generator.sample() * theta_range + uniform_theta_inf);
+  float phi =
+      two_pi<float>() * (generator.sample() * phi_range + uniform_phi_inf);
+  float r = sqrt(1 - y * y);
+  float x = r * cos(phi);
+  float z = r * sin(phi);
+
+  return { vec3(x, y, z), adjust };
+}
+
+float lambert_adjust(vec3 omega, bounding_sphere_t sphere) {
+  auto bound = angular_bound(sphere);
+
+  auto uniform_theta_inf = cos(bound.theta_sup) * cos(bound.theta_sup);
+  auto uniform_theta_sup = cos(bound.theta_inf) * cos(bound.theta_inf);
+  auto uniform_phi_inf = bound.phi_inf * one_over_pi<float>() * 0.5f;
+  auto uniform_phi_sup = bound.phi_sup * one_over_pi<float>() * 0.5f;
+
+  auto theta_range = uniform_theta_sup - uniform_theta_inf;
+  auto phi_range = uniform_phi_sup - uniform_phi_inf;
+
+  return theta_range * phi_range;
+}
+
 direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
                                 float power) {
-  mat3 refl_to_surf;
-  refl_to_surf[1] = vec3(-omega.x, omega.y, -omega.z);
-  refl_to_surf[2] =
-      normalize(vec3(0.0f, 1.0f, 0.0f) - refl_to_surf[1].y * refl_to_surf[1]);
-  refl_to_surf[0] = normalize(cross(refl_to_surf[1], refl_to_surf[2]));
+  mat3 refl_to_surf = reflection_to_surface(vec3(-omega.x, omega.y, -omega.z));
 
   float y = pow(generator.sample(), 1.0f / (power + 1.0f));
   float r = sqrt(1.0f - y * y);
@@ -77,39 +110,49 @@ direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
   return {refl_to_surf * vec3(x, y, z), 1.0f};
 }
 
-lambertian_bounded_distribution_t::lambertian_bounded_distribution_t(
-    angular_bound_t bound) {
-  _uniform_theta_inf = cos(bound.theta_sup) * cos(bound.theta_sup);
-  _uniform_theta_sup = cos(bound.theta_inf) * cos(bound.theta_inf);
-  _uniform_phi_inf = bound.phi_inf * one_over_pi<float>() * 0.5f;
-  _uniform_phi_sup = bound.phi_sup * one_over_pi<float>() * 0.5f;
-}
+direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
+                                float power, bounding_sphere_t sphere) {
+  mat3 refl_to_surf = reflection_to_surface(vec3(-omega.x, omega.y, -omega.z));
 
-vec3 lambertian_bounded_distribution_t::sample(
-    random_generator_t& generator) const {
-  float theta_range = _uniform_theta_sup - _uniform_theta_inf;
-  float phi_range = _uniform_phi_sup - _uniform_phi_inf;
+  sphere.center = sphere.center * refl_to_surf;
 
-  float y = sqrt(generator.sample() * theta_range + _uniform_theta_inf);
+  auto bound = angular_bound(sphere);
+
+  auto uniform_theta_inf = pow(cos(bound.theta_sup), power + 1.0f);
+  auto uniform_theta_sup = pow(cos(bound.theta_inf), power + 1.0f);
+  auto uniform_phi_inf = bound.phi_inf * one_over_pi<float>() * 0.5f;
+  auto uniform_phi_sup = bound.phi_sup * one_over_pi<float>() * 0.5f;
+
+  auto theta_range = uniform_theta_sup - uniform_theta_inf;
+  auto phi_range = uniform_phi_sup - uniform_phi_inf;
+  float adjust = theta_range * phi_range;
+
+  float y = pow(generator.sample() * theta_range + uniform_theta_inf, 1.0f / (power + 1.0f));
   float phi =
-      two_pi<float>() * (generator.sample() * phi_range + _uniform_phi_inf);
+      two_pi<float>() * (generator.sample() * phi_range + uniform_phi_inf);
   float r = sqrt(1 - y * y);
   float x = r * cos(phi);
   float z = r * sin(phi);
-  return vec3(x, y, z);
+
+  return { refl_to_surf * vec3(x, y, z), adjust };
 }
 
-float lambertian_bounded_distribution_t::density(vec3 sample) const {
-  return sample.y * one_over_pi<float>();
-}
+float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere) {
+  mat3 refl_to_surf = reflection_to_surface(vec3(-omega.x, omega.y, -omega.z));
 
-float lambertian_bounded_distribution_t::density_inv(vec3 sample) const {
-  return pi<float>() / sample.y;
-}
+  sphere.center = sphere.center * refl_to_surf;
 
-float lambertian_bounded_distribution_t::subarea() const {
-  return (_uniform_theta_sup - _uniform_theta_inf) *
-         (_uniform_phi_sup - _uniform_phi_inf);
+  auto bound = angular_bound(sphere);
+
+  auto uniform_theta_inf = pow(cos(bound.theta_sup), power + 1.0f);
+  auto uniform_theta_sup = pow(cos(bound.theta_inf), power + 1.0f);
+  auto uniform_phi_inf = bound.phi_inf * one_over_pi<float>() * 0.5f;
+  auto uniform_phi_sup = bound.phi_sup * one_over_pi<float>() * 0.5f;
+
+  auto theta_range = uniform_theta_sup - uniform_theta_inf;
+  auto phi_range = uniform_phi_sup - uniform_phi_inf;
+
+  return theta_range * phi_range;
 }
 
 RandomEngine::RandomEngine() {
@@ -120,13 +163,15 @@ RandomEngine::RandomEngine() {
 RandomEngine::RandomEngine(RandomEngine&& that)
     : engine(std::move(that.engine)) {}
 
-template <> float RandomEngine::sample<float>() {
+template <>
+float RandomEngine::sample<float>() {
   return std::uniform_real_distribution<float>()(engine);
 }
 
-template <> vec2 RandomEngine::sample<vec2>() {
-    return vec2(std::uniform_real_distribution<float>()(engine),
-        std::uniform_real_distribution<float>()(engine));
+template <>
+vec2 RandomEngine::sample<vec2>() {
+  return vec2(std::uniform_real_distribution<float>()(engine),
+              std::uniform_real_distribution<float>()(engine));
 }
 
 std::uint_fast32_t RandomEngine::operator()() { return engine.operator()(); }

@@ -12,12 +12,12 @@ PhongBSDF::PhongBSDF(vec3 diffuse, vec3 specular, float power)
 
   float reflectivity_sum = diffuse_reflectivity + specular_reflectivity;
 
-  _kdiffuse = diffuse_reflectivity / reflectivity_sum;
+  _diffuse_probability = diffuse_reflectivity / reflectivity_sum;
 }
 
 const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
-  float diffuse_density_factor = _kdiffuse;
-  float specular_density_factor = 1.0f - _kdiffuse;
+  float diffuse_density_factor = _diffuse_probability;
+  float specular_density_factor = 1.0f - _diffuse_probability;
 
   float same_side = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
 
@@ -56,7 +56,7 @@ const BSDFQuery PhongBSDF::query(vec3 incident, vec3 outgoing) const {
 
 const BSDFSample PhongBSDF::sample(RandomEngine& engine, vec3 omega) const {
   BSDFSample sample;
-  sample.omega = engine.sample() < _kdiffuse
+  sample.omega = engine.sample() < _diffuse_probability
                      ? sample_lambert(engine, omega).direction
                      : sample_phong(engine, omega, _power).direction;
 
@@ -72,12 +72,31 @@ const BSDFSample PhongBSDF::sample(RandomEngine& engine, vec3 omega) const {
 BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
                                             bounding_sphere_t target,
                                             vec3 omega) const {
-  auto bound = angular_bound(target);
-  auto distribution = lambertian_bounded_distribution_t(bound);
-
   BSDFBoundedSample result;
-  result.omega = distribution.sample(generator);
-  result.adjust = distribution.subarea();
+
+  float diffuse_adjust = lambert_adjust(omega, target);
+  float specular_adjust = phong_adjust(omega, _power, target);
+
+  float diffuse_probability = diffuse_adjust * _diffuse_probability /
+                              (diffuse_adjust * _diffuse_probability +
+                               specular_adjust * (1.0f - _diffuse_probability));
+
+  float specular_probability = 1.0f - diffuse_probability;
+
+  if (generator.sample() < diffuse_probability) {
+    auto sample = sample_lambert(generator, omega, target);
+
+    result.omega = sample.direction;
+    result.adjust = sample.adjust * _diffuse_probability +
+                    specular_adjust * (1.0f - _diffuse_probability);
+  } else {
+    auto sample = sample_phong(generator, omega, _power, target);
+
+    result.omega = sample.direction;
+    result.adjust =
+        sample.adjust * (1.0f - _diffuse_probability) +
+        diffuse_adjust * _diffuse_probability;
+  }
 
   return result;
 }

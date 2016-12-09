@@ -135,13 +135,13 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
 
         point.gnormal = isect.gnormal();
 
-        /* point._tangent[1]
+        point._tangent[1]
             = point._tangent[1]
             * (dot(isect.omega(), point._tangent[1]) < 0.0f ? -1.0f : 1.0f);
 
         point.gnormal
             = point.gnormal
-            * (dot(isect.omega(), point.gnormal) < 0.0f ? -1.0f : 1.0f); */
+            * (dot(isect.omega(), point.gnormal) < 0.0f ? -1.0f : 1.0f);
 
         point._materialId = mesh.materialID;
 

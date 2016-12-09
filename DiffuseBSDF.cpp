@@ -34,12 +34,11 @@ const BSDFSample DiffuseBSDF::sample(RandomEngine& engine, vec3 omega) const {
 BSDFBoundedSample DiffuseBSDF::sample_bounded(random_generator_t& generator,
                                        bounding_sphere_t target,
                                        vec3 omega) const {
-  auto bound = angular_bound(target);
-  auto distribution = lambertian_bounded_distribution_t(bound);
+  auto sample = sample_lambert(generator, omega, target);
 
   BSDFBoundedSample result;
-  result.omega = distribution.sample(generator);
-  result.adjust = distribution.subarea();
+  result.omega = sample.direction;
+  result.adjust = sample.adjust;
 
   return result;
 }

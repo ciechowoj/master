@@ -9,8 +9,8 @@ struct RandomEngine {
   RandomEngine();
   RandomEngine(RandomEngine&& that);
 
-  template <class T = float> T sample();
-
+  template <class T = float>
+  T sample();
 
   std::uint_fast32_t operator()();
 
@@ -20,9 +20,10 @@ struct RandomEngine {
   RandomEngine& operator=(const RandomEngine&) = delete;
 };
 
-template <> float RandomEngine::sample<float>();
-template <> vec2 RandomEngine::sample<vec2>();
-
+template <>
+float RandomEngine::sample<float>();
+template <>
+vec2 RandomEngine::sample<vec2>();
 
 using random_generator_t = RandomEngine;
 
@@ -49,29 +50,17 @@ mat3 reflection_to_surface(vec3 reflection);
 direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega);
 
 direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
-                                  bounding_sphere_t& sphere);
+                                  bounding_sphere_t sphere);
+
+float lambert_adjust(vec3 omega, bounding_sphere_t sphere);
 
 direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
                                 float power);
 
 direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
-                                float power, bounding_sphere_t& sphere);
+                                float power, bounding_sphere_t sphere);
 
-class lambertian_bounded_distribution_t {
- public:
-  lambertian_bounded_distribution_t(angular_bound_t bound);
-
-  vec3 sample(random_generator_t& generator) const;
-  float density(vec3 sample) const;
-  float density_inv(vec3 sample) const;
-  float subarea() const;
-
- private:
-  float _uniform_theta_inf;
-  float _uniform_theta_sup;
-  float _uniform_phi_inf;
-  float _uniform_phi_sup;
-};
+float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere);
 
 struct HemisphereSample1 {
   vec3 _omega;
