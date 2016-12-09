@@ -57,12 +57,12 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].d = 0;
     eye[prv].D = 0;
 
-    // radiance += _connect_eye(context, eye[prv], light_path, radius);
+    radiance += _connect_eye(context, eye[prv], light_path, radius);
 
     RayIsect isect = _scene->intersect(ray.origin, ray.direction);
 
     while (isect.isLight()) {
-        // radiance += _scene->queryRadiance(isect, -ray.direction);
+        radiance += _scene->queryRadiance(isect, -ray.direction);
         isect = _scene->intersect(isect.position(), ray.direction);
     }
 
@@ -88,7 +88,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
     while (true) {
         radiance += _gather(*context.engine, eye[prv], radius);
-        // radiance += _connect(eye[prv], light_path, radius);
+        radiance += _connect(eye[prv], light_path, radius);
 
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
@@ -131,7 +131,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
                 * eye[itr].c;
 
             if (isect.isLight()) {
-                // radiance += _connect_light(eye[itr], radius);
+                radiance += _connect_light(eye[itr], radius);
             }
             else {
                 break;
@@ -289,17 +289,17 @@ float UPGBase<Beta, Mode>::_weightVC(
 
     float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
 
-    float Ap = 0.0f;
-        /* = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev); */
+    float Ap
+        = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Bp
         = light.B * Beta::beta(lightBSDF.densityRev)
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
-    float Cp = 0.0f;
-        /* = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(edge.fGeometry * lightBSDF.density); */
+    float Cp
+        = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float Dp
         = (eye.D * Beta::beta(eyeBSDF.density) + eye.d * (1.0f - eyeBSDF.specular))
@@ -307,7 +307,7 @@ float UPGBase<Beta, Mode>::_weightVC(
 
     float weightInv
         = Ap + eta * Bp + Cp + eta * Dp
-        + eta * Beta::beta(edge.bGeometry * eyeBSDF.densityRev * skip_direct_vm); // + 1.0f;
+        + eta * Beta::beta(edge.bGeometry * eyeBSDF.densityRev * skip_direct_vm) + 1.0f;
 
     return 1.0f / weightInv;
 }

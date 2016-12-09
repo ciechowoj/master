@@ -128,7 +128,7 @@ build/imgui/sentinel:
 
 run: all
 	./build/master/master.bin models/CornellBoxDiffuse.blend \
-	--UPG --max-radius=0.001 --parallel --beta=2 --resolution=512x512 \
+	--UPG --max-radius=0.001 --parallel --resolution=512x512 \
 	--reference=/home/wojciech/CornellBoxDiffuse.512.512.5461.PT.indirect.exr
 
 profile:
