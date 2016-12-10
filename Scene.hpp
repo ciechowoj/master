@@ -52,11 +52,16 @@ public:
     const BSDF& queryBSDF(const SurfacePoint& surface) const;
 
     vec3 queryRadiance(const RayIsect& isect) const;
+
     SurfacePoint querySurface(const RayIsect& isect) const;
 
     vec3 queryRadiance(
         const RayIsect& isect,
         const vec3& omega) const;
+
+    vec3 queryRadiance(
+        const SurfacePoint& surface,
+        const vec3& direction) const;
 
     const LSDFQuery queryLSDF(
         const RayIsect& isect,
@@ -78,12 +83,19 @@ public:
     const RayIsect intersect(
         const Ray& ray) const;
 
+    using Intersector::intersect;
+
     const float occluded(const vec3& origin,
         const vec3& target) const override;
 
     const RayIsect intersectLight(
         const vec3& origin,
         const vec3& direction) const override;
+
+    virtual SurfacePoint intersect(
+        const SurfacePoint& surface,
+        vec3 direction,
+        float tfar) const override;
 
     const size_t numNormalRays() const;
     const size_t numShadowRays() const;
@@ -107,6 +119,9 @@ public:
     bounding_sphere_t bounding_sphere() const;
 
 private:
+    int32_t _material_id_to_light_id(int32_t) const;
+    int32_t _light_id_to_material_id(int32_t) const;
+
     bounding_sphere_t _bounding_sphere; // = bounding_sphere_t(0.0f);
     bounding_sphere_t _compute_bounding_sphere() const;
 

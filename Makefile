@@ -127,8 +127,8 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/TestCase4.blend \
-	--UPG --parallel --resolution=512x512
+	./build/master/master.bin models/CornellBoxDiffuse.blend \
+	--PT --parallel
 
 profile:
 	valgrind \

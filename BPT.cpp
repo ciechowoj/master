@@ -32,18 +32,18 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
     radiance += _connect_eye(context, eye[prv], light_path);
 
-    RayIsect isect = _scene->intersect(ray.origin, ray.direction);
+    SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
-    while (isect.isLight()) {
-        radiance += _scene->queryRadiance(isect, -ray.direction);
-        isect = _scene->intersect(isect.position(), ray.direction);
+    while (surface.is_light()) {
+        radiance += _scene->queryRadiance(surface, -ray.direction);
+        surface = _scene->intersect(surface, ray.direction);
     }
 
-    if (!isect.isPresent()) {
+    if (!surface.is_present()) {
         return radiance;
     }
 
-    eye[itr].surface = _scene->querySurface(isect);
+    eye[itr].surface = surface;
     eye[itr].omega = -ray.direction;
 
     auto edge = Edge(eye[prv], eye[itr]);
@@ -63,13 +63,13 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
         while (true) {
-            isect = _scene->intersect(isect.position(), bsdf.omega);
+            surface = _scene->intersect(surface, bsdf.omega);
 
-            if (!isect.isPresent()) {
+            if (!surface.is_present()) {
                 return radiance;
             }
 
-            eye[itr].surface = _scene->querySurface(isect);
+            eye[itr].surface = surface;
             eye[itr].omega = -bsdf.omega;
 
             auto edge = Edge(eye[prv], eye[itr]);
@@ -91,7 +91,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
                 * Beta::beta(edge.bGeometry)
                 * eye[itr].c;
 
-            if (isect.isLight()) {
+            if (surface.is_light()) {
                 radiance += _connect_light(eye[itr]);
             }
             else {
@@ -130,14 +130,14 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     path[prv].a = 1.0f / Beta::beta(light.areaDensity());
     path[prv].A = 0.0f;
 
-    RayIsect isect = _scene->intersectMesh(light.position(), light.omega());
+    SurfacePoint surface = _scene->intersectMesh(path[prv].surface, light.omega());
 
-    if (!isect.isPresent()) {
+    if (!surface.is_present()) {
         return;
     }
 
     path.emplace_back();
-    path[itr].surface = _scene->querySurface(isect);
+    path[itr].surface = surface;
     path[itr].omega = -light.omega();
 
     auto edge = Edge(light, path[itr]);
@@ -157,16 +157,16 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     while (uniform < roulette) {
         auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega);
 
-        isect = _scene->intersectMesh(path[prv].surface.position(), bsdf.omega);
+        surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
 
-        if (!isect.isPresent()) {
+        if (!surface.is_present()) {
             break;
         }
 
         ++path_size;
         path.emplace_back();
 
-        path[itr].surface = _scene->querySurface(isect);
+        path[itr].surface = surface;
         path[itr].omega = -bsdf.omega;
 
         edge = Edge(path[prv], path[itr]);

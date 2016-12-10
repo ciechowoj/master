@@ -81,8 +81,6 @@ BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
                               (diffuse_adjust * _diffuse_probability +
                                specular_adjust * (1.0f - _diffuse_probability));
 
-  float specular_probability = 1.0f - diffuse_probability;
-
   if (generator.sample() < diffuse_probability) {
     auto sample = sample_lambert(generator, omega, target);
 

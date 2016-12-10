@@ -16,18 +16,18 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
   EyeVertex eye[2];
   size_t itr = 0, prv = 1;
 
-  RayIsect isect = _scene->intersect(ray.origin, ray.direction);
+  SurfacePoint surface = _scene->intersect(_camera_surface(context), ray.direction);
 
-  while (isect.isLight() && _max_path > 0) {
-    radiance += _scene->queryRadiance(isect, -ray.direction);
-    isect = _scene->intersect(isect.position(), ray.direction);
+  while (surface.is_light() && _max_path > 0) {
+    radiance += _scene->queryRadiance(surface, -ray.direction);
+    surface = _scene->intersect(surface, ray.direction);
   }
 
-  if (!isect.isPresent() || _max_path < 2) {
+  if (!surface.is_present() || _max_path < 2) {
     return radiance;
   }
 
-  eye[prv].surface = _scene->querySurface(isect);
+  eye[prv].surface = surface;
   eye[prv].omega = -ray.direction;
   eye[prv].throughput = vec3(1.0f);
   eye[prv].specular = 0.0f;
@@ -42,13 +42,13 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
         _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
     while (true) {
-      isect = _scene->intersect(isect.position(), bsdf.omega);
+      surface = _scene->intersect(surface, bsdf.omega);
 
-      if (!isect.isPresent()) {
+      if (!surface.is_present()) {
         return radiance;
       }
 
-      eye[itr].surface = _scene->querySurface(isect);
+      eye[itr].surface = surface;
       eye[itr].omega = -bsdf.omega;
 
       auto edge = Edge(eye[prv], eye[itr]);
@@ -59,7 +59,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
       eye[prv].specular = bsdf.specular;
       eye[itr].density = eye[prv].density * edge.fGeometry * bsdf.density;
 
-      if (isect.isLight()) {
+      if (surface.is_light()) {
         auto lsdf = _scene->queryLSDF(eye[itr].surface, eye[itr].omega);
         float weightInv = pow(lsdf.areaDensity(), _beta) /
                               pow(edge.fGeometry * bsdf.density, _beta) +

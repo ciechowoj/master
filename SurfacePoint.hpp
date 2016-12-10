@@ -35,8 +35,9 @@ struct SurfacePoint {
     const vec3 toSurface(const vec3& world) const { return world * _tangent; }
 
     const bool is_camera() const { return _materialId == 0; }
-    const bool is_light() const { return _materialId < 0; }
+    const bool is_light() const { return _materialId < 0 && _materialId > INT32_MIN; }
     const bool is_solid() const { return _materialId > 0; }
+    const bool is_present() const { return _materialId != INT32_MIN; }
 };
 
 }

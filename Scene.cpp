@@ -95,7 +95,12 @@ const BSDF& Scene::queryBSDF(const SurfacePoint& surface) const {
 }
 
 SurfacePoint Scene::querySurface(const RayIsect& isect) const {
-    if (isect.isLight()) {
+    if (!isect.isPresent()) {
+        SurfacePoint surface;
+        surface._materialId = INT32_MIN;
+        return surface;
+    }
+    else if (isect.isLight()) {
         SurfacePoint point;
 
         point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
@@ -155,9 +160,15 @@ vec3 Scene::queryRadiance(const RayIsect& isect) const {
 
 vec3 Scene::queryRadiance(
     const RayIsect& isect,
-    const vec3& omega) const
-{
+    const vec3& omega) const {
     return lights.queryRadiance(isect.primId(), omega);
+}
+
+vec3 Scene::queryRadiance(
+    const SurfacePoint& surface,
+    const vec3& direction) const {
+    return lights.queryRadiance(
+        _material_id_to_light_id(surface.materialId()), direction);
 }
 
 const LSDFQuery Scene::queryLSDF(
@@ -286,6 +297,27 @@ const RayIsect Scene::intersectLight(
     return rtcRay;
 }
 
+SurfacePoint Scene::intersect(
+    const SurfacePoint& surface,
+    vec3 direction,
+    float tfar) const {
+    RayIsect rtcRay;
+    (*(vec3*)rtcRay.org) = surface.position();
+    (*(vec3*)rtcRay.dir) = direction;
+    rtcRay.tnear = 0.0005f;
+    rtcRay.tfar = tfar;
+    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.mask = 0xFFFFFFFF;
+    rtcRay.time = 0.f;
+    rtcIntersect(rtcScene, rtcRay);
+
+    ++_numIntersectRays;
+
+    return querySurface(rtcRay);
+}
+
 const size_t Scene::numNormalRays() const {
     return _numIntersectRays;
 }
@@ -302,6 +334,14 @@ const LightSample Scene::sampleLight(
         RandomEngine& engine) const
 {
     return lights.sample(engine);
+}
+
+int32_t Scene::_material_id_to_light_id(int32_t id) const {
+    return id + materials.lights_offset;
+}
+
+int32_t Scene::_light_id_to_material_id(int32_t id) const {
+    return id - materials.lights_offset;
 }
 
 bounding_sphere_t Scene::_compute_bounding_sphere() const {
