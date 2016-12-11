@@ -10,8 +10,8 @@ class Intersector {
  public:
   virtual ~Intersector();
 
-  virtual const float occluded(const vec3& origin,
-                               const vec3& target) const = 0;
+  virtual float occluded(const SurfacePoint& origin,
+                         const SurfacePoint& target) const = 0;
 
   virtual SurfacePoint intersect(const SurfacePoint& surface, vec3 direction,
                                  float tfar) const = 0;

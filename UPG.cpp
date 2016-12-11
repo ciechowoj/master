@@ -385,7 +385,7 @@ vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& ey
     auto weight = _weightVC<SkipDirectVM>(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
     vec3 radiance = _combine(
-        _scene->occluded(eye.surface.position(), light.surface.position())
+        _scene->occluded(eye.surface, light.surface)
             * light.throughput
             * lightBSDF.throughput
             * eye.throughput
@@ -496,7 +496,7 @@ vec3 UPGBase<Beta, Mode>::_merge(
 
     auto edge = Edge(light, eye, omega);
 
-    vec3 result = _scene->occluded(eye.surface.position(), light.surface.position())
+    vec3 result = _scene->occluded(eye.surface, light.surface)
         * light.throughput
         * lightBSDF.throughput
         * eye.throughput
@@ -531,7 +531,7 @@ vec3 UPGBase<Beta, Mode>::_merge(
     auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
     auto density = 1.0f / (eyeBSDF.densityRev * pi<float>() * radius * radius);
 
-    vec3 result = _scene->occluded(light.surface.position(), eye.surface.position())
+    vec3 result = _scene->occluded(light.surface, eye.surface)
         * light.throughput
         * lightBSDF.throughput
         * eye.throughput

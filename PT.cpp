@@ -105,7 +105,7 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
                         pow(light.areaDensity(), _beta) +
                     1.0f;
 
-  return _scene->occluded(eye.surface.position(), light.position()) *
+  return _scene->occluded(eye.surface, light.surface) *
          light.radiance() / light.areaDensity() * eye.throughput *
          eyeBSDF.throughput * edge.bCosTheta * edge.fGeometry / weightInv;
 }

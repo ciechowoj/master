@@ -208,13 +208,13 @@ const BSDFQuery Scene::queryBSDF(
     return bsdf->query(surface, incident, outgoing);
 }
 
-const float Scene::occluded(
-    const vec3& origin,
-    const vec3& target) const
+float Scene::occluded(
+    const SurfacePoint& origin,
+    const SurfacePoint& target) const
 {
     RTCRay rtcRay;
-    (*(vec3*)rtcRay.org) = origin;
-    (*(vec3*)rtcRay.dir) = target - origin;
+    (*(vec3*)rtcRay.org) = origin.position();
+    (*(vec3*)rtcRay.dir) = target.position() - origin.position();
     rtcRay.tnear = 0.0005f;
     rtcRay.tfar =  0.9995f;
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;

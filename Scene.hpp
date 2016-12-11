@@ -73,8 +73,8 @@ public:
 
     using Intersector::intersect;
 
-    const float occluded(const vec3& origin,
-        const vec3& target) const override;
+    float occluded(const SurfacePoint& origin,
+        const SurfacePoint& target) const override;
 
     virtual SurfacePoint intersect(
         const SurfacePoint& surface,

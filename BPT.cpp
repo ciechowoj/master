@@ -236,7 +236,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     float weightInv = Ap + Cp + 1.0f;
 
-    return _scene->occluded(eye.surface.position(), light.surface.position())
+    return _scene->occluded(eye.surface, light.surface)
         * light.throughput
         * lightBSDF.throughput
         * eye.throughput
