@@ -208,49 +208,6 @@ const BSDFQuery Scene::queryBSDF(
     return bsdf->query(surface, incident, outgoing);
 }
 
-const RayIsect Scene::intersect(
-    const vec3& origin,
-    const vec3& direction) const
-{
-    RayIsect rtcRay;
-    (*(vec3*)rtcRay.org) = origin;
-    (*(vec3*)rtcRay.dir) = direction;
-    rtcRay.tnear = 0.0001f;
-    rtcRay.tfar = INFINITY;
-    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.mask = 0xFFFFFFFF;
-    rtcRay.time = 0.f;
-    rtcIntersect(rtcScene, rtcRay);
-
-    ++_numIntersectRays;
-
-    return rtcRay;
-}
-
-const RayIsect Scene::intersect(
-    const vec3& origin,
-    const vec3& direction,
-    float bound) const
-{
-    RayIsect rtcRay;
-    (*(vec3*)rtcRay.org) = origin;
-    (*(vec3*)rtcRay.dir) = direction;
-    rtcRay.tnear = 0.0005f;
-    rtcRay.tfar = bound;
-    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.mask = 0xFFFFFFFF;
-    rtcRay.time = 0.f;
-    rtcIntersect(rtcScene, rtcRay);
-
-    ++_numIntersectRays;
-
-    return rtcRay;
-}
-
 const float Scene::occluded(
     const vec3& origin,
     const vec3& target) const
@@ -270,31 +227,6 @@ const float Scene::occluded(
     ++_numOccludedRays;
 
     return rtcRay.geomID == 0 ? 0.f : 1.f;
-}
-
-const RayIsect Scene::intersect(const Ray& ray) const {
-    return intersect(ray.origin, ray.direction);
-}
-
-const RayIsect Scene::intersectLight(
-    const vec3& origin,
-    const vec3& direction) const
-{
-    RayIsect rtcRay;
-    (*(vec3*)rtcRay.org) = origin;
-    (*(vec3*)rtcRay.dir) = direction;
-    rtcRay.tnear = 0.0005f;
-    rtcRay.tfar = INFINITY;
-    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.mask = RayIsect::lightMask();
-    rtcRay.time = 0.f;
-    rtcIntersect(rtcScene, rtcRay);
-
-    ++_numIntersectRays;
-
-    return rtcRay;
 }
 
 SurfacePoint Scene::intersect(

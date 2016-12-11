@@ -87,12 +87,12 @@ float BSDF::gathering_density(
         auto sample = sample_bounded(generator, target, omega);
 
         if (cos_alpha < dot(sample.omega, target_normalized)) {
-            RayIsect isect = intersector->intersectMesh(
-                surface.position(),
+            SurfacePoint isect = intersector->intersectMesh(
+                surface,
                 surface.toWorld(sample.omega),
                 target_length + target.radius);
 
-            if (isect.isPresent()) {
+            if (isect.is_present()) {
                 vec3 tentative = surface.toSurface(isect.position() - surface.position());
 
                 float distance_sq = distance2(target.center, tentative);

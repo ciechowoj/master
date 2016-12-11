@@ -130,7 +130,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     path[prv].a = 1.0f / Beta::beta(light.areaDensity());
     path[prv].A = 0.0f;
 
-    SurfacePoint surface = _scene->intersectMesh(path[prv].surface, light.omega());
+    SurfacePoint surface = _scene->intersectMesh(light.surface, light.omega());
 
     if (!surface.is_present()) {
         return;

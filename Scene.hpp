@@ -71,26 +71,10 @@ public:
         const SurfacePoint& surface,
         const vec3& omega) const;
 
-    const RayIsect intersect(
-        const vec3& origin,
-        const vec3& direction) const override;
-
-    const RayIsect intersect(
-        const vec3& origin,
-        const vec3& direction,
-        float bound) const override;
-
-    const RayIsect intersect(
-        const Ray& ray) const;
-
     using Intersector::intersect;
 
     const float occluded(const vec3& origin,
         const vec3& target) const override;
-
-    const RayIsect intersectLight(
-        const vec3& origin,
-        const vec3& direction) const override;
 
     virtual SurfacePoint intersect(
         const SurfacePoint& surface,

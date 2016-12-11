@@ -128,7 +128,7 @@ build/imgui/sentinel:
 
 run: all
 	./build/master/master.bin models/CornellBoxDiffuse.blend \
-	--PT --parallel
+	--UPG --parallel
 
 profile:
 	valgrind \

@@ -59,18 +59,18 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
     radiance += _connect_eye(context, eye[prv], light_path, radius);
 
-    RayIsect isect = _scene->intersect(ray.origin, ray.direction);
+    SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
-    while (isect.isLight()) {
-        radiance += _scene->queryRadiance(isect, -ray.direction);
-        isect = _scene->intersect(isect.position(), ray.direction);
+    while (surface.is_light()) {
+        radiance += _scene->queryRadiance(surface, -ray.direction);
+        surface = _scene->intersect(surface, ray.direction);
     }
 
-    if (!isect.isPresent()) {
+    if (!surface.is_present()) {
         return radiance;
     }
 
-    eye[itr].surface = _scene->querySurface(isect);
+    eye[itr].surface = surface;
     eye[itr].omega = -ray.direction;
 
     auto edge = Edge(eye[prv], eye[itr]);
@@ -93,13 +93,13 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
         while (true) {
-            isect = _scene->intersect(isect.position(), bsdf.omega);
+            surface = _scene->intersect(surface, bsdf.omega);
 
-            if (!isect.isPresent()) {
+            if (!surface.is_present()) {
                 return radiance;
             }
 
-            eye[itr].surface = _scene->querySurface(isect);
+            eye[itr].surface = surface;
             eye[itr].omega = -bsdf.omega;
 
             auto edge = Edge(eye[prv], eye[itr]);
@@ -130,7 +130,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
                 * Beta::beta(edge.bGeometry)
                 * eye[itr].c;
 
-            if (isect.isLight()) {
+            if (surface.is_light()) {
                 radiance += _connect_light(eye[itr], radius);
             }
             else {
@@ -173,14 +173,14 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
         ++itr;
     }
 
-    RayIsect isect = _scene->intersectMesh(light.position(), light.omega());
+    SurfacePoint surface = _scene->intersectMesh(light.surface, light.omega());
 
-    if (!isect.isPresent()) {
+    if (!surface.is_present()) {
         return;
     }
 
     path.emplace_back();
-    path[itr].surface = _scene->querySurface(isect);
+    path[itr].surface = surface;
     path[itr].omega = -light.omega();
 
     auto edge = Edge(light, path[itr]);
@@ -201,16 +201,16 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
     while (uniform < roulette) {
         auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega);
 
-        isect = _scene->intersectMesh(path[prv].surface.position(), bsdf.omega);
+        surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
 
-        if (!isect.isPresent()) {
+        if (!surface.is_present()) {
             break;
         }
 
         ++path_size;
         path.emplace_back();
 
-        path[itr].surface = _scene->querySurface(isect);
+        path[itr].surface = surface;
         path[itr].omega = -bsdf.omega;
 
         edge = Edge(path[prv], path[itr]);
@@ -454,9 +454,9 @@ void UPGBase<Beta, Mode>::_scatter(RandomEngine& engine) {
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_gather(RandomEngine& engine, const EyeVertex& eye, float& radius) {
     auto eyeBSDF = _scene->sampleBSDF(engine, eye.surface, eye.omega);
-    RayIsect isect = _scene->intersectMesh(eye.surface.position(), eyeBSDF.omega);
+    SurfacePoint surface = _scene->intersectMesh(eye.surface, eyeBSDF.omega);
 
-    if (!isect.isPresent()) {
+    if (!surface.is_present()) {
         return vec3(0.0f);
     }
 
@@ -477,7 +477,7 @@ vec3 UPGBase<Beta, Mode>::_gather(RandomEngine& engine, const EyeVertex& eye, fl
                 radiance += _merge(engine, light, eye, query, radius);
             }
         },
-        isect.position(),
+        surface.position(),
         radius);
 
     return radiance / float(_num_scattered);
