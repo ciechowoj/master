@@ -212,11 +212,14 @@ float Scene::occluded(
     const SurfacePoint& origin,
     const SurfacePoint& target) const
 {
+    vec3 adjusted_origin = origin.position() + origin.normal() * 0.001f;
+    vec3 adjusted_target = target.position() + target.normal() * 0.001f;
+
     RTCRay rtcRay;
-    (*(vec3*)rtcRay.org) = origin.position();
-    (*(vec3*)rtcRay.dir) = target.position() - origin.position();
-    rtcRay.tnear = 0.0005f;
-    rtcRay.tfar =  0.9995f;
+    (*(vec3*)rtcRay.org) = adjusted_origin;
+    (*(vec3*)rtcRay.dir) = adjusted_target - adjusted_origin;
+    rtcRay.tnear = 0.0f;
+    rtcRay.tfar =  1.0f;
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.instID = RTC_INVALID_GEOMETRY_ID;

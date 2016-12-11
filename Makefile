@@ -128,7 +128,7 @@ build/imgui/sentinel:
 
 run: all
 	./build/master/master.bin models/CornellBoxDiffuse.blend \
-	--UPG --parallel
+	--BPT --parallel --reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.212000.PT.snapshot.exr"
 
 profile:
 	valgrind \
