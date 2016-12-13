@@ -444,6 +444,8 @@ template <class Beta, GatherMode Mode>
 void UPGBase<Beta, Mode>::_scatter(RandomEngine& engine) {
     vector<LightVertex> vertices;
 
+    _num_scattered = 0;
+
     while (vertices.size() < _num_photons) {
         _traceLight(engine, vertices);
         ++_num_scattered;

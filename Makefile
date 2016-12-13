@@ -127,9 +127,9 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/TestCase1.blend \
-	--UPG --parallel --no-lights --beta=1 \
-	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.212000.PT.snapshot.exr"
+	./build/master/master.bin models/TestCase5.blend \
+	--UPG --parallel --no-lights --beta=0 \
+	--reference="/home/wojciech/cornell boxes references/TestCase1.512.512.27000.PT.snapshot.exr"
 
 profile:
 	valgrind \
