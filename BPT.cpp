@@ -290,9 +290,10 @@ vec3 BPTBase<Beta>::_connect_eye(
             context,
             omega,
             [&] {
-                float correct_normal = abs(dot(omega, path[i].surface.normal()))
-                    / abs(dot(omega, path[i].surface.gnormal));
-                return _connect(eye, path[i]) * context.focal_factor_y / correct_normal;
+                float correct_normal = abs(dot(omega, path[i].surface.gnormal)
+                    / dot(omega, path[i].surface.normal()));
+
+                return _connect(eye, path[i]) * context.focal_factor_y * correct_normal;
             });
     }
 

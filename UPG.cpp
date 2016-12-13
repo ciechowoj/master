@@ -64,7 +64,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
     while (surface.is_light()) {
-        radiance += _scene->queryRadiance(surface, -ray.direction);
+        radiance += _lights * _scene->queryRadiance(surface, -ray.direction);
         surface = _scene->intersect(surface, ray.direction);
     }
 
@@ -424,15 +424,14 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
     vec3 radiance = vec3(0.0f);
 
     for (size_t i = 1; i < path.size(); ++i) {
-        vec3 omega = path[i].surface.position() - eye.surface.position();
+        vec3 omega = normalize(path[i].surface.position() - eye.surface.position());
 
         radiance += _accumulate(
             context,
             omega,
             [&] {
-                float correct_normal =
-                    abs(dot(path[i].omega, path[i].surface.normal())
-                    / dot(path[i].omega, path[i].surface.gnormal));
+                float correct_normal = abs(dot(omega, path[i].surface.gnormal)
+                    / dot(omega, path[i].surface.normal()));
 
                 return _connect<true>(path[i], eye, radius) * context.focal_factor_y * correct_normal;
             });
