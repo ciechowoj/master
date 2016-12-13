@@ -128,7 +128,7 @@ build/imgui/sentinel:
 
 run: all
 	./build/master/master.bin models/TestCase1.blend \
-	--BPT --parallel --no-lights --beta=5 \
+	--UPG --parallel --no-lights --beta=1 \
 	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.212000.PT.snapshot.exr"
 
 profile:

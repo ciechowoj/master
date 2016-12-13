@@ -1,5 +1,6 @@
 #include <BPT.hpp>
 #include <Edge.hpp>
+#include <iostream>
 
 namespace haste {
 
@@ -237,14 +238,15 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     float weightInv = Ap + Cp + 1.0f;
 
-    return _scene->occluded(eye.surface, light.surface)
+    vec3 result = _scene->occluded(eye.surface, light.surface)
         * light.throughput
         * lightBSDF.throughput
         * eye.throughput
         * eyeBSDF.throughput
         * edge.bCosTheta
-        * edge.fGeometry
-        / weightInv;
+        * edge.fGeometry;
+
+    return l1Norm(result) < FLT_EPSILON ? vec3(0.0f) : result / weightInv;
 }
 
 template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {

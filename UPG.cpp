@@ -510,8 +510,8 @@ vec3 UPGBase<Beta, Mode>::_merge(
     }
     else {
         auto density = _density(engine, light, eye, eyeBSDF, edge, radius);
-
         auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
+
         return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
     }
 }
@@ -544,7 +544,7 @@ vec3 UPGBase<Beta, Mode>::_merge(
 
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_combine(vec3 throughput, float weight) {
-    return throughput * weight;
+    return l1Norm(throughput) < FLT_EPSILON ? vec3(0.0f) : throughput * weight;
 }
 
 UPGb::UPGb(
