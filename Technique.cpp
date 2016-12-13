@@ -230,6 +230,7 @@ void Technique::_for_each_ray(
     auto shoot = [&](float x, float y) -> Ray {
         vec2 position = vec2(x + context.engine->sample(), y + context.engine->sample());
 
+
         vec3 direction = ray_direction(
             position,
             context.resolution,
@@ -242,6 +243,7 @@ void Technique::_for_each_ray(
     for (int y = yBegin; y < yEnd; ++y) {
         for (int x = xBegin; x < xEnd; ++x) {
             const Ray ray = shoot(float(x), float(y));
+            context.pixel_position = vec2(x, y);
             _eye_image[y * view.width() + x] += _traceEye(context, ray);
         }
 
@@ -250,6 +252,7 @@ void Technique::_for_each_ray(
         if (y < yEnd) {
             for (int x = rXBegin; x > rXEnd; --x) {
                 const Ray ray = shoot(float(x), float(y));
+                context.pixel_position = vec2(x, y);
                 _eye_image[y * view.width() + x] += _traceEye(context, ray);
             }
         }

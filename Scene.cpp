@@ -125,6 +125,8 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
 
         point._tangent = w * t0 + isect.u * t1 + isect.v * t2;
 
+        point._tangent[1] = normalize(point._tangent[1]);
+
         point._tangent[0]
             = point._tangent[0]
             - dot(point._tangent[0], point._tangent[1]) * point._tangent[1];

@@ -98,7 +98,6 @@ float BSDF::gathering_density(
                 float distance_sq = distance2(target.center, tentative);
 
                 if (distance_sq < target.radius * target.radius) {
-
                     return N / sample.adjust;
                 }
             }

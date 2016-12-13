@@ -15,7 +15,7 @@ struct RandomEngine {
   std::uint_fast32_t operator()();
 
  private:
-  std::minstd_rand engine;
+  std::mt19937 engine;
   RandomEngine(const RandomEngine&) = delete;
   RandomEngine& operator=(const RandomEngine&) = delete;
 };

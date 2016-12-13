@@ -85,8 +85,6 @@ public:
     const size_t numShadowRays() const;
     const size_t numRays() const;
 
-    mutable UniformSampler sampler;
-
     const LightSample sampleLight(
         RandomEngine& engine) const;
 

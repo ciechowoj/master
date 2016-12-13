@@ -30,7 +30,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].c = 0;
     eye[prv].C = 0;
 
-    // radiance += _connect_eye(context, eye[prv], light_path);
+    radiance += _connect_eye(context, eye[prv], light_path);
 
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
@@ -50,7 +50,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
     eye[itr].throughput = vec3(1.0f);
     eye[itr].specular = 0.0f;
-    eye[itr].c = 0.0f; 1.0f / Beta::beta(edge.fGeometry);
+    eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
     eye[itr].C = 0.0f;
 
     std::swap(itr, prv);
@@ -283,17 +283,15 @@ vec3 BPTBase<Beta>::_connect_eye(
     vec3 radiance = vec3(0.0f);
 
     for (size_t i = 1; i < path.size(); ++i) {
-        vec3 omega = path[i].surface.position() - eye.surface.position();
+        vec3 omega = normalize(path[i].surface.position() - eye.surface.position());
 
         radiance += _accumulate(
             context,
             omega,
             [&] {
-                float correct_normal =
-                    abs(dot(path[i].omega, path[i].surface.normal())
-                    / dot(path[i].omega, path[i].surface.gnormal));
-
-                return _connect(eye, path[i]) * context.focal_factor_y * correct_normal;
+                float correct_normal = abs(dot(omega, path[i].surface.normal()))
+                    / abs(dot(omega, path[i].surface.gnormal));
+                return _connect(eye, path[i]) * context.focal_factor_y / correct_normal;
             });
     }
 

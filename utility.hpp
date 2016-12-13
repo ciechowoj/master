@@ -13,14 +13,6 @@ using std::string;
 using std::pair;
 using namespace glm;
 
-class UniformSampler {
-public:
-    UniformSampler();
-    float sample();
-private:
-    std::minstd_rand engine;
-};
-
 class PiecewiseSampler {
 public:
     PiecewiseSampler();
@@ -29,13 +21,6 @@ public:
 private:
     std::minstd_rand engine;
     std::piecewise_constant_distribution<float> distribution;
-};
-
-class BarycentricSampler {
-public:
-    vec3 sample();
-private:
-    UniformSampler uniform;
 };
 
 void saveEXR(

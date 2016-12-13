@@ -7,15 +7,6 @@
 
 namespace haste {
 
-UniformSampler::UniformSampler() {
-    std::random_device device;
-    engine.seed(device());
-}
-
-float UniformSampler::sample() {
-    return std::uniform_real_distribution<float>()(engine);
-}
-
 PiecewiseSampler::PiecewiseSampler() { }
 
 PiecewiseSampler::PiecewiseSampler(const float* weightsBegin, const float* weightsEnd) {
@@ -37,18 +28,6 @@ PiecewiseSampler::PiecewiseSampler(const float* weightsBegin, const float* weigh
 
 float PiecewiseSampler::sample() {
     return distribution(engine);
-}
-
-vec3 BarycentricSampler::sample() {
-    float u = uniform.sample();
-    float v = uniform.sample();
-
-    if (u + v <= 1) {
-        return vec3(u, v, 1 - u - v);
-    }
-    else {
-        return vec3(1 - u, 1 - v, u + v - 1);
-    }
 }
 
 }

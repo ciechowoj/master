@@ -26,15 +26,6 @@ private:
     }
 
     template <class A, class B>
-    void _init(const A& fst, const B& snd, const vec3& omega, std::false_type, std::true_type) {
-        distSqInv = 1.0f / distance2(fst.position(), snd.surface.position());
-        fCosTheta = abs(dot(omega, snd.surface.normal()));
-        bCosTheta = abs(dot(omega, fst.gnormal()));
-        fGeometry = distSqInv * fCosTheta;
-        bGeometry = distSqInv * bCosTheta;
-    }
-
-    template <class A, class B>
     void _init(const A& fst, const B& snd, const vec3& omega, std::true_type, std::true_type) {
         distSqInv = 1.0f / distance2(fst.surface.position(), snd.surface.position());
         fCosTheta = abs(dot(omega, snd.surface.normal()));
