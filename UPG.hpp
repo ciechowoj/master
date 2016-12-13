@@ -17,6 +17,7 @@ template <class Beta, GatherMode Mode> class UPGBase : public Technique, protect
 public:
     UPGBase(
         size_t minSubpath,
+        float lights,
         float roulette,
         size_t numPhotons,
         size_t numGather,
@@ -123,6 +124,7 @@ private:
     size_t _num_scattered;
     const size_t _numGather;
     const size_t _minSubpath;
+    const float _lights;
     const float _roulette;
     const float _radius;
 
@@ -137,6 +139,7 @@ class UPGb : public UPGBase<VariableBeta, GatherMode::Unbiased> {
 public:
     UPGb(
         size_t minSubpath,
+        float lights,
         float roulette,
         size_t numPhotons,
         size_t numGather,
@@ -153,6 +156,7 @@ class VCMb : public UPGBase<VariableBeta, GatherMode::Biased> {
 public:
     VCMb(
         size_t minSubpath,
+        float lights,
         float roulette,
         size_t numPhotons,
         size_t numGather,

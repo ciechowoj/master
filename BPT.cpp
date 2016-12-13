@@ -3,10 +3,11 @@
 
 namespace haste {
 
-template <class Beta> BPTBase<Beta>::BPTBase(size_t minSubpath, float roulette, size_t num_threads)
+template <class Beta> BPTBase<Beta>::BPTBase(size_t minSubpath, float lights, float roulette, size_t num_threads)
     : Technique(num_threads)
     , _minSubpath(minSubpath)
     , _roulette(roulette)
+    , _lights(lights)
 { }
 
 template <class Beta> string BPTBase<Beta>::name() const {
@@ -35,7 +36,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
     while (surface.is_light()) {
-        radiance += _scene->queryRadiance(surface, -ray.direction);
+        radiance += _lights * _scene->queryRadiance(surface, -ray.direction);
         surface = _scene->intersect(surface, ray.direction);
     }
 
@@ -299,8 +300,8 @@ vec3 BPTBase<Beta>::_connect_eye(
 }
 
 
-BPTb::BPTb(size_t minSubpath, float roulette, float beta, size_t num_threads)
-    : BPTBase<VariableBeta>(minSubpath, roulette, num_threads)
+BPTb::BPTb(size_t minSubpath, float lights, float roulette, float beta, size_t num_threads)
+    : BPTBase<VariableBeta>(minSubpath, lights, roulette, num_threads)
 {
     VariableBeta::init(beta);
 }

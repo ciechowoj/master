@@ -5,7 +5,7 @@ namespace haste {
 
 class PathTracing : public Technique {
  public:
-  PathTracing(size_t min_subpath, float roulette, float beta, size_t max_path,
+  PathTracing(size_t min_subpath, float lights, float roulette, float beta, size_t max_path,
               size_t num_threads);
 
   vec3 _traceEye(render_context_t& context, Ray ray) override;
@@ -25,6 +25,7 @@ class PathTracing : public Technique {
 
   const size_t _min_subpath;
   const size_t _max_path;
+  const float _lights;
   const float _roulette;
   const float _beta;
 };

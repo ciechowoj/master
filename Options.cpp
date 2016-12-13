@@ -38,6 +38,7 @@ R"(
       --roulette=<n>      Russian roulette coefficient. [default: 0.5]
       --batch             Run in batch mode (interactive otherwise).
       --quiet             Do not output anything to console.
+      --no-lights         Do not draw the lights.
       --no-reload         Disable autoreload (input file is reloaded on modification in interactive mode).
       --num-samples=<n>   Terminate after n samples.
       --num-seconds=<n>   Terminate after n seconds.
@@ -431,6 +432,11 @@ Options parseArgs(int argc, char const* const* argv) {
             dict.erase("--quiet");
         }
 
+        if (dict.count("--no-lights")) {
+            options.lights = 0.0f;
+            dict.erase("--no-lights");
+        }
+
         if (dict.count("--no-reload")) {
             options.reload = false;
             dict.erase("--no-reload");
@@ -607,17 +613,18 @@ shared<Technique> makeTechnique(Options& options) {
     switch (options.technique) {
         case Options::BPT:
             if (options.beta == 0.0f) {
-                return std::make_shared<BPT0>(options.minSubpath, options.roulette, options.numThreads);
+                return std::make_shared<BPT0>(options.minSubpath, options.lights, options.roulette, options.numThreads);
             }
             else if (options.beta == 1.0f) {
-                return std::make_shared<BPT1>(options.minSubpath, options.roulette, options.numThreads);
+                return std::make_shared<BPT1>(options.minSubpath, options.lights, options.roulette, options.numThreads);
             }
             else if (options.beta == 2.0f) {
-                return std::make_shared<BPT2>(options.minSubpath, options.roulette, options.numThreads);
+                return std::make_shared<BPT2>(options.minSubpath, options.lights, options.roulette, options.numThreads);
             }
             else {
                 return std::make_shared<BPTb>(
                     options.minSubpath,
+                    options.lights,
                     options.roulette,
                     options.beta,
                     options.numThreads);
@@ -626,6 +633,7 @@ shared<Technique> makeTechnique(Options& options) {
         case Options::PT:
             return std::make_shared<PathTracing>(
                 options.minSubpath,
+                options.lights,
                 options.roulette,
                 options.beta,
                 options.maxPath,
@@ -635,6 +643,7 @@ shared<Technique> makeTechnique(Options& options) {
             if (options.beta == 0.0f) {
                 return std::make_shared<VCM0>(
                     options.minSubpath,
+                    options.lights,
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
@@ -644,6 +653,7 @@ shared<Technique> makeTechnique(Options& options) {
             else if (options.beta == 1.0f) {
                 return std::make_shared<VCM1>(
                     options.minSubpath,
+                    options.lights,
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
@@ -653,6 +663,7 @@ shared<Technique> makeTechnique(Options& options) {
             else if (options.beta == 2.0f) {
                 return std::make_shared<VCM2>(
                     options.minSubpath,
+                    options.lights,
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
@@ -662,6 +673,7 @@ shared<Technique> makeTechnique(Options& options) {
             else {
                 return std::make_shared<VCMb>(
                     options.minSubpath,
+                    options.lights,
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
@@ -674,6 +686,7 @@ shared<Technique> makeTechnique(Options& options) {
             if (options.beta == 0.0f) {
                 return std::make_shared<UPG0>(
                     options.minSubpath,
+                    options.lights,
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
@@ -683,6 +696,7 @@ shared<Technique> makeTechnique(Options& options) {
             else if (options.beta == 1.0f) {
                 return std::make_shared<UPG1>(
                     options.minSubpath,
+                    options.lights,
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
@@ -692,6 +706,7 @@ shared<Technique> makeTechnique(Options& options) {
             else if (options.beta == 2.0f) {
                 return std::make_shared<UPG2>(
                     options.minSubpath,
+                    options.lights,
                     options.roulette,
                     options.numPhotons,
                     options.numGather,
@@ -701,6 +716,7 @@ shared<Technique> makeTechnique(Options& options) {
             else {
                 return std::make_shared<UPGb>(
                     options.minSubpath,
+                    options.lights,
                     options.roulette,
                     options.numPhotons,
                     options.numGather,

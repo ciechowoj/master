@@ -7,7 +7,7 @@ namespace haste {
 
 template <class Beta> class BPTBase : public Technique, protected Beta {
 public:
-    BPTBase(size_t minSubpath, float roulette, size_t num_threads);
+    BPTBase(size_t minSubpath, float lights, float roulette, size_t num_threads);
 
     string name() const override;
 
@@ -32,6 +32,7 @@ private:
     using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
     const size_t _minSubpath;
     const float _roulette;
+    const float _lights;
 
     vec3 _traceEye(render_context_t& context, Ray ray) override;
     void _traceLight(RandomEngine& engine, light_path_t& path);
@@ -48,7 +49,7 @@ typedef BPTBase<FixedBeta<2>> BPT2;
 
 class BPTb : public BPTBase<VariableBeta> {
 public:
-    BPTb(size_t minSubpath, float roulette, float beta, size_t num_threads);
+    BPTb(size_t minSubpath, float lights, float roulette, float beta, size_t num_threads);
 };
 
 }

@@ -6,6 +6,7 @@ namespace haste {
 template <class Beta, GatherMode Mode>
 UPGBase<Beta, Mode>::UPGBase(
     size_t minSubpath,
+    float lights,
     float roulette,
     size_t numPhotons,
     size_t numGather,
@@ -16,6 +17,7 @@ UPGBase<Beta, Mode>::UPGBase(
     , _num_scattered(0)
     , _numGather(numGather)
     , _minSubpath(minSubpath)
+    , _lights(lights)
     , _roulette(roulette)
     , _radius(radius)
 { }
@@ -548,6 +550,7 @@ vec3 UPGBase<Beta, Mode>::_combine(vec3 throughput, float weight) {
 
 UPGb::UPGb(
     size_t minSubpath,
+    float lights,
     float roulette,
     size_t numPhotons,
     size_t numGather,
@@ -556,6 +559,7 @@ UPGb::UPGb(
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Unbiased>(
         minSubpath,
+        lights,
         roulette,
         numPhotons,
         numGather,
@@ -571,6 +575,7 @@ template class UPGBase<VariableBeta, GatherMode::Unbiased>;
 
 VCMb::VCMb(
     size_t minSubpath,
+    float lights,
     float roulette,
     size_t numPhotons,
     size_t numGather,
@@ -579,6 +584,7 @@ VCMb::VCMb(
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Biased>(
         minSubpath,
+        lights,
         roulette,
         numPhotons,
         numGather,

@@ -3,11 +3,12 @@
 
 namespace haste {
 
-PathTracing::PathTracing(size_t min_subpath, float roulette, float beta,
+PathTracing::PathTracing(size_t min_subpath, float lights, float roulette, float beta,
                          size_t max_path, size_t num_threads)
     : Technique(num_threads),
       _min_subpath(min_subpath),
       _max_path(max_path),
+      _lights(lights),
       _roulette(roulette),
       _beta(beta) {}
 
@@ -19,7 +20,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
   SurfacePoint surface = _scene->intersect(_camera_surface(context), ray.direction);
 
   while (surface.is_light() && _max_path > 0) {
-    radiance += _scene->queryRadiance(surface, -ray.direction);
+    radiance += _lights * _scene->queryRadiance(surface, -ray.direction);
     surface = _scene->intersect(surface, ray.direction);
   }
 
