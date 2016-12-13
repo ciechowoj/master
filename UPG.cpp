@@ -309,7 +309,7 @@ float UPGBase<Beta, Mode>::_weightVC(
 
     float weightInv
         = Ap + eta * Bp + Cp + eta * Dp
-        + eta * Beta::beta(edge.bGeometry * eyeBSDF.densityRev * skip_direct_vm) + 1.0f;
+        + eta * Beta::beta(edge.bGeometry * eyeBSDF.densityRev) * skip_direct_vm + 1.0f;
 
     return 1.0f / weightInv;
 }

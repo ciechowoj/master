@@ -77,7 +77,6 @@ float BSDF::gathering_density(
     target.center = surface.toSurface(target.center - surface.position());
 
     float target_length = length(target.center);
-    vec3 target_normalized = target.center / target_length;
 
     while (N < L) {
         auto sample = sample_bounded(generator, target, omega);
