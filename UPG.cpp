@@ -109,8 +109,13 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
             eye[itr].throughput
                 = eye[prv].throughput
                 * bsdf.throughput
-                * edge.bCosTheta
-                / bsdf.density;
+                * edge.bCosTheta;
+
+            if (l1Norm(eye[itr].throughput) < FLT_EPSILON) {
+              return radiance;
+            }
+
+            eye[itr].throughput /= bsdf.density;
 
             eye[prv].specular = max(eye[prv].specular, bsdf.specular);
             eye[itr].specular = bsdf.specular;
@@ -221,7 +226,14 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
             = path[prv].throughput
             * bsdf.throughput
             * edge.bCosTheta
-            / (bsdf.density * roulette);
+            / roulette;
+
+        if (l1Norm(path[itr].throughput) < FLT_EPSILON) {
+            path.pop_back();
+            break;
+        }
+
+        path[itr].throughput /= bsdf.density;
 
         path[prv].specular = max(path[prv].specular, bsdf.specular);
         path[itr].specular = bsdf.specular;

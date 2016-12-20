@@ -33,6 +33,8 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
     radiance += _connect_eye(context, eye[prv], light_path);
 
+    return radiance;
+
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
     while (surface.is_light()) {
@@ -181,7 +183,14 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
             = path[prv].throughput
             * bsdf.throughput
             * edge.bCosTheta
-            / (bsdf.density * roulette);
+            / roulette;
+
+        if (l1Norm(path[itr].throughput) < FLT_EPSILON) {
+            path.pop_back();
+            break;
+        }
+
+        path[itr].throughput /= bsdf.density;
 
         path[prv].specular = max(path[prv].specular, bsdf.specular);
         path[itr].specular = bsdf.specular;

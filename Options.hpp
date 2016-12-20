@@ -20,9 +20,9 @@ struct Options {
     string reference;
     Technique technique = PT;
     Action action = Render;
-    size_t numPhotons = 5000000;
+    size_t numPhotons = 1000000;
     size_t numGather = 100;
-    double maxRadius = 0.001;
+    double maxRadius = 0.1;
     size_t minSubpath = 5;
     size_t maxPath = SIZE_MAX;
     double beta = 1.0f;
