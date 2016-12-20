@@ -84,11 +84,6 @@ void Scene::buildAccelStructs(RTCDevice device) {
     }
 }
 
-const BSDF& Scene::queryBSDF(const RayIsect& isect) const {
-    runtime_assert(isect.meshId() < meshes.size());
-    return *materials.bsdfs[meshes[isect.meshId()].materialID + materials.lights_offset];
-}
-
 const BSDF& Scene::queryBSDF(const SurfacePoint& surface) const {
     runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
     return *materials.bsdfs[surface.materialId() + materials.lights_offset].get();
@@ -156,28 +151,11 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
     }
 }
 
-vec3 Scene::queryRadiance(const RayIsect& isect) const {
-    return lights.lightRadiance(isect.primId());
-}
-
-vec3 Scene::queryRadiance(
-    const RayIsect& isect,
-    const vec3& omega) const {
-    return lights.queryRadiance(isect.primId(), omega);
-}
-
 vec3 Scene::queryRadiance(
     const SurfacePoint& surface,
     const vec3& direction) const {
     return lights.queryRadiance(
         _material_id_to_light_id(surface.materialId()), direction);
-}
-
-const LSDFQuery Scene::queryLSDF(
-    const RayIsect& isect,
-    const vec3& omega) const
-{
-    return lights.queryLSDF(isect.primId(), omega);
 }
 
 const LSDFQuery Scene::queryLSDF(

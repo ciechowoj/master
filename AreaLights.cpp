@@ -23,19 +23,6 @@ namespace haste {
 // v1 ************************************** v2
 //
 
-/* const SurfacePoint LightSampleEx::surface() const {
-    SurfacePoint point;
-
-    point._position = _position;
-    point._tangent[0] = normalize(cross(_tangent, _normal));
-    point._tangent[1] = _normal;
-    point._tangent[2] = _tangent;
-    point._materialId = _materialId;
-    point.gnormal = _normal;
-
-    return point;
-}*/
-
 void AreaLights::init(const Intersector* intersector, bounding_sphere_t sphere) {
     _intersector = intersector;
 }

@@ -48,24 +48,13 @@ public:
 
     void buildAccelStructs(RTCDevice device);
 
-    const BSDF& queryBSDF(const RayIsect& isect) const;
     const BSDF& queryBSDF(const SurfacePoint& surface) const;
-
-    vec3 queryRadiance(const RayIsect& isect) const;
 
     SurfacePoint querySurface(const RayIsect& isect) const;
 
     vec3 queryRadiance(
-        const RayIsect& isect,
-        const vec3& omega) const;
-
-    vec3 queryRadiance(
         const SurfacePoint& surface,
         const vec3& direction) const;
-
-    const LSDFQuery queryLSDF(
-        const RayIsect& isect,
-        const vec3& omega) const;
 
     const LSDFQuery queryLSDF(
         const SurfacePoint& surface,
