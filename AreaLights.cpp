@@ -85,19 +85,25 @@ LightSample AreaLights::sample(
     RandomEngine& engine) const
 {
     size_t light_id = _sampleLight(engine);
-    auto sample = sampleCosineHemisphere1(engine);
+    const auto& light = this->light(light_id);
+
+    bounding_sphere_t bound = _scene_bound;
+    bound.center = (bound.center - light.position) * light.tangent;
+    bound.radius += light.radius();
+
+    auto sample = sample_lambert(engine, vec3(0.0f, 1.0f, 0.0f), bound);
 
     LightSample result;
+
     result.surface._position = _samplePosition(light_id, engine);
-    result.surface._tangent = light(light_id).tangent;
-    result.surface.gnormal = light(light_id).normal();
+    result.surface._tangent = light.tangent;
+    result.surface.gnormal = light.normal();
+    result.surface._materialId = light.materialId;
 
-    result.surface._materialId = light(light_id).materialId;
-
-    result._omega = light(light_id).tangent * sample.omega();
-    result._radiance = light(light_id).radiance();
-    result._areaDensity = _weights[light_id] / light(light_id).area();
-    result._omegaDensity = sample.density();
+    result._omega = light.tangent * sample.direction;
+    result._radiance = light.radiance();
+    result._areaDensity = _weights[light_id] / light.area();
+    result._omegaDensity = lambert_density(sample);
 
     return result;
 }
