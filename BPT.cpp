@@ -1,6 +1,5 @@
 #include <BPT.hpp>
 #include <Edge.hpp>
-#include <iostream>
 
 namespace haste {
 

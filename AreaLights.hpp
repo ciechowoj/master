@@ -35,6 +35,20 @@ struct LSDFQuery {
     const float omegaDensity() const { return _omegaDensity; }
 };
 
+struct AreaLight {
+    vec3 position;
+    mat3 tangent;
+    vec2 size;
+    vec3 exitance;
+    int32_t materialId;
+
+    float area() const { return size.x * size.y; }
+    float power() const { return area() * l1Norm(exitance); }
+    float radius() const { return length(size) * 0.5f; }
+    vec3 radiance() const { return exitance * one_over_pi<float>(); }
+    vec3 normal() const { return tangent[1]; }
+};
+
 class AreaLights : public Geometry {
 public:
     void init(const Intersector* intersector, bounding_sphere_t sphere);
@@ -48,27 +62,18 @@ public:
         const vec3& exitance,
         const vec2& size);
 
-    const size_t numLights() const;
+    const size_t num_lights() const;
     const string& name(size_t lightId) const;
-    const float lightArea(size_t lightId) const;
-    const float lightPower(size_t lightId) const;
-    const vec3 lightNormal(size_t lightId) const;
-    const vec3 lightRadiance(size_t lightId) const;
+    const AreaLight& light(size_t light_id) const;
+
     const float totalArea() const;
     const float totalPower() const;
 
-    const vec3 toWorld(size_t lightId, const vec3& omega) const;
+    LightSample sample(RandomEngine& engine) const;
 
-    LightSample sample(
-        RandomEngine& engine) const;
+    vec3 queryRadiance(size_t lightId, const vec3& omega) const;
 
-    vec3 queryRadiance(
-        size_t lightId,
-        const vec3& omega) const;
-
-    LSDFQuery queryLSDF(
-        size_t lightId,
-        const vec3& omega) const;
+    LSDFQuery queryLSDF(size_t lightId, const vec3& omega) const;
 
     const mat3 light_to_world_mat3(size_t lightId) const;
 
@@ -80,20 +85,12 @@ public:
     const Intersector* _intersector = nullptr;
     mutable PiecewiseSampler lightSampler;
 
-    struct Shape {
-        vec3 position;
-        vec3 direction;
-        vec3 up;
-    };
-
     vector<string> _names;
-    vector<int32_t> _materialIds;
-    vector<Shape> _shapes;
-    vector<vec2> _sizes;
-    vector<vec3> _exitances;
+    vector<AreaLight> _lights;
     vector<float> _weights;
     float _totalPower = 0.0f;
     float _totalArea = 0.0f;
+    bounding_sphere_t _scene_bound;
 
     void _updateSampler();
     const size_t _sampleLight(RandomEngine& engine) const;

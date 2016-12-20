@@ -96,6 +96,10 @@ float lambert_adjust(vec3 omega, bounding_sphere_t sphere) {
   return theta_range * phi_range;
 }
 
+float lambert_density(direction_sample_t sample) {
+  return sample.direction.y * one_over_pi<float>() / sample.adjust;
+}
+
 direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
                                 float power) {
   mat3 refl_to_surf = reflection_to_surface(vec3(-omega.x, omega.y, -omega.z));
