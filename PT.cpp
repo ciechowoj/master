@@ -1,5 +1,6 @@
 #include <Edge.hpp>
 #include <PT.hpp>
+#include <iostream>
 
 namespace haste {
 
@@ -55,7 +56,13 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
       auto edge = Edge(eye[prv], eye[itr]);
 
       eye[itr].throughput =
-          eye[prv].throughput * bsdf.throughput * edge.bCosTheta / bsdf.density;
+          eye[prv].throughput * bsdf.throughput * edge.bCosTheta;
+
+      if (l1Norm(eye[itr].throughput) < FLT_EPSILON) {
+        return radiance;
+      }
+
+      eye[itr].throughput /= bsdf.density;
 
       eye[prv].specular = bsdf.specular;
       eye[itr].density = eye[prv].density * edge.fGeometry * bsdf.density;

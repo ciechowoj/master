@@ -78,8 +78,13 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             eye[itr].throughput
                 = eye[prv].throughput
                 * bsdf.throughput
-                * edge.bCosTheta
-                / bsdf.density;
+                * edge.bCosTheta;
+
+            if (l1Norm(eye[itr].throughput) < FLT_EPSILON) {
+              return radiance;
+            }
+
+            eye[itr].throughput /= bsdf.density;
 
             eye[prv].specular = max(eye[prv].specular, bsdf.specular);
             eye[itr].specular = bsdf.specular;

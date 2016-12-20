@@ -128,7 +128,7 @@ build/imgui/sentinel:
 
 run: all
 	./build/master/master.bin models/MetalRings.blend \
-	--BPT --parallel --beta=2 \
+	--PT --parallel --beta=2 \
 	# --num-photons=1000000 --reference="/home/wojciech/cornell boxes references/TestCase1.512.512.27000.PT.snapshot.exr"
 
 profile:
