@@ -246,5 +246,32 @@ void exec_in_bands(threadpool_t& pool, size_t width, size_t height,
   std::unique_lock<std::mutex> lock(mutex);
   condition.wait(lock, [&] { return counter == num_cells; });
 }
+
+void generate(threadpool_t& pool, void** results, size_t number, void* closure,
+              void (*callback)(void*, void*, size_t)) {
+  const size_t num_tasks = pool.num_threads();
+
+  std::mutex mutex;
+  std::condition_variable condition;
+  std::atomic<size_t> counter(0);
+
+  std::atomic<size_t> remaining(number);
+  const size_t per_task = number / num_tasks;
+
+  for (size_t task = 0; task < num_tasks; ++task) {
+    pool.exec([=, &mutex, &counter, &condition, &remaining] {
+
+      callback(closure, results[task], std::min(remaining.load(), per_task));
+
+      if (counter.fetch_add(1) == num_tasks - 1) {
+        std::unique_lock<std::mutex> lock(mutex);
+        condition.notify_one();
+      }
+    });
+  }
+
+  std::unique_lock<std::mutex> lock(mutex);
+  condition.wait(lock, [&] { return counter == num_tasks; });
+}
 }
 }

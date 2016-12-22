@@ -454,14 +454,29 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
 
 template <class Beta, GatherMode Mode>
 void UPGBase<Beta, Mode>::_scatter(RandomEngine& engine) {
-    vector<LightVertex> vertices;
-
     _num_scattered = 0;
 
-    while (vertices.size() < _num_photons) {
-        _traceLight(engine, vertices);
-        ++_num_scattered;
-    }
+    std::atomic<size_t> total_num_scattered(0);
+
+    vector<LightVertex> vertices = generate<LightVertex>(_threadpool, _num_photons,
+        [this, &total_num_scattered, &engine](size_t num_photons) {
+        auto local_generator = engine.clone();
+
+        size_t num_scattered = 0;
+
+        vector<LightVertex> vertices;
+
+        while (vertices.size() < num_photons) {
+            _traceLight(local_generator, vertices);
+            ++num_scattered;
+        }
+
+        total_num_scattered += num_scattered;
+
+        return vertices;
+    });
+
+    _num_scattered = total_num_scattered;
 
     _vertices = v3::HashGrid3D<LightVertex>(move(vertices), _radius);
 }

@@ -4,28 +4,31 @@
 
 namespace haste {
 
-struct RandomEngine {
+struct random_generator_t {
  public:
-  RandomEngine();
-  RandomEngine(RandomEngine&& that);
+  random_generator_t();
+  random_generator_t(std::size_t seed);
+  random_generator_t(random_generator_t&& that);
 
   template <class T = float>
   T sample();
+
+  random_generator_t clone();
 
   std::uint_fast32_t operator()();
 
  private:
   std::mt19937 engine;
-  RandomEngine(const RandomEngine&) = delete;
-  RandomEngine& operator=(const RandomEngine&) = delete;
+  random_generator_t(const random_generator_t&) = delete;
+  random_generator_t& operator=(const random_generator_t&) = delete;
 };
 
 template <>
-float RandomEngine::sample<float>();
+float random_generator_t::sample<float>();
 template <>
-vec2 RandomEngine::sample<vec2>();
+vec2 random_generator_t::sample<vec2>();
 
-using random_generator_t = RandomEngine;
+using RandomEngine = random_generator_t;
 
 struct bounding_sphere_t {
   vec3 center;

@@ -110,6 +110,8 @@ void exec2d(threadpool_t&, size_t, size_t, size_t, void*,
 
 void exec_in_bands(threadpool_t&, size_t, size_t, size_t, void*,
                    void (*)(void*, size_t, size_t, size_t, size_t));
+
+void generate(threadpool_t&, void**, size_t, void*, void (*)(void*, void*, size_t));
 }
 
 template <class F>
@@ -131,5 +133,37 @@ void exec_in_bands(threadpool_t& pool, size_t width, size_t height,
         using Closure = typename std::decay<F>::type;
         (*reinterpret_cast<Closure*>(closure))(x0, x1, y0, y1);
       });
+}
+
+template <class T, class F>
+std::vector<T> generate(threadpool_t& pool, std::size_t number, F&& task) {
+  std::vector<std::vector<T>> results(pool.num_threads());
+  std::vector<std::vector<T>*> pointers(pool.num_threads());
+
+  for (std::size_t i = 0; i < results.size(); ++i) {
+    pointers[i] = &results[i];
+  }
+
+  detail::generate(pool, reinterpret_cast<void**>(pointers.data()), number,
+                   &task, [](void* closure, void* result, size_t number) {
+                     using Closure = typename std::decay<F>::type;
+                     *reinterpret_cast<std::vector<T>*>(result) =
+                         (*reinterpret_cast<Closure*>(closure))(number);
+                   });
+
+  std::size_t total_size = 0;
+
+  for (std::size_t i = 0; i < results.size(); ++i) {
+    total_size += results[i].size();
+  }
+
+  results.front().reserve(total_size);
+
+  for (std::size_t i = 1; i < results.size(); ++i) {
+    results.front().insert(results.front().begin(), results[i].begin(),
+                           results[i].end());
+  }
+
+  return results.front();
 }
 }

@@ -79,7 +79,7 @@ direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
   float x = r * cos(phi);
   float z = r * sin(phi);
 
-  return { vec3(x, y, z), adjust };
+  return {vec3(x, y, z), adjust};
 }
 
 float lambert_adjust(vec3 omega, bounding_sphere_t sphere) {
@@ -131,14 +131,15 @@ direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
   auto phi_range = uniform_phi_sup - uniform_phi_inf;
   float adjust = theta_range * phi_range;
 
-  float y = pow(generator.sample() * theta_range + uniform_theta_inf, 1.0f / (power + 1.0f));
+  float y = pow(generator.sample() * theta_range + uniform_theta_inf,
+                1.0f / (power + 1.0f));
   float phi =
       two_pi<float>() * (generator.sample() * phi_range + uniform_phi_inf);
   float r = sqrt(1 - y * y);
   float x = r * cos(phi);
   float z = r * sin(phi);
 
-  return { refl_to_surf * vec3(x, y, z), adjust };
+  return {refl_to_surf * vec3(x, y, z), adjust};
 }
 
 float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere) {
@@ -159,28 +160,37 @@ float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere) {
   return theta_range * phi_range;
 }
 
-RandomEngine::RandomEngine() {
+random_generator_t::random_generator_t() {
   std::random_device device;
   engine.seed(device());
 }
 
-RandomEngine::RandomEngine(RandomEngine&& that)
+random_generator_t::random_generator_t(std::size_t seed) { engine.seed(seed); }
+
+random_generator_t::random_generator_t(random_generator_t&& that)
     : engine(std::move(that.engine)) {}
 
 template <>
-float RandomEngine::sample<float>() {
+float random_generator_t::sample<float>() {
   return std::uniform_real_distribution<float>()(engine);
 }
 
+random_generator_t random_generator_t::clone() {
+  return random_generator_t(this->operator()() * UINT32_MAX +
+                            this->operator()());
+}
+
 template <>
-vec2 RandomEngine::sample<vec2>() {
+vec2 random_generator_t::sample<vec2>() {
   return vec2(std::uniform_real_distribution<float>()(engine),
               std::uniform_real_distribution<float>()(engine));
 }
 
-std::uint_fast32_t RandomEngine::operator()() { return engine.operator()(); }
+std::uint_fast32_t random_generator_t::operator()() {
+  return engine.operator()();
+}
 
-HemisphereSample1 sampleHemisphere1(RandomEngine& engine) {
+HemisphereSample1 sampleHemisphere1(random_generator_t& engine) {
   auto uniform = engine.sample<vec2>();
   float a = uniform.x;
   float b = uniform.y * pi<float>() * 2.0f;
@@ -188,7 +198,7 @@ HemisphereSample1 sampleHemisphere1(RandomEngine& engine) {
   return {vec3(cos(b) * c, a, sin(b) * c)};
 }
 
-CosineHemisphereSample1 sampleCosineHemisphere1(RandomEngine& engine) {
+CosineHemisphereSample1 sampleCosineHemisphere1(random_generator_t& engine) {
   auto uniform = engine.sample<vec2>();
   float r = sqrt(uniform.x);
   float phi = uniform.y * pi<float>() * 2.0f;
@@ -198,7 +208,7 @@ CosineHemisphereSample1 sampleCosineHemisphere1(RandomEngine& engine) {
   return {vec3(x, y, z)};
 }
 
-BarycentricSample1 sampleBarycentric1(RandomEngine& engine) {
+BarycentricSample1 sampleBarycentric1(random_generator_t& engine) {
   auto uniform = engine.sample<vec2>();
 
   const float u = uniform.x;
