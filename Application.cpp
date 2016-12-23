@@ -47,6 +47,7 @@ void Application::render(size_t width, size_t height, glm::vec4* data) {
         _technique->render(view, _engine, _options.cameraId);
 
         double elapsed = high_resolution_time() - _startTime;
+        _update_rms_history(width, height, data);
         _saveIfRequired(view, elapsed);
         _updateQuitCond(view, elapsed);
         _printStatistics(view, elapsed, false);
@@ -88,8 +89,6 @@ void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, s
         size_t center = height / 2 * width + width / 2;
         _ui->centerValue = src[center].rgb() / src[center].a;
     }
-
-    // if (_ui->compute)
 
     if (_reference.size() == 0) {
         Framework::postproc(dst, src, width, height);
@@ -192,6 +191,26 @@ bool Application::updateScene() {
     return false;
 }
 
+double Application::_compute_rms(std::size_t width, std::size_t height, const glm::vec4* left, const glm::vec4* right) {
+    double sum = 0.0f;
+    std::size_t num = width * height;
+
+    for (std::size_t i = 0; i < num; ++i) {
+        vec4 d = left[i] - right[i];
+        sum += glm::l1Norm((d * d).xyz());
+    }
+
+    return glm::sqrt(sum / double(num));
+}
+
+void Application::_update_rms_history(std::size_t width, std::size_t height, const glm::vec4* data) {
+    _rms_history.push_back(_reference.empty() ? double(NAN) : _compute_rms(width, height, data, _reference.data()));
+}
+
+void Application::_reset_rms_history() {
+    _rms_history.clear();
+}
+
 void Application::_printStatistics(const ImageView& view, double elapsed, bool preprocessed) {
     if (!_options.quiet && _options.technique != Options::Viewer) {
         if (preprocessed) {
@@ -225,15 +244,15 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
     if (numSamples != 0) {
 
         if (_options.numSamples != 0 &&
-            _options.numSamples <= size_t(view.last().w)) {
+            _options.numSamples < size_t(view.last().w)) {
             _save(view, numSamples, false);
         }
         else if (_options.numSeconds != 0.0 &&
             _options.numSeconds <= elapsed) {
             _save(view, numSamples, false);
         }
-        else if (_options.snapshot != 0 &&
-            numSamples % _options.snapshot == 0) {
+        else if (_options.snapshot > 1 &&
+            numSamples % _options.snapshot == 1) {
             _save(view, numSamples, true);
         }
     }
@@ -241,7 +260,7 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
 
 void Application::_updateQuitCond(const ImageView& view, double elapsed) {
     if (_options.numSamples != 0 &&
-        _options.numSamples <= size_t(view.last().w)) {
+        _options.numSamples < size_t(view.last().w)) {
         quit();
     }
 

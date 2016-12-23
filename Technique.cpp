@@ -165,13 +165,7 @@ void Technique::_commit_images(ImageView& view) {
             vec3* eye_itr = _eye_image.data() + y * subview.width() + subview.xBegin();
 
             for (vec4* dst_itr = dst_begin; dst_itr < dst_end; ++dst_itr) {
-                /* float check_numeric_errors =
-                    light_itr->x + light_itr->y + light_itr->z +
-                    eye_itr->x + eye_itr->y + eye_itr->z; */
-
-                //if (std::isfinite(check_numeric_errors)) {
-                    *dst_itr += vec4(*light_itr + *eye_itr, 1.0f);
-                //}
+                *dst_itr += vec4(*light_itr + *eye_itr, 1.0f);
 
                 *light_itr = vec3(0.0f);
                 *eye_itr = vec3(0.0f);
