@@ -1,9 +1,9 @@
 #pragma once
+#include <framework.hpp>
 #include <Options.hpp>
 #include <Scene.hpp>
 #include <Technique.hpp>
 #include <UserInterface.hpp>
-#include <framework.hpp>
 
 namespace haste {
 
@@ -33,6 +33,8 @@ class Application : public Framework {
   void _updateQuitCond(const ImageView& view, double elapsed);
   void _save(const ImageView& view, size_t numSamples, bool snapshot);
 
+  std::size_t _num_samples() const;
+
   Options _options;
   RTCDevice _device;
   RandomEngine _engine;
@@ -41,7 +43,6 @@ class Application : public Framework {
   bool _preprocessed = false;
   shared<UserInterface> _ui;
   double _startTime;
-  double _num_samples;
   size_t _modificationTime;
   vector<vec4> _reference;
   vector<double> _rms_history;

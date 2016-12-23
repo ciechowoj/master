@@ -42,9 +42,9 @@ void Application::render(size_t width, size_t height, glm::vec4* data) {
 
     double elapsed = high_resolution_time() - _startTime;
     _update_rms_history(width, height, data);
+    _printStatistics(view, elapsed, false);
     _saveIfRequired(view, elapsed);
     _updateQuitCond(view, elapsed);
-    _printStatistics(view, elapsed, false);
   } else {
     _technique->preprocess(_scene, _engine, [](string, float) {});
     _printStatistics(ImageView(), 0.0f, true);
@@ -183,9 +183,10 @@ double Application::_compute_rms(std::size_t width, std::size_t height,
 
 void Application::_update_rms_history(std::size_t width, std::size_t height,
                                       const glm::vec4* data) {
-  _rms_history.push_back(_reference.empty() ? double(NAN)
-                                            : _compute_rms(width, height, data,
-                                                           _reference.data()));
+  _rms_history.push_back(
+      (_reference.empty() || width * height != _reference.size())
+          ? double(NAN)
+          : _compute_rms(width, height, data, _reference.data()));
 }
 
 void Application::_reset_rms_history() { _rms_history.clear(); }
@@ -196,7 +197,7 @@ void Application::_printStatistics(const ImageView& view, double elapsed,
     if (preprocessed) {
       std::cout << "Preprocessing finished..." << std::endl;
     } else {
-      size_t numSamples = size_t(view.last().w);
+      size_t numSamples = _num_samples();
       std::cout << "Sample #" << std::setw(6) << std::left << numSamples << " "
                 << std::right << std::fixed << std::setw(8)
                 << std::setprecision(3) << elapsed << "s" << std::setw(8)
@@ -206,26 +207,22 @@ void Application::_printStatistics(const ImageView& view, double elapsed,
 }
 
 void Application::_saveIfRequired(const ImageView& view, double elapsed) {
-  size_t numSamples = size_t(view.last().w);
+  size_t num_samples = _num_samples();
 
-  if (numSamples != 0) {
-    if (_options.numSamples != 0 &&
-        _options.numSamples < size_t(view.last().w)) {
-      _save(view, numSamples, false);
+  if (num_samples != 0) {
+    if (_options.numSamples != 0 && _options.numSamples == num_samples) {
+      _save(view, num_samples, false);
     } else if (_options.numSeconds != 0.0 && _options.numSeconds <= elapsed) {
-      _save(view, numSamples, false);
-    } else if (_options.snapshot > 1 && numSamples % _options.snapshot == 1) {
-      _save(view, numSamples, true);
+      _save(view, num_samples, false);
+    } else if (_options.snapshot > 1 && num_samples % _options.snapshot == 1) {
+      _save(view, num_samples, true);
     }
   }
 }
 
 void Application::_updateQuitCond(const ImageView& view, double elapsed) {
-  if (_options.numSamples != 0 && _options.numSamples < size_t(view.last().w)) {
-    quit();
-  }
-
-  if (_options.numSeconds != 0.0 && _options.numSeconds <= elapsed) {
+  if ((_options.numSamples != 0 && _options.numSamples == _num_samples()) ||
+      (_options.numSeconds != 0.0 && _options.numSeconds <= elapsed)) {
     quit();
   }
 }
@@ -269,4 +266,6 @@ void Application::_save(const ImageView& view, size_t numSamples,
     std::cout << "Result saved to `" << path << "`." << std::endl;
   }
 }
+
+std::size_t Application::_num_samples() const { return _rms_history.size(); }
 }
