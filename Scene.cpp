@@ -9,11 +9,13 @@ Scene::Scene(
     Cameras&& cameras,
     Materials&& materials,
     vector<Mesh>&& meshes,
-    AreaLights&& areaLights)
+    AreaLights&& areaLights,
+    const bounding_sphere_t& bounding_sphere)
     : _cameras(cameras)
     , meshes(move(meshes))
     , lights(move(areaLights))
     , materials(move(materials))
+    , _bounding_sphere(bounding_sphere)
 {
     rtcScene = nullptr;
 
@@ -79,7 +81,6 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
 void Scene::buildAccelStructs(RTCDevice device) {
     if (rtcScene == nullptr) {
         updateRTCScene(rtcScene, device, *this);
-        _bounding_sphere = _compute_bounding_sphere();
         lights.init(this, _bounding_sphere);
     }
 }
@@ -257,31 +258,6 @@ int32_t Scene::_material_id_to_light_id(int32_t id) const {
 
 int32_t Scene::_light_id_to_material_id(int32_t id) const {
     return id - materials.lights_offset;
-}
-
-bounding_sphere_t Scene::_compute_bounding_sphere() const {
-    bounding_sphere_t result = { vec3(0.0f), 0.0f };
-    size_t num_vertices = 0.0;
-
-    for (auto&& mesh : meshes) {
-        for (auto&& vertex : mesh.vertices) {
-            result.center += vertex;
-        }
-
-        num_vertices += mesh.vertices.size();
-    }
-
-    result.center /= static_cast<float>(num_vertices);
-
-    for (auto&& mesh : meshes) {
-        for (auto&& vertex : mesh.vertices) {
-            result.radius = glm::max(result.radius, glm::distance2(result.center, vertex));
-        }
-    }
-
-    result.radius = glm::sqrt(result.radius);
-
-    return result;
 }
 
 }

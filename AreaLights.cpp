@@ -23,7 +23,7 @@ namespace haste {
 // v1 ************************************** v2
 //
 
-bounding_sphere_t bound_to_area_light(
+bounding_sphere_t bounding_sphere_wrt_area_light(
     const bounding_sphere_t& bound,
     const AreaLight& light) {
 
@@ -32,6 +32,11 @@ bounding_sphere_t bound_to_area_light(
     result.radius += light.radius();
 
     return result;
+}
+
+std::unique_ptr<BSDF> AreaLight::create_bsdf(const bounding_sphere_t& bounding_sphere) const {
+    auto with_respect_to_light = bounding_sphere_wrt_area_light(bounding_sphere, *this);
+    return std::unique_ptr<BSDF>(new LightBSDF(lambert_adjust(with_respect_to_light)));
 }
 
 void AreaLights::init(const Intersector* intersector, bounding_sphere_t sphere) {
@@ -98,7 +103,7 @@ LightSample AreaLights::sample(
     size_t light_id = _sampleLight(engine);
     const auto& light = this->light(light_id);
 
-    auto bound = bound_to_area_light(_scene_bound, light);
+    auto bound = bounding_sphere_wrt_area_light(_scene_bound, light);
 
     auto sample = sample_lambert(engine, vec3(0.0f, 1.0f, 0.0f), bound);
 
@@ -133,7 +138,7 @@ LSDFQuery AreaLights::queryLSDF(
 {
     auto& light = this->light(light_id);
 
-    auto bound = bound_to_area_light(_scene_bound, light);
+    auto bound = bounding_sphere_wrt_area_light(_scene_bound, light);
 
     float cosTheta = dot(omega, light.normal());
 

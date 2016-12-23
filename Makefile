@@ -127,7 +127,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/TestCase5.blend --BPT --parallel --beta=1
+	./build/master/master.bin models/CornellBoxDiffuse.blend --BPT --parallel --beta=1
 	# --UPG --parallel --beta=1 --max-radius=0.01 \
 	# --num-photons=1000000 --reference="/home/wojciech/cornell boxes references/TestCase1.512.512.27000.PT.snapshot.exr"
 

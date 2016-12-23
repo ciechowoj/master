@@ -47,9 +47,10 @@ struct AreaLight {
     float radius() const { return length(size) * 0.5f; }
     vec3 radiance() const { return exitance * one_over_pi<float>(); }
     vec3 normal() const { return tangent[1]; }
+    std::unique_ptr<BSDF> create_bsdf(const bounding_sphere_t&) const;
 };
 
-bounding_sphere_t bound_to_area_light(
+bounding_sphere_t bounding_sphere_wrt_area_light(
     const bounding_sphere_t& bound,
     const AreaLight& light);
 

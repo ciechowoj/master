@@ -71,16 +71,11 @@ public:
 
 class LightBSDF : public BSDF {
 public:
-    LightBSDF(vec3 radiance);
-
-    const BSDFSample sample(
-        RandomEngine& engine,
-        vec3 omega) const override;
-
+    LightBSDF(float adjust);
+    const BSDFSample sample(RandomEngine& engine, vec3 omega) const override;
     const BSDFQuery query(vec3 incident, vec3 outgoing) const override;
-
 private:
-    vec3 _radiance;
+    float _adjust_inv;
 };
 
 class CameraBSDF : public BSDF {

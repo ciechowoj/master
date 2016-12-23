@@ -113,8 +113,8 @@ const BSDFQuery DeltaBSDF::query(vec3 incident, vec3 outgoing) const
     return query;
 }
 
-LightBSDF::LightBSDF(vec3 radiance)
-    : _radiance(radiance * one_over_pi<float>()) {
+LightBSDF::LightBSDF(float adjust)
+    : _adjust_inv(1.0f / adjust) {
 }
 
 const BSDFSample LightBSDF::sample(RandomEngine& engine, vec3 omega) const {
@@ -127,13 +127,10 @@ const BSDFQuery LightBSDF::query(vec3 incident, vec3 outgoing) const {
 
     query.throughput = outgoing.y > 0.0f ? vec3(1.0f) : vec3(0.0f);
 
-    query.density = outgoing.y > 0.0f
-        ? outgoing.y * one_over_pi<float>()
-        : 0.0f;
+    query.density = (outgoing.y > 0.0f ? 1.0f : 0.0f)
+                  * outgoing.y * one_over_pi<float>() * _adjust_inv;
 
-    query.densityRev = incident.y > 0.0f
-        ? incident.y * one_over_pi<float>()
-        : 0.0f;
+    query.densityRev = 0.0f;
 
     return query;
 }

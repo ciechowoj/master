@@ -290,7 +290,7 @@ bool isEmissive(const aiScene* scene, size_t meshID) {
     return emissive(material) != vec3(0.0f);
 }
 
-AreaLights loadAreaLights(const aiScene* scene, Materials& materials) {
+AreaLights loadAreaLights(const aiScene* scene, Materials& materials, const bounding_sphere_t& bounding_sphere) {
     AreaLights result;
 
     materials.lights_offset = scene->mNumLights + 1;
@@ -309,7 +309,7 @@ AreaLights loadAreaLights(const aiScene* scene, Materials& materials) {
                 toVec2(light->mSize));
 
             materials.names.push_back(toString(light->mName));
-            materials.bsdfs.push_back(unique<BSDF>(new LightBSDF(toVec3(light->mColorDiffuse))));
+            materials.bsdfs.push_back(result.light(i).create_bsdf(bounding_sphere));
         }
     }
 
@@ -397,6 +397,41 @@ Mesh aiMeshToMesh(const aiMesh* mesh) {
     return result;
 }
 
+vector<Mesh> aiMeshes_to_Meshes(aiMesh const *const *const meshes, std::size_t num_meshes) {
+    vector<Mesh> result;
+
+    for (size_t i = 0; i < num_meshes; ++i) {
+        result.push_back(aiMeshToMesh(meshes[i]));
+    }
+
+    return result;
+}
+
+bounding_sphere_t compute_bounding_sphere(const std::vector<Mesh>& meshes) {
+    bounding_sphere_t result = { vec3(0.0f), 0.0f };
+    size_t num_vertices = 0;
+
+    for (auto&& mesh : meshes) {
+        for (auto&& vertex : mesh.vertices) {
+            result.center += vertex;
+        }
+
+        num_vertices += mesh.vertices.size();
+    }
+
+    result.center /= static_cast<float>(num_vertices);
+
+    for (auto&& mesh : meshes) {
+        for (auto&& vertex : mesh.vertices) {
+            result.radius = glm::max(result.radius, glm::distance2(result.center, vertex));
+        }
+    }
+
+    result.radius = glm::sqrt(result.radius);
+
+    return result;
+}
+
 shared<Scene> loadScene(string path) {
     Assimp::Importer importer;
 
@@ -414,24 +449,15 @@ shared<Scene> loadScene(string path) {
         throw std::runtime_error("Cannot load \"" + path + "\" scene.");
     }
 
+    vector<Mesh> meshes = aiMeshes_to_Meshes(scene->mMeshes, scene->mNumMeshes);
+    bounding_sphere_t meshes_bounding_sphere = compute_bounding_sphere(meshes);
+
     Materials materials;
 
-    AreaLights lights = loadAreaLights(scene, materials);
+    AreaLights lights = loadAreaLights(scene, materials, meshes_bounding_sphere);
 
     materials.names.push_back("camera");
     materials.bsdfs.push_back(unique<BSDF>(new CameraBSDF()));
-
-    vector<Mesh> meshes;
-    vector<size_t> emissive;
-
-    for (size_t i = 0; i < scene->mNumMeshes; ++i) {
-        if (isEmissive(scene, i)) {
-            emissive.push_back(i);
-        }
-        else {
-            meshes.push_back(aiMeshToMesh(scene->mMeshes[i]));
-        }
-    }
 
     for (size_t i = 0; i < scene->mNumMaterials; ++i) {
         const aiMaterial* material = scene->mMaterials[i];
@@ -462,7 +488,8 @@ shared<Scene> loadScene(string path) {
         loadCameras(scene),
         move(materials),
         move(meshes),
-        move(lights));
+        move(lights),
+        meshes_bounding_sphere);
 
     return result;
 }

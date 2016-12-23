@@ -37,7 +37,8 @@ public:
         Cameras&& cameras,
         Materials&& materials,
         vector<Mesh>&& meshes,
-        AreaLights&& areaLights);
+        AreaLights&& areaLights,
+        const bounding_sphere_t& bounding_sphere);
 
     Cameras _cameras;
     const vector<Mesh> meshes;
@@ -93,8 +94,7 @@ private:
     int32_t _material_id_to_light_id(int32_t) const;
     int32_t _light_id_to_material_id(int32_t) const;
 
-    bounding_sphere_t _bounding_sphere; // = bounding_sphere_t(0.0f);
-    bounding_sphere_t _compute_bounding_sphere() const;
+    bounding_sphere_t _bounding_sphere;
 
     mutable std::atomic<size_t> _numIntersectRays;
     mutable std::atomic<size_t> _numOccludedRays;
