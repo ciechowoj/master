@@ -82,7 +82,7 @@ direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
   return {vec3(x, y, z), adjust};
 }
 
-float lambert_adjust(vec3 omega, bounding_sphere_t sphere) {
+float lambert_adjust(bounding_sphere_t sphere) {
   auto bound = angular_bound(sphere);
 
   auto uniform_theta_inf = cos(bound.theta_sup) * cos(bound.theta_sup);
@@ -97,7 +97,7 @@ float lambert_adjust(vec3 omega, bounding_sphere_t sphere) {
 }
 
 float lambert_density(direction_sample_t sample) {
-  return sample.direction.y * one_over_pi<float>() / sample.adjust;
+  return abs(sample.direction.y) * one_over_pi<float>() / sample.adjust;
 }
 
 direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,

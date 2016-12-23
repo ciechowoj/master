@@ -49,6 +49,10 @@ struct AreaLight {
     vec3 normal() const { return tangent[1]; }
 };
 
+bounding_sphere_t bound_to_area_light(
+    const bounding_sphere_t& bound,
+    const AreaLight& light);
+
 class AreaLights : public Geometry {
 public:
     void init(const Intersector* intersector, bounding_sphere_t sphere);

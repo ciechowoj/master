@@ -55,7 +55,7 @@ direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega);
 direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
                                   bounding_sphere_t sphere);
 
-float lambert_adjust(vec3 omega, bounding_sphere_t sphere);
+float lambert_adjust(bounding_sphere_t sphere);
 
 float lambert_density(direction_sample_t sample);
 

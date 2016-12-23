@@ -33,8 +33,6 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
     radiance += _connect_eye(context, eye[prv], light_path);
 
-    return radiance;
-
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
     while (surface.is_light()) {
@@ -234,10 +232,6 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
     auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
-
-    /*if (eyeBSDF.specular() == 1.0f) {
-        // return vec3(0.0f);
-    }*/
 
     auto edge = Edge(light, eye, omega);
 

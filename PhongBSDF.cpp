@@ -74,7 +74,7 @@ BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
                                             vec3 omega) const {
   BSDFBoundedSample result;
 
-  float diffuse_adjust = lambert_adjust(omega, target);
+  float diffuse_adjust = lambert_adjust(target);
   float specular_adjust = phong_adjust(omega, _power, target);
 
   float diffuse_probability = diffuse_adjust * _diffuse_probability /

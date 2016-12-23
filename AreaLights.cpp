@@ -23,6 +23,17 @@ namespace haste {
 // v1 ************************************** v2
 //
 
+bounding_sphere_t bound_to_area_light(
+    const bounding_sphere_t& bound,
+    const AreaLight& light) {
+
+    auto result = bound;
+    result.center = (result.center - light.position) * light.tangent;
+    result.radius += light.radius();
+
+    return result;
+}
+
 void AreaLights::init(const Intersector* intersector, bounding_sphere_t sphere) {
     _intersector = intersector;
     _scene_bound = sphere;
@@ -87,9 +98,7 @@ LightSample AreaLights::sample(
     size_t light_id = _sampleLight(engine);
     const auto& light = this->light(light_id);
 
-    bounding_sphere_t bound = _scene_bound;
-    bound.center = (bound.center - light.position) * light.tangent;
-    bound.radius += light.radius();
+    auto bound = bound_to_area_light(_scene_bound, light);
 
     auto sample = sample_lambert(engine, vec3(0.0f, 1.0f, 0.0f), bound);
 
@@ -124,12 +133,14 @@ LSDFQuery AreaLights::queryLSDF(
 {
     auto& light = this->light(light_id);
 
+    auto bound = bound_to_area_light(_scene_bound, light);
+
     float cosTheta = dot(omega, light.normal());
 
     LSDFQuery result;
     result._radiance = light.radiance() * (cosTheta > 0.0f ? 1.0f : 0.0f);
     result._areaDensity = _weights[light_id] / light.area();
-    result._omegaDensity = abs(cosTheta) * one_over_pi<float>();
+    result._omegaDensity = abs(cosTheta) * one_over_pi<float>() / lambert_adjust(bound);
 
     return result;
 }
