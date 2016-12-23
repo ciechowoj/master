@@ -189,35 +189,4 @@ vec2 random_generator_t::sample<vec2>() {
 std::uint_fast32_t random_generator_t::operator()() {
   return engine.operator()();
 }
-
-HemisphereSample1 sampleHemisphere1(random_generator_t& engine) {
-  auto uniform = engine.sample<vec2>();
-  float a = uniform.x;
-  float b = uniform.y * pi<float>() * 2.0f;
-  float c = sqrt(1 - a * a);
-  return {vec3(cos(b) * c, a, sin(b) * c)};
-}
-
-CosineHemisphereSample1 sampleCosineHemisphere1(random_generator_t& engine) {
-  auto uniform = engine.sample<vec2>();
-  float r = sqrt(uniform.x);
-  float phi = uniform.y * pi<float>() * 2.0f;
-  float x = r * cos(phi);
-  float z = r * sin(phi);
-  float y = sqrt(max(0.0f, 1.0f - x * x - z * z));
-  return {vec3(x, y, z)};
-}
-
-BarycentricSample1 sampleBarycentric1(random_generator_t& engine) {
-  auto uniform = engine.sample<vec2>();
-
-  const float u = uniform.x;
-  const float v = uniform.y;
-
-  if (u + v <= 1) {
-    return {vec2(u, v)};
-  } else {
-    return {vec2(1 - u, 1 - v)};
-  }
-}
 }
