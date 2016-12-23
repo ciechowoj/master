@@ -1,318 +1,272 @@
-#include <sstream>
-#include <iostream>
-#include <iomanip>
 #include <Application.hpp>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
 namespace haste {
 
 Application::Application(const Options& options) {
-    _options = options;
+  _options = options;
 
-    _device = rtcNewDevice(NULL);
-    runtime_assert(_device != nullptr);
+  _device = rtcNewDevice(NULL);
+  runtime_assert(_device != nullptr);
 
-    _technique = makeTechnique(_options);
-    _ui = make_shared<UserInterface>(_options.input0, _scale);
+  _technique = makeTechnique(_options);
+  _ui = make_shared<UserInterface>(_options.input0, _scale);
 
-    _modificationTime = 0;
+  _modificationTime = 0;
 
-    bool reload = _options.reload;
-    _options.reload = true;
-    updateScene();
-    _options.reload = reload;
+  bool reload = _options.reload;
+  _options.reload = true;
+  updateScene();
+  _options.reload = reload;
 
-    if (!_options.reference.empty()) {
-        loadEXR(
-            _options.reference,
-            _options.width,
-            _options.height,
-            _reference);
-    }
+  if (!_options.reference.empty()) {
+    loadEXR(_options.reference, _options.width, _options.height, _reference);
+  }
 
-    if (!_options.quiet) {
-        std::cout << "Using: " << _technique->name() << std::endl;
-    }
+  if (!_options.quiet) {
+    std::cout << "Using: " << _technique->name() << std::endl;
+  }
 
-    _startTime = high_resolution_time();
+  _startTime = high_resolution_time();
 }
 
-Application::~Application() {
-    rtcDeleteDevice(_device);
-}
+Application::~Application() { rtcDeleteDevice(_device); }
 
 void Application::render(size_t width, size_t height, glm::vec4* data) {
-    if (_preprocessed) {
-        auto view = ImageView(data, width, height);
+  if (_preprocessed) {
+    auto view = ImageView(data, width, height);
 
-        _technique->render(view, _engine, _options.cameraId);
+    _technique->render(view, _engine, _options.cameraId);
 
-        double elapsed = high_resolution_time() - _startTime;
-        _update_rms_history(width, height, data);
-        _saveIfRequired(view, elapsed);
-        _updateQuitCond(view, elapsed);
-        _printStatistics(view, elapsed, false);
-    }
-    else {
-        _technique->preprocess(_scene, _engine, [](string, float) {});
-        _printStatistics(ImageView(), 0.0f, true);
-        _preprocessed = true;
-        _startTime = high_resolution_time();
-    }
+    double elapsed = high_resolution_time() - _startTime;
+    _update_rms_history(width, height, data);
+    _saveIfRequired(view, elapsed);
+    _updateQuitCond(view, elapsed);
+    _printStatistics(view, elapsed, false);
+  } else {
+    _technique->preprocess(_scene, _engine, [](string, float) {});
+    _printStatistics(ImageView(), 0.0f, true);
+    _preprocessed = true;
+    _startTime = high_resolution_time();
+  }
 }
 
-void Application::updateUI(
-    size_t width,
-    size_t height,
-    const glm::vec4* data,
-    double elapsed)
-{
-    _ui->update(
-        *_technique,
-        width,
-        height,
-        data,
-        elapsed);
+void Application::updateUI(size_t width, size_t height, const glm::vec4* data,
+                           double elapsed) {
+  _ui->update(*_technique, width, height, data, elapsed);
 }
 
-void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, size_t height) {
-    size_t size = width * height;
+void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width,
+                           size_t height) {
+  size_t size = width * height;
 
-    if (_ui->computeAverage)
-    {
-        _ui->averageValue = vec3(0.f, 0.f, 0.f);
+  if (_ui->computeAverage) {
+    _ui->averageValue = vec3(0.f, 0.f, 0.f);
 
-        for (size_t i = 0; i < size; ++i) {
-            _ui->averageValue += src[i].rgb() / src[i].a;
+    for (size_t i = 0; i < size; ++i) {
+      _ui->averageValue += src[i].rgb() / src[i].a;
+    }
+
+    _ui->averageValue /= float(size);
+    size_t center = height / 2 * width + width / 2;
+    _ui->centerValue = src[center].rgb() / src[center].a;
+  }
+
+  if (_reference.size() == 0) {
+    Framework::postproc(dst, src, width, height);
+  } else {
+    _ui->maxError = 0.0f;
+
+    switch (_ui->displayMode) {
+      case DisplayModeUnsignedRelative:
+        for (size_t i = 0; i < _reference.size(); ++i) {
+          float current = length(src[i].rgb() / src[i].a);
+          float reference = length(_reference[i].rgb());
+          float error = current == reference ? 0.0f : abs(current - reference) /
+                                                          reference;
+
+          _ui->maxError = std::max(_ui->maxError, error);
+
+          dst[i] = vec4(vec3(error), 1.0f);
         }
 
-        _ui->averageValue /= float(size);
-        size_t center = height / 2 * width + width / 2;
-        _ui->centerValue = src[center].rgb() / src[center].a;
-    }
+        break;
 
-    if (_reference.size() == 0) {
+      case DisplayModeUnsignedAbsolute:
+        _ui->avgAbsError = 0.0f;
+
+        for (size_t i = 0; i < _reference.size(); ++i) {
+          float current = length(src[i].rgb() / src[i].a);
+          float reference = length(_reference[i].rgb());
+          float error = abs(current - reference);
+
+          _ui->maxError = std::max(_ui->maxError, error);
+
+          dst[i] = vec4(vec3(error), 1.0f);
+        }
+
+        break;
+
+      case DisplayModeRelative:
+        for (size_t i = 0; i < _reference.size(); ++i) {
+          float current = length(src[i].rgb() / src[i].a);
+          float reference = length(_reference[i].rgb());
+          float error = current == reference ? 0.0f : abs(current - reference) /
+                                                          reference;
+
+          _ui->maxError = std::max(_ui->maxError, error);
+
+          dst[i] = current < reference ? vec4(0.0f, 0.0f, error, 1.0f)
+                                       : vec4(error, 0.0f, 0.0f, 1.0f);
+        }
+
+        break;
+
+      case DisplayModeAbsolute:
+        for (size_t i = 0; i < _reference.size(); ++i) {
+          float current = length(src[i].rgb() / src[i].a);
+          float reference = length(_reference[i].rgb());
+          float error = abs(current - reference);
+
+          _ui->maxError = std::max(_ui->maxError, error);
+
+          dst[i] = current < reference ? vec4(0.0f, 0.0f, error, 1.0f)
+                                       : vec4(error, 0.0f, 0.0f, 1.0f);
+        }
+
+        break;
+
+      case DisplayModeCurrent:
         Framework::postproc(dst, src, width, height);
+        break;
+
+      case DisplayModeReference:
+        Framework::postproc(dst, _reference.data(), width, height);
+        break;
     }
-    else {
-        _ui->maxError = 0.0f;
 
-        switch (_ui->displayMode)
-        {
-            case DisplayModeUnsignedRelative:
-                for (size_t i = 0; i < _reference.size(); ++i) {
-                    float current = length(src[i].rgb() / src[i].a);
-                    float reference = length(_reference[i].rgb());
-                    float error
-                        = current == reference
-                        ? 0.0f
-                        : abs(current - reference) / reference;
-
-                    _ui->maxError = std::max(_ui->maxError, error);
-
-                    dst[i] = vec4(vec3(error), 1.0f);
-                }
-
-                break;
-
-            case DisplayModeUnsignedAbsolute:
-                _ui->avgAbsError = 0.0f;
-
-                for (size_t i = 0; i < _reference.size(); ++i) {
-                    float current = length(src[i].rgb() / src[i].a);
-                    float reference = length(_reference[i].rgb());
-                    float error = abs(current - reference);
-
-                    _ui->maxError = std::max(_ui->maxError, error);
-
-                    dst[i] = vec4(vec3(error), 1.0f);
-                }
-
-                break;
-
-            case DisplayModeRelative:
-                for (size_t i = 0; i < _reference.size(); ++i) {
-                    float current = length(src[i].rgb() / src[i].a);
-                    float reference = length(_reference[i].rgb());
-                    float error
-                        = current == reference
-                        ? 0.0f
-                        : abs(current - reference) / reference;
-
-                    _ui->maxError = std::max(_ui->maxError, error);
-
-                    dst[i] = current < reference
-                        ? vec4(0.0f, 0.0f, error, 1.0f)
-                        : vec4(error, 0.0f, 0.0f, 1.0f);
-                }
-
-                break;
-
-            case DisplayModeAbsolute:
-                for (size_t i = 0; i < _reference.size(); ++i) {
-                    float current = length(src[i].rgb() / src[i].a);
-                    float reference = length(_reference[i].rgb());
-                    float error = abs(current - reference);
-
-                    _ui->maxError = std::max(_ui->maxError, error);
-
-                    dst[i] = current < reference
-                        ? vec4(0.0f, 0.0f, error, 1.0f)
-                        : vec4(error, 0.0f, 0.0f, 1.0f);
-                }
-
-                break;
-
-            case DisplayModeCurrent:
-                Framework::postproc(dst, src, width, height);
-                break;
-
-            case DisplayModeReference:
-                Framework::postproc(dst, _reference.data(), width, height);
-                break;
-        }
-
-        _ui->maxErrors.push_back(_ui->maxError);
-    }
+    _ui->maxErrors.push_back(_ui->maxError);
+  }
 }
 
 bool Application::updateScene() {
-    if (_options.reload && _options.technique != Options::Viewer) {
-        auto modificationTime = getmtime(_options.input0);
+  if (_options.reload && _options.technique != Options::Viewer) {
+    auto modificationTime = getmtime(_options.input0);
 
-        if (_modificationTime < modificationTime) {
-            _scene = loadScene(_options);
-            _scene->buildAccelStructs(_device);
-            _preprocessed = false;
-            _modificationTime = modificationTime;
-            return true;
-        }
+    if (_modificationTime < modificationTime) {
+      _scene = loadScene(_options);
+      _scene->buildAccelStructs(_device);
+      _preprocessed = false;
+      _modificationTime = modificationTime;
+      return true;
     }
+  }
 
-    return false;
+  return false;
 }
 
-double Application::_compute_rms(std::size_t width, std::size_t height, const glm::vec4* left, const glm::vec4* right) {
-    double sum = 0.0f;
-    std::size_t num = width * height;
+double Application::_compute_rms(std::size_t width, std::size_t height,
+                                 const glm::vec4* left,
+                                 const glm::vec4* right) {
+  double sum = 0.0f;
+  std::size_t num = width * height;
 
-    for (std::size_t i = 0; i < num; ++i) {
-        vec4 d = left[i] - right[i];
-        sum += glm::l1Norm((d * d).xyz());
+  for (std::size_t i = 0; i < num; ++i) {
+    vec4 d = left[i] - right[i];
+    sum += glm::l1Norm((d * d).xyz());
+  }
+
+  return glm::sqrt(sum / double(num));
+}
+
+void Application::_update_rms_history(std::size_t width, std::size_t height,
+                                      const glm::vec4* data) {
+  _rms_history.push_back(_reference.empty() ? double(NAN)
+                                            : _compute_rms(width, height, data,
+                                                           _reference.data()));
+}
+
+void Application::_reset_rms_history() { _rms_history.clear(); }
+
+void Application::_printStatistics(const ImageView& view, double elapsed,
+                                   bool preprocessed) {
+  if (!_options.quiet && _options.technique != Options::Viewer) {
+    if (preprocessed) {
+      std::cout << "Preprocessing finished..." << std::endl;
+    } else {
+      size_t numSamples = size_t(view.last().w);
+      std::cout << "Sample #" << std::setw(6) << std::left << numSamples << " "
+                << std::right << std::fixed << std::setw(8)
+                << std::setprecision(3) << elapsed << "s" << std::setw(8)
+                << elapsed / numSamples << "s/sample" << std::endl;
     }
-
-    return glm::sqrt(sum / double(num));
-}
-
-void Application::_update_rms_history(std::size_t width, std::size_t height, const glm::vec4* data) {
-    _rms_history.push_back(_reference.empty() ? double(NAN) : _compute_rms(width, height, data, _reference.data()));
-}
-
-void Application::_reset_rms_history() {
-    _rms_history.clear();
-}
-
-void Application::_printStatistics(const ImageView& view, double elapsed, bool preprocessed) {
-    if (!_options.quiet && _options.technique != Options::Viewer) {
-        if (preprocessed) {
-            std::cout << "Preprocessing finished..." << std::endl;
-        }
-        else {
-            size_t numSamples = size_t(view.last().w);
-            std::cout
-                << "Sample #"
-                << std::setw(6)
-                << std::left
-                << numSamples
-                << " "
-                << std::right
-                << std::fixed
-                << std::setw(8)
-                << std::setprecision(3)
-                << elapsed
-                << "s"
-                << std::setw(8)
-                << elapsed / numSamples
-                << "s/sample"
-                << std::endl;
-        }
-    }
+  }
 }
 
 void Application::_saveIfRequired(const ImageView& view, double elapsed) {
-    size_t numSamples = size_t(view.last().w);
+  size_t numSamples = size_t(view.last().w);
 
-    if (numSamples != 0) {
-
-        if (_options.numSamples != 0 &&
-            _options.numSamples < size_t(view.last().w)) {
-            _save(view, numSamples, false);
-        }
-        else if (_options.numSeconds != 0.0 &&
-            _options.numSeconds <= elapsed) {
-            _save(view, numSamples, false);
-        }
-        else if (_options.snapshot > 1 &&
-            numSamples % _options.snapshot == 1) {
-            _save(view, numSamples, true);
-        }
+  if (numSamples != 0) {
+    if (_options.numSamples != 0 &&
+        _options.numSamples < size_t(view.last().w)) {
+      _save(view, numSamples, false);
+    } else if (_options.numSeconds != 0.0 && _options.numSeconds <= elapsed) {
+      _save(view, numSamples, false);
+    } else if (_options.snapshot > 1 && numSamples % _options.snapshot == 1) {
+      _save(view, numSamples, true);
     }
+  }
 }
 
 void Application::_updateQuitCond(const ImageView& view, double elapsed) {
-    if (_options.numSamples != 0 &&
-        _options.numSamples < size_t(view.last().w)) {
-        quit();
-    }
+  if (_options.numSamples != 0 && _options.numSamples < size_t(view.last().w)) {
+    quit();
+  }
 
-    if (_options.numSeconds != 0.0 &&
-        _options.numSeconds <= elapsed) {
-        quit();
-    }
+  if (_options.numSeconds != 0.0 && _options.numSeconds <= elapsed) {
+    quit();
+  }
 }
 
-void Application::_save(const ImageView& view, size_t numSamples, bool snapshot) {
-    string path;
-    bool hasSamples = false;
+void Application::_save(const ImageView& view, size_t numSamples,
+                        bool snapshot) {
+  string path;
+  bool hasSamples = false;
 
-    if (_options.output.empty()) {
-        auto split = splitext(_options.input0);
-        std::stringstream stream;
-        stream
-            << split.first << "."
-            << view.width() << "."
-            << view.height() << "."
-            << numSamples << "."
-            << techniqueString(_options) << ".exr";
-        path = stream.str();
-        hasSamples = true;
-    }
-    else {
-        path = _options.output;
-    }
+  if (_options.output.empty()) {
+    auto split = splitext(_options.input0);
+    std::stringstream stream;
+    stream << split.first << "." << view.width() << "." << view.height() << "."
+           << numSamples << "." << techniqueString(_options) << ".exr";
+    path = stream.str();
+    hasSamples = true;
+  } else {
+    path = _options.output;
+  }
 
-    if (snapshot) {
-        auto split = splitext(path);
-        std::stringstream stream;
+  if (snapshot) {
+    auto split = splitext(path);
+    std::stringstream stream;
 
-        stream << split.first;
+    stream << split.first;
 
-        if (!hasSamples) {
-            stream << "." << numSamples;
-        }
-
-        stream << ".snapshot" << split.second;
-
-        path = stream.str();
+    if (!hasSamples) {
+      stream << "." << numSamples;
     }
 
-    saveEXR(path, view.width(), view.height(), view.data());
+    stream << ".snapshot" << split.second;
 
-    if (snapshot) {
-        std::cout << "Snapshot saved to `" << path << "`." << std::endl;
-    }
-    else {
-        std::cout << "Result saved to `" << path << "`." << std::endl;
-    }
+    path = stream.str();
+  }
+
+  saveEXR(path, view.width(), view.height(), view.data());
+
+  if (snapshot) {
+    std::cout << "Snapshot saved to `" << path << "`." << std::endl;
+  } else {
+    std::cout << "Result saved to `" << path << "`." << std::endl;
+  }
 }
-
 }
