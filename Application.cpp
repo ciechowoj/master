@@ -223,7 +223,7 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
       _save(view, num_samples, false);
     } else if (_options.numSeconds != 0.0 && _options.numSeconds <= elapsed) {
       _save(view, num_samples, false);
-    } else if (_options.snapshot > 1 && num_samples % _options.snapshot == 1) {
+    } else if (_options.snapshot > 1 && num_samples % _options.snapshot == 0) {
       _save(view, num_samples, true);
     }
   }

@@ -28,7 +28,7 @@ CC = gcc
 CCFLAGS = -march=native -g -O2 -w -Wall $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 CXX = g++
-CXXFLAGS = -march=native -g -O1 -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CXXFLAGS = -march=native -g -O2 -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \
@@ -127,8 +127,8 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --VCM --parallel --beta=2 --num-samples=10 --batch --num-photons=1000000 --max-radius=0.1 \
-	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.100000.PT.snapshot.exr"
+	./build/master/master.bin models/TestCase7.blend --PT --parallel --beta=2
+	# --reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.100000.PT.snapshot.exr"
 
 profile:
 	valgrind \
