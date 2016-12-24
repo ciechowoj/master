@@ -27,25 +27,29 @@ void saveEXR(
     const string& path,
     size_t width,
     size_t height,
-    const vec3* data);
+    const vec3* data,
+    const std::vector<std::string>& metadata = std::vector<std::string>());
 
 void saveEXR(
     const string& path,
     size_t width,
     size_t height,
-    const vec4* data);
+    const vec4* data,
+    const std::vector<std::string>& metadata = std::vector<std::string>());
 
 void loadEXR(
     const string& path,
     size_t& width,
     size_t& height,
-    vector<vec3>& data);
+    vector<vec3>& data,
+    std::vector<std::string>* metadata = nullptr);
 
 void loadEXR(
     const string& path,
     size_t& width,
     size_t& height,
-    vector<vec4>& data);
+    vector<vec4>& data,
+    std::vector<std::string>* metadata = nullptr);
 
 string homePath();
 string baseName(string path);
@@ -55,6 +59,7 @@ size_t getmtime(const string& path);
 
 vec3 computeAVG(const string& path);
 void printAVG(const string& path);
+void printHistory(const string& path);
 
 vec3 computeRMS(const string& path0, const string& path1);
 void printRMS(const string& path0, const string& path1);

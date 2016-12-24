@@ -23,6 +23,8 @@ R"(
       master --version
       master avg <x>      Compute average value of pixels in <x>.
       master rms <x> <y>  Compute root mean square error between <x> and <y>.
+      master sub <x> <y>  Compute difference between <x> and <y>.
+      master history <x>  Print embedded RMS history.
 
     Options:
       -h --help           Show this screen.
@@ -214,6 +216,21 @@ Options parseSubArgs(int argc, char const* const* argv) {
     return options;
 }
 
+Options parseHistoryArgs(int argc, char const* const* argv) {
+    Options options;
+
+    if (argc != 3) {
+        options.displayHelp = true;
+        options.displayMessage = "Input file is required.";
+    }
+    else {
+        options.action = Options::History;
+        options.input0 = argv[2];
+    }
+
+    return options;
+}
+
 Options parseArgs(int argc, char const* const* argv) {
     if (1 < argc) {
         if (1 < argc && argv[1] == string("avg")) {
@@ -224,6 +241,9 @@ Options parseArgs(int argc, char const* const* argv) {
         }
         else if (1 < argc && argv[1] == string("sub")) {
             return parseSubArgs(argc, argv);
+        }
+        else if (1 < argc && argv[1] == string("history")) {
+            return parseHistoryArgs(argc, argv);
         }
     }
 

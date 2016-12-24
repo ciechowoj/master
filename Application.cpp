@@ -28,8 +28,6 @@ Application::Application(const Options& options) {
   if (!_options.quiet) {
     std::cout << "Using: " << _technique->name() << std::endl;
   }
-
-  _startTime = high_resolution_time();
 }
 
 Application::~Application() { rtcDeleteDevice(_device); }
@@ -40,16 +38,18 @@ void Application::render(size_t width, size_t height, glm::vec4* data) {
 
     _technique->render(view, _engine, _options.cameraId);
 
-    double elapsed = high_resolution_time() - _startTime;
+    double elapsed = high_resolution_time() - _rendering_start_time;
     _update_rms_history(width, height, data);
     _printStatistics(view, elapsed, false);
     _saveIfRequired(view, elapsed);
     _updateQuitCond(view, elapsed);
   } else {
+    _preprocessing_start_time = high_resolution_time();
     _technique->preprocess(_scene, _engine, [](string, float) {});
     _printStatistics(ImageView(), 0.0f, true);
     _preprocessed = true;
-    _startTime = high_resolution_time();
+    _rendering_start_time = high_resolution_time();
+    _reset_rms_history();
   }
 }
 
@@ -174,8 +174,8 @@ double Application::_compute_rms(std::size_t width, std::size_t height,
   std::size_t num = width * height;
 
   for (std::size_t i = 0; i < num; ++i) {
-    vec4 d = left[i] - right[i];
-    sum += glm::l1Norm((d * d).xyz());
+    vec3 d = left[i].rgb() / left[i].a - right[i].rgb() / right[i].a;
+    sum += glm::l1Norm(d * d);
   }
 
   return glm::sqrt(sum / double(num));
@@ -183,13 +183,22 @@ double Application::_compute_rms(std::size_t width, std::size_t height,
 
 void Application::_update_rms_history(std::size_t width, std::size_t height,
                                       const glm::vec4* data) {
+  double current_time = high_resolution_time();
+
   _rms_history.push_back(
       (_reference.empty() || width * height != _reference.size())
-          ? double(NAN)
-          : _compute_rms(width, height, data, _reference.data()));
+          ? std::make_pair(current_time - _preprocessing_start_time,
+                           double(NAN))
+          : std::make_pair(
+                current_time - _preprocessing_start_time,
+                _compute_rms(width, height, data, _reference.data())));
 }
 
-void Application::_reset_rms_history() { _rms_history.clear(); }
+void Application::_reset_rms_history() {
+  _rms_history.clear();
+  _rms_history.push_back(std::make_pair(
+      _rendering_start_time - _preprocessing_start_time, double(INFINITY)));
+}
 
 void Application::_printStatistics(const ImageView& view, double elapsed,
                                    bool preprocessed) {
@@ -258,7 +267,8 @@ void Application::_save(const ImageView& view, size_t numSamples,
     path = stream.str();
   }
 
-  saveEXR(path, view.width(), view.height(), view.data());
+  saveEXR(path, view.width(), view.height(), view.data(),
+          _serialize_rms_history());
 
   if (snapshot) {
     std::cout << "Snapshot saved to `" << path << "`." << std::endl;
@@ -267,5 +277,20 @@ void Application::_save(const ImageView& view, size_t numSamples,
   }
 }
 
-std::size_t Application::_num_samples() const { return _rms_history.size(); }
+std::size_t Application::_num_samples() const {
+  return _rms_history.size() == 0 ? 0 : _rms_history.size() - 1;
+}
+
+std::vector<std::string> Application::_serialize_rms_history() const {
+  std::vector<std::string> result(_rms_history.size());
+
+  for (std::size_t i = 0; i < _rms_history.size(); ++i) {
+    std::stringstream stream;
+    stream << std::setprecision(10) << _rms_history[i].first << " "
+           << _rms_history[i].second;
+    result[i] = stream.str();
+  }
+
+  return result;
+}
 }

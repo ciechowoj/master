@@ -34,6 +34,7 @@ class Application : public Framework {
   void _save(const ImageView& view, size_t numSamples, bool snapshot);
 
   std::size_t _num_samples() const;
+  std::vector<std::string> _serialize_rms_history() const;
 
   Options _options;
   RTCDevice _device;
@@ -42,9 +43,10 @@ class Application : public Framework {
   shared<Scene> _scene;
   bool _preprocessed = false;
   shared<UserInterface> _ui;
-  double _startTime;
+  double _rendering_start_time;
+  double _preprocessing_start_time;
   size_t _modificationTime;
   vector<vec4> _reference;
-  vector<double> _rms_history;
+  vector<pair<double, double>> _rms_history;
 };
 }

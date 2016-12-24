@@ -36,6 +36,7 @@ float PiecewiseSampler::sample() {
 #include <ImfOutputFile.h>
 #include <ImfChannelList.h>
 #include <ImfStringAttribute.h>
+#include <ImfStringVectorAttribute.h>
 #include <ImfMatrixAttribute.h>
 #include <ImfArray.h>
 
@@ -48,8 +49,8 @@ void saveEXR(
     const string& path,
     size_t widthll,
     size_t heightll,
-    const vec3* data)
-{
+    const vec3* data,
+    const std::vector<std::string>& metadata) {
     runtime_assert(widthll < INT_MAX);
     runtime_assert(heightll < INT_MAX);
 
@@ -60,6 +61,7 @@ void saveEXR(
     header.channels().insert ("R", Channel (Imf::FLOAT));
     header.channels().insert ("G", Channel (Imf::FLOAT));
     header.channels().insert ("B", Channel (Imf::FLOAT));
+    header.insert("p7yh5o0587jqc5qv-metadata", StringVectorAttribute(metadata));
 
     OutputFile file (path.c_str(), header);
 
@@ -91,7 +93,8 @@ void saveEXR(
     const string& path,
     size_t width,
     size_t height,
-    const vec4* data)
+    const vec4* data,
+    const std::vector<std::string>& metadata)
 {
     auto data3 = vector<vec3>(width * height);
 
@@ -99,16 +102,23 @@ void saveEXR(
         data3[i] = data[i].xyz() / data[i].w;
     }
 
-    saveEXR(path, width, height, data3.data());
+    saveEXR(path, width, height, data3.data(), metadata);
 }
 
 void loadEXR(
     const string& path,
     size_t& width,
     size_t& height,
-    vector<vec3>& data)
+    vector<vec3>& data,
+    std::vector<std::string>* metadata)
 {
     InputFile file (path.c_str());
+
+    auto comments = file.header().findTypedAttribute<StringVectorAttribute>("p7yh5o0587jqc5qv-metadata");
+
+    if (comments && metadata) {
+        *metadata = comments->value();
+    }
 
     auto dw = file.header().dataWindow();
     int ihegith = dw.max.x - dw.min.x + 1;
@@ -148,10 +158,11 @@ void loadEXR(
     const string& path,
     size_t& width,
     size_t& height,
-    vector<vec4>& data)
+    vector<vec4>& data,
+    std::vector<std::string>* metadata)
 {
     auto data3 = vector<vec3>();
-    loadEXR(path, width, height, data3);
+    loadEXR(path, width, height, data3, metadata);
 
     data.resize(data3.size());
 
@@ -265,6 +276,20 @@ static void printVec(const vec3& v) {
 
 void printAVG(const string& path) {
     printVec(computeAVG(path));
+}
+
+void printHistory(const string& path) {
+    std::vector<glm::vec3> data;
+    std::vector<std::string> metadata;
+    size_t width, height;
+
+    loadEXR(path, width, height, data, &metadata);
+
+    for (auto&& entry : metadata) {
+        std::cout << entry << "\n";
+    }
+
+    std::cout.flush();
 }
 
 vec3 computeRMS(const string& path0, const string& path1) {
