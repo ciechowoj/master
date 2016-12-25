@@ -40,9 +40,10 @@ R"(
       --roulette=<n>      Russian roulette coefficient. [default: 0.5]
       --batch             Run in batch mode (interactive otherwise).
       --quiet             Do not output anything to console.
+      --no-vc             Disable vertex connection.
+      --no-vm             Disable vertex merging.
       --no-lights         Do not draw the lights.
       --no-reload         Disable auto-reload (input file is reloaded on modification in interactive mode).
-      --weights           Show contribution of MIS wights in hybrid techniques.
       --num-samples=<n>   Terminate after n samples.
       --num-seconds=<n>   Terminate after n seconds.
       --num-minutes=<n>   Terminate after n minutes.
@@ -453,6 +454,30 @@ Options parseArgs(int argc, char const* const* argv) {
             dict.erase("--quiet");
         }
 
+        if (dict.count("--no-vc")) {
+            if (options.technique != Options::VCM &&
+                options.technique != Options::UPG) {
+                options.displayHelp = true;
+                options.displayMessage = "--no-vc is only valid with --VCM and --UPG.";
+                return options;
+            }
+
+            options.enable_vc = false;
+            dict.erase("--no-vc");
+        }
+
+        if (dict.count("--no-vm")) {
+            if (options.technique != Options::VCM &&
+                options.technique != Options::UPG) {
+                options.displayHelp = true;
+                options.displayMessage = "--no-vm is only valid with --VCM and --UPG.";
+                return options;
+            }
+
+            options.enable_vm = false;
+            dict.erase("--no-vm");
+        }
+
         if (dict.count("--no-lights")) {
             options.lights = 0.0f;
             dict.erase("--no-lights");
@@ -461,18 +486,6 @@ Options parseArgs(int argc, char const* const* argv) {
         if (dict.count("--no-reload")) {
             options.reload = false;
             dict.erase("--no-reload");
-        }
-
-        if (dict.count("--weights")) {
-            if (options.technique != Options::VCM &&
-                options.technique != Options::UPG) {
-                options.displayHelp = true;
-                options.displayMessage = "--weights is only valid with --VCM and --UPG.";
-                return options;
-            }
-
-            options.weights = true;
-            dict.erase("--weights");
         }
 
         if (dict.count("--num-samples")) {
@@ -646,8 +659,9 @@ template <class T>
 shared<Technique> make_upg_technique(const Options& options) {
     return std::make_shared<T>(
         options.minSubpath,
+        options.enable_vc,
+        options.enable_vm,
         options.lights,
-        options.weights ? 1.0f : 0.0f,
         options.roulette,
         options.numPhotons,
         options.numGather,

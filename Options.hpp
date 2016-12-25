@@ -29,7 +29,8 @@ struct Options {
     double roulette = 0.6;
     bool batch = false;
     bool quiet = false;
-    float weights = 0.0f;
+    bool enable_vc = true;
+    bool enable_vm = true;
     float lights = 1.0f;
     size_t numSamples = 0;
     double numSeconds = 0.0;

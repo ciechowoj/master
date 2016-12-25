@@ -6,8 +6,9 @@ namespace haste {
 template <class Beta, GatherMode Mode>
 UPGBase<Beta, Mode>::UPGBase(
     size_t minSubpath,
+    bool enable_vc,
+    bool enable_vm,
     float lights,
-    float weights,
     float roulette,
     size_t numPhotons,
     size_t numGather,
@@ -19,8 +20,9 @@ UPGBase<Beta, Mode>::UPGBase(
     , _num_scattered(0)
     , _numGather(numGather)
     , _minSubpath(minSubpath)
+    , _enable_vc(enable_vc)
+    , _enable_vm(enable_vm)
     , _lights(lights)
-    , _weights(weights)
     , _roulette(roulette)
     , _radius(radius)
 { }
@@ -47,7 +49,9 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     float radius = _radius;
     light_path_t light_path;
 
-    _traceLight(*context.engine, light_path);
+    if (_enable_vc) {
+        _traceLight(*context.engine, light_path);
+    }
 
     vec3 radiance = vec3(0.0f);
     EyeVertex eye[2];
@@ -62,12 +66,17 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].d = 0;
     eye[prv].D = 0;
 
-    radiance += _connect_eye(context, eye[prv], light_path, radius);
+    if (_enable_vc) {
+        radiance += _connect_eye(context, eye[prv], light_path, radius);
+    }
 
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
     while (surface.is_light()) {
-        radiance += _lights * _scene->queryRadiance(surface, -ray.direction);
+        if (_enable_vc) {
+            radiance += _lights * _scene->queryRadiance(surface, -ray.direction);
+        }
+
         surface = _scene->intersect(surface, ray.direction);
     }
 
@@ -92,8 +101,13 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     size_t path_size = 2;
 
     while (true) {
-        radiance += _gather(*context.engine, eye[prv], radius);
-        radiance += _connect(eye[prv], light_path, radius);
+        if (_enable_vm) {
+            radiance += _gather(*context.engine, eye[prv], radius);
+        }
+
+        if (_enable_vc) {
+            radiance += _connect(eye[prv], light_path, radius);
+        }
 
         auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
 
@@ -141,7 +155,9 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
                 * eye[itr].c;
 
             if (surface.is_light()) {
-                radiance += _connect_light(eye[itr], radius);
+                if (_enable_vc) {
+                    radiance += _connect_light(eye[itr], radius);
+                }
             }
             else {
                 break;
@@ -581,8 +597,9 @@ vec3 UPGBase<Beta, Mode>::_combine(vec3 throughput, float weight) {
 
 UPGb::UPGb(
     size_t minSubpath,
+    bool enable_vc,
+    bool enable_vm,
     float lights,
-    float weights,
     float roulette,
     size_t numPhotons,
     size_t numGather,
@@ -591,8 +608,9 @@ UPGb::UPGb(
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Unbiased>(
         minSubpath,
+        enable_vc,
+        enable_vm,
         lights,
-        weights,
         roulette,
         numPhotons,
         numGather,
@@ -609,8 +627,9 @@ template class UPGBase<VariableBeta, GatherMode::Unbiased>;
 
 VCMb::VCMb(
     size_t minSubpath,
+    bool enable_vc,
+    bool enable_vm,
     float lights,
-    float weights,
     float roulette,
     size_t numPhotons,
     size_t numGather,
@@ -619,8 +638,9 @@ VCMb::VCMb(
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Biased>(
         minSubpath,
+        enable_vc,
+        enable_vm,
         lights,
-        weights,
         roulette,
         numPhotons,
         numGather,
