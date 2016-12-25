@@ -7,12 +7,14 @@ namespace haste {
 template <int C> class FixedBeta {
 public:
     float beta(float x);
+    float beta_exp() const;
     std::string name() const;
 };
 
 class VariableBeta {
 public:
     float beta(float x);
+    float beta_exp() const;
     std::string name() const;
     void init(float beta);
 private:
@@ -31,8 +33,16 @@ template <> inline float FixedBeta<2>::beta(float x) {
     return x * x;
 }
 
+template <int C> inline float FixedBeta<C>::beta_exp() const {
+    return float(C);
+}
+
 inline float VariableBeta::beta(float x) {
     return pow(x, _beta);
+}
+
+inline float VariableBeta::beta_exp() const {
+    return _beta;
 }
 
 }

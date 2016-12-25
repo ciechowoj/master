@@ -127,7 +127,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/TestCase7.blend --PT --parallel --beta=2
+	./build/master/master.bin models/CornellBoxPhong.blend --VCM --parallel --beta=2 --weights
 	# --reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.100000.PT.snapshot.exr"
 
 profile:

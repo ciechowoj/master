@@ -41,11 +41,12 @@ R"(
       --batch             Run in batch mode (interactive otherwise).
       --quiet             Do not output anything to console.
       --no-lights         Do not draw the lights.
-      --no-reload         Disable autoreload (input file is reloaded on modification in interactive mode).
+      --no-reload         Disable auto-reload (input file is reloaded on modification in interactive mode).
+      --weights           Show contribution of MIS wights in hybrid techniques.
       --num-samples=<n>   Terminate after n samples.
       --num-seconds=<n>   Terminate after n seconds.
       --num-minutes=<n>   Terminate after n minutes.
-      --parallel          Use multithreading.
+      --parallel          Use multi-threading.
       --snapshot=<n>      Save output every n samples (adds number of samples to output file).
       --output=<path>     Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
       --reference=<path>  Reference file for comparison.
@@ -462,6 +463,18 @@ Options parseArgs(int argc, char const* const* argv) {
             dict.erase("--no-reload");
         }
 
+        if (dict.count("--weights")) {
+            if (options.technique != Options::VCM &&
+                options.technique != Options::UPG) {
+                options.displayHelp = true;
+                options.displayMessage = "--weights is only valid with --VCM and --UPG.";
+                return options;
+            }
+
+            options.weights = true;
+            dict.erase("--weights");
+        }
+
         if (dict.count("--num-samples")) {
             if (!isUnsigned(dict["--num-samples"])) {
                 options.displayHelp = true;
@@ -629,6 +642,20 @@ shared<Technique> makeViewer(Options& options) {
     return std::make_shared<Viewer>(image, options.width, options.height);
 }
 
+template <class T>
+shared<Technique> make_upg_technique(const Options& options) {
+    return std::make_shared<T>(
+        options.minSubpath,
+        options.lights,
+        options.weights ? 1.0f : 0.0f,
+        options.roulette,
+        options.numPhotons,
+        options.numGather,
+        options.maxRadius,
+        options.beta,
+        options.numThreads);
+}
+
 shared<Technique> makeTechnique(Options& options) {
     switch (options.technique) {
         case Options::BPT:
@@ -661,88 +688,30 @@ shared<Technique> makeTechnique(Options& options) {
 
         case Options::VCM:
             if (options.beta == 0.0f) {
-                return std::make_shared<VCM0>(
-                    options.minSubpath,
-                    options.lights,
-                    options.roulette,
-                    options.numPhotons,
-                    options.numGather,
-                    options.maxRadius,
-                    options.numThreads);
+                return make_upg_technique<VCM0>(options);
             }
             else if (options.beta == 1.0f) {
-                return std::make_shared<VCM1>(
-                    options.minSubpath,
-                    options.lights,
-                    options.roulette,
-                    options.numPhotons,
-                    options.numGather,
-                    options.maxRadius,
-                    options.numThreads);
+                return make_upg_technique<VCM1>(options);
             }
             else if (options.beta == 2.0f) {
-                return std::make_shared<VCM2>(
-                    options.minSubpath,
-                    options.lights,
-                    options.roulette,
-                    options.numPhotons,
-                    options.numGather,
-                    options.maxRadius,
-                    options.numThreads);
+                return make_upg_technique<VCM2>(options);
             }
             else {
-                return std::make_shared<VCMb>(
-                    options.minSubpath,
-                    options.lights,
-                    options.roulette,
-                    options.numPhotons,
-                    options.numGather,
-                    options.maxRadius,
-                    options.beta,
-                    options.numThreads);
+                return make_upg_technique<VCMb>(options);
             }
 
         case Options::UPG:
             if (options.beta == 0.0f) {
-                return std::make_shared<UPG0>(
-                    options.minSubpath,
-                    options.lights,
-                    options.roulette,
-                    options.numPhotons,
-                    options.numGather,
-                    options.maxRadius,
-                    options.numThreads);
+                return make_upg_technique<UPG0>(options);
             }
             else if (options.beta == 1.0f) {
-                return std::make_shared<UPG1>(
-                    options.minSubpath,
-                    options.lights,
-                    options.roulette,
-                    options.numPhotons,
-                    options.numGather,
-                    options.maxRadius,
-                    options.numThreads);
+                return make_upg_technique<UPG1>(options);
             }
             else if (options.beta == 2.0f) {
-                return std::make_shared<UPG2>(
-                    options.minSubpath,
-                    options.lights,
-                    options.roulette,
-                    options.numPhotons,
-                    options.numGather,
-                    options.maxRadius,
-                    options.numThreads);
+                return make_upg_technique<UPG2>(options);
             }
             else {
-                return std::make_shared<UPGb>(
-                    options.minSubpath,
-                    options.lights,
-                    options.roulette,
-                    options.numPhotons,
-                    options.numGather,
-                    options.maxRadius,
-                    options.beta,
-                    options.numThreads);
+                return make_upg_technique<UPGb>(options);
             }
 
         default:

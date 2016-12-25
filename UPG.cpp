@@ -7,10 +7,12 @@ template <class Beta, GatherMode Mode>
 UPGBase<Beta, Mode>::UPGBase(
     size_t minSubpath,
     float lights,
+    float weights,
     float roulette,
     size_t numPhotons,
     size_t numGather,
     float radius,
+    float beta,
     size_t num_threads)
     : Technique(num_threads)
     , _num_photons(numPhotons)
@@ -18,6 +20,7 @@ UPGBase<Beta, Mode>::UPGBase(
     , _numGather(numGather)
     , _minSubpath(minSubpath)
     , _lights(lights)
+    , _weights(weights)
     , _roulette(roulette)
     , _radius(radius)
 { }
@@ -541,7 +544,7 @@ vec3 UPGBase<Beta, Mode>::_merge(
         auto density = _density(engine, light, eye, eyeBSDF, edge, radius);
         auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
-        return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
+        return _combine(result * density, weight);
     }
 }
 
@@ -579,6 +582,7 @@ vec3 UPGBase<Beta, Mode>::_combine(vec3 throughput, float weight) {
 UPGb::UPGb(
     size_t minSubpath,
     float lights,
+    float weights,
     float roulette,
     size_t numPhotons,
     size_t numGather,
@@ -588,10 +592,12 @@ UPGb::UPGb(
     : UPGBase<VariableBeta, GatherMode::Unbiased>(
         minSubpath,
         lights,
+        weights,
         roulette,
         numPhotons,
         numGather,
         radius,
+        beta,
         num_threads) {
     VariableBeta::init(beta);
 }
@@ -604,6 +610,7 @@ template class UPGBase<VariableBeta, GatherMode::Unbiased>;
 VCMb::VCMb(
     size_t minSubpath,
     float lights,
+    float weights,
     float roulette,
     size_t numPhotons,
     size_t numGather,
@@ -613,10 +620,12 @@ VCMb::VCMb(
     : UPGBase<VariableBeta, GatherMode::Biased>(
         minSubpath,
         lights,
+        weights,
         roulette,
         numPhotons,
         numGather,
         radius,
+        beta,
         num_threads) {
     VariableBeta::init(beta);
 }

@@ -18,10 +18,12 @@ public:
     UPGBase(
         size_t minSubpath,
         float lights,
+        float weights,
         float roulette,
         size_t numPhotons,
         size_t numGather,
         float radius,
+        float beta,
         size_t numThreads);
 
     void preprocess(
@@ -125,6 +127,7 @@ private:
     const size_t _numGather;
     const size_t _minSubpath;
     const float _lights;
+    const float _weights;
     const float _roulette;
     const float _radius;
 
@@ -140,6 +143,7 @@ public:
     UPGb(
         size_t minSubpath,
         float lights,
+        float weights,
         float roulette,
         size_t numPhotons,
         size_t numGather,
@@ -157,6 +161,7 @@ public:
     VCMb(
         size_t minSubpath,
         float lights,
+        float weights,
         float roulette,
         size_t numPhotons,
         size_t numGather,
