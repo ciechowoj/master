@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <stdexcept>
 #include <runtime_assert>
@@ -36,7 +37,6 @@ float PiecewiseSampler::sample() {
 #include <ImfOutputFile.h>
 #include <ImfChannelList.h>
 #include <ImfStringAttribute.h>
-#include <ImfStringVectorAttribute.h>
 #include <ImfMatrixAttribute.h>
 #include <ImfArray.h>
 
@@ -61,7 +61,14 @@ void saveEXR(
     header.channels().insert ("R", Channel (Imf::FLOAT));
     header.channels().insert ("G", Channel (Imf::FLOAT));
     header.channels().insert ("B", Channel (Imf::FLOAT));
-    header.insert("p7yh5o0587jqc5qv-metadata", StringVectorAttribute(metadata));
+
+    std::stringstream stream;
+
+    for (auto&& entry : metadata) {
+        stream << entry << ";";
+    }
+
+    header.insert("p7yh5o0587jqc5qv-metadata", StringAttribute(stream.str()));
 
     OutputFile file (path.c_str(), header);
 
@@ -121,6 +128,21 @@ void saveEXR(
     saveEXR(path, width, height, data3.data(), metadata);
 }
 
+void split(const std::string &s, char delim, std::vector<std::string> &elems) {
+    std::stringstream ss;
+    ss.str(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+}
+
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
+}
+
 void loadEXR(
     const string& path,
     size_t& width,
@@ -130,10 +152,10 @@ void loadEXR(
 {
     InputFile file (path.c_str());
 
-    auto comments = file.header().findTypedAttribute<StringVectorAttribute>("p7yh5o0587jqc5qv-metadata");
+    auto comments = file.header().findTypedAttribute<StringAttribute>("p7yh5o0587jqc5qv-metadata");
 
     if (comments && metadata) {
-        *metadata = comments->value();
+        *metadata = split(comments->value(), ';');
     }
 
     auto dw = file.header().dataWindow();
