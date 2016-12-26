@@ -6,9 +6,9 @@ namespace haste {
 
 struct ImageView {
     ImageView() = default;
-    ImageView(vec4* data, size_t width, size_t height);
+    ImageView(dvec4* data, size_t width, size_t height);
 
-    vec4* _data = nullptr;
+    dvec4* _data = nullptr;
     size_t _width = 0;
     size_t _height = 0;
     size_t _xOffset = 0;
@@ -32,16 +32,16 @@ struct ImageView {
     const bool inYWindow(size_t y) const { return yBegin() <= y && y < yEnd(); }
     const bool inWindow(size_t x, size_t y) const { return inXWindow(x) && inYWindow(y); }
 
-    vec4& relAt(size_t x, size_t y);
-    vec4& absAt(size_t x, size_t y);
-    const vec4& relAt(size_t x, size_t y) const;
-    const vec4& absAt(size_t x, size_t y) const;
-    const vec4& last() const;
-    vec4* data() { return _data; }
-    const vec4* data() const { return _data; }
+    dvec4& relAt(size_t x, size_t y);
+    dvec4& absAt(size_t x, size_t y);
+    const dvec4& relAt(size_t x, size_t y) const;
+    const dvec4& absAt(size_t x, size_t y) const;
+    const dvec4& last() const;
+    dvec4* data() { return _data; }
+    const dvec4* data() const { return _data; }
     void clear();
 
-    void copyFrom(const std::vector<vec4>& data, size_t width, size_t height);
+    void copyFrom(const std::vector<dvec4>& data, size_t width, size_t height);
 };
 
 }

@@ -325,16 +325,19 @@ bool Framework::updateScene() {
     return false;
 }
 
-void Framework::postproc(glm::vec4* dst, const glm::vec4* src, size_t width, size_t height) {
-    const size_t size = width * height * sizeof(glm::vec4);
-    std::memcpy(dst, src, size);
+void Framework::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width, size_t height) {
+    for (std::size_t y = 0; y < height; ++y) {
+        for (std::size_t x = 0; x < width; ++x) {
+            dst[y * width + x] = glm::vec4(src[y * width + x]);
+        }
+    }
 }
 
 int Framework::run(size_t width, size_t height, const std::string& caption) {
     return ::run(width, height, caption, [=](GLFWwindow* window) {
         _window = window;
 
-        std::vector<glm::vec4> buffer;
+        std::vector<glm::dvec4> buffer;
         std::atomic<int> bufferWidth, bufferHeight;
         std::atomic<bool> trigger, done, quit;
         std::atomic<double> elapsed;
@@ -377,7 +380,7 @@ int Framework::run(size_t width, size_t height, const std::string& caption) {
                 }
                 else {
                     buffer.resize(width * height);
-                    std::memset(buffer.data(), 0, buffer.size() * sizeof(glm::vec4));
+                    std::memset(buffer.data(), 0, buffer.size() * sizeof(buffer[0]));
                     bufferWidth = width;
                     bufferHeight = height;
                 }
@@ -412,7 +415,7 @@ int Framework::run(size_t width, size_t height, const std::string& caption) {
 }
 
 int Framework::runBatch(size_t width, size_t height) {
-    std::vector<glm::vec4> buffer;
+    std::vector<glm::dvec4> buffer;
     buffer.resize(width * height);
     std::memset(buffer.data(), 0, buffer.size() * sizeof(glm::vec4));
 

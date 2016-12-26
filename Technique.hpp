@@ -51,8 +51,8 @@ protected:
     size_t _numShadowRays;
     size_t _numSamples;
     shared<const Scene> _scene;
-    std::vector<vec3> _eye_image;
-    std::vector<vec3> _light_image;
+    std::vector<dvec3> _eye_image;
+    std::vector<dvec3> _light_image;
     std::mutex _light_mutex;
 
     threadpool_t _threadpool;

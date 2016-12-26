@@ -12,19 +12,19 @@ class Application : public Framework {
   Application(const Options& options);
   ~Application();
 
-  void render(size_t width, size_t height, glm::vec4* data) override;
+  void render(size_t width, size_t height, glm::dvec4* data) override;
   void updateUI(size_t width, size_t height, const glm::vec4* data,
                 double elapsed) override;
-  void postproc(glm::vec4* dst, const glm::vec4* src, size_t width,
+  void postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
                 size_t height) override;
 
   bool updateScene() override;
 
  private:
   static double _compute_rms(std::size_t width, std::size_t height,
-                             const glm::vec4* left, const glm::vec4* right);
+                             const glm::dvec4* left, const glm::dvec4* right);
   void _update_rms_history(std::size_t width, std::size_t height,
-                           const glm::vec4* data);
+                           const glm::dvec4* data);
   void _reset_rms_history();
 
   void _printStatistics(const ImageView& view, double elapsed,
@@ -46,7 +46,7 @@ class Application : public Framework {
   double _rendering_start_time;
   double _preprocessing_start_time;
   size_t _modificationTime;
-  vector<vec4> _reference;
+  vector<dvec4> _reference;
   vector<pair<double, double>> _rms_history;
 };
 }

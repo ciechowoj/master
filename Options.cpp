@@ -650,7 +650,7 @@ pair<bool, int> displayHelpIfNecessary(
 }
 
 shared<Technique> makeViewer(Options& options) {
-    auto image = vector<vec4>();
+    auto image = vector<dvec4>();
     loadEXR(options.input0, options.width, options.height, image);
     return std::make_shared<Viewer>(image, options.width, options.height);
 }

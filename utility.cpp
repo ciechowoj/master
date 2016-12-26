@@ -49,7 +49,7 @@ void saveEXR(
     const string& path,
     size_t widthll,
     size_t heightll,
-    const vec3* data,
+    const dvec3* data,
     const std::vector<std::string>& metadata) {
     runtime_assert(widthll < INT_MAX);
     runtime_assert(heightll < INT_MAX);
@@ -71,10 +71,11 @@ void saveEXR(
     vector<float> data_copy(size);
 
     for (size_t y = 0; y < heightll; ++y) {
-        ::memcpy(
-            data_copy.data() + y * width * 3,
-            data + (height - y - 1) * width,
-            width * sizeof(vec3));
+        for (size_t x = 0; x < widthll; ++x) {
+            data_copy[(y * width + x) * 3 + 0] = float(data[(heightll - y - 1) * width + x].x);
+            data_copy[(y * width + x) * 3 + 1] = float(data[(heightll - y - 1) * width + x].y);
+            data_copy[(y * width + x) * 3 + 2] = float(data[(heightll - y - 1) * width + x].z);
+        }
     }
 
     auto R = Slice(Imf::FLOAT, (char*)(data_copy.data() + 0), sizeof(float) * 3, sizeof(float) * width * 3);
@@ -94,9 +95,24 @@ void saveEXR(
     size_t width,
     size_t height,
     const vec4* data,
+    const std::vector<std::string>& metadata) {
+    auto data3 = vector<dvec3>(width * height);
+
+    for (size_t i = 0; i < data3.size(); ++i) {
+        data3[i] = data[i].xyz() / data[i].w;
+    }
+
+    saveEXR(path, width, height, data3.data(), metadata);
+}
+
+void saveEXR(
+    const string& path,
+    size_t width,
+    size_t height,
+    const dvec4* data,
     const std::vector<std::string>& metadata)
 {
-    auto data3 = vector<vec3>(width * height);
+    auto data3 = vector<dvec3>(width * height);
 
     for (size_t i = 0; i < data3.size(); ++i) {
         data3[i] = data[i].xyz() / data[i].w;
@@ -109,7 +125,7 @@ void loadEXR(
     const string& path,
     size_t& width,
     size_t& height,
-    vector<vec3>& data,
+    vector<dvec3>& data,
     std::vector<std::string>* metadata)
 {
     InputFile file (path.c_str());
@@ -132,9 +148,10 @@ void loadEXR(
 
     FrameBuffer framebuffer;
 
-    data.resize(width * height);
+    vector<vec3> data_copy;
+    data_copy.resize(width * height);
 
-    float* fdata = (float*)data.data();
+    float* fdata = (float*)data_copy.data();
 
     auto R = Slice(Imf::FLOAT, (char*)(fdata + 0), sizeof(float) * 3, sizeof(float) * width * 3);
     auto G = Slice(Imf::FLOAT, (char*)(fdata + 1), sizeof(float) * 3, sizeof(float) * width * 3);
@@ -147,9 +164,11 @@ void loadEXR(
     file.setFrameBuffer(framebuffer);
     file.readPixels(dw.min.y, dw.max.y);
 
+    data.resize(width * height);
+
     for (size_t i = 0; i < height / 2; ++i) {
         for (size_t j = 0; j < width; ++j) {
-            std::swap(data[i * width + j], data[(height - i - 1) * width + j]);
+            data[i * width + j] = data_copy[(height - i - 1) * width + j];
         }
     }
 }
@@ -158,10 +177,10 @@ void loadEXR(
     const string& path,
     size_t& width,
     size_t& height,
-    vector<vec4>& data,
+    vector<dvec4>& data,
     std::vector<std::string>* metadata)
 {
-    auto data3 = vector<vec3>();
+    auto data3 = vector<dvec3>();
     loadEXR(path, width, height, data3, metadata);
 
     data.resize(data3.size());
@@ -246,19 +265,19 @@ size_t getmtime(const string& path) {
     return buf.st_mtime;
 }
 
-vec3 computeAVG(const string& path) {
-    vector<vec3> data;
+dvec3 computeAVG(const string& path) {
+    vector<dvec3> data;
     size_t width, height;
 
     loadEXR(path, width, height, data);
 
-    vec3 result = vec3(0.0f);
+    dvec3 result = vec3(0.0f);
 
     for (size_t i = 0; i < data.size(); ++i) {
         result += data[i];
     }
 
-    return result / float(data.size());
+    return result / double(data.size());
 }
 
 static void printVec(const vec3& v) {
@@ -279,7 +298,7 @@ void printAVG(const string& path) {
 }
 
 void printHistory(const string& path) {
-    std::vector<glm::vec3> data;
+    std::vector<glm::dvec3> data;
     std::vector<std::string> metadata;
     size_t width, height;
 
@@ -292,14 +311,14 @@ void printHistory(const string& path) {
     std::cout.flush();
 }
 
-vec3 computeRMS(const string& path0, const string& path1) {
-    vector<vec3> data0, data1;
+dvec3 computeRMS(const string& path0, const string& path1) {
+    vector<dvec3> data0, data1;
     size_t width0, height0, width1, height1;
 
     loadEXR(path0, width0, height0, data0);
     loadEXR(path1, width1, height1, data1);
 
-    vec3 result = vec3(0.0f);
+    dvec3 result = dvec3(0.0f);
 
     if (data0.size() != data1.size()) {
         throw std::runtime_error(
@@ -311,11 +330,11 @@ vec3 computeRMS(const string& path0, const string& path1) {
         result += diff * diff;
     }
 
-    return sqrt(result / float(data0.size()));
+    return sqrt(result / double(data0.size()));
 }
 
 void subtract(const string& result, const string& path0, const string& path1) {
-    vector<vec3> data0, data1, data2;
+    vector<dvec3> data0, data1, data2;
     size_t width0, height0, width1, height1;
 
     loadEXR(path0, width0, height0, data0);

@@ -32,7 +32,7 @@ Application::Application(const Options& options) {
 
 Application::~Application() { rtcDeleteDevice(_device); }
 
-void Application::render(size_t width, size_t height, glm::vec4* data) {
+void Application::render(size_t width, size_t height, glm::dvec4* data) {
   if (_preprocessed) {
     auto view = ImageView(data, width, height);
 
@@ -58,7 +58,7 @@ void Application::updateUI(size_t width, size_t height, const glm::vec4* data,
   _ui->update(*_technique, width, height, data, elapsed);
 }
 
-void Application::postproc(glm::vec4* dst, const glm::vec4* src, size_t width,
+void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
                            size_t height) {
   size_t size = width * height;
 
@@ -168,13 +168,13 @@ bool Application::updateScene() {
 }
 
 double Application::_compute_rms(std::size_t width, std::size_t height,
-                                 const glm::vec4* left,
-                                 const glm::vec4* right) {
+                                 const glm::dvec4* left,
+                                 const glm::dvec4* right) {
   double sum = 0.0f;
   std::size_t num = width * height;
 
   for (std::size_t i = 0; i < num; ++i) {
-    vec3 d = left[i].rgb() / left[i].a - right[i].rgb() / right[i].a;
+    dvec3 d = left[i].rgb() / left[i].a - right[i].rgb() / right[i].a;
     sum += glm::l1Norm(d * d);
   }
 
@@ -182,7 +182,7 @@ double Application::_compute_rms(std::size_t width, std::size_t height,
 }
 
 void Application::_update_rms_history(std::size_t width, std::size_t height,
-                                      const glm::vec4* data) {
+                                      const glm::dvec4* data) {
   double current_time = high_resolution_time();
 
   _rms_history.push_back(

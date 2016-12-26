@@ -159,16 +159,16 @@ void Technique::_commit_images(ImageView& view) {
         subview._yWindow = yEnd - yBegin;
 
         for (size_t y = subview.yBegin(); y < subview.yEnd(); ++y) {
-            vec4* dst_begin = subview.data() + y * subview.width() + subview.xBegin();
-            vec4* dst_end = dst_begin + subview.xWindow();
-            vec3* light_itr = _light_image.data() + y * subview.width() + subview.xBegin();
-            vec3* eye_itr = _eye_image.data() + y * subview.width() + subview.xBegin();
+            dvec4* dst_begin = subview.data() + y * subview.width() + subview.xBegin();
+            dvec4* dst_end = dst_begin + subview.xWindow();
+            dvec3* light_itr = _light_image.data() + y * subview.width() + subview.xBegin();
+            dvec3* eye_itr = _eye_image.data() + y * subview.width() + subview.xBegin();
 
-            for (vec4* dst_itr = dst_begin; dst_itr < dst_end; ++dst_itr) {
-                *dst_itr += vec4(*light_itr + *eye_itr, 1.0f);
+            for (dvec4* dst_itr = dst_begin; dst_itr < dst_end; ++dst_itr) {
+                *dst_itr += dvec4(*light_itr + *eye_itr, 1.0f);
 
-                *light_itr = vec3(0.0f);
-                *eye_itr = vec3(0.0f);
+                *light_itr = dvec3(0.0f);
+                *eye_itr = dvec3(0.0f);
                 ++light_itr;
                 ++eye_itr;
             }
