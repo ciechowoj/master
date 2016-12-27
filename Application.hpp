@@ -9,7 +9,7 @@ namespace haste {
 
 class Application : public Framework {
  public:
-  Application(const Options& options);
+  Application(Options& options);
   ~Application();
 
   void render(size_t width, size_t height, glm::dvec4* data) override;

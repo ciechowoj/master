@@ -5,13 +5,13 @@
 
 namespace haste {
 
-Application::Application(const Options& options) {
-  _options = options;
+Application::Application(Options& options) {
 
   _device = rtcNewDevice(NULL);
   runtime_assert(_device != nullptr);
 
-  _technique = makeTechnique(_options);
+  _technique = makeTechnique(options);
+  _options = options;
   _ui = make_shared<UserInterface>(_options.input0, _scale);
 
   _modificationTime = 0;
