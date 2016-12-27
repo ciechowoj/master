@@ -22,7 +22,6 @@ public:
         float lights,
         float roulette,
         size_t numPhotons,
-        size_t numGather,
         float radius,
         float beta,
         size_t numThreads);
@@ -126,7 +125,6 @@ private:
 
     const size_t _num_photons;
     size_t _num_scattered;
-    const size_t _numGather;
     const size_t _minSubpath;
     const bool _enable_vc;
     const bool _enable_vm;
@@ -151,7 +149,6 @@ public:
         float lights,
         float roulette,
         size_t numPhotons,
-        size_t numGather,
         float radius,
         float beta,
         size_t numThreads);
@@ -170,7 +167,6 @@ public:
         float lights,
         float roulette,
         size_t numPhotons,
-        size_t numGather,
         float radius,
         float beta,
         size_t numThreads);

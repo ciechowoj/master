@@ -34,7 +34,6 @@ R"(
       --VCM               Use vertex connection and merging.
       --UPG               Use unbiased photon gathering.
       --num-photons=<n>   Use n photons. [default: 1 000 000]
-      --num-gather=<n>    Use n as maximal number of gathered photons. [default: 100]
       --max-radius=<n>    Use n as maximum gather radius. [default: 0.1]
       --min-subpath=<n>   Do not use Russian roulette for sub-paths shorter than n. [default: 5]
       --roulette=<n>      Russian roulette coefficient. [default: 0.5]
@@ -321,24 +320,6 @@ Options parseArgs(int argc, char const* const* argv) {
             else {
                 options.numPhotons = atoi(dict["--num-photons"].c_str());
                 dict.erase("--num-photons");
-            }
-        }
-
-        if (dict.count("--num-gather")) {
-            if (options.technique != Options::VCM &&
-                options.technique != Options::UPG) {
-                options.displayHelp = true;
-                options.displayMessage = "--num-gather can be specified for PM, VCM and UPG.";
-                return options;
-            }
-            else if (!isUnsigned(dict["--num-gather"])) {
-                options.displayHelp = true;
-                options.displayMessage = "Invalid value for --num-gather.";
-                return options;
-            }
-            else {
-                options.numGather = atoi(dict["--num-gather"].c_str());
-                dict.erase("--num-gather");
             }
         }
 
@@ -664,7 +645,6 @@ shared<Technique> make_upg_technique(const Options& options) {
         options.lights,
         options.roulette,
         options.numPhotons,
-        options.numGather,
         options.maxRadius,
         options.beta,
         options.numThreads);

@@ -11,14 +11,12 @@ UPGBase<Beta, Mode>::UPGBase(
     float lights,
     float roulette,
     size_t numPhotons,
-    size_t numGather,
     float radius,
     float beta,
     size_t num_threads)
     : Technique(num_threads)
     , _num_photons(numPhotons)
     , _num_scattered(0)
-    , _numGather(numGather)
     , _minSubpath(minSubpath)
     , _enable_vc(enable_vc)
     , _enable_vm(enable_vm)
@@ -607,7 +605,6 @@ UPGb::UPGb(
     float lights,
     float roulette,
     size_t numPhotons,
-    size_t numGather,
     float radius,
     float beta,
     size_t num_threads)
@@ -618,7 +615,6 @@ UPGb::UPGb(
         lights,
         roulette,
         numPhotons,
-        numGather,
         radius,
         beta,
         num_threads) {
@@ -637,7 +633,6 @@ VCMb::VCMb(
     float lights,
     float roulette,
     size_t numPhotons,
-    size_t numGather,
     float radius,
     float beta,
     size_t num_threads)
@@ -648,7 +643,6 @@ VCMb::VCMb(
         lights,
         roulette,
         numPhotons,
-        numGather,
         radius,
         beta,
         num_threads) {
