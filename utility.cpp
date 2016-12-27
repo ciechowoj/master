@@ -188,7 +188,7 @@ void loadEXR(
 
     data.resize(width * height);
 
-    for (size_t i = 0; i < height / 2; ++i) {
+    for (size_t i = 0; i < height; ++i) {
         for (size_t j = 0; j < width; ++j) {
             data[i * width + j] = data_copy[(height - i - 1) * width + j];
         }
