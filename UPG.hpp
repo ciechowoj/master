@@ -41,7 +41,8 @@ private:
         vec3 omega;
         vec3 throughput;
         float specular;
-        float a, A, B;
+        float a, A, b, B;
+        float bGeometry;
 
         const vec3& position() const {
             return surface.position();
@@ -132,6 +133,7 @@ private:
     const float _lights;
     const float _roulette;
     const float _radius;
+    const float _circle;
 
     v3::HashGrid3D<LightVertex> _vertices;
 };

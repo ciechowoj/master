@@ -127,7 +127,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxPhong.blend --PT --num-samples=20 --parallel \
+	./build/master/master.bin models/CornellBoxPhong.blend --VCM --parallel --resolution=256x256 \
 	--reference="/home/wojciech/CornellBoxPhong.512.512.100000.PT.snapshot.exr"
 
 profile:
