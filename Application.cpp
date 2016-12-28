@@ -22,10 +22,6 @@ Application::Application(Options& options) {
   if (!_options.reference.empty()) {
     loadEXR(_options.reference, _options.width, _options.height, _reference);
   }
-
-  if (!_options.quiet) {
-    std::cout << "Using: " << _technique->name() << std::endl;
-  }
 }
 
 Application::~Application() { rtcDeleteDevice(_device); }
@@ -40,9 +36,13 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
   _technique->render(view, _engine, _options.cameraId);
 
   double elapsed = high_resolution_time() - _rendering_start_time;
-  _update_rms_history(width, height, data);
-  _printStatistics(view, elapsed, false);
-  _saveIfRequired(view, elapsed);
+
+  if (_options.technique != Options::Viewer) {
+    _update_rms_history(width, height, data);
+    _printStatistics(view, elapsed, false);
+    _saveIfRequired(view, elapsed);
+  }
+
   _updateQuitCond(view, elapsed);
 }
 
@@ -145,13 +145,21 @@ void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
 }
 
 bool Application::updateScene() {
-  if (_options.reload && _options.technique != Options::Viewer) {
+  if (_options.reload) {
     auto modificationTime = getmtime(_options.input0);
 
     if (_modificationTime < modificationTime) {
-      _scene = loadScene(_options);
-      _scene->buildAccelStructs(_device);
+      if (_options.technique != Options::Viewer) {
+        _scene = loadScene(_options);
+        _scene->buildAccelStructs(_device);
+      }
+
       _technique = makeTechnique(_scene, _options);
+
+      if (!_options.quiet && !std::isfinite(_rendering_start_time)) {
+        std::cout << "Using: " << _technique->name() << std::endl;
+      }
+
       _reset_rms_history();
       _rendering_start_time = NAN;
       _modificationTime = modificationTime;

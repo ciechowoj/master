@@ -127,7 +127,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxPhong.blend --BPT --parallel --beta=2 \
+	./build/master/master.bin models/CornellBoxPhong.blend --BPT --parallel --beta=2 --snapshot=10 \
 	--reference="/home/wojciech/cornell boxes 28 dec/CornellBoxPhong.512.512.100000.PT.snapshot.exr"
 
 profile:

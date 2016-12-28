@@ -42,7 +42,7 @@ class Application : public Framework {
   shared<Technique> _technique;
   shared<Scene> _scene;
   shared<UserInterface> _ui;
-  double _rendering_start_time;
+  double _rendering_start_time = NAN;
   size_t _modificationTime;
   vector<dvec4> _reference;
   vector<pair<double, double>> _rms_history;
