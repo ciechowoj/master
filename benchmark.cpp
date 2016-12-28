@@ -27,7 +27,7 @@ struct TestStruct
         return _position;
     }
 
-    vec3& setPosition(const vec3& position) {
+    void setPosition(const vec3& position) {
         _position = position;
     }
 
@@ -50,7 +50,7 @@ struct TestPosition
         return _position;
     }
 
-    vec3& setPosition(const vec3& position) {
+    void setPosition(const vec3& position) {
         _position = position;
     }
 };
@@ -333,17 +333,11 @@ template <class T> void runQueries(
     }
 }
 
-void run_test_case(ifstream& stream) {
+template <template <class> class T> void run_test_case(ifstream& stream) {
     vector<vec3> data, queries;
     vector<vector<vec3>> result;
     float radius = 0.0f;
     loadTestCase(stream, data, queries, result, radius);
-
-    cout
-        << setw(14) << "<current>"
-        << setw(16) << data.size()
-        << setw(16) << queries.size()
-        << setw(16) << radius;
 
     auto testData = injectPositions<TestStruct>(data);
     vector<vector<TestStruct>> testResult(result.size());
@@ -354,20 +348,27 @@ void run_test_case(ifstream& stream) {
 
     auto start = chrono::high_resolution_clock::now();
 
+    T<TestStruct> accel_struct(testData, radius);
+
     // v2::KDTree3D<TestStruct> kdtree(testData);
-    v3::HashGrid3D<TestStruct> grid(testData, radius);
+    // v3::HashGrid3D<TestStruct> grid(testData, radius);
 
     auto build = chrono::high_resolution_clock::now();
 
     // BENCHMARKED CALL
-    // runQueries(kdtree, queries, testResult, radius);
-    runQueries(grid, queries, testResult, radius);
+    runQueries(accel_struct, queries, testResult, radius);
 
     auto end = chrono::high_resolution_clock::now();
 
     chrono::duration<double> buildTime = build - start;
     chrono::duration<double> queriesTime = end - build;
     chrono::duration<double> totalTime = end - start;
+
+    cout
+        << setw(14) << "<current>"
+        << setw(16) << data.size()
+        << setw(16) << queries.size()
+        << setw(16) << radius;
 
     cout
         << setw(12) << setprecision(4) << fixed << buildTime.count() << "s"
@@ -413,7 +414,7 @@ void run_test_case(ifstream& stream) {
 
 void run_test_case(string path) {
     ifstream stream(path, ifstream::binary);
-    run_test_case(stream);
+    run_test_case<v3::HashGrid3D>(stream);
 }
 
 void test_case_header() {

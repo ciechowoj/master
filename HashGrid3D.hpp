@@ -7,6 +7,9 @@
 #include <vector>
 #include <algorithm>
 #include <cstdint>
+#include <iostream>
+#include <iomanip>
+#include <utility.hpp>
 
 namespace std
 {
@@ -308,7 +311,7 @@ public:
         const vec3& query,
         const float radius) const
     {
-        vec3 center = floor(query / _radius);
+        vec3 center = floor(query * _radius_inv);
 
         const float radiusSq = radius * radius;
 
@@ -345,6 +348,7 @@ private:
     vector<T> _data;
     vector<vec3> _points;
     float _radius;
+    float _radius_inv;
 
     struct Range {
         uint32_t begin;
@@ -365,50 +369,82 @@ private:
             vec3 position;
             uint32_t count;
 
+            Count() = default;
+            Count(vec3 position, uint32_t count)
+                : position(position)
+                , count(count) { }
+
             bool operator<(const Count& b) const {
                 return this->operator()(position, b.position);
             }
         };
 
-        unordered_map<vec3, uint32_t> counts2;
+        struct Point {
+            vec3 cell;
+            uint32_t index;
+        };
+
+        const float radius_inv = 1.0f / radius;
+
+        double start_time = haste::high_resolution_time();
+
+        vector<Point> points(data.size());
+
+        for (size_t i = 0; i < data.size(); ++i) {
+            points[i].cell = floor(data[i].position() * radius_inv);
+            points[i].index = i;
+        }
+
+        sort(points.begin(), points.end(), [](const Point& a, const Point& b) {
+            const Comparator comparator;
+            return comparator(a.cell, b.cell);
+        });
+
+        double counting_time1 = high_resolution_time() - start_time;
+
         vector<Count> counts3;
 
-        for (uint32_t i = 0; i < data.size(); ++i) {
-            ++counts2[floor(data[i].position() / radius)];
-        }
-
-        counts3.resize(counts2.size());
-        size_t jtr = 0;
-
-        for (auto&& itr : counts2) {
-            counts3[jtr].position = itr.first;
-            counts3[jtr++].count = itr.second;
-        }
-
-        std::sort(counts3.begin(), counts3.end());
-        // tbb::parallel_sort(counts3.begin(), counts3.end());
-
+        uint32_t count = 1;
         uint32_t offset = 0;
-        for (auto&& itr : counts3) {
-            _ranges[itr.position] = { offset, offset };
-            offset += itr.count;
+
+        for (size_t i = 1; i < points.size(); ++i) {
+            if (points[i - 1].cell == points[i].cell) {
+                ++count;
+            }
+            else {
+                _ranges[points[i - 1].cell] = { offset, offset + count };
+                offset += count;
+
+                counts3.push_back(Count(points[i - 1].cell, count));
+                count = 1;
+            }
         }
+
+        _ranges[points.back().cell] = { offset, offset + count };
+        offset += count;
+
+        counts3.push_back(Count(points.back().cell, count));
+
+        double counting_time2 = high_resolution_time() - (start_time + counting_time1);
+        double counting_time = counting_time1 + counting_time2;
+
+        double sorting_time = high_resolution_time() - (start_time + counting_time);
+
+        double init_start = high_resolution_time();
 
         _data.resize(offset);
         _points.resize(offset);
 
         for (uint32_t i = 0; i < data.size(); ++i) {
-            vec3 key = floor(data[i].position() / radius);
-
-            auto cell = _ranges.find(key);
-
-            _data[cell->second.end] = data[i];
-            _points[cell->second.end] = data[i].position();
-
-            ++cell->second.end;
+            _data[i] = data[points[i].index];
+            _points[i] = _data[i].position();
         }
 
-        for (uint32_t i = 1; i < counts3.size() - 1; ++i) {
+        double init_time = high_resolution_time() - init_start;
+
+        double range_start = high_resolution_time();
+
+        for (uint32_t i = 1; i + 1 < counts3.size(); ++i) {
             auto begin = counts3[i].position.x == counts3[i - 1].position.x + 1.0f;
             auto end = counts3[i].position.x == counts3[i + 1].position.x - 1.0f;
             auto center = _ranges.find(counts3[i].position);
@@ -436,6 +472,8 @@ private:
                _ranges[counts3[i].position].end += counts3[i + 1].count;
             }
         }
+
+        double range_time = high_resolution_time() - range_start;
 
         if (counts3.size() > 1) {
             uint32_t size = counts3.size();
@@ -467,6 +505,18 @@ private:
         }
 
         _radius = radius;
+        _radius_inv = radius_inv;
+
+        double total_time = high_resolution_time() - start_time;
+
+        std::cout << std::setprecision(4) << std::fixed << "counting_time:      " << counting_time / total_time * 100 << std::endl;
+        std::cout << std::setprecision(4) << std::fixed << "    counting_time1: " << counting_time1 / total_time * 100 << std::endl;
+        std::cout << std::setprecision(4) << std::fixed << "    counting_time2: " << counting_time2 / total_time * 100 << std::endl;
+        std::cout << std::setprecision(4) << std::fixed << "sorting_time:       " << sorting_time / total_time * 100 << std::endl;
+        std::cout << std::setprecision(4) << std::fixed << "init_time:          " << init_time / total_time * 100 << std::endl;
+        std::cout << std::setprecision(4) << std::fixed << "range_time:         " << range_time / total_time * 100 << std::endl;
+        std::cout << std::setprecision(4) << std::fixed << "adjust_time:        " << (total_time - counting_time - sorting_time - init_time - range_time) / total_time * 100 << std::endl;
+        std::cout << std::setprecision(4) << std::fixed << "total_time:         " << total_time / total_time * 100 << std::endl;
     }
 };
 

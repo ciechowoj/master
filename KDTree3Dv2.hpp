@@ -262,7 +262,7 @@ private:
     vector<vec3> _points;
     BitfieldVector<2> _axes;
 
-    size_t query_k(
+    void query_k(
         QueryKState& state,
         size_t begin,
         size_t end) const
