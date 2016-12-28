@@ -587,6 +587,10 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
+        if (options.numPhotons == 0) {
+            options.numPhotons = options.width * options.height;
+        }
+
         if (dict.empty()) {
             return options;
         }

@@ -29,18 +29,22 @@ Application::~Application() { rtcDeleteDevice(_device); }
 void Application::render(size_t width, size_t height, glm::dvec4* data) {
   if (!std::isfinite(_rendering_start_time)) {
     _rendering_start_time = high_resolution_time();
+    _previous_frame_time = high_resolution_time();
   }
 
   auto view = ImageView(data, width, height);
 
   _technique->render(view, _engine, _options.cameraId);
 
-  double elapsed = high_resolution_time() - _rendering_start_time;
+  double current = high_resolution_time();
+  double total = current - _rendering_start_time;
+  double elapsed = current - _previous_frame_time;
+  _previous_frame_time = current;
 
   if (_options.technique != Options::Viewer) {
-    _update_rms_history(width, height, data);
-    _printStatistics(view, elapsed, false);
-    _saveIfRequired(view, elapsed);
+    _update_rms_history(total, width, height, data);
+    _printStatistics(view, elapsed, total, false);
+    _saveIfRequired(view, total);
   }
 
   _updateQuitCond(view, elapsed);
@@ -184,25 +188,20 @@ double Application::_compute_rms(std::size_t width, std::size_t height,
   return glm::sqrt(sum / double(num));
 }
 
-void Application::_update_rms_history(std::size_t width, std::size_t height,
+void Application::_update_rms_history(double time, std::size_t width,
+                                      std::size_t height,
                                       const glm::dvec4* data) {
-  double current_time = high_resolution_time();
-
   _rms_history.push_back(
       (_reference.empty() || width * height != _reference.size())
-          ? std::make_pair(current_time - _rendering_start_time,
-                           double(NAN))
+          ? std::make_pair(time, double(NAN))
           : std::make_pair(
-                current_time - _rendering_start_time,
-                _compute_rms(width, height, data, _reference.data())));
+                time, _compute_rms(width, height, data, _reference.data())));
 }
 
-void Application::_reset_rms_history() {
-  _rms_history.clear();
-}
+void Application::_reset_rms_history() { _rms_history.clear(); }
 
 void Application::_printStatistics(const ImageView& view, double elapsed,
-                                   bool preprocessed) {
+                                   double time, bool preprocessed) {
   if (!_options.quiet && _options.technique != Options::Viewer) {
     if (preprocessed) {
       std::cout << "Preprocessing finished..." << std::endl;
@@ -210,8 +209,8 @@ void Application::_printStatistics(const ImageView& view, double elapsed,
       size_t numSamples = _num_samples();
       std::cout << "Sample #" << std::setw(6) << std::left << numSamples << " "
                 << std::right << std::fixed << std::setw(8)
-                << std::setprecision(3) << elapsed << "s" << std::setw(8)
-                << elapsed / numSamples << "s/sample" << std::endl;
+                << std::setprecision(3) << time << "s" << std::setw(8)
+                << elapsed << "s/sample" << std::endl;
     }
   }
 }
@@ -278,9 +277,7 @@ void Application::_save(const ImageView& view, size_t numSamples,
   }
 }
 
-std::size_t Application::_num_samples() const {
-  return _rms_history.size();
-}
+std::size_t Application::_num_samples() const { return _rms_history.size(); }
 
 std::vector<std::string> Application::_serialize_rms_history() const {
   std::vector<std::string> result(_rms_history.size());

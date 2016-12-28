@@ -23,11 +23,11 @@ class Application : public Framework {
  private:
   static double _compute_rms(std::size_t width, std::size_t height,
                              const glm::dvec4* left, const glm::dvec4* right);
-  void _update_rms_history(std::size_t width, std::size_t height,
+  void _update_rms_history(double time, std::size_t width, std::size_t height,
                            const glm::dvec4* data);
   void _reset_rms_history();
 
-  void _printStatistics(const ImageView& view, double elapsed,
+  void _printStatistics(const ImageView& view, double elapsed, double time,
                         bool preprocessed);
   void _saveIfRequired(const ImageView& view, double elapsed);
   void _updateQuitCond(const ImageView& view, double elapsed);
@@ -43,6 +43,7 @@ class Application : public Framework {
   shared<Scene> _scene;
   shared<UserInterface> _ui;
   double _rendering_start_time = NAN;
+  double _previous_frame_time = NAN;
   size_t _modificationTime;
   vector<dvec4> _reference;
   vector<pair<double, double>> _rms_history;
