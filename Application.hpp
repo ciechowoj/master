@@ -41,10 +41,8 @@ class Application : public Framework {
   RandomEngine _engine;
   shared<Technique> _technique;
   shared<Scene> _scene;
-  bool _preprocessed = false;
   shared<UserInterface> _ui;
   double _rendering_start_time;
-  double _preprocessing_start_time;
   size_t _modificationTime;
   vector<dvec4> _reference;
   vector<pair<double, double>> _rms_history;

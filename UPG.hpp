@@ -16,6 +16,7 @@ enum class GatherMode {
 template <class Beta, GatherMode Mode> class UPGBase : public Technique, protected Beta {
 public:
     UPGBase(
+        const shared<const Scene>& scene,
         size_t minSubpath,
         bool enable_vc,
         bool enable_vm,
@@ -25,12 +26,6 @@ public:
         float radius,
         float beta,
         size_t numThreads);
-
-    void preprocess(
-        const shared<const Scene>& scene,
-        RandomEngine& engine,
-        const function<void(string, float)>& progress,
-        bool parallel) override;
 
     string name() const override;
 
@@ -60,6 +55,7 @@ private:
     using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
 
     vec3 _traceEye(render_context_t& context, Ray ray) override;
+    void _preprocess(RandomEngine& engine) override;
 
     template <bool First, class Appender>
     void _traceLight(RandomEngine& engine, Appender& path);
@@ -143,6 +139,7 @@ using UPG2 = UPGBase<FixedBeta<2>, GatherMode::Unbiased>;
 class UPGb : public UPGBase<VariableBeta, GatherMode::Unbiased> {
 public:
     UPGb(
+        const shared<const Scene>& scene,
         size_t minSubpath,
         bool enable_vc,
         bool enable_vm,
@@ -161,6 +158,7 @@ using VCM2 = UPGBase<FixedBeta<2>, GatherMode::Biased>;
 class VCMb : public UPGBase<VariableBeta, GatherMode::Biased> {
 public:
     VCMb(
+        const shared<const Scene>& scene,
         size_t minSubpath,
         bool enable_vc,
         bool enable_vm,

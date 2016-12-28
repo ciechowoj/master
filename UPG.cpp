@@ -5,6 +5,7 @@ namespace haste {
 
 template <class Beta, GatherMode Mode>
 UPGBase<Beta, Mode>::UPGBase(
+    const shared<const Scene>& scene,
     size_t minSubpath,
     bool enable_vc,
     bool enable_vm,
@@ -14,7 +15,7 @@ UPGBase<Beta, Mode>::UPGBase(
     float radius,
     float beta,
     size_t num_threads)
-    : Technique(num_threads)
+    : Technique(scene, num_threads)
     , _num_photons(numPhotons)
     , _num_scattered(0)
     , _minSubpath(minSubpath)
@@ -25,18 +26,6 @@ UPGBase<Beta, Mode>::UPGBase(
     , _radius(radius)
     , _circle(pi<float>() * radius * radius)
 { }
-
-template <class Beta, GatherMode Mode>
-void UPGBase<Beta, Mode>::preprocess(
-    const shared<const Scene>& scene,
-    RandomEngine& engine,
-    const function<void(string, float)>& progress,
-    bool parallel)
-{
-    Technique::preprocess(scene, engine, progress, parallel);
-
-    _scatter(engine);
-}
 
 template <class Beta, GatherMode Mode>
 string UPGBase<Beta, Mode>::name() const {
@@ -180,6 +169,11 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     }
 
     return radiance;
+}
+
+template <class Beta, GatherMode Mode>
+void UPGBase<Beta, Mode>::_preprocess(RandomEngine& engine) {
+    _scatter(engine);
 }
 
 template <class Beta, GatherMode Mode> template <bool First, class Appender>
@@ -599,6 +593,7 @@ vec3 UPGBase<Beta, Mode>::_combine(vec3 throughput, float weight) {
 }
 
 UPGb::UPGb(
+    const shared<const Scene>& scene,
     size_t minSubpath,
     bool enable_vc,
     bool enable_vm,
@@ -609,6 +604,7 @@ UPGb::UPGb(
     float beta,
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Unbiased>(
+        scene,
         minSubpath,
         enable_vc,
         enable_vm,
@@ -627,6 +623,7 @@ template class UPGBase<FixedBeta<2>, GatherMode::Unbiased>;
 template class UPGBase<VariableBeta, GatherMode::Unbiased>;
 
 VCMb::VCMb(
+    const shared<const Scene>& scene,
     size_t minSubpath,
     bool enable_vc,
     bool enable_vm,
@@ -637,6 +634,7 @@ VCMb::VCMb(
     float beta,
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Biased>(
+        scene,
         minSubpath,
         enable_vc,
         enable_vm,

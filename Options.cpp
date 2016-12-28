@@ -637,8 +637,20 @@ shared<Technique> makeViewer(Options& options) {
 }
 
 template <class T>
-shared<Technique> make_upg_technique(const Options& options) {
+shared<Technique> make_bpt_technique(const shared<const Scene>& scene, const Options& options) {
     return std::make_shared<T>(
+        scene,
+        options.minSubpath,
+        options.lights,
+        options.roulette,
+        options.beta,
+        options.numThreads);
+}
+
+template <class T>
+shared<Technique> make_upg_technique(const shared<const Scene>& scene, const Options& options) {
+    return std::make_shared<T>(
+        scene,
         options.minSubpath,
         options.enable_vc,
         options.enable_vm,
@@ -650,29 +662,25 @@ shared<Technique> make_upg_technique(const Options& options) {
         options.numThreads);
 }
 
-shared<Technique> makeTechnique(Options& options) {
+shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& options) {
     switch (options.technique) {
         case Options::BPT:
             if (options.beta == 0.0f) {
-                return std::make_shared<BPT0>(options.minSubpath, options.lights, options.roulette, options.numThreads);
+                return make_bpt_technique<BPT0>(scene, options);
             }
             else if (options.beta == 1.0f) {
-                return std::make_shared<BPT1>(options.minSubpath, options.lights, options.roulette, options.numThreads);
+                return make_bpt_technique<BPT1>(scene, options);
             }
             else if (options.beta == 2.0f) {
-                return std::make_shared<BPT2>(options.minSubpath, options.lights, options.roulette, options.numThreads);
+                return make_bpt_technique<BPT2>(scene, options);
             }
             else {
-                return std::make_shared<BPTb>(
-                    options.minSubpath,
-                    options.lights,
-                    options.roulette,
-                    options.beta,
-                    options.numThreads);
+                return make_bpt_technique<BPTb>(scene, options);
             }
 
         case Options::PT:
             return std::make_shared<PathTracing>(
+                scene,
                 options.minSubpath,
                 options.lights,
                 options.roulette,
@@ -682,30 +690,30 @@ shared<Technique> makeTechnique(Options& options) {
 
         case Options::VCM:
             if (options.beta == 0.0f) {
-                return make_upg_technique<VCM0>(options);
+                return make_upg_technique<VCM0>(scene, options);
             }
             else if (options.beta == 1.0f) {
-                return make_upg_technique<VCM1>(options);
+                return make_upg_technique<VCM1>(scene, options);
             }
             else if (options.beta == 2.0f) {
-                return make_upg_technique<VCM2>(options);
+                return make_upg_technique<VCM2>(scene, options);
             }
             else {
-                return make_upg_technique<VCMb>(options);
+                return make_upg_technique<VCMb>(scene, options);
             }
 
         case Options::UPG:
             if (options.beta == 0.0f) {
-                return make_upg_technique<UPG0>(options);
+                return make_upg_technique<UPG0>(scene, options);
             }
             else if (options.beta == 1.0f) {
-                return make_upg_technique<UPG1>(options);
+                return make_upg_technique<UPG1>(scene, options);
             }
             else if (options.beta == 2.0f) {
-                return make_upg_technique<UPG2>(options);
+                return make_upg_technique<UPG2>(scene, options);
             }
             else {
-                return make_upg_technique<UPGb>(options);
+                return make_upg_technique<UPGb>(scene, options);
             }
 
         default:

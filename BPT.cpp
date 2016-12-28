@@ -3,8 +3,8 @@
 
 namespace haste {
 
-template <class Beta> BPTBase<Beta>::BPTBase(size_t minSubpath, float lights, float roulette, size_t num_threads)
-    : Technique(num_threads)
+template <class Beta> BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, size_t minSubpath, float lights, float roulette, float beta, size_t num_threads)
+    : Technique(scene, num_threads)
     , _minSubpath(minSubpath)
     , _roulette(roulette)
     , _lights(lights)
@@ -310,8 +310,8 @@ vec3 BPTBase<Beta>::_connect_eye(
 }
 
 
-BPTb::BPTb(size_t minSubpath, float lights, float roulette, float beta, size_t num_threads)
-    : BPTBase<VariableBeta>(minSubpath, lights, roulette, num_threads)
+BPTb::BPTb(const shared<const Scene>& scene, size_t minSubpath, float lights, float roulette, float beta, size_t num_threads)
+    : BPTBase<VariableBeta>(scene, minSubpath, lights, roulette, beta, num_threads)
 {
     VariableBeta::init(beta);
 }

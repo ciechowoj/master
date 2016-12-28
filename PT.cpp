@@ -4,9 +4,10 @@
 
 namespace haste {
 
-PathTracing::PathTracing(size_t min_subpath, float lights, float roulette, float beta,
+PathTracing::PathTracing(const shared<const Scene>& scene, size_t min_subpath,
+                         float lights, float roulette, float beta,
                          size_t max_path, size_t num_threads)
-    : Technique(num_threads),
+    : Technique(scene, num_threads),
       _min_subpath(min_subpath),
       _max_path(max_path),
       _lights(lights),
@@ -18,7 +19,8 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
   EyeVertex eye[2];
   size_t itr = 0, prv = 1;
 
-  SurfacePoint surface = _scene->intersect(_camera_surface(context), ray.direction);
+  SurfacePoint surface =
+      _scene->intersect(_camera_surface(context), ray.direction);
 
   while (surface.is_light() && _max_path > 0) {
     radiance += _lights * _scene->queryRadiance(surface, -ray.direction);
@@ -113,9 +115,9 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
                         pow(light.areaDensity(), _beta) +
                     1.0f;
 
-  return _scene->occluded(eye.surface, light.surface) *
-         light.radiance() / light.areaDensity() * eye.throughput *
-         eyeBSDF.throughput * edge.bCosTheta * edge.fGeometry / weightInv;
+  return _scene->occluded(eye.surface, light.surface) * light.radiance() /
+         light.areaDensity() * eye.throughput * eyeBSDF.throughput *
+         edge.bCosTheta * edge.fGeometry / weightInv;
 }
 
 string PathTracing::name() const { return "Path Tracing"; }

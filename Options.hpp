@@ -55,7 +55,7 @@ pair<bool, int> displayHelpIfNecessary(
 class Technique;
 class Scene;
 
-shared<Technique> makeTechnique(Options& options);
+shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& options);
 shared<Scene> loadScene(const Options& options);
 string techniqueString(const Options& options);
 

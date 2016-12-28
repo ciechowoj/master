@@ -5,7 +5,7 @@
 namespace haste {
 
 Viewer::Viewer(const vector<dvec4>& data, size_t width, size_t height)
-    : Technique(1) {
+    : Technique(nullptr, 1) {
     _data = data;
     _width = width;
     _height = height;

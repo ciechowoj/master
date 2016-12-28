@@ -127,8 +127,8 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxPhong.blend --UPG --parallel --resolution=256x256 --beta=2 --max-radius=0.004 --num-photons=10000000 \
-	--reference="/home/wojciech/CornellBoxPhong.512.512.100000.PT.snapshot.exr"
+	./build/master/master.bin models/CornellBoxPhong.blend --BPT --parallel --beta=2 \
+	--reference="/home/wojciech/cornell boxes 28 dec/CornellBoxPhong.512.512.100000.PT.snapshot.exr"
 
 profile:
 	valgrind \

@@ -4,21 +4,16 @@
 
 namespace haste {
 
-Technique::Technique(size_t num_threads)
-    : _threadpool(num_threads) { }
+Technique::Technique(const shared<const Scene>& scene, size_t num_threads)
+    : _scene(scene)
+    , _threadpool(num_threads) { }
 
 Technique::~Technique() { }
 
-void Technique::preprocess(
-    const shared<const Scene>& scene,
-    RandomEngine& engine,
-    const function<void(string, float)>& progress,
-    bool parallel)
-{
+void Technique::reset() {
     _numNormalRays = 0;
     _numShadowRays = 0;
     _numSamples = 0;
-    _scene = scene;
 }
 
 void Technique::render(
@@ -42,6 +37,7 @@ void Technique::render(
     size_t numShadowRays = _scene->numShadowRays();
 
     _adjust_helper_image(view);
+    _preprocess(engine);
     _trace_paths(view, context, cameraId);
     _commit_images(view);
 
@@ -55,6 +51,10 @@ vec3 Technique::_traceEye(
     Ray ray)
 {
     return vec3(1.0f, 0.0f, 1.0f);
+}
+
+void Technique::_preprocess(RandomEngine& engine) {
+
 }
 
 SurfacePoint Technique::_camera_surface(render_context_t& context) {

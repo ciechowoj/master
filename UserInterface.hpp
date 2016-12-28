@@ -16,7 +16,7 @@ enum DisplayMode : int {
 };
 
 struct UserInterface {
-    DisplayMode displayMode;
+    DisplayMode displayMode = DisplayModeCurrent;
     float maxError = 0.0f;
 
     vector<float> maxErrors;

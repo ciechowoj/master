@@ -7,7 +7,7 @@ namespace haste {
 
 template <class Beta> class BPTBase : public Technique, protected Beta {
 public:
-    BPTBase(size_t minSubpath, float lights, float roulette, size_t num_threads);
+    BPTBase(const shared<const Scene>& scene, size_t minSubpath, float lights, float roulette, float beta, size_t num_threads);
 
     string name() const override;
 
@@ -49,7 +49,7 @@ typedef BPTBase<FixedBeta<2>> BPT2;
 
 class BPTb : public BPTBase<VariableBeta> {
 public:
-    BPTb(size_t minSubpath, float lights, float roulette, float beta, size_t num_threads);
+    BPTb(const shared<const Scene>& scene, size_t minSubpath, float lights, float roulette, float beta, size_t num_threads);
 };
 
 }

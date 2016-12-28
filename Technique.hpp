@@ -26,14 +26,10 @@ struct render_context_t {
 
 class Technique {
 public:
-    Technique(size_t num_threads);
+    Technique(const shared<const Scene>& scene, size_t num_threads);
     virtual ~Technique();
 
-    virtual void preprocess(
-        const shared<const Scene>& scene,
-        RandomEngine& engine,
-        const function<void(string, float)>& progress,
-        bool parallel = false);
+    virtual void reset();
 
     virtual void render(
         ImageView& view,
@@ -58,6 +54,7 @@ protected:
     threadpool_t _threadpool;
 
     virtual vec3 _traceEye(render_context_t& context, Ray ray);
+    virtual void _preprocess(RandomEngine& engine);
     static SurfacePoint _camera_surface(render_context_t& context);
     static vec3 _camera_direction(render_context_t& context);
 
