@@ -47,6 +47,7 @@ struct UserInterface {
 
     void update(
         const Technique& technique,
+        size_t num_samples,
         size_t width,
         size_t height,
         const vec4* image,
@@ -65,6 +66,7 @@ private:
 
     void _updateSaveRegion(
         const Technique& technique,
+        size_t num_samples,
         size_t width,
         size_t height,
         const vec4* image);

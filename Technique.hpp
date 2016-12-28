@@ -40,7 +40,6 @@ public:
 
     const size_t numNormalRays() const { return _numNormalRays; }
     const size_t numShadowRays() const { return _numShadowRays; }
-    const size_t numSamples() const { return _numSamples; }
 
 protected:
     size_t _numNormalRays;

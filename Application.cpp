@@ -48,7 +48,7 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
 
 void Application::updateUI(size_t width, size_t height, const glm::vec4* data,
                            double elapsed) {
-  _ui->update(*_technique, width, height, data, elapsed);
+  _ui->update(*_technique, _num_samples(), width, height, data, elapsed);
 }
 
 void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
@@ -152,6 +152,7 @@ bool Application::updateScene() {
       _scene = loadScene(_options);
       _scene->buildAccelStructs(_device);
       _technique = makeTechnique(_scene, _options);
+      _reset_rms_history();
       _rendering_start_time = NAN;
       _modificationTime = modificationTime;
       return true;

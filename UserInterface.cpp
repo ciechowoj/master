@@ -16,6 +16,7 @@ UserInterface::UserInterface(string scenePath, float& brightness)
 
 void UserInterface::update(
     const Technique& technique,
+    size_t num_samples,
     size_t width,
     size_t height,
     const vec4* image,
@@ -33,7 +34,7 @@ void UserInterface::update(
     ImGui::Begin("Statistics");
 
     _updateStatistics(technique, elapsed);
-    _updateSaveRegion(technique, width, height, image);
+    _updateSaveRegion(technique, num_samples, width, height, image);
 
     ImGui::Combo(
         "Display",
@@ -48,7 +49,7 @@ void UserInterface::update(
 
     ImGui::InputFloat("max error", &maxError);
 
-    float numSamples = technique.numSamples();
+    float numSamples = num_samples;
     ImGui::InputFloat("samples ", &numSamples);
 
     _updateComputeAverage();
@@ -109,10 +110,10 @@ void UserInterface::_displayRadiance(
 
 void UserInterface::_updateSaveRegion(
     const Technique& technique,
+    size_t num_samples,
     size_t width,
     size_t height,
-    const vec4* image)
-{
+    const vec4* image) {
     if(ImGui::CollapsingHeader("Snapshot")) {
         ImGui::InputText("", path, int(pathSize - 1));
         ImGui::SameLine();
@@ -121,7 +122,7 @@ void UserInterface::_updateSaveRegion(
             saveEXR(path, width, height, image);
         }
 
-        string fixed = fixedPath(path, scenePath, technique.numSamples());
+        string fixed = fixedPath(path, scenePath, num_samples);
         ImGui::LabelText("", "%s", fixed.c_str());
         ImGui::SameLine();
 
