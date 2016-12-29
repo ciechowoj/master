@@ -55,13 +55,13 @@ private:
     using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
 
     vec3 _traceEye(render_context_t& context, Ray ray) override;
-    void _preprocess(RandomEngine& engine) override;
+    void _preprocess(random_generator_t& generator) override;
 
     template <bool First, class Appender>
-    void _traceLight(RandomEngine& engine, Appender& path);
-    void _traceLight(RandomEngine& engine, vector<LightVertex>& path);
+    void _traceLight(random_generator_t& generator, Appender& path);
+    void _traceLight(random_generator_t& generator, vector<LightVertex>& path);
     void _traceLight(
-        RandomEngine& engine,
+        random_generator_t& generator,
         light_path_t& path);
 
     template <bool SkipDirectVM> float _weightVC(
@@ -81,7 +81,7 @@ private:
         float radius);
 
     float _density(
-        RandomEngine& engine,
+        random_generator_t& generator,
         const LightVertex& light,
         const EyeVertex& eye,
         const BSDFQuery& eyeQuery,
@@ -100,24 +100,26 @@ private:
 
     vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const light_path_t& path, float radius);
 
-    void _scatter(RandomEngine& engine);
+    void _scatter(random_generator_t& generator);
 
-    vec3 _gather(RandomEngine& engine, const EyeVertex& eye, float& radius);
+    vec3 _gather(random_generator_t& generator, const EyeVertex& eye, float& radius);
 
     vec3 _merge(
-        RandomEngine& engine,
+        random_generator_t& generator,
         const LightVertex& light,
         const EyeVertex& eye,
         float radius);
 
     vec3 _merge(
-        RandomEngine& engine,
+        random_generator_t& generator,
         const LightVertex& light,
         const EyeVertex& eye,
         const BSDFQuery& eyeBSDF,
         float radius);
 
     vec3 _combine(vec3 throughput, float weight);
+
+    bool _russian_roulette(random_generator_t& generator) const;
 
     const size_t _num_photons;
     size_t _num_scattered;

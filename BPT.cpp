@@ -19,11 +19,11 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     light_path_t light_path;
     vec3 radiance = vec3(0.0f);
 
-    if (_russian_roulette(*context.engine)) {
+    if (_russian_roulette(*context.generator)) {
         return radiance;
     }
 
-    _traceLight(*context.engine, light_path);
+    _traceLight(*context.generator, light_path);
 
     EyeVertex eye[2];
     size_t itr = 0, prv = 1;
@@ -48,7 +48,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
         return radiance;
     }
 
-    if (_russian_roulette(*context.engine)) {
+    if (_russian_roulette(*context.generator)) {
         return radiance;
     }
 
@@ -67,7 +67,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     while (true) {
         radiance += _connect(eye[prv], light_path);
 
-        auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
+        auto bsdf = _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
 
         while (true) {
             surface = _scene->intersect(surface, bsdf.omega);
@@ -113,7 +113,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
         std::swap(itr, prv);
 
-        if (_russian_roulette(*context.engine)) {
+        if (_russian_roulette(*context.generator)) {
             return radiance;
         }
 

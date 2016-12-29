@@ -43,7 +43,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
     radiance += _connect(context, eye[prv]);
 
     auto bsdf =
-        _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
+        _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
 
     while (true) {
       surface = _scene->intersect(surface, bsdf.omega);
@@ -86,7 +86,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
     std::swap(itr, prv);
 
     float roulette = path_size < _min_subpath ? 1.0f : _roulette;
-    float uniform = context.engine->sample();
+    float uniform = context.generator->sample();
 
     if (roulette < uniform) {
       return radiance;
@@ -100,7 +100,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 }
 
 vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
-  LightSample light = _scene->sampleLight(*context.engine);
+  LightSample light = _scene->sampleLight(*context.generator);
   vec3 omega = normalize(eye.surface.position() - light.position());
 
   if (dot(omega, light.normal()) < 0.0f) {

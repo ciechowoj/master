@@ -38,7 +38,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     light_path_t light_path;
 
     if (_enable_vc) {
-        _traceLight(*context.engine, light_path);
+        _traceLight(*context.generator, light_path);
     }
 
     vec3 radiance = vec3(0.0f);
@@ -90,14 +90,14 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
     while (true) {
         if (_enable_vm) {
-            radiance += _gather(*context.engine, eye[prv], radius);
+            radiance += _gather(*context.generator, eye[prv], radius);
         }
 
         if (_enable_vc) {
             radiance += _connect(eye[prv], light_path, radius);
         }
 
-        auto bsdf = _scene->sampleBSDF(*context.engine, eye[prv].surface, eye[prv].omega);
+        auto bsdf = _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
 
         while (true) {
             surface = _scene->intersect(surface, bsdf.omega);
@@ -157,7 +157,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
         std::swap(itr, prv);
 
         float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        float uniform = context.engine->sample();
+        float uniform = context.generator->sample();
 
         if (roulette < uniform) {
             return radiance;
@@ -172,15 +172,15 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 }
 
 template <class Beta, GatherMode Mode>
-void UPGBase<Beta, Mode>::_preprocess(RandomEngine& engine) {
-    _scatter(engine);
+void UPGBase<Beta, Mode>::_preprocess(random_generator_t& generator) {
+    _scatter(generator);
 }
 
 template <class Beta, GatherMode Mode> template <bool First, class Appender>
-void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
+void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, Appender& path) {
     size_t itr = path.size(), prv = path.size();
 
-    LightSample light = _scene->sampleLight(engine);
+    LightSample light = _scene->sampleLight(generator);
 
     if (First) {
         path.emplace_back();
@@ -219,10 +219,10 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
 
     size_t path_size = 2;
     float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-    float uniform = engine.sample();
+    float uniform = generator.sample();
 
     while (uniform < roulette) {
-        auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega);
+        auto bsdf = _scene->sampleBSDF(generator, path[prv].surface, path[prv].omega);
 
         surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
 
@@ -285,11 +285,11 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
         }
 
         roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        uniform = engine.sample();
+        uniform = generator.sample();
     }
 
     auto bsdf = _scene->sampleBSDF(
-        engine,
+        generator,
         path[prv].surface,
         path[prv].omega);
 
@@ -300,16 +300,16 @@ void UPGBase<Beta, Mode>::_traceLight(RandomEngine& engine, Appender& path) {
 
 template <class Beta, GatherMode Mode>
 void UPGBase<Beta, Mode>::_traceLight(
-    RandomEngine& engine,
+    random_generator_t& generator,
     vector<LightVertex>& path) {
-    _traceLight<false, vector<LightVertex>>(engine, path);
+    _traceLight<false, vector<LightVertex>>(generator, path);
 }
 
 template <class Beta, GatherMode Mode>
 void UPGBase<Beta, Mode>::_traceLight(
-    RandomEngine& engine,
+    random_generator_t& generator,
     light_path_t& path) {
-    _traceLight<true, light_path_t>(engine, path);
+    _traceLight<true, light_path_t>(generator, path);
 }
 
 template <class Beta, GatherMode Mode> template <bool SkipDirectVM>
@@ -361,7 +361,7 @@ float UPGBase<Beta, Mode>::_weightVM(
 
 template <class Beta, GatherMode Mode>
 float UPGBase<Beta, Mode>::_density(
-    RandomEngine& engine,
+    random_generator_t& generator,
     const LightVertex& light,
     const EyeVertex& eye,
     const BSDFQuery& eyeQuery,
@@ -370,7 +370,7 @@ float UPGBase<Beta, Mode>::_density(
 
     if (Mode == GatherMode::Unbiased) {
         return _scene->queryBSDF(eye.surface).gathering_density(
-            engine,
+            generator,
             _scene.get(),
             eye.surface,
             { light.surface.position(), radius },
@@ -469,14 +469,14 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
 }
 
 template <class Beta, GatherMode Mode>
-void UPGBase<Beta, Mode>::_scatter(RandomEngine& engine) {
+void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
     _num_scattered = 0;
 
     std::atomic<size_t> total_num_scattered(0);
 
     vector<LightVertex> vertices = generate<LightVertex>(_threadpool, _num_photons,
-        [this, &total_num_scattered, &engine](size_t num_photons) {
-        auto local_generator = engine.clone();
+        [this, &total_num_scattered, &generator](size_t num_photons) {
+        auto local_generator = generator.clone();
 
         size_t num_scattered = 0;
 
@@ -498,8 +498,8 @@ void UPGBase<Beta, Mode>::_scatter(RandomEngine& engine) {
 }
 
 template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_gather(RandomEngine& engine, const EyeVertex& eye, float& radius) {
-    auto eyeBSDF = _scene->sampleBSDF(engine, eye.surface, eye.omega);
+vec3 UPGBase<Beta, Mode>::_gather(random_generator_t& generator, const EyeVertex& eye, float& radius) {
+    auto eyeBSDF = _scene->sampleBSDF(generator, eye.surface, eye.omega);
     SurfacePoint surface = _scene->intersectMesh(eye.surface, eyeBSDF.omega);
 
     if (!surface.is_present()) {
@@ -513,14 +513,14 @@ vec3 UPGBase<Beta, Mode>::_gather(RandomEngine& engine, const EyeVertex& eye, fl
     _vertices.rQuery(
         [&](const LightVertex& light) {
             if (Mode == GatherMode::Unbiased) {
-                radiance += _merge(engine, light, eye, radius);
+                radiance += _merge(generator, light, eye, radius);
             }
             else {
                 BSDFQuery query;
                 query.throughput = eyeBSDF.throughput;
                 query.density = eyeBSDF.densityRev;
                 query.densityRev = eyeBSDF.density;
-                radiance += _merge(engine, light, eye, query, radius);
+                radiance += _merge(generator, light, eye, query, radius);
             }
         },
         surface.position(),
@@ -531,7 +531,7 @@ vec3 UPGBase<Beta, Mode>::_gather(RandomEngine& engine, const EyeVertex& eye, fl
 
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_merge(
-    RandomEngine& engine,
+    random_generator_t& generator,
     const LightVertex& light,
     const EyeVertex& eye,
     float radius) {
@@ -554,7 +554,7 @@ vec3 UPGBase<Beta, Mode>::_merge(
         return vec3(0.0f);
     }
     else {
-        auto density = _density(engine, light, eye, eyeBSDF, edge, radius);
+        auto density = _density(generator, light, eye, eyeBSDF, edge, radius);
         auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
 
         return _combine(result * density, weight);
@@ -563,7 +563,7 @@ vec3 UPGBase<Beta, Mode>::_merge(
 
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_merge(
-    RandomEngine& engine,
+    random_generator_t& generator,
     const LightVertex& light,
     const EyeVertex& eye,
     const BSDFQuery& eyeBSDF,
@@ -590,6 +590,11 @@ vec3 UPGBase<Beta, Mode>::_merge(
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_combine(vec3 throughput, float weight) {
     return l1Norm(throughput) < FLT_EPSILON ? vec3(0.0f) : throughput * weight;
+}
+
+template <class Beta, GatherMode Mode>
+bool UPGBase<Beta, Mode>::_russian_roulette(random_generator_t& generator) const {
+    return _roulette < generator.sample();
 }
 
 UPGb::UPGb(

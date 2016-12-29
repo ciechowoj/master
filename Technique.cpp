@@ -31,7 +31,7 @@ void Technique::render(
     context.resolution_y_inv = 1.0f / context.resolution.y;
     context.focal_length_y = cameras.focal_length_y(cameraId, context.resolution.x / context.resolution.y);
     context.focal_factor_y = context.focal_length_y * context.focal_length_y * 0.25f;
-    context.engine = &engine;
+    context.generator = &engine;
 
     size_t numNormalRays = _scene->numNormalRays();
     size_t numShadowRays = _scene->numShadowRays();
@@ -121,7 +121,7 @@ void Technique::_trace_paths(
         [&](size_t x0, size_t x1, size_t y0, size_t y1) {
         render_context_t local_context = context;
         RandomEngine engine;
-        local_context.engine = &engine;
+        local_context.generator = &engine;
 
         ImageView subview = view;
 
@@ -222,7 +222,7 @@ void Technique::_for_each_ray(
     runtime_assert(0 <= yBegin && yEnd <= (int)view.height());
 
     auto shoot = [&](float x, float y) -> Ray {
-        vec2 position = vec2(x + context.engine->sample(), y + context.engine->sample());
+        vec2 position = vec2(x + context.generator->sample(), y + context.generator->sample());
 
         vec3 direction = ray_direction(
             position,

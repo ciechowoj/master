@@ -20,7 +20,7 @@ struct render_context_t {
     float focal_factor_y;
     int32_t camera_id;
 
-    RandomEngine* engine;
+    RandomEngine* generator;
     vec2 pixel_position;
 };
 
