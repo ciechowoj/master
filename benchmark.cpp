@@ -423,7 +423,7 @@ void test_case_header() {
 
 int main(int argc, char **argv) {
 
-    // prepareCornellTestCase("test_case_3.dat", 500000, 2000, 1.f);
+    // prepareCornellTestCase("test_case_3.dat", 200, 20, 15.f);
 
     test_case_header();
 

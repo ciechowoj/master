@@ -7,9 +7,6 @@
 #include <vector>
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
-#include <iomanip>
-#include <utility.hpp>
 
 namespace std
 {
@@ -357,6 +354,73 @@ private:
 
     unordered_map<vec3, Range> _ranges;
 
+    struct Point {
+        vec3 cell;
+        uint32_t index;
+    };
+
+    template <class L, class C, class R> void iterate_ranges(
+        const vector<Point>& points,
+        const L& left, const C& center, const R& right) {
+        uint32_t fst = 0, snd = 0, trd = 0, fth = 0;
+
+        uint32_t count = 1;
+        // uint32_t offset = 0;
+        uint32_t itr = 1;
+
+        for (; itr < points.size(); ++itr) {
+            if (points[itr - 1].cell == points[itr].cell) {
+                ++count;
+            }
+            else {
+                snd = count;
+                count = 1;
+                ++itr;
+                break;
+            }
+        }
+
+        for (; itr < points.size(); ++itr) {
+            if (points[itr - 1].cell == points[itr].cell) {
+                ++count;
+            }
+            else {
+                trd = snd + count;
+                count = 1;
+                ++itr;
+                break;
+            }
+        }
+
+        if (itr == points.size()) {
+            left(fst, snd, trd);
+            trd = snd + count;
+            right(fst, snd, trd);
+        }
+        else {
+            left(fst, snd, trd);
+
+            for (; itr < points.size(); ++itr) {
+                if (points[itr - 1].cell == points[itr].cell) {
+                    ++count;
+                }
+                else {
+                    fth = trd + count;
+                    center(fst, snd, trd, fth);
+                    fst = snd;
+                    snd = trd;
+                    trd = fth;
+                    count = 1;
+                }
+            }
+
+            fth = trd + count;
+            center(fst, snd, trd, fth);
+            right(snd, trd, fth);
+        }
+    }
+
+
     void build(const vector<T>& data, float radius) {
         struct Comparator {
             bool operator()(const vec3& a, const vec3& b) const {
@@ -364,29 +428,11 @@ private:
             }
         };
 
-        struct Count : public Comparator
-        {
-            vec3 position;
-            uint32_t count;
-
-            Count() = default;
-            Count(vec3 position, uint32_t count)
-                : position(position)
-                , count(count) { }
-
-            bool operator<(const Count& b) const {
-                return this->operator()(position, b.position);
-            }
-        };
-
-        struct Point {
-            vec3 cell;
-            uint32_t index;
-        };
+        if (data.empty()) {
+            return;
+        }
 
         const float radius_inv = 1.0f / radius;
-
-        double start_time = haste::high_resolution_time();
 
         vector<Point> points(data.size());
 
@@ -400,123 +446,71 @@ private:
             return comparator(a.cell, b.cell);
         });
 
-        double counting_time1 = high_resolution_time() - start_time;
+        iterate_ranges(points,
+            [&](uint32_t fst, uint32_t snd, uint32_t trd) {
+                bool next = points[fst].cell.x + 1.0f == points[snd].cell.x;
 
-        vector<Count> counts3;
+                if (next) {
+                    _ranges[points[fst].cell] = { fst, trd };
+                    _ranges[points[snd].cell - vec3(1, 0, 0)] = { fst, snd };
+                }
+                else {
+                    _ranges[points[fst].cell] = { fst, snd };
+                }
+            },
+            [&](uint32_t fst, uint32_t snd, uint32_t trd, uint32_t fth) {
+                bool prev = points[fst].cell.x + 1.0f == points[snd].cell.x;
+                bool next = points[snd].cell.x + 1.0f == points[trd].cell.x;
 
-        uint32_t count = 1;
-        uint32_t offset = 0;
+                if (prev && next) {
+                    _ranges[points[snd].cell] = { fst, fth };
+                }
+                else if (prev) {
+                    _ranges[points[snd].cell] = { fst, trd };
+                    _ranges[points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
+                }
+                else {
+                    if (next) {
+                        _ranges[points[snd].cell] = { snd, fth };
+                        _ranges[points[snd].cell - vec3(1, 0, 0)] = { snd, trd };
+                    }
+                    else {
+                        _ranges[points[snd].cell] = { snd, trd };
+                        _ranges[points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
+                        _ranges[points[snd].cell - vec3(1, 0, 0)] = { snd, trd };
+                    }
 
-        for (size_t i = 1; i < points.size(); ++i) {
-            if (points[i - 1].cell == points[i].cell) {
-                ++count;
-            }
-            else {
-                _ranges[points[i - 1].cell] = { offset, offset + count };
-                offset += count;
+                    if (points[fst].cell.x + 1.0f == points[snd].cell.x - 1.0f) {
+                        _ranges[points[snd].cell - vec3(1, 0, 0)] = { fst, trd };
+                    }
+                }
+            },
+            [&](uint32_t fst, uint32_t snd, uint32_t trd) {
+                bool prev = points[fst].cell.x + 1.0f == points[snd].cell.x;
 
-                counts3.push_back(Count(points[i - 1].cell, count));
-                count = 1;
-            }
-        }
+                if (prev) {
+                    _ranges[points[snd].cell] = { fst, trd };
+                    _ranges[points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
+                }
+                else {
+                    _ranges[points[snd].cell] = { snd, trd };
 
-        _ranges[points.back().cell] = { offset, offset + count };
-        offset += count;
+                    if (points[fst].cell.x + 1.0f == points[snd].cell.x - 1.0f) {
+                        _ranges[points[snd].cell - vec3(1, 0, 0)] = { fst, trd };
+                    }
+                }
+            });
 
-        counts3.push_back(Count(points.back().cell, count));
-
-        double counting_time2 = high_resolution_time() - (start_time + counting_time1);
-        double counting_time = counting_time1 + counting_time2;
-
-        double sorting_time = high_resolution_time() - (start_time + counting_time);
-
-        double init_start = high_resolution_time();
-
-        _data.resize(offset);
-        _points.resize(offset);
+        _data.resize(data.size());
+        _points.resize(data.size());
 
         for (uint32_t i = 0; i < data.size(); ++i) {
             _data[i] = data[points[i].index];
             _points[i] = _data[i].position();
         }
 
-        double init_time = high_resolution_time() - init_start;
-
-        double range_start = high_resolution_time();
-
-        for (uint32_t i = 1; i + 1 < counts3.size(); ++i) {
-            auto begin = counts3[i].position.x == counts3[i - 1].position.x + 1.0f;
-            auto end = counts3[i].position.x == counts3[i + 1].position.x - 1.0f;
-            auto center = _ranges.find(counts3[i].position);
-
-            if (!begin) {
-                if (counts3[i - 1].position.x + 1.f == counts3[i].position.x - 1.f) {
-                    _ranges[counts3[i].position - vec3(1, 0, 0)].end = center->second.end;
-                }
-                else {
-                    _ranges.insert(
-                        make_pair(counts3[i].position - vec3(1, 0, 0), center->second));
-                }
-            }
-
-            if (!end) {
-                _ranges.insert(
-                    make_pair(counts3[i].position + vec3(1, 0, 0), center->second));
-            }
-
-            if (begin) {
-               _ranges[counts3[i].position].begin -= counts3[i - 1].count;
-            }
-
-            if (end) {
-               _ranges[counts3[i].position].end += counts3[i + 1].count;
-            }
-        }
-
-        double range_time = high_resolution_time() - range_start;
-
-        if (counts3.size() > 1) {
-            uint32_t size = counts3.size();
-
-            if (counts3[0].position.x == counts3[1].position.x - 1.0f) {
-                _ranges[counts3[0].position].end += counts3[1].count;
-            }
-            else {
-                auto center = _ranges.find(counts3[0].position);
-                _ranges.insert(
-                    make_pair(counts3[0].position + vec3(1, 0, 0), center->second));
-            }
-
-            if (counts3[size - 1].position.x == counts3[size - 2].position.x + 1.0f) {
-                _ranges[counts3[size - 1].position].begin -= counts3[size - 2].count;
-            }
-            else {
-                auto center = _ranges.find(counts3[size - 1].position);
-
-                if (size > 2 &&
-                    counts3[size - 2].position.x + 1.f == counts3[size - 1].position.x - 1.f) {
-                    _ranges[counts3[size - 1].position - vec3(1, 0, 0)].end = center->second.end;
-                }
-                else {
-                    _ranges.insert(
-                        make_pair(counts3[size - 1].position - vec3(1, 0, 0), center->second));
-                }
-            }
-        }
-
         _radius = radius;
         _radius_inv = radius_inv;
-
-        double total_time = high_resolution_time() - start_time;
-
-        std::cout << std::setprecision(4) << std::fixed << "counting_time:      " << counting_time / total_time * 100 << std::endl;
-        std::cout << std::setprecision(4) << std::fixed << "    counting_time1: " << counting_time1 / total_time * 100 << std::endl;
-        std::cout << std::setprecision(4) << std::fixed << "    counting_time2: " << counting_time2 / total_time * 100 << std::endl;
-        std::cout << std::setprecision(4) << std::fixed << "sorting_time:       " << sorting_time / total_time * 100 << std::endl;
-        std::cout << std::setprecision(4) << std::fixed << "init_time:          " << init_time / total_time * 100 << std::endl;
-        std::cout << std::setprecision(4) << std::fixed << "range_time:         " << range_time / total_time * 100 << std::endl;
-        std::cout << std::setprecision(4) << std::fixed << "adjust_time:        " << (total_time - counting_time - sorting_time - init_time - range_time) / total_time * 100 << std::endl;
-        std::cout << std::setprecision(4) << std::fixed << "total_time:         " << total_time / total_time * 100 << std::endl;
     }
 };
 
