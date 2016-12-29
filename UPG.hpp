@@ -69,53 +69,47 @@ private:
         const BSDFQuery& lightBSDF,
         const EyeVertex& eye,
         const BSDFQuery& eyeBSDF,
-        const Edge& edge,
-        float radius);
+        const Edge& edge);
 
     float _weightVM(
         const LightVertex& light,
         const BSDFQuery& lightBSDF,
         const EyeVertex& eye,
         const BSDFQuery& eyeBSDF,
-        const Edge& edge,
-        float radius);
+        const Edge& edge);
 
     float _density(
         random_generator_t& generator,
         const LightVertex& light,
         const EyeVertex& eye,
         const BSDFQuery& eyeQuery,
-        const Edge& edge,
-        float radius);
+        const Edge& edge);
 
-    vec3 _connect_light(const EyeVertex& eye, float radius);
+    vec3 _connect_light(const EyeVertex& eye);
 
     template <bool SkipDirectVM>
-    vec3 _connect(const LightVertex& light, const EyeVertex& eye, float radius);
+    vec3 _connect(const LightVertex& light, const EyeVertex& eye);
 
     vec3 _connect(
         const EyeVertex& eye,
-        const light_path_t& path,
-        float radius);
+        const light_path_t& path);
 
-    vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const light_path_t& path, float radius);
+    vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const light_path_t& path);
 
     void _scatter(random_generator_t& generator);
 
-    vec3 _gather(random_generator_t& generator, const EyeVertex& eye, float& radius);
+    vec3 _gather(random_generator_t& generator, const EyeVertex& eye);
+
+    vec3 _merge(
+        random_generator_t& generator,
+        const LightVertex& light,
+        const EyeVertex& eye);
 
     vec3 _merge(
         random_generator_t& generator,
         const LightVertex& light,
         const EyeVertex& eye,
-        float radius);
-
-    vec3 _merge(
-        random_generator_t& generator,
-        const LightVertex& light,
-        const EyeVertex& eye,
-        const BSDFQuery& eyeBSDF,
-        float radius);
+        const BSDFQuery& eyeBSDF);
 
     vec3 _combine(vec3 throughput, float weight);
 

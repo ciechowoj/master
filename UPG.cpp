@@ -34,7 +34,6 @@ string UPGBase<Beta, Mode>::name() const {
 
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
-    float radius = _radius;
     light_path_t light_path;
 
     if (_enable_vc) {
@@ -55,7 +54,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].D = 0;
 
     if (_enable_vc) {
-        radiance += _connect_eye(context, eye[prv], light_path, radius);
+        radiance += _connect_eye(context, eye[prv], light_path);
     }
 
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
@@ -90,11 +89,11 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
     while (true) {
         if (_enable_vm) {
-            radiance += _gather(*context.generator, eye[prv], radius);
+            radiance += _gather(*context.generator, eye[prv]);
         }
 
         if (_enable_vc) {
-            radiance += _connect(eye[prv], light_path, radius);
+            radiance += _connect(eye[prv], light_path);
         }
 
         auto bsdf = _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
@@ -146,7 +145,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
             if (surface.is_light()) {
                 if (_enable_vc) {
-                    radiance += _connect_light(eye[itr], radius);
+                    radiance += _connect_light(eye[itr]);
                 }
             }
             else {
@@ -318,8 +317,7 @@ float UPGBase<Beta, Mode>::_weightVC(
     const BSDFQuery& lightBSDF,
     const EyeVertex& eye,
     const BSDFQuery& eyeBSDF,
-    const Edge& edge,
-    float radius) {
+    const Edge& edge) {
 
     float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
 
@@ -352,9 +350,8 @@ float UPGBase<Beta, Mode>::_weightVM(
     const BSDFQuery& lightBSDF,
     const EyeVertex& eye,
     const BSDFQuery& eyeBSDF,
-    const Edge& edge,
-    float radius) {
-    float weight = _weightVC<false>(light, lightBSDF, eye, eyeBSDF, edge, radius);
+    const Edge& edge) {
+    float weight = _weightVC<false>(light, lightBSDF, eye, eyeBSDF, edge);
 
     return Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev)) * weight;
 }
@@ -365,24 +362,23 @@ float UPGBase<Beta, Mode>::_density(
     const LightVertex& light,
     const EyeVertex& eye,
     const BSDFQuery& eyeQuery,
-    const Edge& edge,
-    float radius) {
+    const Edge& edge) {
 
     if (Mode == GatherMode::Unbiased) {
         return _scene->queryBSDF(eye.surface).gathering_density(
             generator,
             _scene.get(),
             eye.surface,
-            { light.surface.position(), radius },
+            { light.surface.position(), _radius },
             eye.omega);
     }
     else {
-        return 1.0f / (edge.bGeometry * eyeQuery.densityRev * pi<float>() * radius * radius);
+        return 1.0f / (edge.bGeometry * eyeQuery.densityRev * _circle);
     }
 }
 
 template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_connect_light(const EyeVertex& eye, float radius) {
+vec3 UPGBase<Beta, Mode>::_connect_light(const EyeVertex& eye) {
     if (!eye.surface.is_light()) {
         return vec3(0.0f);
     }
@@ -404,7 +400,7 @@ vec3 UPGBase<Beta, Mode>::_connect_light(const EyeVertex& eye, float radius) {
 
 
 template <class Beta, GatherMode Mode> template <bool SkipDirectVM>
-vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& eye, float radius) {
+vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
@@ -412,7 +408,7 @@ vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& ey
 
     auto edge = Edge(light, eye, omega);
 
-    auto weight = _weightVC<SkipDirectVM>(light, lightBSDF, eye, eyeBSDF, edge, radius);
+    auto weight = _weightVC<SkipDirectVM>(light, lightBSDF, eye, eyeBSDF, edge);
 
     vec3 radiance = _combine(
         _scene->occluded(eye.surface, light.surface)
@@ -430,14 +426,13 @@ vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& ey
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_connect(
     const EyeVertex& eye,
-    const light_path_t& path,
-    float radius) {
+    const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    radiance += _connect<true>(path[0], eye, radius);
+    radiance += _connect<true>(path[0], eye);
 
     for (size_t i = 1; i < path.size(); ++i) {
-        radiance += _connect<false>(path[i], eye, radius);
+        radiance += _connect<false>(path[i], eye);
     }
 
     return radiance;
@@ -447,8 +442,7 @@ template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_connect_eye(
     render_context_t& context,
     const EyeVertex& eye,
-    const light_path_t& path,
-    float radius) {
+    const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
     for (size_t i = 1; i < path.size(); ++i) {
@@ -461,7 +455,7 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
                 float correct_normal = abs(dot(omega, path[i].surface.gnormal)
                     / dot(omega, path[i].surface.normal()));
 
-                return _connect<true>(path[i], eye, radius) * context.focal_factor_y * correct_normal;
+                return _connect<true>(path[i], eye) * context.focal_factor_y * correct_normal;
             });
     }
 
@@ -498,7 +492,7 @@ void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
 }
 
 template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_gather(random_generator_t& generator, const EyeVertex& eye, float& radius) {
+vec3 UPGBase<Beta, Mode>::_gather(random_generator_t& generator, const EyeVertex& eye) {
     auto eyeBSDF = _scene->sampleBSDF(generator, eye.surface, eye.omega);
     SurfacePoint surface = _scene->intersectMesh(eye.surface, eyeBSDF.omega);
 
@@ -508,23 +502,21 @@ vec3 UPGBase<Beta, Mode>::_gather(random_generator_t& generator, const EyeVertex
 
     vec3 radiance = vec3(0.0f);
 
-    radius = _radius;
-
     _vertices.rQuery(
         [&](const LightVertex& light) {
             if (Mode == GatherMode::Unbiased) {
-                radiance += _merge(generator, light, eye, radius);
+                radiance += _merge(generator, light, eye);
             }
             else {
                 BSDFQuery query;
                 query.throughput = eyeBSDF.throughput;
                 query.density = eyeBSDF.densityRev;
                 query.densityRev = eyeBSDF.density;
-                radiance += _merge(generator, light, eye, query, radius);
+                radiance += _merge(generator, light, eye, query);
             }
         },
         surface.position(),
-        radius);
+        _radius);
 
     return radiance / float(_num_scattered);
 }
@@ -533,8 +525,7 @@ template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_merge(
     random_generator_t& generator,
     const LightVertex& light,
-    const EyeVertex& eye,
-    float radius) {
+    const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
@@ -554,8 +545,8 @@ vec3 UPGBase<Beta, Mode>::_merge(
         return vec3(0.0f);
     }
     else {
-        auto density = _density(generator, light, eye, eyeBSDF, edge, radius);
-        auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
+        auto density = _density(generator, light, eye, eyeBSDF, edge);
+        auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
 
         return _combine(result * density, weight);
     }
@@ -566,16 +557,15 @@ vec3 UPGBase<Beta, Mode>::_merge(
     random_generator_t& generator,
     const LightVertex& light,
     const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF,
-    float radius) {
+    const BSDFQuery& eyeBSDF) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
 
     auto edge = Edge(light, eye, omega);
 
-    auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge, radius);
-    auto density = 1.0f / (eyeBSDF.densityRev * pi<float>() * radius * radius);
+    auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
+    auto density = 1.0f / (eyeBSDF.densityRev * pi<float>() * _radius * _radius);
 
     vec3 result = _scene->occluded(light.surface, eye.surface)
         * light.throughput
