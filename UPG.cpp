@@ -181,12 +181,16 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, Appender& p
     size_t begin = path.size();
     size_t itr = path.size() + 1, prv = path.size();
 
+    if (_russian_roulette(generator)) {
+        return;
+    }
+
     LightSample light = _scene->sampleLight(generator);
 
     path.emplace_back();
     path[prv].surface = light.surface;
-    path[prv].omega = vec3(0.0f);
-    path[prv].throughput = light.radiance() / light.areaDensity();
+    path[prv].omega = path[prv].surface.normal();
+    path[prv].throughput = light.radiance() / light.areaDensity() / _roulette;
     path[prv].specular = 0.0f;
     path[prv].a = 1.0f / Beta::beta(light.areaDensity());
     path[prv].A = 0.0f;
@@ -224,6 +228,7 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, Appender& p
 
         path[prv].specular = max(path[prv].specular, bsdf.specular);
         path[itr].specular = bsdf.specular;
+
         path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
         path[itr].A
@@ -403,7 +408,9 @@ vec3 UPGBase<Beta, Mode>::_connect(
     const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    radiance += _connect<true>(path[0], eye);
+    if (path.size() != 0) {
+        radiance += _connect<true>(path[0], eye);
+    }
 
     for (size_t i = 1; i < path.size(); ++i) {
         radiance += _connect<false>(path[i], eye);

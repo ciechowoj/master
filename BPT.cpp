@@ -124,14 +124,14 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 }
 
 template <class Beta>
-void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
+void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
     size_t itr = path.size() + 1, prv = path.size();
 
-    if (_russian_roulette(engine)) {
+    if (_russian_roulette(generator)) {
         return;
     }
 
-    LightSample light = _scene->sampleLight(engine);
+    LightSample light = _scene->sampleLight(generator);
 
     path.emplace_back();
     path[prv].surface = light.surface;
@@ -141,8 +141,8 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     path[prv].a = 1.0f / Beta::beta(light.areaDensity() * _roulette);
     path[prv].A = 0.0f;
 
-    while (!_russian_roulette(engine)) {
-        auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega);
+    while (!_russian_roulette(generator)) {
+        auto bsdf = _scene->sampleBSDF(generator, path[prv].surface, path[prv].omega);
 
         auto surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
 
@@ -170,7 +170,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
 
         path[itr].throughput /= bsdf.density;
 
-        path[prv].specular = max(path[prv].specular, bsdf.specular * _roulette);
+        path[prv].specular = max(path[prv].specular, bsdf.specular);
         path[itr].specular = bsdf.specular;
 
         path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density * _roulette);
@@ -193,7 +193,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     }
 
     auto bsdf = _scene->sampleBSDF(
-        engine,
+        generator,
         path[prv].surface,
         path[prv].omega);
 
