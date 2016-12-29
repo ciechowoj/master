@@ -35,18 +35,22 @@ string UPGBase<Beta, Mode>::name() const {
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     light_path_t light_path;
+    vec3 radiance = vec3(0.0f);
+
+    if (_russian_roulette(*context.generator)) {
+        return radiance;
+    }
 
     if (_enable_vc) {
         _traceLight(*context.generator, light_path);
     }
 
-    vec3 radiance = vec3(0.0f);
     EyeVertex eye[2];
     size_t itr = 0, prv = 1;
 
     eye[prv].surface = _camera_surface(context);
     eye[prv].omega = -ray.direction;
-    eye[prv].throughput = vec3(1.0f);
+    eye[prv].throughput = vec3(1.0f) / _roulette;
     eye[prv].specular = 0.0f;
     eye[prv].c = 0;
     eye[prv].C = 0;
@@ -61,7 +65,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
     while (surface.is_light()) {
         if (_enable_vc) {
-            radiance += _lights * _scene->queryRadiance(surface, -ray.direction);
+            radiance += eye[prv].throughput * _lights * _scene->queryRadiance(surface, -ray.direction);
         }
 
         surface = _scene->intersect(surface, ray.direction);
@@ -71,12 +75,16 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
         return radiance;
     }
 
+    if (_russian_roulette(*context.generator)) {
+        return radiance;
+    }
+
     eye[itr].surface = surface;
     eye[itr].omega = -ray.direction;
 
     auto edge = Edge(eye[prv], eye[itr]);
 
-    eye[itr].throughput = vec3(1.0f);
+    eye[itr].throughput = eye[prv].throughput / _roulette;
     eye[itr].specular = 0.0f;
     eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
     eye[itr].C = 0.0f;
@@ -84,8 +92,6 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[itr].D = 0.0f;
 
     std::swap(itr, prv);
-
-    size_t path_size = 2;
 
     while (true) {
         if (_enable_vm) {
@@ -155,16 +161,11 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
         std::swap(itr, prv);
 
-        float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        float uniform = context.generator->sample();
-
-        if (roulette < uniform) {
+        if (_russian_roulette(*context.generator)) {
             return radiance;
         }
-        else {
-            eye[prv].throughput /= roulette;
-            ++path_size;
-        }
+
+        eye[prv].throughput /= _roulette;
     }
 
     return radiance;
