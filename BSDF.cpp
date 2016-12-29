@@ -113,13 +113,22 @@ const BSDFQuery DeltaBSDF::query(vec3 incident, vec3 outgoing) const
     return query;
 }
 
-LightBSDF::LightBSDF(float adjust)
-    : _adjust_inv(1.0f / adjust) {
+LightBSDF::LightBSDF(bounding_sphere_t sphere, float adjust)
+    : _sphere(sphere)
+    , _adjust_inv(1.0f / adjust) {
 }
 
 const BSDFSample LightBSDF::sample(RandomEngine& engine, vec3 omega) const {
-    runtime_assert(false);
-    return BSDFSample();
+    auto sample = sample_lambert(engine, vec3(0.0f, 1.0f, 0.0f), _sphere);
+
+    BSDFSample result;
+    result.throughput = vec3(1.0f, 1.0f, 1.0f);
+    result.omega = sample.direction;
+    result.density = lambert_density(sample);
+    result.densityRev = 0.0f;
+    result.specular = 0.0f;
+
+    return result;
 }
 
 const BSDFQuery LightBSDF::query(vec3 incident, vec3 outgoing) const {

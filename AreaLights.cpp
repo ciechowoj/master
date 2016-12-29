@@ -36,7 +36,7 @@ bounding_sphere_t bounding_sphere_wrt_area_light(
 
 std::unique_ptr<BSDF> AreaLight::create_bsdf(const bounding_sphere_t& bounding_sphere) const {
     auto with_respect_to_light = bounding_sphere_wrt_area_light(bounding_sphere, *this);
-    return std::unique_ptr<BSDF>(new LightBSDF(lambert_adjust(with_respect_to_light)));
+    return std::unique_ptr<BSDF>(new LightBSDF(with_respect_to_light, lambert_adjust(with_respect_to_light)));
 }
 
 void AreaLights::init(const Intersector* intersector, bounding_sphere_t sphere) {

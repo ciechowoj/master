@@ -25,7 +25,7 @@ struct Options {
     size_t minSubpath = 5;
     size_t maxPath = SIZE_MAX;
     double beta = 1.0f;
-    double roulette = 0.84;
+    double roulette = 0.9;
     bool batch = false;
     bool quiet = false;
     bool enable_vc = true;

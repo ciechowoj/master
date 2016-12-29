@@ -71,10 +71,11 @@ public:
 
 class LightBSDF : public BSDF {
 public:
-    LightBSDF(float adjust);
+    LightBSDF(bounding_sphere_t sphere, float adjust);
     const BSDFSample sample(RandomEngine& engine, vec3 omega) const override;
     const BSDFQuery query(vec3 incident, vec3 outgoing) const override;
 private:
+    bounding_sphere_t _sphere;
     float _adjust_inv;
 };
 

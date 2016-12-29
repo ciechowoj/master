@@ -141,34 +141,10 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     path[prv].a = 1.0f / Beta::beta(light.areaDensity() * _roulette);
     path[prv].A = 0.0f;
 
-    SurfacePoint surface = _scene->intersectMesh(light.surface, light.omega());
-
-    if (!surface.is_present()) {
-        return;
-    }
-
-    if (_russian_roulette(engine)) {
-        return;
-    }
-
-    path.emplace_back();
-    path[itr].surface = surface;
-    path[itr].omega = -light.omega();
-
-    auto edge = Edge(light, path[itr]);
-
-    path[itr].throughput = light.radiance() * edge.bCosTheta / light.density() / _roulette / _roulette;
-    path[itr].specular = 0.0f;
-    path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity() * _roulette);
-    path[itr].A = Beta::beta(edge.bGeometry) * path[itr].a / Beta::beta(light.areaDensity() * _roulette);
-
-    prv = itr;
-    ++itr;
-
     while (!_russian_roulette(engine)) {
         auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega);
 
-        surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
+        auto surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
 
         if (!surface.is_present()) {
             break;
@@ -179,7 +155,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
         path[itr].surface = surface;
         path[itr].omega = -bsdf.omega;
 
-        edge = Edge(path[prv], path[itr]);
+        auto edge = Edge(path[prv], path[itr]);
 
         path[itr].throughput
             = path[prv].throughput
