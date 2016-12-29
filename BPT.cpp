@@ -17,16 +17,20 @@ template <class Beta> string BPTBase<Beta>::name() const {
 template <class Beta>
 vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     light_path_t light_path;
+    vec3 radiance = vec3(0.0f);
+
+    if (_russian_roulette(*context.engine)) {
+        return radiance;
+    }
 
     _traceLight(*context.engine, light_path);
 
-    vec3 radiance = vec3(0.0f);
     EyeVertex eye[2];
     size_t itr = 0, prv = 1;
 
     eye[prv].surface = _camera_surface(context);
     eye[prv].omega = -ray.direction;
-    eye[prv].throughput = vec3(1.0f);
+    eye[prv].throughput = vec3(1.0f) / _roulette;
     eye[prv].specular = 0.0f;
     eye[prv].c = 0;
     eye[prv].C = 0;
@@ -36,11 +40,15 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
     while (surface.is_light()) {
-        radiance += _lights * _scene->queryRadiance(surface, -ray.direction);
+        radiance += eye[prv].throughput * _lights * _scene->queryRadiance(surface, -ray.direction);
         surface = _scene->intersect(surface, ray.direction);
     }
 
     if (!surface.is_present()) {
+        return radiance;
+    }
+
+    if (_russian_roulette(*context.engine)) {
         return radiance;
     }
 
@@ -49,14 +57,12 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
     auto edge = Edge(eye[prv], eye[itr]);
 
-    eye[itr].throughput = vec3(1.0f);
+    eye[itr].throughput = eye[prv].throughput / _roulette;
     eye[itr].specular = 0.0f;
-    eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
+    eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * _roulette);
     eye[itr].C = 0.0f;
 
     std::swap(itr, prv);
-
-    size_t path_size = 2;
 
     while (true) {
         radiance += _connect(eye[prv], light_path);
@@ -88,11 +94,11 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             eye[prv].specular = max(eye[prv].specular, bsdf.specular);
             eye[itr].specular = bsdf.specular;
-            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
+            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density * _roulette);
 
             eye[itr].C
                 = (eye[prv].C
-                    * Beta::beta(bsdf.densityRev)
+                    * Beta::beta(bsdf.densityRev * _roulette)
                     + eye[prv].c * (1.0f - eye[prv].specular))
                 * Beta::beta(edge.bGeometry)
                 * eye[itr].c;
@@ -107,16 +113,11 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
         std::swap(itr, prv);
 
-        float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        float uniform = context.engine->sample();
-
-        if (roulette < uniform) {
+        if (_russian_roulette(*context.engine)) {
             return radiance;
         }
-        else {
-            eye[prv].throughput /= roulette;
-            ++path_size;
-        }
+
+        eye[prv].throughput /= _roulette;
     }
 
     return radiance;
@@ -126,19 +127,27 @@ template <class Beta>
 void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
     size_t itr = path.size() + 1, prv = path.size();
 
+    if (_russian_roulette(engine)) {
+        return;
+    }
+
     LightSample light = _scene->sampleLight(engine);
 
     path.emplace_back();
     path[prv].surface = light.surface;
     path[prv].omega = path[prv].surface.normal();
-    path[prv].throughput = light.radiance() / light.areaDensity();
+    path[prv].throughput = light.radiance() / light.areaDensity() / _roulette;
     path[prv].specular = 0.0f;
-    path[prv].a = 1.0f / Beta::beta(light.areaDensity());
+    path[prv].a = 1.0f / Beta::beta(light.areaDensity() * _roulette);
     path[prv].A = 0.0f;
 
     SurfacePoint surface = _scene->intersectMesh(light.surface, light.omega());
 
     if (!surface.is_present()) {
+        return;
+    }
+
+    if (_russian_roulette(engine)) {
         return;
     }
 
@@ -148,19 +157,15 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
 
     auto edge = Edge(light, path[itr]);
 
-    path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
+    path[itr].throughput = light.radiance() * edge.bCosTheta / light.density() / _roulette / _roulette;
     path[itr].specular = 0.0f;
-    path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
-    path[itr].A = Beta::beta(edge.bGeometry) * path[itr].a / Beta::beta(light.areaDensity());
+    path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity() * _roulette);
+    path[itr].A = Beta::beta(edge.bGeometry) * path[itr].a / Beta::beta(light.areaDensity() * _roulette);
 
     prv = itr;
     ++itr;
 
-    size_t path_size = 2;
-    float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-    float uniform = engine.sample();
-
-    while (uniform < roulette) {
+    while (!_russian_roulette(engine)) {
         auto bsdf = _scene->sampleBSDF(engine, path[prv].surface, path[prv].omega);
 
         surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
@@ -169,7 +174,6 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
             break;
         }
 
-        ++path_size;
         path.emplace_back();
 
         path[itr].surface = surface;
@@ -181,7 +185,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
             = path[prv].throughput
             * bsdf.throughput
             * edge.bCosTheta
-            / roulette;
+            / _roulette;
 
         if (l1Norm(path[itr].throughput) < FLT_EPSILON) {
             path.pop_back();
@@ -190,14 +194,14 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
 
         path[itr].throughput /= bsdf.density;
 
-        path[prv].specular = max(path[prv].specular, bsdf.specular);
+        path[prv].specular = max(path[prv].specular, bsdf.specular * _roulette);
         path[itr].specular = bsdf.specular;
 
-        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
+        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density * _roulette);
 
         path[itr].A
             = (path[prv].A
-                * Beta::beta(bsdf.densityRev)
+                * Beta::beta(bsdf.densityRev * _roulette)
                 + path[prv].a * (1.0f - path[prv].specular))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
@@ -210,9 +214,6 @@ void BPTBase<Beta>::_traceLight(RandomEngine& engine, light_path_t& path) {
             prv = itr;
             ++itr;
         }
-
-        roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        uniform = engine.sample();
     }
 
     auto bsdf = _scene->sampleBSDF(
@@ -236,12 +237,12 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     auto edge = Edge(light, eye, omega);
 
     float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
+        = (light.A * Beta::beta(lightBSDF.densityRev * _roulette) + light.a * (1.0f - light.specular))
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev * _roulette);
 
     float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(edge.fGeometry * lightBSDF.density);
+        = (eye.C * Beta::beta(eyeBSDF.density * _roulette) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(edge.fGeometry * lightBSDF.density * _roulette);
 
     float weightInv = Ap + Cp + 1.0f;
 
@@ -264,8 +265,8 @@ template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
     auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
 
     float Cp
-        = (eye.C * Beta::beta(lsdf.omegaDensity()) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(lsdf.areaDensity());
+        = (eye.C * Beta::beta(lsdf.omegaDensity() * _roulette) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(lsdf.areaDensity() * _roulette);
 
     float weightInv = Cp + 1.0f;
 
@@ -309,6 +310,10 @@ vec3 BPTBase<Beta>::_connect_eye(
     return radiance;
 }
 
+template <class Beta>
+bool BPTBase<Beta>::_russian_roulette(random_generator_t& generator) const {
+    return _roulette < generator.sample();
+}
 
 BPTb::BPTb(const shared<const Scene>& scene, size_t minSubpath, float lights, float roulette, float beta, size_t num_threads)
     : BPTBase<VariableBeta>(scene, minSubpath, lights, roulette, beta, num_threads)

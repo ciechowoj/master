@@ -35,12 +35,14 @@ private:
     const float _lights;
 
     vec3 _traceEye(render_context_t& context, Ray ray) override;
-    void _traceLight(RandomEngine& engine, light_path_t& path);
+    void _traceLight(random_generator_t& generator, light_path_t& path);
     vec3 _connect(const EyeVertex& eye, const LightVertex& light);
 
     vec3 _connect_light(const EyeVertex& eye);
     vec3 _connect(const EyeVertex& eye, const light_path_t& path);
     vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const light_path_t& path);
+
+    bool _russian_roulette(random_generator_t& generator) const;
 };
 
 typedef BPTBase<FixedBeta<0>> BPT0;
