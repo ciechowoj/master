@@ -177,71 +177,42 @@ void UPGBase<Beta, Mode>::_preprocess(random_generator_t& generator) {
 
 template <class Beta, GatherMode Mode> template <bool First, class Appender>
 void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, Appender& path) {
-    size_t itr = path.size(), prv = path.size();
+    size_t begin = path.size();
+    size_t itr = path.size() + 1, prv = path.size();
 
     LightSample light = _scene->sampleLight(generator);
 
-    if (First) {
-        path.emplace_back();
-        path[itr].surface = light.surface;
-        path[itr].omega = vec3(0.0f);
-        path[itr].throughput = light.radiance() / light.areaDensity();
-        path[itr].specular = 0.0f;
-        path[itr].a = 1.0f / Beta::beta(light.areaDensity());
-        path[itr].A = 0.0f;
-        path[itr].b = 0.0f;
-        path[itr].B = 0.0f;
-        ++itr;
-    }
-
-    SurfacePoint surface = _scene->intersectMesh(light.surface, light.omega());
-
-    if (!surface.is_present()) {
-        return;
-    }
-
     path.emplace_back();
-    path[itr].surface = surface;
-    path[itr].omega = -light.omega();
+    path[prv].surface = light.surface;
+    path[prv].omega = vec3(0.0f);
+    path[prv].throughput = light.radiance() / light.areaDensity();
+    path[prv].specular = 0.0f;
+    path[prv].a = 1.0f / Beta::beta(light.areaDensity());
+    path[prv].A = 0.0f;
+    path[prv].b = 0.0f;
+    path[prv].B = 0.0f;
 
-    auto edge = Edge(light, path[itr]);
-
-    path[itr].throughput = light.radiance() * edge.bCosTheta / light.density();
-    path[itr].specular = 0.0f;
-    path[itr].a = 1.0f / Beta::beta(edge.fGeometry * light.omegaDensity());
-    path[itr].A = Beta::beta(edge.bGeometry) * path[itr].a / Beta::beta(light.areaDensity());
-    path[itr].b = 0.0f;
-    path[itr].B = 0.0f;
-
-    prv = itr;
-    ++itr;
-
-    size_t path_size = 2;
-    float roulette = path_size < _minSubpath ? 1.0f : _roulette;
-    float uniform = generator.sample();
-
-    while (uniform < roulette) {
+    while (!_russian_roulette(generator)) {
         auto bsdf = _scene->sampleBSDF(generator, path[prv].surface, path[prv].omega);
 
-        surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
+        auto surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
 
         if (!surface.is_present()) {
             break;
         }
 
-        ++path_size;
         path.emplace_back();
 
         path[itr].surface = surface;
         path[itr].omega = -bsdf.omega;
 
-        edge = Edge(path[prv], path[itr]);
+        auto edge = Edge(path[prv], path[itr]);
 
         path[itr].throughput
             = path[prv].throughput
             * bsdf.throughput
             * edge.bCosTheta
-            / roulette;
+            / _roulette;
 
         if (l1Norm(path[itr].throughput) < FLT_EPSILON) {
             path.pop_back();
@@ -261,7 +232,7 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, Appender& p
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
 
-        path[itr].b = path[itr].a;
+        path[itr].b = itr - begin < 2 ? 0.0f : path[itr].a;
 
         path[itr].B
             = (path[prv].B
@@ -282,9 +253,6 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, Appender& p
             prv = itr;
             ++itr;
         }
-
-        roulette = path_size < _minSubpath ? 1.0f : _roulette;
-        uniform = generator.sample();
     }
 
     auto bsdf = _scene->sampleBSDF(
@@ -293,6 +261,11 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, Appender& p
         path[prv].omega);
 
     if (bsdf.specular == 1.0f) {
+        path.pop_back();
+    }
+
+    if (!First) {
+        path[begin] = path[path.size() - 1];
         path.pop_back();
     }
 }
