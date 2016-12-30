@@ -24,7 +24,7 @@ struct Options {
     double maxRadius = 0.01;
     size_t minSubpath = 5;
     size_t maxPath = SIZE_MAX;
-    double alpha = 0.5f;
+    double alpha = 0.75f;
     double beta = 1.0f;
     double roulette = 0.9;
     bool batch = false;

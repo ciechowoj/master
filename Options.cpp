@@ -38,7 +38,7 @@ R"(
       --min-subpath=<n>   Do not use Russian roulette for sub-paths shorter than n. [default: 5]
       --roulette=<n>      Russian roulette coefficient. [default: 0.5]
       --beta=<n>          MIS beta. [default: 1]
-      --alpha=<n>         VCM alpha. [default: 0.5]
+      --alpha=<n>         VCM alpha. [default: 0.75]
       --batch             Run in batch mode (interactive otherwise).
       --quiet             Do not output anything to console.
       --no-vc             Disable vertex connection.

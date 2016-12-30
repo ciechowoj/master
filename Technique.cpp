@@ -5,16 +5,11 @@
 namespace haste {
 
 Technique::Technique(const shared<const Scene>& scene, size_t num_threads)
-    : _scene(scene)
+    : _numSamples(0)
+    , _scene(scene)
     , _threadpool(num_threads) { }
 
 Technique::~Technique() { }
-
-void Technique::reset() {
-    _numNormalRays = 0;
-    _numShadowRays = 0;
-    _numSamples = 0;
-}
 
 void Technique::render(
     ImageView& view,

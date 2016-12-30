@@ -29,7 +29,7 @@ public:
     Technique(const shared<const Scene>& scene, size_t num_threads);
     virtual ~Technique();
 
-    virtual void reset();
+    // virtual void reset();
 
     virtual void render(
         ImageView& view,

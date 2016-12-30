@@ -1,6 +1,5 @@
 #include <PhongBSDF.hpp>
 #include <SurfacePoint.hpp>
-#include <iostream>
 
 namespace haste {
 
