@@ -3,11 +3,10 @@
 
 namespace haste {
 
-PathTracing::PathTracing(const shared<const Scene>& scene, size_t min_subpath,
+PathTracing::PathTracing(const shared<const Scene>& scene,
                          float lights, float roulette, float beta,
                          size_t max_path, size_t num_threads)
     : Technique(scene, num_threads),
-      _min_subpath(min_subpath),
       _max_path(max_path),
       _lights(lights),
       _roulette(roulette),

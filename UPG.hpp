@@ -17,7 +17,6 @@ template <class Beta, GatherMode Mode> class UPGBase : public Technique, protect
 public:
     UPGBase(
         const shared<const Scene>& scene,
-        size_t minSubpath,
         bool enable_vc,
         bool enable_vm,
         float lights,
@@ -117,7 +116,6 @@ private:
     bool _russian_roulette(random_generator_t& generator) const;
 
     const size_t _num_photons;
-    const size_t _minSubpath;
     const bool _enable_vc;
     const bool _enable_vm;
     const float _lights;
@@ -140,7 +138,6 @@ class UPGb : public UPGBase<VariableBeta, GatherMode::Unbiased> {
 public:
     UPGb(
         const shared<const Scene>& scene,
-        size_t minSubpath,
         bool enable_vc,
         bool enable_vm,
         float lights,
@@ -160,7 +157,6 @@ class VCMb : public UPGBase<VariableBeta, GatherMode::Biased> {
 public:
     VCMb(
         const shared<const Scene>& scene,
-        size_t minSubpath,
         bool enable_vc,
         bool enable_vm,
         float lights,

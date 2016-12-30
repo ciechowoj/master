@@ -6,7 +6,6 @@ namespace haste {
 template <class Beta, GatherMode Mode>
 UPGBase<Beta, Mode>::UPGBase(
     const shared<const Scene>& scene,
-    size_t minSubpath,
     bool enable_vc,
     bool enable_vm,
     float lights,
@@ -18,7 +17,6 @@ UPGBase<Beta, Mode>::UPGBase(
     size_t num_threads)
     : Technique(scene, num_threads)
     , _num_photons(numPhotons)
-    , _minSubpath(minSubpath)
     , _enable_vc(enable_vc)
     , _enable_vm(enable_vm)
     , _lights(lights)
@@ -577,7 +575,6 @@ bool UPGBase<Beta, Mode>::_russian_roulette(random_generator_t& generator) const
 
 UPGb::UPGb(
     const shared<const Scene>& scene,
-    size_t minSubpath,
     bool enable_vc,
     bool enable_vm,
     float lights,
@@ -589,7 +586,6 @@ UPGb::UPGb(
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Unbiased>(
         scene,
-        minSubpath,
         enable_vc,
         enable_vm,
         lights,
@@ -609,7 +605,6 @@ template class UPGBase<VariableBeta, GatherMode::Unbiased>;
 
 VCMb::VCMb(
     const shared<const Scene>& scene,
-    size_t minSubpath,
     bool enable_vc,
     bool enable_vm,
     float lights,
@@ -621,7 +616,6 @@ VCMb::VCMb(
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Biased>(
         scene,
-        minSubpath,
         enable_vc,
         enable_vm,
         lights,

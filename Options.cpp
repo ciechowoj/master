@@ -35,7 +35,6 @@ R"(
       --UPG               Use unbiased photon gathering.
       --num-photons=<n>   Use n photons. [default: 1 000 000]
       --max-radius=<n>    Use n as maximum gather radius. [default: 0.1]
-      --min-subpath=<n>   Do not use Russian roulette for sub-paths shorter than n. [default: 5]
       --roulette=<n>      Russian roulette coefficient. [default: 0.5]
       --beta=<n>          MIS beta. [default: 1]
       --alpha=<n>         VCM alpha. [default: 0.75]
@@ -343,26 +342,6 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
-        if (dict.count("--min-subpath")) {
-            if (options.technique != Options::BPT &&
-                options.technique != Options::PT &&
-                options.technique != Options::VCM &&
-                options.technique != Options::UPG) {
-                options.displayHelp = true;
-                options.displayMessage = "--min-subpath in not available for specified technique.";
-                return options;
-            }
-            else if (!isUnsigned(dict["--min-subpath"])) {
-                options.displayHelp = true;
-                options.displayMessage = "Invalid value for --min-subpath.";
-                return options;
-            }
-            else {
-                options.minSubpath = atoi(dict["--min-subpath"].c_str());
-                dict.erase("--min-subpath");
-            }
-        }
-
         if (dict.count("--max-path")) {
             if (options.technique != Options::PT) {
                 options.displayHelp = true;
@@ -663,7 +642,6 @@ template <class T>
 shared<Technique> make_bpt_technique(const shared<const Scene>& scene, const Options& options) {
     return std::make_shared<T>(
         scene,
-        options.minSubpath,
         options.lights,
         options.roulette,
         options.beta,
@@ -674,7 +652,6 @@ template <class T>
 shared<Technique> make_upg_technique(const shared<const Scene>& scene, const Options& options) {
     return std::make_shared<T>(
         scene,
-        options.minSubpath,
         options.enable_vc,
         options.enable_vm,
         options.lights,
@@ -705,7 +682,6 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
         case Options::PT:
             return std::make_shared<PathTracing>(
                 scene,
-                options.minSubpath,
                 options.lights,
                 options.roulette,
                 options.beta,

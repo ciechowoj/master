@@ -7,7 +7,7 @@ namespace haste {
 
 template <class Beta> class BPTBase : public Technique, protected Beta {
 public:
-    BPTBase(const shared<const Scene>& scene, size_t minSubpath, float lights, float roulette, float beta, size_t num_threads);
+    BPTBase(const shared<const Scene>& scene, float lights, float roulette, float beta, size_t num_threads);
 
     string name() const override;
 
@@ -30,7 +30,6 @@ private:
 
     static const size_t _maxSubpath = 1024;
     using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
-    const size_t _minSubpath;
     const float _roulette;
     const float _lights;
 
@@ -51,7 +50,7 @@ typedef BPTBase<FixedBeta<2>> BPT2;
 
 class BPTb : public BPTBase<VariableBeta> {
 public:
-    BPTb(const shared<const Scene>& scene, size_t minSubpath, float lights, float roulette, float beta, size_t num_threads);
+    BPTb(const shared<const Scene>& scene, float lights, float roulette, float beta, size_t num_threads);
 };
 
 }

@@ -3,9 +3,8 @@
 
 namespace haste {
 
-template <class Beta> BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, size_t minSubpath, float lights, float roulette, float beta, size_t num_threads)
+template <class Beta> BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, float lights, float roulette, float beta, size_t num_threads)
     : Technique(scene, num_threads)
-    , _minSubpath(minSubpath)
     , _roulette(roulette)
     , _lights(lights)
 { }
@@ -291,8 +290,8 @@ bool BPTBase<Beta>::_russian_roulette(random_generator_t& generator) const {
     return _roulette < generator.sample();
 }
 
-BPTb::BPTb(const shared<const Scene>& scene, size_t minSubpath, float lights, float roulette, float beta, size_t num_threads)
-    : BPTBase<VariableBeta>(scene, minSubpath, lights, roulette, beta, num_threads)
+BPTb::BPTb(const shared<const Scene>& scene, float lights, float roulette, float beta, size_t num_threads)
+    : BPTBase<VariableBeta>(scene, lights, roulette, beta, num_threads)
 {
     VariableBeta::init(beta);
 }
