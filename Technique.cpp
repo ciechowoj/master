@@ -37,13 +37,13 @@ void Technique::render(
     size_t numShadowRays = _scene->numShadowRays();
 
     _adjust_helper_image(view);
-    _preprocess(engine);
+    _preprocess(engine, _numSamples);
+    ++_numSamples;
     _trace_paths(view, context, cameraId);
     _commit_images(view);
 
     _numNormalRays += _scene->numNormalRays() - numNormalRays;
     _numShadowRays += _scene->numShadowRays() - numShadowRays;
-    _numSamples = size_t(view.last().w);
 }
 
 vec3 Technique::_traceEye(
@@ -53,7 +53,7 @@ vec3 Technique::_traceEye(
     return vec3(1.0f, 0.0f, 1.0f);
 }
 
-void Technique::_preprocess(RandomEngine& engine) {
+void Technique::_preprocess(RandomEngine& engine, double num_samples) {
 
 }
 

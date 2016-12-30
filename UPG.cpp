@@ -13,16 +13,19 @@ UPGBase<Beta, Mode>::UPGBase(
     float roulette,
     size_t numPhotons,
     float radius,
+    float alpha,
     float beta,
     size_t num_threads)
     : Technique(scene, num_threads)
     , _num_photons(numPhotons)
-    , _num_scattered(0)
     , _minSubpath(minSubpath)
     , _enable_vc(enable_vc)
     , _enable_vm(enable_vm)
     , _lights(lights)
     , _roulette(roulette)
+    , _initial_radius(radius)
+    , _alpha(alpha)
+    , _num_scattered(0)
     , _radius(radius)
     , _circle(pi<float>() * radius * radius)
 { }
@@ -172,7 +175,11 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 }
 
 template <class Beta, GatherMode Mode>
-void UPGBase<Beta, Mode>::_preprocess(random_generator_t& generator) {
+void UPGBase<Beta, Mode>::_preprocess(random_generator_t& generator, double num_samples) {
+    if (Mode == GatherMode::Biased) {
+        _radius = _initial_radius * pow((num_samples + 1.0f), _alpha * 0.5f - 0.5f);
+    }
+
     _scatter(generator);
 }
 
@@ -577,6 +584,7 @@ UPGb::UPGb(
     float roulette,
     size_t numPhotons,
     float radius,
+    float alpha,
     float beta,
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Unbiased>(
@@ -588,6 +596,7 @@ UPGb::UPGb(
         roulette,
         numPhotons,
         radius,
+        alpha,
         beta,
         num_threads) {
     VariableBeta::init(beta);
@@ -607,6 +616,7 @@ VCMb::VCMb(
     float roulette,
     size_t numPhotons,
     float radius,
+    float alpha,
     float beta,
     size_t num_threads)
     : UPGBase<VariableBeta, GatherMode::Biased>(
@@ -618,6 +628,7 @@ VCMb::VCMb(
         roulette,
         numPhotons,
         radius,
+        alpha,
         beta,
         num_threads) {
     VariableBeta::init(beta);

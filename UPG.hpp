@@ -24,6 +24,7 @@ public:
         float roulette,
         size_t numPhotons,
         float radius,
+        float alpha,
         float beta,
         size_t numThreads);
 
@@ -55,7 +56,7 @@ private:
     using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
 
     vec3 _traceEye(render_context_t& context, Ray ray) override;
-    void _preprocess(random_generator_t& generator) override;
+    void _preprocess(random_generator_t& generator, double num_samples) override;
 
     template <bool First, class Appender>
     void _traceLight(random_generator_t& generator, Appender& path);
@@ -116,14 +117,17 @@ private:
     bool _russian_roulette(random_generator_t& generator) const;
 
     const size_t _num_photons;
-    size_t _num_scattered;
     const size_t _minSubpath;
     const bool _enable_vc;
     const bool _enable_vm;
     const float _lights;
     const float _roulette;
-    const float _radius;
-    const float _circle;
+    const float _initial_radius;
+    const float _alpha;
+
+    size_t _num_scattered;
+    float _radius;
+    float _circle;
 
     v3::HashGrid3D<LightVertex> _vertices;
 };
@@ -143,6 +147,7 @@ public:
         float roulette,
         size_t numPhotons,
         float radius,
+        float alpha,
         float beta,
         size_t numThreads);
 };
@@ -162,6 +167,7 @@ public:
         float roulette,
         size_t numPhotons,
         float radius,
+        float alpha,
         float beta,
         size_t numThreads);
 };

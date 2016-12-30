@@ -37,6 +37,8 @@ R"(
       --max-radius=<n>    Use n as maximum gather radius. [default: 0.1]
       --min-subpath=<n>   Do not use Russian roulette for sub-paths shorter than n. [default: 5]
       --roulette=<n>      Russian roulette coefficient. [default: 0.5]
+      --beta=<n>          MIS beta. [default: 1]
+      --alpha=<n>         VCM alpha. [default: 0.5]
       --batch             Run in batch mode (interactive otherwise).
       --quiet             Do not output anything to console.
       --no-vc             Disable vertex connection.
@@ -398,6 +400,23 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
+        if (dict.count("--alpha")) {
+            if (options.technique != Options::VCM) {
+                options.displayHelp = true;
+                options.displayMessage = "--alpha is valid only for VCM.";
+                return options;
+            }
+            else if (!isReal(dict["--alpha"])) {
+                options.displayHelp = true;
+                options.displayMessage = "Invalid value for --alpha.";
+                return options;
+            }
+            else {
+                options.alpha = atof(dict["--alpha"].c_str());
+                dict.erase("--alpha");
+            }
+        }
+
         if (dict.count("--roulette")) {
             if (options.technique != Options::BPT &&
                 options.technique != Options::PT &&
@@ -662,6 +681,7 @@ shared<Technique> make_upg_technique(const shared<const Scene>& scene, const Opt
         options.roulette,
         options.numPhotons,
         options.maxRadius,
+        options.alpha,
         options.beta,
         options.numThreads);
 }

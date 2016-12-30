@@ -53,7 +53,7 @@ protected:
     threadpool_t _threadpool;
 
     virtual vec3 _traceEye(render_context_t& context, Ray ray);
-    virtual void _preprocess(RandomEngine& engine);
+    virtual void _preprocess(RandomEngine& engine, double num_samples);
     static SurfacePoint _camera_surface(render_context_t& context);
     static vec3 _camera_direction(render_context_t& context);
 
