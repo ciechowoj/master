@@ -59,7 +59,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
     eye[itr].throughput = eye[prv].throughput / _roulette;
     eye[itr].specular = 0.0f;
-    eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * _roulette);
+    eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
     eye[itr].C = 0.0f;
 
     std::swap(itr, prv);
@@ -94,11 +94,11 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             eye[prv].specular = max(eye[prv].specular, bsdf.specular);
             eye[itr].specular = bsdf.specular;
-            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density * _roulette);
+            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
             eye[itr].C
                 = (eye[prv].C
-                    * Beta::beta(bsdf.densityRev * _roulette)
+                    * Beta::beta(bsdf.densityRev)
                     + eye[prv].c * (1.0f - eye[prv].specular))
                 * Beta::beta(edge.bGeometry)
                 * eye[itr].c;
@@ -138,7 +138,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
     path[prv].omega = path[prv].surface.normal();
     path[prv].throughput = light.radiance() / light.areaDensity() / _roulette;
     path[prv].specular = 0.0f;
-    path[prv].a = 1.0f / Beta::beta(light.areaDensity() * _roulette);
+    path[prv].a = 1.0f / Beta::beta(light.areaDensity());
     path[prv].A = 0.0f;
 
     while (!_russian_roulette(generator)) {
@@ -173,11 +173,11 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
         path[prv].specular = max(path[prv].specular, bsdf.specular);
         path[itr].specular = bsdf.specular;
 
-        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density * _roulette);
+        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
         path[itr].A
             = (path[prv].A
-                * Beta::beta(bsdf.densityRev * _roulette)
+                * Beta::beta(bsdf.densityRev)
                 + path[prv].a * (1.0f - path[prv].specular))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
@@ -213,12 +213,12 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     auto edge = Edge(light, eye, omega);
 
     float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev * _roulette) + light.a * (1.0f - light.specular))
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev * _roulette);
+        = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density * _roulette) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(edge.fGeometry * lightBSDF.density * _roulette);
+        = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float weightInv = Ap + Cp + 1.0f;
 
@@ -241,8 +241,8 @@ template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
     auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
 
     float Cp
-        = (eye.C * Beta::beta(lsdf.omegaDensity() * _roulette) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(lsdf.areaDensity() * _roulette);
+        = (eye.C * Beta::beta(lsdf.omegaDensity()) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(lsdf.areaDensity());
 
     float weightInv = Cp + 1.0f;
 
