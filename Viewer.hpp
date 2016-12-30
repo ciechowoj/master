@@ -10,7 +10,7 @@ public:
         size_t width,
         size_t height);
 
-    void render(
+    double render(
         ImageView& view,
         RandomEngine& engine,
         size_t cameraId) override;

@@ -11,13 +11,14 @@ Viewer::Viewer(const vector<dvec4>& data, size_t width, size_t height)
     _height = height;
 }
 
-void Viewer::render(
+double Viewer::render(
     ImageView& view,
     RandomEngine& engine,
     size_t cameraId)
 {
     view.copyFrom(_data, _width, _height);
     std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(33));
+    return 0.0f;
 }
 
 string Viewer::name() const {

@@ -29,9 +29,7 @@ public:
     Technique(const shared<const Scene>& scene, size_t num_threads);
     virtual ~Technique();
 
-    // virtual void reset();
-
-    virtual void render(
+    virtual double render(
         ImageView& view,
         RandomEngine& engine,
         size_t cameraId);
@@ -59,7 +57,7 @@ protected:
 
     void _adjust_helper_image(ImageView& view);
     void _trace_paths(ImageView& view, render_context_t& context, size_t cameraId);
-    void _commit_images(ImageView& view);
+    double _commit_images(ImageView& view);
 
     template <class F>
     vec3 _accumulate(

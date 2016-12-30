@@ -34,7 +34,7 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
 
   auto view = ImageView(data, width, height);
 
-  _technique->render(view, _engine, _options.cameraId);
+  double epsilon = _technique->render(view, _engine, _options.cameraId);
 
   double current = high_resolution_time();
   double total = current - _rendering_start_time;
@@ -43,7 +43,7 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
 
   if (_options.technique != Options::Viewer) {
     _update_rms_history(total, width, height, data);
-    _printStatistics(view, elapsed, total, false);
+    _printStatistics(view, elapsed, total, epsilon, false);
     _saveIfRequired(view, total);
   }
 
@@ -201,16 +201,17 @@ void Application::_update_rms_history(double time, std::size_t width,
 void Application::_reset_rms_history() { _rms_history.clear(); }
 
 void Application::_printStatistics(const ImageView& view, double elapsed,
-                                   double time, bool preprocessed) {
+                                   double time, double epsilon,
+                                   bool preprocessed) {
   if (!_options.quiet && _options.technique != Options::Viewer) {
     if (preprocessed) {
       std::cout << "Preprocessing finished..." << std::endl;
     } else {
       size_t numSamples = _num_samples();
-      std::cout << "Sample #" << std::setw(6) << std::left << numSamples << " "
+      std::cout << "#" << std::setw(6) << std::left << numSamples << " "
                 << std::right << std::fixed << std::setw(8)
                 << std::setprecision(3) << time << "s" << std::setw(8)
-                << elapsed << "s/sample" << std::endl;
+                << elapsed << "s/sample   " << std::setprecision(8) << std::defaultfloat << epsilon << std::endl;
     }
   }
 }

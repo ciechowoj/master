@@ -7,11 +7,14 @@ namespace haste {
 Technique::Technique(const shared<const Scene>& scene, size_t num_threads)
     : _numSamples(0)
     , _scene(scene)
-    , _threadpool(num_threads) { }
+    , _threadpool(num_threads) {
+    _numNormalRays = 0;
+    _numShadowRays = 0;
+}
 
 Technique::~Technique() { }
 
-void Technique::render(
+double Technique::render(
     ImageView& view,
     RandomEngine& engine,
     size_t cameraId)
@@ -35,10 +38,12 @@ void Technique::render(
     _preprocess(engine, _numSamples);
     ++_numSamples;
     _trace_paths(view, context, cameraId);
-    _commit_images(view);
+    double epsilon = _commit_images(view);
 
     _numNormalRays += _scene->numNormalRays() - numNormalRays;
     _numShadowRays += _scene->numShadowRays() - numShadowRays;
+
+    return epsilon;
 }
 
 vec3 Technique::_traceEye(
@@ -136,7 +141,9 @@ void Technique::_trace_paths(
     });
 }
 
-void Technique::_commit_images(ImageView& view) {
+double Technique::_commit_images(ImageView& view) {
+    double epsilon = 0.0f;
+
     exec_in_bands(_threadpool, view.xWindow(), view.yWindow(), 128,
         [&](size_t x0, size_t x1, size_t y0, size_t y1) {
         ImageView subview = view;
@@ -153,6 +160,8 @@ void Technique::_commit_images(ImageView& view) {
         subview._yOffset = yBegin;
         subview._yWindow = yEnd - yBegin;
 
+        double local_epsilon = 0.0f;
+
         for (size_t y = subview.yBegin(); y < subview.yEnd(); ++y) {
             dvec4* dst_begin = subview.data() + y * subview.width() + subview.xBegin();
             dvec4* dst_end = dst_begin + subview.xWindow();
@@ -160,7 +169,12 @@ void Technique::_commit_images(ImageView& view) {
             dvec3* eye_itr = _eye_image.data() + y * subview.width() + subview.xBegin();
 
             for (dvec4* dst_itr = dst_begin; dst_itr < dst_end; ++dst_itr) {
-                *dst_itr += dvec4(*light_itr + *eye_itr, 1.0f);
+                dvec4 new_dst = *dst_itr + dvec4(*light_itr + *eye_itr, 1.0f);
+
+                dvec3 delta = new_dst.rgb() / new_dst.a - dst_itr->rgb() / dst_itr->a;
+                local_epsilon += l1Norm(delta * delta);
+
+                *dst_itr = new_dst;
 
                 *light_itr = dvec3(0.0f);
                 *eye_itr = dvec3(0.0f);
@@ -168,7 +182,12 @@ void Technique::_commit_images(ImageView& view) {
                 ++eye_itr;
             }
         }
+
+        std::unique_lock<std::mutex> lock(_light_mutex);
+        epsilon += local_epsilon;
     });
+
+    return sqrt(epsilon / (view.width() * view.height()));
 }
 
 vec3 Technique::_accumulate(

@@ -28,7 +28,7 @@ class Application : public Framework {
   void _reset_rms_history();
 
   void _printStatistics(const ImageView& view, double elapsed, double time,
-                        bool preprocessed);
+                        double epsilon, bool preprocessed);
   void _saveIfRequired(const ImageView& view, double elapsed);
   void _updateQuitCond(const ImageView& view, double elapsed);
   void _save(const ImageView& view, size_t numSamples, bool snapshot);
