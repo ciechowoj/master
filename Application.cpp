@@ -178,7 +178,7 @@ void Application::_printStatistics(const ImageView& view, double elapsed,
       std::cout << "#" << std::setw(6) << std::left << numSamples << " "
                 << std::right << std::fixed << std::setw(8)
                 << std::setprecision(3) << time << "s" << std::setw(8)
-                << elapsed << "s/sample   " << std::setprecision(8) << std::defaultfloat << epsilon << std::endl;
+                << elapsed << "s/sample   " << std::setprecision(8) << std::fixed << epsilon << std::endl;
     }
   }
 }
