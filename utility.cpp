@@ -36,8 +36,9 @@ float PiecewiseSampler::sample() {
 #include <ImfInputFile.h>
 #include <ImfOutputFile.h>
 #include <ImfChannelList.h>
+#include <ImfDoubleAttribute.h>
+#include <ImfVecAttribute.h>
 #include <ImfStringAttribute.h>
-#include <ImfMatrixAttribute.h>
 #include <ImfArray.h>
 
 using namespace std;
@@ -46,29 +47,41 @@ using namespace Imf;
 namespace haste {
 
 void saveEXR(
-    const string& path,
-    size_t widthll,
-    size_t heightll,
-    const dvec3* data,
-    const std::vector<std::string>& metadata) {
-    runtime_assert(widthll < INT_MAX);
-    runtime_assert(heightll < INT_MAX);
+    const std::string& path,
+    const metadata_t& metadata,
+    const vec3* data) {
+    runtime_assert(metadata.resolution.x > 0);
+    runtime_assert(metadata.resolution.y > 0);
 
-    const int width = int(widthll);
-    const int height = int(heightll);
+    int width = metadata.resolution.x;
+    int height = metadata.resolution.y;
 
     Header header (width, height);
     header.channels().insert ("R", Channel (Imf::FLOAT));
     header.channels().insert ("G", Channel (Imf::FLOAT));
     header.channels().insert ("B", Channel (Imf::FLOAT));
 
-    std::stringstream stream;
+    header.insert("technique", StringAttribute(metadata.technique));
+    header.insert("num_samples", DoubleAttribute(double(metadata.num_samples)));
+    header.insert("num_basic_rays", DoubleAttribute(double(metadata.num_basic_rays)));
+    header.insert("num_shadow_rays", DoubleAttribute(double(metadata.num_shadow_rays)));
+    header.insert("num_tentative_rays", DoubleAttribute(double(metadata.num_tentative_rays)));
+    header.insert("num_photons", DoubleAttribute(double(metadata.num_photons)));
+    header.insert("num_threads", DoubleAttribute(double(metadata.num_threads)));
 
-    for (auto&& entry : metadata) {
-        stream << entry << ";";
-    }
+    header.insert("roulette", DoubleAttribute(double(metadata.roulette)));
+    header.insert("radius", DoubleAttribute(double(metadata.radius)));
+    header.insert("alpha", DoubleAttribute(double(metadata.alpha)));
+    header.insert("beta", DoubleAttribute(double(metadata.beta)));
+    header.insert("epsilon", DoubleAttribute(double(metadata.epsilon)));
+    header.insert("total_time", DoubleAttribute(double(metadata.total_time)));
 
-    header.insert("p7yh5o0587jqc5qv-metadata", StringAttribute(stream.str()));
+    Imath::V3f metadata_average(
+        metadata.average.x,
+        metadata.average.y,
+        metadata.average.z);
+
+    header.insert("average", V3fAttribute(metadata_average));
 
     OutputFile file (path.c_str(), header);
 
@@ -77,11 +90,11 @@ void saveEXR(
     size_t size = width * height * 3;
     vector<float> data_copy(size);
 
-    for (size_t y = 0; y < heightll; ++y) {
-        for (size_t x = 0; x < widthll; ++x) {
-            data_copy[(y * width + x) * 3 + 0] = float(data[(heightll - y - 1) * width + x].x);
-            data_copy[(y * width + x) * 3 + 1] = float(data[(heightll - y - 1) * width + x].y);
-            data_copy[(y * width + x) * 3 + 2] = float(data[(heightll - y - 1) * width + x].z);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            data_copy[(y * width + x) * 3 + 0] = data[(height - y - 1) * width + x].x;
+            data_copy[(y * width + x) * 3 + 1] = data[(height - y - 1) * width + x].y;
+            data_copy[(y * width + x) * 3 + 2] = data[(height - y - 1) * width + x].z;
         }
     }
 
@@ -98,34 +111,13 @@ void saveEXR(
 }
 
 void saveEXR(
-    const string& path,
-    size_t width,
-    size_t height,
-    const vec4* data,
-    const std::vector<std::string>& metadata) {
-    auto data3 = vector<dvec3>(width * height);
-
-    for (size_t i = 0; i < data3.size(); ++i) {
-        data3[i] = data[i].xyz() / data[i].w;
-    }
-
-    saveEXR(path, width, height, data3.data(), metadata);
-}
-
-void saveEXR(
-    const string& path,
-    size_t width,
-    size_t height,
-    const dvec4* data,
-    const std::vector<std::string>& metadata)
-{
-    auto data3 = vector<dvec3>(width * height);
-
-    for (size_t i = 0; i < data3.size(); ++i) {
-        data3[i] = data[i].xyz() / data[i].w;
-    }
-
-    saveEXR(path, width, height, data3.data(), metadata);
+    const std::string& path,
+    const metadata_t& metadata,
+    const std::vector<vec3>& data) {
+    runtime_assert(metadata.resolution.x > 0);
+    runtime_assert(metadata.resolution.y > 0);
+    runtime_assert(size_t(metadata.resolution.x * metadata.resolution.y) == data.size());
+    saveEXR(path, metadata, data.data());
 }
 
 void split(const std::string &s, char delim, std::vector<std::string> &elems) {
@@ -145,28 +137,64 @@ std::vector<std::string> split(const std::string &s, char delim) {
 
 void loadEXR(
     const string& path,
-    size_t& width,
-    size_t& height,
-    vector<dvec3>& data,
-    std::vector<std::string>* metadata)
-{
+    metadata_t& metadata,
+    vector<vec3>& data) {
     InputFile file (path.c_str());
 
     auto comments = file.header().findTypedAttribute<StringAttribute>("p7yh5o0587jqc5qv-metadata");
 
-    if (comments && metadata) {
-        *metadata = split(comments->value(), ';');
+    auto technique = file.header().findTypedAttribute<StringAttribute>("technique");
+    auto num_samples = file.header().findTypedAttribute<DoubleAttribute>("num_samples");
+    auto num_basic_rays = file.header().findTypedAttribute<DoubleAttribute>("num_basic_rays");
+    auto num_shadow_rays = file.header().findTypedAttribute<DoubleAttribute>("num_shadow_rays");
+    auto num_tentative_rays = file.header().findTypedAttribute<DoubleAttribute>("num_tentative_rays");
+    auto num_photons = file.header().findTypedAttribute<DoubleAttribute>("num_photons");
+    auto num_threads = file.header().findTypedAttribute<DoubleAttribute>("num_threads");
+
+    auto roulette = file.header().findTypedAttribute<DoubleAttribute>("roulette");
+    auto radius = file.header().findTypedAttribute<DoubleAttribute>("radius");
+    auto alpha = file.header().findTypedAttribute<DoubleAttribute>("alpha");
+    auto beta = file.header().findTypedAttribute<DoubleAttribute>("beta");
+    auto epsilon = file.header().findTypedAttribute<DoubleAttribute>("epsilon");
+    auto total_time = file.header().findTypedAttribute<DoubleAttribute>("total_time");
+
+    auto average = file.header().findTypedAttribute<V3fAttribute>("average");
+
+    metadata.technique = technique ? technique->value() : std::string("N/A");
+
+    if (comments) {
+        std::vector<std::string> history = split(comments->value(), ';');
+        metadata.num_samples = history.size();
+    }
+    else {
+        metadata.num_samples = num_samples ? num_samples->value() : std::size_t(0);
     }
 
+    metadata.num_basic_rays = num_basic_rays ? num_basic_rays->value() : std::size_t(0);
+    metadata.num_shadow_rays = num_shadow_rays ? num_shadow_rays->value() : std::size_t(0);
+    metadata.num_tentative_rays = num_tentative_rays ? num_tentative_rays->value() : std::size_t(0);
+    metadata.num_photons = num_photons ? num_photons->value() : std::size_t(0);
+    metadata.num_threads = num_threads ? num_threads->value() : std::size_t(0);
+
+    metadata.roulette = roulette ? roulette->value() : 0.0;
+    metadata.radius = radius ? radius->value() : 0.0;
+    metadata.alpha = alpha ? alpha->value() : 0.0;
+    metadata.beta = beta ? beta->value() : 0.0;
+    metadata.epsilon = epsilon ? epsilon->value() : 0.0;
+    metadata.total_time = total_time ? total_time->value() : 0.0;
+
+    Imath::V3f metadata_average = average ? average->value() : Imath::V3f(0.f, 0.f, 0.f);
+    metadata.average = vec3(metadata_average.x, metadata_average.y, metadata_average.z);
+
     auto dw = file.header().dataWindow();
-    int ihegith = dw.max.x - dw.min.x + 1;
-    int iwidth = dw.max.y - dw.min.y + 1;
+    int width = dw.max.x - dw.min.x + 1;
+    int height = dw.max.y - dw.min.y + 1;
 
-    runtime_assert(iwidth >= 0);
-    runtime_assert(ihegith >= 0);
+    metadata.resolution.x = width;
+    metadata.resolution.y = height;
 
-    width = size_t(iwidth);
-    height = size_t(ihegith);
+    runtime_assert(width >= 0);
+    runtime_assert(height >= 0);
 
     FrameBuffer framebuffer;
 
@@ -188,28 +216,41 @@ void loadEXR(
 
     data.resize(width * height);
 
-    for (size_t i = 0; i < height; ++i) {
-        for (size_t j = 0; j < width; ++j) {
+    for (int i = 0; i < height; ++i) {
+        for (int j = 0; j < width; ++j) {
             data[i * width + j] = data_copy[(height - i - 1) * width + j];
         }
     }
 }
 
-void loadEXR(
-    const string& path,
-    size_t& width,
-    size_t& height,
-    vector<dvec4>& data,
-    std::vector<std::string>* metadata)
-{
-    auto data3 = vector<dvec3>();
-    loadEXR(path, width, height, data3, metadata);
+std::vector<dvec4> vv3f_to_vv4d(const std::vector<vec3>& data) {
+    std::vector<dvec4> result(data.size());
 
-    data.resize(data3.size());
-
-    for (size_t i = 0; i < data3.size(); ++i) {
-        data[i] = vec4(data3[i], 1.0f);
+    for (std::size_t i = 0; i < data.size(); ++i) {
+        result[i] = dvec4(data[i], 1.0f);
     }
+
+    return result;
+}
+
+std::vector<vec3> vv4f_to_vv3f(std::size_t size, const vec4* data) {
+    std::vector<vec3> result(size);
+
+    for (std::size_t i = 0; i < size; ++i) {
+        result[i] = data[i].rgb() / data[i].a;
+    }
+
+    return result;
+}
+
+std::vector<vec3> vv4d_to_vv3f(std::size_t size, const dvec4* data) {
+    std::vector<vec3> result(size);
+
+    for (std::size_t i = 0; i < size; ++i) {
+        result[i] = data[i].rgb() / data[i].a;
+    }
+
+    return result;
 }
 
 }
@@ -288,12 +329,12 @@ size_t getmtime(const string& path) {
 }
 
 dvec3 computeAVG(const string& path) {
-    vector<dvec3> data;
-    size_t width, height;
+    vector<vec3> data;
+    metadata_t metadata;
 
-    loadEXR(path, width, height, data);
+    loadEXR(path, metadata, data);
 
-    dvec3 result = vec3(0.0f);
+    dvec3 result = dvec3(0.0f);
 
     for (size_t i = 0; i < data.size(); ++i) {
         result += data[i];
@@ -319,26 +360,12 @@ void printAVG(const string& path) {
     printVec(computeAVG(path));
 }
 
-void printHistory(const string& path) {
-    std::vector<glm::dvec3> data;
-    std::vector<std::string> metadata;
-    size_t width, height;
-
-    loadEXR(path, width, height, data, &metadata);
-
-    for (auto&& entry : metadata) {
-        std::cout << entry << "\n";
-    }
-
-    std::cout.flush();
-}
-
 dvec3 computeRMS(const string& path0, const string& path1) {
-    vector<dvec3> data0, data1;
-    size_t width0, height0, width1, height1;
+    vector<vec3> data0, data1;
+    metadata_t metadata0, metadata1;
 
-    loadEXR(path0, width0, height0, data0);
-    loadEXR(path1, width1, height1, data1);
+    loadEXR(path0, metadata0, data0);
+    loadEXR(path1, metadata1, data1);
 
     dvec3 result = dvec3(0.0f);
 
@@ -356,11 +383,11 @@ dvec3 computeRMS(const string& path0, const string& path1) {
 }
 
 void subtract(const string& result, const string& path0, const string& path1) {
-    vector<dvec3> data0, data1, data2;
-    size_t width0, height0, width1, height1;
+    vector<vec3> data0, data1, data2;
+    metadata_t metadata0, metadata1;
 
-    loadEXR(path0, width0, height0, data0);
-    loadEXR(path1, width1, height1, data1);
+    loadEXR(path0, metadata0, data0);
+    loadEXR(path1, metadata1, data1);
 
     if (data0.size() != data1.size()) {
         throw std::runtime_error(
@@ -373,7 +400,12 @@ void subtract(const string& result, const string& path0, const string& path1) {
         data2[i] = data0[i] - data1[i];
     }
 
-    saveEXR(result, width0, height0, data2.data());
+    metadata_t metadata;
+    metadata.technique = "difference";
+    metadata.resolution.x = metadata0.resolution.x;
+    metadata.resolution.y = metadata0.resolution.y;
+
+    saveEXR(result, metadata, data2);
 }
 
 void printRMS(const string& path0, const string& path1) {

@@ -5,11 +5,8 @@
 namespace haste {
 
 Technique::Technique(const shared<const Scene>& scene, size_t num_threads)
-    : _numSamples(0)
-    , _scene(scene)
+    : _scene(scene)
     , _threadpool(num_threads) {
-    _numNormalRays = 0;
-    _numShadowRays = 0;
 }
 
 Technique::~Technique() { }
@@ -31,19 +28,44 @@ double Technique::render(
     context.focal_factor_y = context.focal_length_y * context.focal_length_y * 0.25f;
     context.generator = &engine;
 
-    size_t numNormalRays = _scene->numNormalRays();
-    size_t numShadowRays = _scene->numShadowRays();
+    if (!std::isfinite(_rendering_start_time)) {
+        _rendering_start_time = high_resolution_time();
+        _previous_frame_time = high_resolution_time();
+    }
+
+    size_t num_basic_rays = _scene->numNormalRays();
+    size_t num_shadow_rays = _scene->numShadowRays();
 
     _adjust_helper_image(view);
-    _preprocess(engine, _numSamples);
-    ++_numSamples;
+    _preprocess(engine, _metadata.num_samples);
     _trace_paths(view, context, cameraId);
     double epsilon = _commit_images(view);
 
-    _numNormalRays += _scene->numNormalRays() - numNormalRays;
-    _numShadowRays += _scene->numShadowRays() - numShadowRays;
+    double current = high_resolution_time();
+    _frame_time = current - _previous_frame_time;
+    _previous_frame_time = current;
+
+    _metadata.technique = name();
+    ++_metadata.num_samples;
+    _metadata.num_basic_rays += _scene->numNormalRays() - num_basic_rays;
+    _metadata.num_shadow_rays += _scene->numShadowRays() - num_shadow_rays;
+    _metadata.num_tentative_rays += 0;
+
+    _metadata.num_threads = _threadpool.num_threads();
+    _metadata.resolution = ivec2(view.width(), view.height());
+    _metadata.epsilon = epsilon;
+    _metadata.total_time = current - _rendering_start_time;
+    _metadata.average = glm::vec3(0.0f, 0.0f, 0.0f);
 
     return epsilon;
+}
+
+const metadata_t& Technique::metadata() const {
+    return _metadata;
+}
+
+double Technique::frame_time() const {
+    return _frame_time;
 }
 
 vec3 Technique::_traceEye(

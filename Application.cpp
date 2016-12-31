@@ -20,34 +20,29 @@ Application::Application(Options& options) {
   _options.reload = reload;
 
   if (!_options.reference.empty()) {
-    loadEXR(_options.reference, _options.width, _options.height, _reference);
+    metadata_t metadata;
+
+    vector<vec3> reference;
+    loadEXR(_options.reference, metadata, reference);
+    _options.width = metadata.resolution.x;
+    _options.height = metadata.resolution.y;
+    _reference = vv3f_to_vv4d(reference);
   }
 }
 
 Application::~Application() { rtcDeleteDevice(_device); }
 
 void Application::render(size_t width, size_t height, glm::dvec4* data) {
-  if (!std::isfinite(_rendering_start_time)) {
-    _rendering_start_time = high_resolution_time();
-    _previous_frame_time = high_resolution_time();
-  }
-
   auto view = ImageView(data, width, height);
 
   double epsilon = _technique->render(view, _engine, _options.cameraId);
 
-  double current = high_resolution_time();
-  double total = current - _rendering_start_time;
-  double elapsed = current - _previous_frame_time;
-  _previous_frame_time = current;
-
   if (_options.technique != Options::Viewer) {
-    _update_rms_history(total, width, height, data);
-    _printStatistics(view, elapsed, total, epsilon, false);
-    _saveIfRequired(view, total);
+    _printStatistics(view, _technique->frame_time(), _technique->metadata().total_time, epsilon, false);
+    _saveIfRequired(view, _technique->metadata().total_time);
   }
 
-  _updateQuitCond(view, elapsed);
+  _updateQuitCond(view, _technique->metadata().total_time);
 }
 
 void Application::updateUI(size_t width, size_t height, const glm::vec4* data,
@@ -160,12 +155,10 @@ bool Application::updateScene() {
 
       _technique = makeTechnique(_scene, _options);
 
-      if (!_options.quiet && !std::isfinite(_rendering_start_time)) {
+      if (!_options.quiet) {
         std::cout << "Using: " << _technique->name() << std::endl;
       }
 
-      _reset_rms_history();
-      _rendering_start_time = NAN;
       _modificationTime = modificationTime;
       return true;
     }
@@ -173,32 +166,6 @@ bool Application::updateScene() {
 
   return false;
 }
-
-double Application::_compute_rms(std::size_t width, std::size_t height,
-                                 const glm::dvec4* left,
-                                 const glm::dvec4* right) {
-  double sum = 0.0f;
-  std::size_t num = width * height;
-
-  for (std::size_t i = 0; i < num; ++i) {
-    dvec3 d = left[i].rgb() / left[i].a - right[i].rgb() / right[i].a;
-    sum += glm::l1Norm(d * d);
-  }
-
-  return glm::sqrt(sum / double(num));
-}
-
-void Application::_update_rms_history(double time, std::size_t width,
-                                      std::size_t height,
-                                      const glm::dvec4* data) {
-  _rms_history.push_back(
-      (_reference.empty() || width * height != _reference.size())
-          ? std::make_pair(time, double(NAN))
-          : std::make_pair(
-                time, _compute_rms(width, height, data, _reference.data())));
-}
-
-void Application::_reset_rms_history() { _rms_history.clear(); }
 
 void Application::_printStatistics(const ImageView& view, double elapsed,
                                    double time, double epsilon,
@@ -268,8 +235,7 @@ void Application::_save(const ImageView& view, size_t numSamples,
     path = stream.str();
   }
 
-  saveEXR(path, view.width(), view.height(), view.data(),
-          _serialize_rms_history());
+  saveEXR(path, _technique->metadata(), vv4d_to_vv3f(view.width() * view.height(), view.data()));
 
   if (snapshot) {
     std::cout << "Snapshot saved to `" << path << "`." << std::endl;
@@ -278,18 +244,6 @@ void Application::_save(const ImageView& view, size_t numSamples,
   }
 }
 
-std::size_t Application::_num_samples() const { return _rms_history.size(); }
+std::size_t Application::_num_samples() const { return _technique->metadata().num_samples; }
 
-std::vector<std::string> Application::_serialize_rms_history() const {
-  std::vector<std::string> result(_rms_history.size());
-
-  for (std::size_t i = 0; i < _rms_history.size(); ++i) {
-    std::stringstream stream;
-    stream << std::setprecision(10) << _rms_history[i].first << " "
-           << _rms_history[i].second;
-    result[i] = stream.str();
-  }
-
-  return result;
-}
 }

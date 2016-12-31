@@ -10,7 +10,10 @@ PathTracing::PathTracing(const shared<const Scene>& scene,
       _max_path(max_path),
       _lights(lights),
       _roulette(roulette),
-      _beta(beta) {}
+      _beta(beta) {
+    _metadata.roulette = roulette;
+    _metadata.beta = beta;
+}
 
 vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
   vec3 radiance = vec3(0.0f);

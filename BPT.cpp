@@ -6,8 +6,10 @@ namespace haste {
 template <class Beta> BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, float lights, float roulette, float beta, size_t num_threads)
     : Technique(scene, num_threads)
     , _roulette(roulette)
-    , _lights(lights)
-{ }
+    , _lights(lights) {
+    _metadata.roulette = roulette;
+    _metadata.beta = beta;
+}
 
 template <class Beta> string BPTBase<Beta>::name() const {
     return Beta::name();

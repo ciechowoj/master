@@ -25,8 +25,13 @@ UPGBase<Beta, Mode>::UPGBase(
     , _alpha(alpha)
     , _num_scattered(0)
     , _radius(radius)
-    , _circle(pi<float>() * radius * radius)
-{ }
+    , _circle(pi<float>() * radius * radius) {
+    _metadata.num_photons = _num_photons;
+    _metadata.roulette = _roulette;
+    _metadata.radius = _radius;
+    _metadata.alpha = _alpha;
+    _metadata.beta = beta;
+}
 
 template <class Beta, GatherMode Mode>
 string UPGBase<Beta, Mode>::name() const {

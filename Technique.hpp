@@ -36,13 +36,13 @@ public:
 
     virtual string name() const = 0;
 
-    const size_t numNormalRays() const { return _numNormalRays; }
-    const size_t numShadowRays() const { return _numShadowRays; }
-
+    const metadata_t& metadata() const;
+    double frame_time() const;
 protected:
-    size_t _numNormalRays;
-    size_t _numShadowRays;
-    size_t _numSamples;
+    double _previous_frame_time = NAN;
+    double _rendering_start_time = NAN;
+    double _frame_time = NAN;
+    metadata_t _metadata;
     shared<const Scene> _scene;
     std::vector<dvec3> _eye_image;
     std::vector<dvec3> _light_image;

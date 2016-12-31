@@ -119,7 +119,7 @@ void UserInterface::_updateSaveRegion(
         ImGui::SameLine();
 
         if (ImGui::Button("Save EXR")) {
-            saveEXR(path, width, height, image);
+            saveEXR(path, technique.metadata(), vv4f_to_vv3f(width * height, image));
         }
 
         string fixed = fixedPath(path, scenePath, num_samples);
@@ -129,7 +129,7 @@ void UserInterface::_updateSaveRegion(
         ImGui::PushID("save-exr");
 
         if (ImGui::Button("Save EXR")) {
-            saveEXR(fixed, width, height, image);
+            saveEXR(fixed, technique.metadata(), vv4f_to_vv3f(width * height, image));
         }
 
         ImGui::PopID();

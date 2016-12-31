@@ -23,40 +23,42 @@ private:
     std::piecewise_constant_distribution<float> distribution;
 };
 
-void saveEXR(
-    const string& path,
-    size_t width,
-    size_t height,
-    const dvec3* data,
-    const std::vector<std::string>& metadata = std::vector<std::string>());
+struct metadata_t {
+    std::string technique;
+    size_t num_samples = 0;
+    size_t num_basic_rays = 0;
+    size_t num_shadow_rays = 0;
+    size_t num_tentative_rays = 0;
+    size_t num_photons = 0;
+    size_t num_threads = 0;
+    glm::ivec2 resolution = glm::ivec2(0, 0);
+    double roulette = 0.0;
+    double radius = 0.0;
+    double alpha = 0.0;
+    double beta = 0.0;
+    double epsilon = 0.0;
+    double total_time = 0.0;
+    glm::vec3 average = glm::vec3(0.0f, 0.0f, 0.0f);
+};
 
 void saveEXR(
-    const string& path,
-    size_t width,
-    size_t height,
-    const vec4* data,
-    const std::vector<std::string>& metadata = std::vector<std::string>());
+    const std::string& path,
+    const metadata_t& metadata,
+    const vec3* data);
 
 void saveEXR(
-    const string& path,
-    size_t width,
-    size_t height,
-    const dvec4* data,
-    const std::vector<std::string>& metadata = std::vector<std::string>());
+    const std::string& path,
+    const metadata_t& metadata,
+    const std::vector<vec3>& data);
 
 void loadEXR(
-    const string& path,
-    size_t& width,
-    size_t& height,
-    vector<dvec3>& data,
-    std::vector<std::string>* metadata = nullptr);
+    const std::string& path,
+    metadata_t& metadata,
+    std::vector<vec3>& data);
 
-void loadEXR(
-    const string& path,
-    size_t& width,
-    size_t& height,
-    vector<dvec4>& data,
-    std::vector<std::string>* metadata = nullptr);
+std::vector<dvec4> vv3f_to_vv4d(const std::vector<vec3>& data);
+std::vector<vec3> vv4f_to_vv3f(std::size_t size, const vec4* data);
+std::vector<vec3> vv4d_to_vv3f(std::size_t size, const dvec4* data);
 
 string homePath();
 string baseName(string path);

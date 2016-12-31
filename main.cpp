@@ -67,9 +67,6 @@ int main(int argc, char **argv) {
     else if (options.action == Options::SUB) {
         subtract(options.output, options.input0, options.input1);
     }
-    else if (options.action == Options::History) {
-        printHistory(options.input0);
-    }
     else {
         Application application(options);
 

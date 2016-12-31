@@ -24,7 +24,6 @@ R"(
       master avg <x>      Compute average value of pixels in <x>.
       master rms <x> <y>  Compute root mean square error between <x> and <y>.
       master sub <x> <y>  Compute difference between <x> and <y>.
-      master history <x>  Print embedded RMS history.
 
     Options:
       -h --help           Show this screen.
@@ -218,21 +217,6 @@ Options parseSubArgs(int argc, char const* const* argv) {
     return options;
 }
 
-Options parseHistoryArgs(int argc, char const* const* argv) {
-    Options options;
-
-    if (argc != 3) {
-        options.displayHelp = true;
-        options.displayMessage = "Input file is required.";
-    }
-    else {
-        options.action = Options::History;
-        options.input0 = argv[2];
-    }
-
-    return options;
-}
-
 Options parseArgs(int argc, char const* const* argv) {
     if (1 < argc) {
         if (1 < argc && argv[1] == string("avg")) {
@@ -243,9 +227,6 @@ Options parseArgs(int argc, char const* const* argv) {
         }
         else if (1 < argc && argv[1] == string("sub")) {
             return parseSubArgs(argc, argv);
-        }
-        else if (1 < argc && argv[1] == string("history")) {
-            return parseHistoryArgs(argc, argv);
         }
     }
 
@@ -633,9 +614,27 @@ pair<bool, int> displayHelpIfNecessary(
 }
 
 shared<Technique> makeViewer(Options& options) {
-    auto image = vector<dvec4>();
-    loadEXR(options.input0, options.width, options.height, image);
-    return std::make_shared<Viewer>(image, options.width, options.height);
+    auto data = vector<vec3>();
+    auto meta = metadata_t();
+    loadEXR(options.input0, meta, data);
+
+    std::cout
+        << "technique: " << meta.technique << "\n"
+        << "num samples: " << meta.num_samples << "\n"
+        << "num basic rays: " << meta.num_basic_rays << "\n"
+        << "num shadow rays: " << meta.num_shadow_rays << "\n"
+        << "num tentative rays: " << meta.num_tentative_rays << "\n"
+        << "num photons: " << meta.num_photons << "\n"
+        << "num threads: " << meta.num_threads << "\n"
+        << "resolution: " << meta.resolution << "\n"
+        << "roulette: " << meta.roulette << "\n"
+        << "radius: " << meta.radius << "\n"
+        << "alpha: " << meta.alpha << "\n"
+        << "beta: " << meta.beta << "\n"
+        << "epsilon: " << meta.epsilon << "\n"
+        << "total time: " << meta.total_time << std::endl;
+
+    return std::make_shared<Viewer>(vv3f_to_vv4d(data), meta.resolution.x, meta.resolution.y);
 }
 
 template <class T>
