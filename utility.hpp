@@ -44,6 +44,7 @@ struct metadata_t {
   double build_time = 0.0;
   double gather_time = 0.0;
   double merge_time = 0.0;
+  double density_time = 0.0;
   double intersect_time = 0.0;
   double trace_eye_time = 0.0;
   double trace_light_time = 0.0;
@@ -54,6 +55,7 @@ template <class Stream> Stream& operator<<(Stream& stream, const metadata_t& met
     double connection_time = meta.trace_eye_time - meta.trace_light_time - meta.gather_time;
     double query_time = meta.gather_time - meta.merge_time - meta.intersect_time;
     double generate_time = meta.scatter_time - meta.build_time;
+    double merge_remaining_time = meta.merge_time - meta.density_time;
 
     stream
         << "technique: " << meta.technique << "\n"
@@ -77,6 +79,8 @@ template <class Stream> Stream& operator<<(Stream& stream, const metadata_t& met
         << "            intersect time: " << meta.intersect_time / meta.total_time << " (" << meta.intersect_time / meta.num_samples << "s)\n"
         << "            query time: " << query_time / meta.total_time << " (" << query_time / meta.num_samples << "s)\n"
         << "            merge time: " << meta.merge_time / meta.total_time << " (" << meta.merge_time / meta.num_samples << "s)\n"
+        << "                density time: " << meta.density_time / meta.total_time << " (" << meta.density_time / meta.num_samples << "s)\n"
+        << "                rest time: " << merge_remaining_time / meta.total_time << " (" << merge_remaining_time / meta.num_samples << "s)\n"
         << "        connection time: " << connection_time / meta.total_time << " (" << connection_time / meta.num_samples << "s)\n"
         << "    scatter time: " << meta.scatter_time / meta.total_time << " (" << meta.scatter_time / meta.num_samples << "s)\n"
         << "        generate time: " << generate_time / meta.total_time << " (" << generate_time / meta.num_samples << "s)\n"

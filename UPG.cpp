@@ -553,8 +553,9 @@ vec3 UPGBase<Beta, Mode>::_merge(
         return vec3(0.0f);
     }
     else {
-        auto density = _density(generator, light, eye, eyeBSDF, edge);
         auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
+        time_scope_t _(_metadata.density_time);
+        auto density = _density(generator, light, eye, eyeBSDF, edge);
 
         return _combine(result * density, weight);
     }

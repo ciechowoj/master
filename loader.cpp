@@ -7,11 +7,7 @@
 #include <utility.hpp>
 #include <loader.hpp>
 
-#include <DiffuseBSDF.hpp>
-#include <PhongBSDF.hpp>
-#include <ReflectionBSDF.hpp>
-#include <TransmissionBSDF.hpp>
-
+#include <BSDF.hpp>
 
 namespace haste {
 
