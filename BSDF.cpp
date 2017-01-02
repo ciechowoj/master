@@ -99,13 +99,12 @@ float BSDF::gathering_density(random_generator_t& generator,
   return INFINITY;
 }
 
-LightBSDF::LightBSDF(bounding_sphere_t sphere)
-    : _sphere(sphere) {}
+LightBSDF::LightBSDF(bounding_sphere_t sphere) : _sphere(sphere) {}
 
 BSDFSample LightBSDF::sample(random_generator_t& generator,
                              const SurfacePoint& surface, vec3 omega) const {
-  bounding_sphere_t local_sphere = {surface.toSurface(_sphere.center - surface.position()),
-                                    _sphere.radius};
+  bounding_sphere_t local_sphere = {
+      surface.toSurface(_sphere.center - surface.position()), _sphere.radius};
 
   auto sample = sample_lambert(generator, vec3(0.0f, 1.0f, 0.0f), local_sphere);
 
@@ -121,8 +120,8 @@ BSDFSample LightBSDF::sample(random_generator_t& generator,
 
 BSDFQuery LightBSDF::query(const SurfacePoint& surface, vec3 incident,
                            vec3 outgoing) const {
-  bounding_sphere_t local_sphere = {surface.toSurface(_sphere.center - surface.position()),
-                                    _sphere.radius};
+  bounding_sphere_t local_sphere = {
+      surface.toSurface(_sphere.center - surface.position()), _sphere.radius};
 
   auto local_outgoing = surface.toSurface(outgoing);
 
