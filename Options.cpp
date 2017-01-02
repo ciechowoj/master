@@ -618,21 +618,7 @@ shared<Technique> makeViewer(Options& options) {
     auto meta = metadata_t();
     loadEXR(options.input0, meta, data);
 
-    std::cout
-        << "technique: " << meta.technique << "\n"
-        << "num samples: " << meta.num_samples << "\n"
-        << "num basic rays: " << meta.num_basic_rays << "\n"
-        << "num shadow rays: " << meta.num_shadow_rays << "\n"
-        << "num tentative rays: " << meta.num_tentative_rays << "\n"
-        << "num photons: " << meta.num_photons << "\n"
-        << "num threads: " << meta.num_threads << "\n"
-        << "resolution: " << meta.resolution << "\n"
-        << "roulette: " << meta.roulette << "\n"
-        << "radius: " << meta.radius << "\n"
-        << "alpha: " << meta.alpha << "\n"
-        << "beta: " << meta.beta << "\n"
-        << "epsilon: " << meta.epsilon << "\n"
-        << "total time: " << meta.total_time << std::endl;
+    std::cout << meta << std::endl;
 
     return std::make_shared<Viewer>(vv3f_to_vv4d(data), meta.resolution.x, meta.resolution.y);
 }

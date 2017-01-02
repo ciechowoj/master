@@ -241,6 +241,7 @@ void Application::_save(const ImageView& view, size_t numSamples,
     std::cout << "Snapshot saved to `" << path << "`." << std::endl;
   } else {
     std::cout << "Result saved to `" << path << "`." << std::endl;
+    std::cout << _technique->metadata() << std::endl;
   }
 }
 

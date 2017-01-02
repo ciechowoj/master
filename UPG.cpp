@@ -40,6 +40,8 @@ string UPGBase<Beta, Mode>::name() const {
 
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
+    time_scope_t _0(_metadata.trace_eye_time);
+
     light_path_t light_path;
     vec3 radiance = vec3(0.0f);
 
@@ -48,6 +50,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     }
 
     if (_enable_vc) {
+        time_scope_t _1(_metadata.trace_light_time);
         _traceLight(*context.generator, light_path);
     }
 
@@ -101,6 +104,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
     while (true) {
         if (_enable_vm) {
+            time_scope_t _2(_metadata.gather_time);
             radiance += _gather(*context.generator, eye[prv]);
         }
 
@@ -179,6 +183,8 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
 template <class Beta, GatherMode Mode>
 void UPGBase<Beta, Mode>::_preprocess(random_generator_t& generator, double num_samples) {
+    time_scope_t _0(_metadata.scatter_time);
+
     if (Mode == GatherMode::Biased) {
         _radius = _initial_radius * pow((num_samples + 1.0f), _alpha * 0.5f - 0.5f);
     }
@@ -479,22 +485,32 @@ void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
 
     _num_scattered = total_num_scattered;
 
+    _metadata.num_scattered += total_num_scattered;
+
+    time_scope_t _(_metadata.build_time);
     _vertices = v3::HashGrid3D<LightVertex>(move(vertices), _radius);
 }
 
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_gather(random_generator_t& generator, const EyeVertex& eye) {
     auto eyeBSDF = _scene->sampleBSDF(generator, eye.surface, eye.omega);
-    SurfacePoint surface = _scene->intersectMesh(eye.surface, eyeBSDF.omega);
+    SurfacePoint surface;
 
-    if (!surface.is_present()) {
-        return vec3(0.0f);
+    {
+        time_scope_t _(_metadata.intersect_time);
+        surface = _scene->intersectMesh(eye.surface, eyeBSDF.omega);
+
+        if (!surface.is_present()) {
+            return vec3(0.0f);
+        }
     }
 
     vec3 radiance = vec3(0.0f);
 
     _vertices.rQuery(
         [&](const LightVertex& light) {
+            time_scope_t _(_metadata.merge_time);
+
             if (Mode == GatherMode::Unbiased) {
                 radiance += _merge(generator, light, eye);
             }

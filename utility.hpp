@@ -1,9 +1,9 @@
 #pragma once
-#include <random>
 #include <functional>
+#include <glm>
+#include <random>
 #include <string>
 #include <vector>
-#include <glm>
 
 namespace haste {
 
@@ -14,47 +14,86 @@ using std::pair;
 using namespace glm;
 
 class PiecewiseSampler {
-public:
-    PiecewiseSampler();
-    PiecewiseSampler(const float* weightsBegin, const float* weightsEnd);
-    float sample();
-private:
-    std::minstd_rand engine;
-    std::piecewise_constant_distribution<float> distribution;
+ public:
+  PiecewiseSampler();
+  PiecewiseSampler(const float* weightsBegin, const float* weightsEnd);
+  float sample();
+
+ private:
+  std::minstd_rand engine;
+  std::piecewise_constant_distribution<float> distribution;
 };
 
 struct metadata_t {
-    std::string technique;
-    size_t num_samples = 0;
-    size_t num_basic_rays = 0;
-    size_t num_shadow_rays = 0;
-    size_t num_tentative_rays = 0;
-    size_t num_photons = 0;
-    size_t num_threads = 0;
-    glm::ivec2 resolution = glm::ivec2(0, 0);
-    double roulette = 0.0;
-    double radius = 0.0;
-    double alpha = 0.0;
-    double beta = 0.0;
-    double epsilon = 0.0;
-    double total_time = 0.0;
-    glm::vec3 average = glm::vec3(0.0f, 0.0f, 0.0f);
+  std::string technique;
+  size_t num_samples = 0;
+  size_t num_basic_rays = 0;
+  size_t num_shadow_rays = 0;
+  size_t num_tentative_rays = 0;
+  size_t num_photons = 0;
+  size_t num_scattered = 0;
+  size_t num_threads = 0;
+  glm::ivec2 resolution = glm::ivec2(0, 0);
+  double roulette = 0.0;
+  double radius = 0.0;
+  double alpha = 0.0;
+  double beta = 0.0;
+  double epsilon = 0.0;
+  double total_time = 0.0;
+  double scatter_time = 0.0;
+  double build_time = 0.0;
+  double gather_time = 0.0;
+  double merge_time = 0.0;
+  double intersect_time = 0.0;
+  double trace_eye_time = 0.0;
+  double trace_light_time = 0.0;
+  glm::vec3 average = glm::vec3(0.0f, 0.0f, 0.0f);
 };
 
-void saveEXR(
-    const std::string& path,
-    const metadata_t& metadata,
-    const vec3* data);
+template <class Stream> Stream& operator<<(Stream& stream, const metadata_t& meta) {
+    double connection_time = meta.trace_eye_time - meta.trace_light_time - meta.gather_time;
+    double query_time = meta.gather_time - meta.merge_time - meta.intersect_time;
+    double generate_time = meta.scatter_time - meta.build_time;
 
-void saveEXR(
-    const std::string& path,
-    const metadata_t& metadata,
-    const std::vector<vec3>& data);
+    stream
+        << "technique: " << meta.technique << "\n"
+        << "num samples: " << meta.num_samples << "\n"
+        << "num basic rays: " << meta.num_basic_rays << "\n"
+        << "num shadow rays: " << meta.num_shadow_rays << "\n"
+        << "num tentative rays: " << meta.num_tentative_rays << "\n"
+        << "num photons: " << meta.num_photons << "\n"
+        << "num scattered: " << meta.num_scattered / meta.num_samples << " (" << (meta.num_scattered / meta.num_samples + meta.num_photons - 1) / meta.num_photons << "x)\n"
+        << "num threads: " << meta.num_threads << "\n"
+        << "resolution: [" << meta.resolution.x << ", " << meta.resolution.y << "]\n"
+        << "roulette: " << meta.roulette << "\n"
+        << "radius: " << meta.radius << "\n"
+        << "alpha: " << meta.alpha << "\n"
+        << "beta: " << meta.beta << "\n"
+        << "epsilon: " << meta.epsilon << "\n"
+        << "time per sample: " << meta.total_time / meta.num_samples << "s\n"
+        << "    trace eye time: " << meta.trace_eye_time / meta.total_time << " (" << meta.trace_eye_time / meta.num_samples << "s)\n"
+        << "        trace light time: " << meta.trace_light_time / meta.total_time << " (" << meta.trace_light_time / meta.num_samples << "s)\n"
+        << "        gather time: " << meta.gather_time / meta.total_time << " (" << meta.gather_time / meta.num_samples << "s)\n"
+        << "            intersect time: " << meta.intersect_time / meta.total_time << " (" << meta.intersect_time / meta.num_samples << "s)\n"
+        << "            query time: " << query_time / meta.total_time << " (" << query_time / meta.num_samples << "s)\n"
+        << "            merge time: " << meta.merge_time / meta.total_time << " (" << meta.merge_time / meta.num_samples << "s)\n"
+        << "        connection time: " << connection_time / meta.total_time << " (" << connection_time / meta.num_samples << "s)\n"
+        << "    scatter time: " << meta.scatter_time / meta.total_time << " (" << meta.scatter_time / meta.num_samples << "s)\n"
+        << "        generate time: " << generate_time / meta.total_time << " (" << generate_time / meta.num_samples << "s)\n"
+        << "        build time: " << meta.build_time / meta.total_time << " (" << meta.build_time / meta.num_samples << "s)";
 
-void loadEXR(
-    const std::string& path,
-    metadata_t& metadata,
-    std::vector<vec3>& data);
+
+    return stream;
+}
+
+void saveEXR(const std::string& path, const metadata_t& metadata,
+             const vec3* data);
+
+void saveEXR(const std::string& path, const metadata_t& metadata,
+             const std::vector<vec3>& data);
+
+void loadEXR(const std::string& path, metadata_t& metadata,
+             std::vector<vec3>& data);
 
 std::vector<dvec4> vv3f_to_vv4d(const std::vector<vec3>& data);
 std::vector<vec3> vv4f_to_vv3f(std::size_t size, const vec4* data);
@@ -76,5 +115,15 @@ void subtract(const string& result, const string& path0, const string& path1);
 
 double high_resolution_time();
 
-}
+struct time_scope_t {
+  time_scope_t(double& timer) : _timer(timer), _start(high_resolution_time()) {}
+  ~time_scope_t() { _timer += high_resolution_time() - _start; }
 
+  time_scope_t(double&&) = delete;
+  time_scope_t& operator=(double&&) = delete;
+
+ private:
+  double& _timer;
+  double _start;
+};
+}
