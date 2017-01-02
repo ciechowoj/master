@@ -39,10 +39,6 @@ struct AreaLight {
     std::unique_ptr<BSDF> create_bsdf(const bounding_sphere_t&) const;
 };
 
-bounding_sphere_t bounding_sphere_wrt_area_light(
-    const bounding_sphere_t& bound,
-    const AreaLight& light);
-
 class AreaLights : public Geometry {
 public:
     void init(const Intersector* intersector, bounding_sphere_t sphere);
