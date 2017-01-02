@@ -10,29 +10,18 @@ namespace haste {
 struct LightSample {
     SurfacePoint surface;
     vec3 _radiance;
-    vec3 _omega;
     float _areaDensity;
-    float _omegaDensity;
 
     const vec3& position() const { return surface.position(); }
     const vec3& normal() const { return surface.normal(); }
     const vec3& gnormal() const { return surface.gnormal; }
     const vec3& radiance() const { return _radiance; }
-    const vec3& omega() const { return _omega; }
-    const float density() const { return _areaDensity * _omegaDensity; }
-    const float densityInv() const { return 1.0f / density(); }
     const float areaDensity() const { return _areaDensity; };
-    const float omegaDensity() const { return _omegaDensity; };
 };
 
 struct LSDFQuery {
-    vec3 _radiance;
-    float _areaDensity;
-    float _omegaDensity;
-
-    const vec3& radiance() const { return _radiance; }
-    const float areaDensity() const { return _areaDensity; }
-    const float omegaDensity() const { return _omegaDensity; }
+    vec3 radiance;
+    float density;
 };
 
 struct AreaLight {

@@ -72,13 +72,13 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 
       if (surface.is_light()) {
         auto lsdf = _scene->queryLSDF(eye[itr].surface, eye[itr].omega);
-        float weightInv = pow(lsdf.areaDensity(), _beta) /
+        float weightInv = pow(lsdf.density, _beta) /
                               pow(edge.fGeometry * bsdf.density, _beta) +
                           1.0f;
 
         if (bsdf.specular == 1.0f) weightInv = 1.0f;
 
-        radiance += lsdf.radiance() * eye[itr].throughput / weightInv;
+        radiance += lsdf.radiance * eye[itr].throughput / weightInv;
       } else {
         break;
       }

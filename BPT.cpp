@@ -240,14 +240,15 @@ template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
     }
 
     auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
+    auto bsdf = _scene->queryBSDF(eye.surface, vec3(0.0f), eye.omega);
 
     float Cp
-        = (eye.C * Beta::beta(lsdf.omegaDensity()) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(lsdf.areaDensity());
+        = (eye.C * Beta::beta(bsdf.density) + eye.c * (1.0f - eye.specular))
+        * Beta::beta(lsdf.density);
 
     float weightInv = Cp + 1.0f;
 
-    return lsdf.radiance()
+    return lsdf.radiance
         * eye.throughput
         / weightInv;
 }

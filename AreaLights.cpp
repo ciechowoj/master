@@ -103,10 +103,6 @@ LightSample AreaLights::sample(
     size_t light_id = _sampleLight(engine);
     const auto& light = this->light(light_id);
 
-    auto bound = bounding_sphere_wrt_area_light(_scene_bound, light);
-
-    auto sample = sample_lambert(engine, vec3(0.0f, 1.0f, 0.0f), bound);
-
     LightSample result;
 
     result.surface._position = _samplePosition(light_id, engine);
@@ -114,10 +110,8 @@ LightSample AreaLights::sample(
     result.surface.gnormal = light.normal();
     result.surface._materialId = light.materialId;
 
-    result._omega = light.tangent * sample.direction;
     result._radiance = light.radiance();
     result._areaDensity = _weights[light_id] / light.area();
-    result._omegaDensity = lambert_density(sample);
 
     return result;
 }
@@ -138,14 +132,11 @@ LSDFQuery AreaLights::queryLSDF(
 {
     auto& light = this->light(light_id);
 
-    auto bound = bounding_sphere_wrt_area_light(_scene_bound, light);
-
     float cosTheta = dot(omega, light.normal());
 
     LSDFQuery result;
-    result._radiance = light.radiance() * (cosTheta > 0.0f ? 1.0f : 0.0f);
-    result._areaDensity = _weights[light_id] / light.area();
-    result._omegaDensity = abs(cosTheta) * one_over_pi<float>() / lambert_adjust(bound);
+    result.radiance = light.radiance() * (cosTheta > 0.0f ? 1.0f : 0.0f);
+    result.density = _weights[light_id] / light.area();
 
     return result;
 }

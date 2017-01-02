@@ -62,7 +62,7 @@ template <class Stream> Stream& operator<<(Stream& stream, const metadata_t& met
         << "num shadow rays: " << meta.num_shadow_rays << "\n"
         << "num tentative rays: " << meta.num_tentative_rays << "\n"
         << "num photons: " << meta.num_photons << "\n"
-        << "num scattered: " << meta.num_scattered / meta.num_samples << " (" << (meta.num_scattered / meta.num_samples + meta.num_photons - 1) / meta.num_photons << "x)\n"
+        << "num scattered: " << meta.num_scattered / meta.num_samples << " (" << (meta.num_scattered / meta.num_samples + meta.num_photons - 1) / max(size_t(1), meta.num_photons) << "x)\n"
         << "num threads: " << meta.num_threads << "\n"
         << "resolution: [" << meta.resolution.x << ", " << meta.resolution.y << "]\n"
         << "roulette: " << meta.roulette << "\n"
