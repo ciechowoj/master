@@ -8,56 +8,6 @@ BSDF::BSDF() {}
 
 BSDF::~BSDF() {}
 
-/*const BSDFQuery BSDF::query(vec3 incident, vec3 outgoing) const
-{
-    BSDFQuery query;
-
-    query.throughput = incident.y > 0.0f && outgoing.y > 0.0f
-        ? vec3(1.0f, 0.0f, 1.0f) * one_over_pi<float>()
-        : vec3(0.0f);
-
-    query.density = outgoing.y > 0.0f
-        ? outgoing.y * one_over_pi<float>()
-        : 0.0f;
-
-    query.densityRev = incident.y > 0.0f
-        ? incident.y * one_over_pi<float>()
-        : 0.0f;
-
-    return query;
-}*/
-
-/* const BSDFQuery BSDF::query(const SurfacePoint& point, vec3 incident, vec3
-outgoing) const
-{
-    return query(point.toSurface(incident), point.toSurface(outgoing));
-}*/
-
-/*const BSDFSample BSDF::sample(
-    random_generator_t& generator,
-    vec3 omega) const
-{
-    BSDFSample sample;
-    sample.throughput = vec3(1.0f, 0.0f, 1.0f) * one_over_pi<float>();
-    sample.omega = sample_lambert(generator, omega).direction;
-    sample.density = abs(sample.omega.y * one_over_pi<float>());
-    sample.densityRev = abs(omega.y * one_over_pi<float>());
-    sample.specular = 0.0f;
-
-    return sample;
-}*/
-
-/*const BSDFSample BSDF::sample(
-    random_generator_t& generator,
-    const SurfacePoint& point,
-    vec3 omega) const
-{
-    BSDFSample result = sample(generator, point.toSurface(omega));
-    result.omega = point.toWorld(result.omega);
-
-    return result;
-}*/
-
 BSDFBoundedSample BSDF::sample_bounded(random_generator_t& generator,
                                        bounding_sphere_t target,
                                        vec3 omega) const {
