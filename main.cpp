@@ -61,11 +61,14 @@ int main(int argc, char **argv) {
     if (options.action == Options::AVG) {
         printAVG(options.input0);
     }
-    else if (options.action == Options::RMS) {
-        printRMS(options.input0, options.input1);
+    else if (options.action == Options::Errors) {
+        print_errors(options.input0, options.input1);
     }
     else if (options.action == Options::SUB) {
         subtract(options.output, options.input0, options.input1);
+    }
+    else if (options.action == Options::Merge) {
+        merge(options.output, options.input0, options.input1);
     }
     else if (options.action == Options::Filter) {
         filter_out_nan(options.output, options.input0);

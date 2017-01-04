@@ -360,32 +360,6 @@ void printAVG(const string& path) {
     printVec(computeAVG(path));
 }
 
-double computeRMS(const string& path0, const string& path1) {
-    vector<vec3> data0, data1;
-    metadata_t metadata0, metadata1;
-
-    loadEXR(path0, metadata0, data0);
-    loadEXR(path1, metadata1, data1);
-
-    double sum = 0.0f;
-
-    if (data0.size() != data1.size()) {
-        throw std::runtime_error(
-            "Sizes of '" + path0 + "' and '" + path1 + "' doesn't match.");
-    }
-
-    double num = 0.0f;
-    for (size_t i = 0; i < data0.size(); ++i) {
-        if (!any(isnan(data0[i])) && !any(isnan(data1[i]))) {
-            auto diff = data0[i] - data1[i];
-            sum += l1Norm(diff * diff);
-            num += 3.0f;
-        }
-    }
-
-    return sqrt(sum / num);
-}
-
 void subtract(const string& result, const string& path0, const string& path1) {
     vector<vec3> data0, data1, data2;
     metadata_t metadata0, metadata1;
@@ -410,6 +384,90 @@ void subtract(const string& result, const string& path0, const string& path1) {
     metadata.resolution.y = metadata0.resolution.y;
 
     saveEXR(result, metadata, data2);
+}
+
+void merge(const string& result, const string& path0, const string& path1) {
+    vector<vec3> data0, data1, data2;
+    metadata_t metadata0, metadata1;
+
+    loadEXR(path0, metadata0, data0);
+    loadEXR(path1, metadata1, data1);
+
+    if (data0.size() != data1.size()) {
+        throw std::runtime_error(
+            "Sizes of '" + path0 + "' and '" + path1 + "' doesn't match.");
+    }
+
+    data2.resize(data0.size());
+
+    for (size_t i = 0; i < data0.size(); ++i) {
+        if (any(isnan(data0[i]))) {
+            data2[i] = data1[i];
+        }
+        else if (any(isnan(data1[i]))) {
+            data2[i] = data0[i];
+        }
+        else {
+            data2[i] = (data0[i] + data1[i]) / 2.0f;
+        }
+    }
+
+    metadata_t metadata;
+    metadata.technique = metadata0.technique;
+    metadata.num_samples = metadata0.num_samples + metadata1.num_samples;
+    metadata.num_basic_rays = metadata0.num_basic_rays + metadata1.num_basic_rays;
+    metadata.num_shadow_rays = metadata0.num_shadow_rays + metadata1.num_shadow_rays;
+    metadata.num_tentative_rays = metadata0.num_tentative_rays + metadata1.num_tentative_rays;
+    metadata.num_photons = metadata0.num_photons + metadata1.num_photons;
+    metadata.num_scattered = metadata0.num_scattered + metadata1.num_scattered;
+    metadata.num_threads = metadata0.num_threads + metadata1.num_threads;
+    metadata.resolution.x = metadata0.resolution.x;
+    metadata.resolution.y = metadata0.resolution.y;
+
+    metadata.total_time = metadata0.total_time + metadata1.total_time;
+    metadata.scatter_time = metadata0.scatter_time + metadata1.scatter_time;
+    metadata.build_time = metadata0.build_time + metadata1.build_time;
+    metadata.gather_time = metadata0.gather_time + metadata1.gather_time;
+    metadata.merge_time = metadata0.merge_time + metadata1.merge_time;
+    metadata.density_time = metadata0.density_time + metadata1.density_time;
+    metadata.intersect_time = metadata0.intersect_time + metadata1.intersect_time;
+    metadata.trace_eye_time = metadata0.trace_eye_time + metadata1.trace_eye_time;
+    metadata.trace_light_time = metadata0.trace_light_time + metadata1.trace_light_time;
+
+    saveEXR(result, metadata, data2);
+}
+
+compute_errors_t compute_errors(const string& path0, const string& path1) {
+    vector<vec3> data0, data1;
+    metadata_t metadata0, metadata1;
+
+    loadEXR(path0, metadata0, data0);
+    loadEXR(path1, metadata1, data1);
+
+    double abs_sum = 0.0;
+    double rms_sum = 0.0;
+
+    if (data0.size() != data1.size()) {
+        throw std::runtime_error(
+            "Sizes of '" + path0 + "' and '" + path1 + "' doesn't match.");
+    }
+
+    double num = 0.0f;
+    for (size_t i = 0; i < data0.size(); ++i) {
+        if (!any(isnan(data0[i])) && !any(isnan(data1[i]))) {
+            auto diff = data0[i] - data1[i];
+            rms_sum += l1Norm(diff * diff);
+            abs_sum += l1Norm(diff);
+            num += 3.0f;
+        }
+    }
+
+    return { abs_sum / num, sqrt(rms_sum / num) };
+}
+
+void print_errors(const string& path0, const string& path1) {
+    auto errors = compute_errors(path0, path1);
+    std::cout << std::setprecision(10) << errors.abs << " " << errors.rms << std::endl;
 }
 
 void filter_out_nan(const string& source, const string& target) {
@@ -455,10 +513,6 @@ void print_time(const string& source) {
     loadEXR(source, metadata, data);
 
     std::cout << metadata.total_time << std::endl;
-}
-
-void printRMS(const string& path0, const string& path1) {
-    std::cout << computeRMS(path0, path1) << std::endl;
 }
 
 double high_resolution_time() {

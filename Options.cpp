@@ -21,37 +21,37 @@ R"(
       master <input> [options]
       master (-h | --help)
       master --version
-      master avg <x>      Compute average value of pixels in <x>.
-      master rms <x> <y>  Compute root mean square error between <x> and <y>.
-      master sub <x> <y>  Compute difference between <x> and <y>.
+      master avg <x>         Compute average value of pixels in <x>.
+      master errors <x> <y>  Compute abs and rms (in this order) error between <x> and <y>.
+      master sub <x> <y>     Compute difference between <x> and <y>.
 
     Options:
-      -h --help           Show this screen.
-      --version           Show version.
-      --PT                Use path tracing for rendering (this is default one).
-      --BPT               Use bidirectional path tracing (balance heuristics).
-      --VCM               Use vertex connection and merging.
-      --UPG               Use unbiased photon gathering.
-      --num-photons=<n>   Use n photons. [default: 1 000 000]
-      --max-radius=<n>    Use n as maximum gather radius. [default: 0.1]
-      --roulette=<n>      Russian roulette coefficient. [default: 0.5]
-      --beta=<n>          MIS beta. [default: 1]
-      --alpha=<n>         VCM alpha. [default: 0.75]
-      --batch             Run in batch mode (interactive otherwise).
-      --quiet             Do not output anything to console.
-      --no-vc             Disable vertex connection.
-      --no-vm             Disable vertex merging.
-      --no-lights         Do not draw the lights.
-      --no-reload         Disable auto-reload (input file is reloaded on modification in interactive mode).
-      --num-samples=<n>   Terminate after n samples.
-      --num-seconds=<n>   Terminate after n seconds.
-      --num-minutes=<n>   Terminate after n minutes.
-      --parallel          Use multi-threading.
-      --snapshot=<n>      Save output every n samples (adds number of samples to output file).
-      --output=<path>     Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
-      --reference=<path>  Reference file for comparison.
-      --camera=<id>       Use camera with given id. [default: 0]
-      --resolution=<WxH>  Resolution of output image. [default: 512x512]
+      -h --help              Show this screen.
+      --version              Show version.
+      --PT                   Use path tracing for rendering (this is default one).
+      --BPT                  Use bidirectional path tracing (balance heuristics).
+      --VCM                  Use vertex connection and merging.
+      --UPG                  Use unbiased photon gathering.
+      --num-photons=<n>      Use n photons. [default: 1 000 000]
+      --max-radius=<n>       Use n as maximum gather radius. [default: 0.1]
+      --roulette=<n>         Russian roulette coefficient. [default: 0.5]
+      --beta=<n>             MIS beta. [default: 1]
+      --alpha=<n>            VCM alpha. [default: 0.75]
+      --batch                Run in batch mode (interactive otherwise).
+      --quiet                Do not output anything to console.
+      --no-vc                Disable vertex connection.
+      --no-vm                Disable vertex merging.
+      --no-lights            Do not draw the lights.
+      --no-reload            Disable auto-reload (input file is reloaded on modification in interactive mode).
+      --num-samples=<n>      Terminate after n samples.
+      --num-seconds=<n>      Terminate after n seconds.
+      --num-minutes=<n>      Terminate after n minutes.
+      --parallel             Use multi-threading.
+      --snapshot=<n>         Save output every n samples (adds number of samples to output file).
+      --output=<path>        Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
+      --reference=<path>     Reference file for comparison.
+      --camera=<id>          Use camera with given id. [default: 0]
+      --resolution=<WxH>     Resolution of output image. [default: 512x512]
 
 )";
 
@@ -184,7 +184,7 @@ Options parseAvgArgs(int argc, char const* const* argv) {
     return options;
 }
 
-Options parseRmsArgs(int argc, char const* const* argv) {
+Options parseErrorsArgs(int argc, char const* const* argv) {
     Options options;
 
     if (argc != 4) {
@@ -192,7 +192,7 @@ Options parseRmsArgs(int argc, char const* const* argv) {
         options.displayMessage = "Input files are required.";
     }
     else {
-        options.action = Options::RMS;
+        options.action = Options::Errors;
         options.input0 = argv[2];
         options.input1 = argv[3];
     }
@@ -209,6 +209,23 @@ Options parseSubArgs(int argc, char const* const* argv) {
     }
     else {
         options.action = Options::SUB;
+        options.output = argv[2];
+        options.input0 = argv[3];
+        options.input1 = argv[4];
+    }
+
+    return options;
+}
+
+Options parseMergeArgs(int argc, char const* const* argv) {
+    Options options;
+
+    if (argc != 5) {
+        options.displayHelp = true;
+        options.displayMessage = "Input files are required.";
+    }
+    else {
+        options.action = Options::Merge;
         options.output = argv[2];
         options.input0 = argv[3];
         options.input1 = argv[4];
@@ -253,11 +270,14 @@ Options parseArgs(int argc, char const* const* argv) {
         if (1 < argc && argv[1] == string("avg")) {
             return parseAvgArgs(argc, argv);
         }
-        else if (1 < argc && argv[1] == string("rms")) {
-            return parseRmsArgs(argc, argv);
-        }
         else if (1 < argc && argv[1] == string("sub")) {
             return parseSubArgs(argc, argv);
+        }
+        else if (1 < argc && argv[1] == string("errors")) {
+            return parseErrorsArgs(argc, argv);
+        }
+        else if (1 < argc && argv[1] == string("merge")) {
+            return parseMergeArgs(argc, argv);
         }
         else if (1 < argc && argv[1] == string("filter")) {
             return parseFilterArgs(argc, argv);

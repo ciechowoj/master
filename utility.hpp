@@ -72,6 +72,7 @@ template <class Stream> Stream& operator<<(Stream& stream, const metadata_t& met
         << "alpha: " << meta.alpha << "\n"
         << "beta: " << meta.beta << "\n"
         << "epsilon: " << meta.epsilon << "\n"
+        << "total time: " << meta.total_time << "s\n"
         << "time per sample: " << meta.total_time / meta.num_samples << "s\n"
         << "    trace eye time: " << meta.trace_eye_time / meta.total_time << " (" << meta.trace_eye_time / meta.num_samples << "s)\n"
         << "        trace light time: " << meta.trace_light_time / meta.total_time << " (" << meta.trace_light_time / meta.num_samples << "s)\n"
@@ -112,10 +113,16 @@ size_t getmtime(const string& path);
 dvec3 computeAVG(const string& path);
 void printAVG(const string& path);
 void printHistory(const string& path);
-
-double computeRMS(const string& path0, const string& path1);
-void printRMS(const string& path0, const string& path1);
 void subtract(const string& result, const string& path0, const string& path1);
+void merge(const string& result, const string& path0, const string& path1);
+
+struct compute_errors_t {
+  double abs;
+  double rms;
+};
+
+compute_errors_t compute_errors(const string& path0, const string& path1);
+void print_errors(const string& path0, const string& path1);
 
 void filter_out_nan(const string& source, const string& target);
 void print_time(const string& source);
