@@ -217,6 +217,37 @@ Options parseSubArgs(int argc, char const* const* argv) {
     return options;
 }
 
+Options parseFilterArgs(int argc, char const* const* argv) {
+    Options options;
+
+    if (argc != 4) {
+        options.displayHelp = true;
+        options.displayMessage = "Input file is required.";
+    }
+    else {
+        options.action = Options::Filter;
+        options.output = argv[2];
+        options.input0 = argv[3];
+    }
+
+    return options;
+}
+
+Options parseTimeArgs(int argc, char const* const* argv) {
+    Options options;
+
+    if (argc != 3) {
+        options.displayHelp = true;
+        options.displayMessage = "Input file is required.";
+    }
+    else {
+        options.action = Options::Time;
+        options.input0 = argv[2];
+    }
+
+    return options;
+}
+
 Options parseArgs(int argc, char const* const* argv) {
     if (1 < argc) {
         if (1 < argc && argv[1] == string("avg")) {
@@ -227,6 +258,12 @@ Options parseArgs(int argc, char const* const* argv) {
         }
         else if (1 < argc && argv[1] == string("sub")) {
             return parseSubArgs(argc, argv);
+        }
+        else if (1 < argc && argv[1] == string("filter")) {
+            return parseFilterArgs(argc, argv);
+        }
+        else if (1 < argc && argv[1] == string("time")) {
+            return parseTimeArgs(argc, argv);
         }
     }
 

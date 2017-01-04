@@ -67,6 +67,12 @@ int main(int argc, char **argv) {
     else if (options.action == Options::SUB) {
         subtract(options.output, options.input0, options.input1);
     }
+    else if (options.action == Options::Filter) {
+        filter_out_nan(options.output, options.input0);
+    }
+    else if (options.action == Options::Time) {
+        print_time(options.input0);
+    }
     else {
         Application application(options);
 

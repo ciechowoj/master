@@ -113,9 +113,12 @@ dvec3 computeAVG(const string& path);
 void printAVG(const string& path);
 void printHistory(const string& path);
 
-dvec3 computeRMS(const string& path0, const string& path1);
+double computeRMS(const string& path0, const string& path1);
 void printRMS(const string& path0, const string& path1);
 void subtract(const string& result, const string& path0, const string& path1);
+
+void filter_out_nan(const string& source, const string& target);
+void print_time(const string& source);
 
 double high_resolution_time();
 

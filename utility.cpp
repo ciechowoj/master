@@ -360,26 +360,30 @@ void printAVG(const string& path) {
     printVec(computeAVG(path));
 }
 
-dvec3 computeRMS(const string& path0, const string& path1) {
+double computeRMS(const string& path0, const string& path1) {
     vector<vec3> data0, data1;
     metadata_t metadata0, metadata1;
 
     loadEXR(path0, metadata0, data0);
     loadEXR(path1, metadata1, data1);
 
-    dvec3 result = dvec3(0.0f);
+    double sum = 0.0f;
 
     if (data0.size() != data1.size()) {
         throw std::runtime_error(
             "Sizes of '" + path0 + "' and '" + path1 + "' doesn't match.");
     }
 
+    double num = 0.0f;
     for (size_t i = 0; i < data0.size(); ++i) {
-        auto diff = data0[i] - data1[i];
-        result += diff * diff;
+        if (!any(isnan(data0[i])) && !any(isnan(data1[i]))) {
+            auto diff = data0[i] - data1[i];
+            sum += l1Norm(diff * diff);
+            num += 3.0f;
+        }
     }
 
-    return sqrt(result / double(data0.size()));
+    return sqrt(sum / num);
 }
 
 void subtract(const string& result, const string& path0, const string& path1) {
@@ -408,8 +412,53 @@ void subtract(const string& result, const string& path0, const string& path1) {
     saveEXR(result, metadata, data2);
 }
 
+void filter_out_nan(const string& source, const string& target) {
+    vector<vec3> data, result;
+    metadata_t metadata;
+
+    loadEXR(source, metadata, data);
+
+    int w = metadata.resolution.x;
+    int h = metadata.resolution.y;
+
+    result.resize(data.size());
+
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
+            if (any(isnan(data[y * w + x]))) {
+                float num = 0.0f;
+                vec3 sum = vec3(0.0f);
+                for (int j = glm::max(0, y - 1); j < glm::min(h - 1, y + 1); ++j) {
+                    for (int i = glm::max(0, x - 1); i < glm::min(w - 1, x + 1); ++i) {
+                        if (!any(isnan(data[j * w + i]))) {
+                            sum += data[j * w + i];
+                            num += 1.0f;
+                        }
+                    }
+                }
+
+                result[y * w + x] = sum / num;
+            }
+            else {
+                result[y * w + x] = data[y * w + x];
+            }
+        }
+    }
+
+    saveEXR(target, metadata, result);
+}
+
+void print_time(const string& source) {
+    vector<vec3> data;
+    metadata_t metadata;
+
+    loadEXR(source, metadata, data);
+
+    std::cout << metadata.total_time << std::endl;
+}
+
 void printRMS(const string& path0, const string& path1) {
-    printVec(computeRMS(path0, path1));
+    std::cout << computeRMS(path0, path1) << std::endl;
 }
 
 double high_resolution_time() {
