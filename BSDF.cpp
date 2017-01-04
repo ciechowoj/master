@@ -273,9 +273,11 @@ BSDFQuery DeltaBSDF::query(const SurfacePoint& surface, vec3 incident,
 BSDFSample ReflectionBSDF::sample(random_generator_t& generator,
                                   const SurfacePoint& surface,
                                   vec3 omega) const {
+  vec3 local_omega = surface.toSurface(omega);
+
   BSDFSample sample;
-  sample.throughput = vec3(1.0f, 1.0f, 1.0f) / omega.y;
-  sample.omega = vec3(-omega.x, omega.y, -omega.z);
+  sample.throughput = vec3(1.0f, 1.0f, 1.0f) / local_omega.y;
+  sample.omega = surface.toWorld(vec3(-local_omega.x, local_omega.y, -local_omega.z));
   sample.density = 1.0f;
   sample.densityRev = 1.0f;
   sample.specular = 1.0f;
