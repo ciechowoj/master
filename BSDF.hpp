@@ -65,10 +65,12 @@ class LightBSDF : public BSDF {
 
 class CameraBSDF : public BSDF {
  public:
-  BSDFSample sample(random_generator_t& generator, const SurfacePoint& surface,
-                    vec3 omega) const override;
   BSDFQuery query(const SurfacePoint& surface, vec3 incident,
                   vec3 outgoing) const override;
+  BSDFSample sample(random_generator_t& generator, const SurfacePoint& surface,
+                    vec3 omega) const override;
+  BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   bounding_sphere_t target, vec3 omega) const override;
 };
 
 class DiffuseBSDF : public BSDF {

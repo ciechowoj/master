@@ -100,13 +100,23 @@ BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
   vec3 local_incident = surface.toSurface(incident);
 
   query.throughput =
-      (local_incident.y < 0.0f ? 1.0f : 0.0f) / vec3(pow(local_incident.y, 4));
+      vec3(local_incident.y < 0.0f ? 1.0f : 0.0f) / pow(abs(local_incident.y), 1.0f);
 
   query.density = 0.0f;
 
   query.densityRev = 1.0f;
 
   return query;
+}
+
+BSDFBoundedSample CameraBSDF::sample_bounded(random_generator_t& generator,
+                                             bounding_sphere_t target,
+                                             vec3 omega) const {
+  BSDFBoundedSample result;
+  result.omega = -omega;
+  result.adjust = 1.0f;
+
+  return result;
 }
 
 DiffuseBSDF::DiffuseBSDF(vec3 diffuse) : _diffuse(diffuse) {}
@@ -277,7 +287,8 @@ BSDFSample ReflectionBSDF::sample(random_generator_t& generator,
 
   BSDFSample sample;
   sample.throughput = vec3(1.0f, 1.0f, 1.0f) / local_omega.y;
-  sample.omega = surface.toWorld(vec3(-local_omega.x, local_omega.y, -local_omega.z));
+  sample.omega =
+      surface.toWorld(vec3(-local_omega.x, local_omega.y, -local_omega.z));
   sample.density = 1.0f;
   sample.densityRev = 1.0f;
   sample.specular = 1.0f;

@@ -95,6 +95,7 @@ private:
         const light_path_t& path);
 
     vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const light_path_t& path);
+    vec3 _gather_eye(render_context_t& context, const EyeVertex& eye);
 
     void _scatter(random_generator_t& generator);
 
@@ -124,6 +125,7 @@ private:
     const float _alpha;
 
     size_t _num_scattered;
+    float _num_scattered_inv;
     float _radius;
     float _circle;
 

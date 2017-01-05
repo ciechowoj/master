@@ -24,6 +24,7 @@ UPGBase<Beta, Mode>::UPGBase(
     , _initial_radius(radius)
     , _alpha(alpha)
     , _num_scattered(0)
+    , _num_scattered_inv(0.0f)
     , _radius(radius)
     , _circle(pi<float>() * radius * radius) {
     _metadata.num_photons = _num_photons;
@@ -66,6 +67,10 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].d = 0;
     eye[prv].D = 0;
 
+    if (_enable_vm) {
+        radiance += _gather_eye(context, eye[prv]);
+    }
+
     if (_enable_vc) {
         radiance += _connect_eye(context, eye[prv], light_path);
     }
@@ -73,9 +78,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
     while (surface.is_light()) {
-        if (_enable_vc) {
-            radiance += eye[prv].throughput * _lights * _scene->queryRadiance(surface, -ray.direction);
-        }
+        radiance += eye[prv].throughput * _lights * _scene->queryRadiance(surface, -ray.direction);
 
         surface = _scene->intersect(surface, ray.direction);
     }
@@ -97,7 +100,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[itr].specular = 0.0f;
     eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
     eye[itr].C = 0.0f;
-    eye[itr].d = 0.0f;
+    eye[itr].d = 1.0f / Beta::beta(edge.fGeometry);
     eye[itr].D = 0.0f;
 
     std::swap(itr, prv);
@@ -387,6 +390,15 @@ vec3 UPGBase<Beta, Mode>::_connect_light(const EyeVertex& eye) {
 
     float Dp = eye.D / eye.c * Beta::beta(bsdf.density);
 
+
+    /*float Cp
+        = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
+        * Beta::beta(edge.fGeometry * lightBSDF.density);*/
+
+    /* float Dp
+        = (eye.D * Beta::beta(bsdf.density) + (1.0f - bsdf.specular) * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
+        * Beta::beta(lsdf.density);*/
+
     float weightInv = Cp + Beta::beta(float(_num_scattered)) * Dp + 1.0f;
 
     return lsdf.radiance
@@ -453,9 +465,63 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
                 float correct_normal = abs(dot(omega, path[i].surface.gnormal)
                     / dot(omega, path[i].surface.normal()));
 
-                return _connect<true>(path[i], eye) * context.focal_factor_y * correct_normal;
+                vec3 camera = eye.surface.toSurface(omega);
+                float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
+
+                return _connect<false>(path[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
             });
     }
+
+    return radiance;
+}
+
+template <class Beta, GatherMode Mode>
+vec3 UPGBase<Beta, Mode>::_gather_eye(
+    render_context_t& context,
+    const EyeVertex& eye) {
+    SurfacePoint surface;
+
+    {
+        time_scope_t _(_metadata.intersect_time);
+        surface = _scene->intersectMesh(eye.surface, -eye.omega);
+
+        if (!surface.is_present()) {
+            return vec3(0.0f);
+        }
+    }
+
+    vec3 radiance = vec3(0.0f);
+
+    _vertices.rQuery(
+        [&](const LightVertex& light) {
+            time_scope_t _(_metadata.merge_time);
+
+            vec3 omega = normalize(light.surface.position() - eye.surface.position());
+
+            radiance += _accumulate(
+            context,
+            omega,
+            [&] {
+                float correct_normal = abs(dot(omega, light.surface.gnormal)
+                    / dot(omega, light.surface.normal()));
+
+                if (Mode == GatherMode::Unbiased) {
+                    return _merge(*context.generator, light, eye)
+                    * _num_scattered_inv * context.focal_factor_y * correct_normal;
+                }
+                else {
+
+                    BSDFQuery query = CameraBSDF().query(eye.surface, omega, eye.omega);
+                    /*query.throughput = vec3(1.0f);
+                    query.density = 0.0f;
+                    query.densityRev = 1.0f;*/
+                    return _merge(*context.generator, light, eye, query)
+                    * _num_scattered_inv * correct_normal; // * context.focal_factor_y; //
+                }
+            });
+        },
+        surface.position(),
+        _radius);
 
     return radiance;
 }
@@ -485,6 +551,7 @@ void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
     });
 
     _num_scattered = total_num_scattered;
+    _num_scattered_inv = 1.0f / float(_num_scattered);
 
     _metadata.num_scattered += total_num_scattered;
 
@@ -520,13 +587,13 @@ vec3 UPGBase<Beta, Mode>::_gather(random_generator_t& generator, const EyeVertex
                 query.throughput = eyeBSDF.throughput;
                 query.density = eyeBSDF.densityRev;
                 query.densityRev = eyeBSDF.density;
-                radiance += _merge(generator, light, eye, query);
+                radiance += _merge(generator, light, eye, query) * _num_scattered_inv;
             }
         },
         surface.position(),
         _radius);
 
-    return radiance / float(_num_scattered);
+    return radiance;
 }
 
 template <class Beta, GatherMode Mode>
