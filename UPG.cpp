@@ -390,15 +390,6 @@ vec3 UPGBase<Beta, Mode>::_connect_light(const EyeVertex& eye) {
 
     float Dp = eye.D / eye.c * Beta::beta(bsdf.density);
 
-
-    /*float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
-        * Beta::beta(edge.fGeometry * lightBSDF.density);*/
-
-    /* float Dp
-        = (eye.D * Beta::beta(bsdf.density) + (1.0f - bsdf.specular) * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
-        * Beta::beta(lsdf.density);*/
-
     float weightInv = Cp + Beta::beta(float(_num_scattered)) * Dp + 1.0f;
 
     return lsdf.radiance
@@ -507,7 +498,7 @@ vec3 UPGBase<Beta, Mode>::_gather_eye(
 
                 if (Mode == GatherMode::Unbiased) {
                     return _merge(*context.generator, light, eye)
-                    * _num_scattered_inv * context.focal_factor_y * correct_normal;
+                    * _num_scattered_inv * correct_normal;
                 }
                 else {
 
@@ -516,7 +507,7 @@ vec3 UPGBase<Beta, Mode>::_gather_eye(
                     query.density = 0.0f;
                     query.densityRev = 1.0f;*/
                     return _merge(*context.generator, light, eye, query)
-                    * _num_scattered_inv * correct_normal; // * context.focal_factor_y; //
+                    * _num_scattered_inv * correct_normal;
                 }
             });
         },
@@ -580,7 +571,7 @@ vec3 UPGBase<Beta, Mode>::_gather(random_generator_t& generator, const EyeVertex
             time_scope_t _(_metadata.merge_time);
 
             if (Mode == GatherMode::Unbiased) {
-                radiance += _merge(generator, light, eye);
+                radiance += _merge(generator, light, eye) * _num_scattered_inv;
             }
             else {
                 BSDFQuery query;
@@ -641,7 +632,7 @@ vec3 UPGBase<Beta, Mode>::_merge(
     auto edge = Edge(light, eye, omega);
 
     auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
-    auto density = 1.0f / (eyeBSDF.densityRev * pi<float>() * _radius * _radius);
+    auto density = 1.0f / (eyeBSDF.densityRev * _circle);
 
     vec3 result = _scene->occluded(light.surface, eye.surface)
         * light.throughput

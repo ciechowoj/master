@@ -83,10 +83,10 @@ SurfacePoint Technique::_camera_surface(render_context_t& context) {
     SurfacePoint result;
     result._position = context.camera_position;
     result._tangent[0] = context.view_to_world_mat3[1];
-    result._tangent[1] = context.view_to_world_mat3[2];
+    result._tangent[1] = -context.view_to_world_mat3[2];
     result._tangent[2] = context.view_to_world_mat3[0];
     result._materialId = -1;
-    result.gnormal = context.view_to_world_mat3[2];
+    result.gnormal = -context.view_to_world_mat3[2];
     return result;
 }
 

@@ -281,7 +281,10 @@ vec3 BPTBase<Beta>::_connect_eye(
                 float correct_normal = abs(dot(omega, path[i].surface.gnormal)
                     / dot(omega, path[i].surface.normal()));
 
-                return _connect(eye, path[i]) * context.focal_factor_y * correct_normal;
+                vec3 camera = eye.surface.toSurface(omega);
+                float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
+
+                return _connect(eye, path[i]) * context.focal_factor_y * correct_normal * correct_cos_inv;
             });
     }
 

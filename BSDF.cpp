@@ -100,7 +100,7 @@ BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
   vec3 local_incident = surface.toSurface(incident);
 
   query.throughput =
-      vec3(local_incident.y < 0.0f ? 1.0f : 0.0f) / pow(abs(local_incident.y), 1.0f);
+      vec3(local_incident.y > 0.0f ? 1.0f : 0.0f) / pow(abs(local_incident.y), 1.0f);
 
   query.density = 0.0f;
 
@@ -112,9 +112,11 @@ BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
 BSDFBoundedSample CameraBSDF::sample_bounded(random_generator_t& generator,
                                              bounding_sphere_t target,
                                              vec3 omega) const {
+  auto sample = sample_hemisphere(generator, target);
+
   BSDFBoundedSample result;
-  result.omega = -omega;
-  result.adjust = 1.0f;
+  result.omega = sample.direction;
+  result.adjust = sample.adjust * 2.0f * pi<float>();
 
   return result;
 }

@@ -160,6 +160,29 @@ float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere) {
   return theta_range * phi_range;
 }
 
+direction_sample_t sample_hemisphere(random_generator_t& generator,
+                                 bounding_sphere_t sphere) {
+  auto bound = angular_bound(sphere);
+
+  auto uniform_theta_inf = cos(bound.theta_sup);
+  auto uniform_theta_sup = cos(bound.theta_inf);
+  auto uniform_phi_inf = bound.phi_inf * one_over_pi<float>() * 0.5f;
+  auto uniform_phi_sup = bound.phi_sup * one_over_pi<float>() * 0.5f;
+
+  auto theta_range = uniform_theta_sup - uniform_theta_inf;
+  auto phi_range = uniform_phi_sup - uniform_phi_inf;
+  float adjust = theta_range * phi_range;
+
+  float y = generator.sample() * theta_range + uniform_theta_inf;
+  float phi =
+      two_pi<float>() * (generator.sample() * phi_range + uniform_phi_inf);
+  float r = sqrt(1 - y * y);
+  float x = r * cos(phi);
+  float z = r * sin(phi);
+
+  return {vec3(x, y, z), adjust};
+}
+
 random_generator_t::random_generator_t() {
   std::random_device device;
   engine.seed(device());
