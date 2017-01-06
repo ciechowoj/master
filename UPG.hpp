@@ -125,7 +125,7 @@ private:
     float _circle;
 
     vector<LightVertex> _light_paths;
-    vector<std::size_t> _light_offsets;
+    vector<uint32_t> _light_offsets;
     v3::HashGrid3D<LightVertex> _vertices;
 };
 

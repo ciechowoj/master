@@ -1,5 +1,6 @@
 #include <UPG.hpp>
 #include <Edge.hpp>
+#include <condition_variable>
 
 namespace haste {
 
@@ -494,13 +495,70 @@ vec3 UPGBase<Beta, Mode>::_gather_eye(
 
 template <class Beta, GatherMode Mode>
 void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
-    _light_paths.clear();
-    _light_offsets.resize(1, 0);
+    std::mutex mutex;
+    std::condition_variable condition;
+    std::atomic<size_t> counter(0);
+
+    const size_t num_tasks = _threadpool.num_threads();
+    const size_t num_photons = _num_photons / num_tasks;
+    const size_t num_photons_last = _num_photons - num_photons * (num_tasks - 1);
+
+    const size_t prev_paths_size = _light_paths.size();
+    const size_t prev_offsets_size = _light_offsets.size();
+
+    vector<vector<LightVertex>> paths(num_tasks - 1);
+    vector<vector<uint32_t>> offsets(num_tasks - 1);
+
+    for (size_t i = 0; i < num_tasks - 1; ++i) {
+        paths.reserve(prev_paths_size / (num_tasks - 1));
+    }
+
+    for (size_t i = 0; i < num_tasks - 1; ++i) {
+        _threadpool.exec([=, &generator, &paths, &offsets, &mutex, &condition, &counter] {
+            auto local_generator = generator.clone();
+            size_t size = 0;
+
+            offsets[i].resize(1, 0);
+            offsets[i].reserve(num_photons + 1);
+
+            for (std::size_t j = 0; j < num_photons; ++j) {
+               _traceLight(local_generator, paths[i], size);
+                offsets[i].push_back(size);
+            }
+
+            paths[i].resize(size);
+
+            if (counter.fetch_add(1) == num_tasks - 2) {
+                std::unique_lock<std::mutex> lock(mutex);
+                condition.notify_one();
+            }
+        });
+    }
+
     size_t size = 0;
 
-    for (std::size_t i = 0; i < _num_photons; ++i) {
+    _light_offsets.resize(1, 0);
+    _light_offsets.reserve(prev_offsets_size);
+
+    for (std::size_t i = 0; i < num_photons_last; ++i) {
         _traceLight(generator, _light_paths, size);
         _light_offsets.push_back(size);
+    }
+
+    _light_paths.resize(size);
+    _light_paths.reserve(prev_paths_size);
+
+    std::unique_lock<std::mutex> lock(mutex);
+    condition.wait(lock, [&] { return counter == num_tasks - 1; });
+
+    for (size_t i = 0; i < paths.size(); ++i) {
+        _light_paths.insert(_light_paths.end(), paths[i].begin(), paths[i].end());
+
+        uint32_t offset = _light_offsets.back();
+
+        for (size_t j = 1; j < offsets[i].size(); ++j) {
+            _light_offsets.push_back(offsets[i][j] + offset);
+        }
     }
 
     _num_scattered = _num_photons;
@@ -508,9 +566,6 @@ void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
     _metadata.num_scattered += _num_scattered;
 
     time_scope_t _(_metadata.build_time);
-
-    _light_paths.resize(size);
-
     _vertices = v3::HashGrid3D<LightVertex>(&_light_paths, _radius);
 }
 
