@@ -481,9 +481,6 @@ vec3 UPGBase<Beta, Mode>::_gather_eye(
                 else {
 
                     BSDFQuery query = CameraBSDF().query(eye.surface, omega, eye.omega);
-                    /*query.throughput = vec3(1.0f);
-                    query.density = 0.0f;
-                    query.densityRev = 1.0f;*/
                     return _merge(*context.generator, light, eye, query)
                     * _num_scattered_inv * correct_normal;
                 }
@@ -512,7 +509,9 @@ void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
 
     time_scope_t _(_metadata.build_time);
 
-    _vertices = v3::HashGrid3D<LightVertex>(std::vector<LightVertex>(_light_paths), _radius);
+    _light_paths.resize(size);
+
+    _vertices = v3::HashGrid3D<LightVertex>(&_light_paths, _radius);
 }
 
 template <class Beta, GatherMode Mode>

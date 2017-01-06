@@ -295,12 +295,9 @@ template <class T> class HashGrid3D {
 public:
     HashGrid3D() { }
 
-    HashGrid3D(vector<T>&& that, float radius) {
-        build(that, radius);
-    }
-
-    HashGrid3D(const vector<T>& that, float radius) {
-        build(that, radius);
+    HashGrid3D(const vector<T>* that, float radius)
+        : _data(that) {
+        build(*that, radius);
     }
 
     template <class Callback> void rQuery(
@@ -319,8 +316,8 @@ public:
 
                 if (cell != _ranges.end()) {
                     for (uint32_t i = cell->second.begin; i < cell->second.end; ++i) {
-                        if (distance2(query, _points[i]) < radiusSq) {
-                            callback(_data[i]);
+                        if (distance2(query, _points[i].cell) < radiusSq) {
+                            callback(_data->operator[](_points[i].index));
                         }
                     }
                 }
@@ -342,8 +339,13 @@ public:
     }
 
 private:
-    vector<T> _data;
-    vector<vec3> _points;
+    struct Point {
+        vec3 cell;
+        uint32_t index;
+    };
+
+    const vector<T>* _data = nullptr;
+    vector<Point> _points;
     float _radius;
     float _radius_inv;
 
@@ -353,11 +355,6 @@ private:
     };
 
     unordered_map<vec3, Range> _ranges;
-
-    struct Point {
-        vec3 cell;
-        uint32_t index;
-    };
 
     template <class L, class C, class R> void iterate_ranges(
         const vector<Point>& points,
@@ -434,79 +431,75 @@ private:
 
         const float radius_inv = 1.0f / radius;
 
-        vector<Point> points(data.size());
+        _points.resize(data.size());
 
         for (size_t i = 0; i < data.size(); ++i) {
-            points[i].cell = floor(data[i].position() * radius_inv);
-            points[i].index = i;
+            _points[i].cell = floor(data[i].position() * radius_inv);
+            _points[i].index = i;
         }
 
-        sort(points.begin(), points.end(), [](const Point& a, const Point& b) {
+        sort(_points.begin(), _points.end(), [](const Point& a, const Point& b) {
             const Comparator comparator;
             return comparator(a.cell, b.cell);
         });
 
-        iterate_ranges(points,
+        iterate_ranges(_points,
             [&](uint32_t fst, uint32_t snd, uint32_t trd) {
-                bool next = points[fst].cell.x + 1.0f == points[snd].cell.x;
+                bool next = _points[fst].cell.x + 1.0f == _points[snd].cell.x;
 
                 if (next) {
-                    _ranges[points[fst].cell] = { fst, trd };
-                    _ranges[points[snd].cell - vec3(1, 0, 0)] = { fst, snd };
+                    _ranges[_points[fst].cell] = { fst, trd };
+                    _ranges[_points[snd].cell - vec3(1, 0, 0)] = { fst, snd };
                 }
                 else {
-                    _ranges[points[fst].cell] = { fst, snd };
+                    _ranges[_points[fst].cell] = { fst, snd };
                 }
             },
             [&](uint32_t fst, uint32_t snd, uint32_t trd, uint32_t fth) {
-                bool prev = points[fst].cell.x + 1.0f == points[snd].cell.x;
-                bool next = points[snd].cell.x + 1.0f == points[trd].cell.x;
+                bool prev = _points[fst].cell.x + 1.0f == _points[snd].cell.x;
+                bool next = _points[snd].cell.x + 1.0f == _points[trd].cell.x;
 
                 if (prev && next) {
-                    _ranges[points[snd].cell] = { fst, fth };
+                    _ranges[_points[snd].cell] = { fst, fth };
                 }
                 else if (prev) {
-                    _ranges[points[snd].cell] = { fst, trd };
-                    _ranges[points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
+                    _ranges[_points[snd].cell] = { fst, trd };
+                    _ranges[_points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
                 }
                 else {
                     if (next) {
-                        _ranges[points[snd].cell] = { snd, fth };
-                        _ranges[points[snd].cell - vec3(1, 0, 0)] = { snd, trd };
+                        _ranges[_points[snd].cell] = { snd, fth };
+                        _ranges[_points[snd].cell - vec3(1, 0, 0)] = { snd, trd };
                     }
                     else {
-                        _ranges[points[snd].cell] = { snd, trd };
-                        _ranges[points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
-                        _ranges[points[snd].cell - vec3(1, 0, 0)] = { snd, trd };
+                        _ranges[_points[snd].cell] = { snd, trd };
+                        _ranges[_points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
+                        _ranges[_points[snd].cell - vec3(1, 0, 0)] = { snd, trd };
                     }
 
-                    if (points[fst].cell.x + 1.0f == points[snd].cell.x - 1.0f) {
-                        _ranges[points[snd].cell - vec3(1, 0, 0)] = { fst, trd };
+                    if (_points[fst].cell.x + 1.0f == _points[snd].cell.x - 1.0f) {
+                        _ranges[_points[snd].cell - vec3(1, 0, 0)] = { fst, trd };
                     }
                 }
             },
             [&](uint32_t fst, uint32_t snd, uint32_t trd) {
-                bool prev = points[fst].cell.x + 1.0f == points[snd].cell.x;
+                bool prev = _points[fst].cell.x + 1.0f == _points[snd].cell.x;
 
                 if (prev) {
-                    _ranges[points[snd].cell] = { fst, trd };
-                    _ranges[points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
+                    _ranges[_points[snd].cell] = { fst, trd };
+                    _ranges[_points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
                 }
                 else {
-                    _ranges[points[snd].cell] = { snd, trd };
+                    _ranges[_points[snd].cell] = { snd, trd };
 
-                    if (points[fst].cell.x + 1.0f == points[snd].cell.x - 1.0f) {
-                        _ranges[points[snd].cell - vec3(1, 0, 0)] = { fst, trd };
+                    if (_points[fst].cell.x + 1.0f == _points[snd].cell.x - 1.0f) {
+                        _ranges[_points[snd].cell - vec3(1, 0, 0)] = { fst, trd };
                     }
                 }
             });
 
-        _data.resize(data.size());
-        _points.resize(data.size());
-
-        for (uint32_t i = 0; i < data.size(); ++i) {
-            _data[i] = data[points[i].index];
-            _points[i] = _data[i].position();
+        for (uint32_t i = 0; i < _points.size(); ++i) {
+            _points[i].cell = _data->operator[](_points[i].index).position();
         }
 
         _radius = radius;
