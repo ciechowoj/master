@@ -99,11 +99,6 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     std::swap(itr, prv);
 
     while (true) {
-        if (_enable_vm) {
-            time_scope_t _2(_metadata.gather_time);
-            radiance += _gather(*context.generator, eye[prv]);
-        }
-
         if (_enable_vc) {
             radiance += _connect(*context.generator, eye[prv], context.pixel_index);
         }
@@ -165,6 +160,11 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
             }
         }
 
+        if (_enable_vm) {
+            time_scope_t _2(_metadata.gather_time);
+            radiance += _gather(*context.generator, eye[prv], bsdf, eye[itr]);
+        }
+
         std::swap(itr, prv);
 
         if (_russian_roulette(*context.generator)) {
@@ -183,6 +183,7 @@ void UPGBase<Beta, Mode>::_preprocess(random_generator_t& generator, double num_
 
     if (Mode == GatherMode::Biased) {
         _radius = _initial_radius * pow((num_samples + 1.0f), _alpha * 0.5f - 0.5f);
+        _circle = pi<float>() * _radius * _radius;
     }
 
     _scatter(generator);
@@ -515,19 +516,11 @@ void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
 }
 
 template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_gather(random_generator_t& generator, const EyeVertex& eye) {
-    auto eyeBSDF = _scene->sampleBSDF(generator, eye.surface, eye.omega);
-    SurfacePoint surface;
-
-    {
-        time_scope_t _(_metadata.intersect_time);
-        surface = _scene->intersectMesh(eye.surface, eyeBSDF.omega);
-
-        if (!surface.is_present()) {
-            return vec3(0.0f);
-        }
-    }
-
+vec3 UPGBase<Beta, Mode>::_gather(
+    random_generator_t& generator,
+    const EyeVertex& eye,
+    const BSDFQuery& eye_bsdf,
+    const EyeVertex& tentative) {
     vec3 radiance = vec3(0.0f);
 
     _vertices.rQuery(
@@ -538,14 +531,10 @@ vec3 UPGBase<Beta, Mode>::_gather(random_generator_t& generator, const EyeVertex
                 radiance += _merge(generator, light, eye) * _num_scattered_inv;
             }
             else {
-                BSDFQuery query;
-                query.throughput = eyeBSDF.throughput;
-                query.density = eyeBSDF.densityRev;
-                query.densityRev = eyeBSDF.density;
-                radiance += _merge(generator, light, eye, query) * _num_scattered_inv;
+                radiance += _merge(generator, light, eye, eye_bsdf.reverse()) * _num_scattered_inv;
             }
         },
-        surface.position(),
+        tentative.surface.position(),
         _radius);
 
     return radiance;

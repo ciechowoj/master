@@ -94,7 +94,7 @@ private:
 
     void _scatter(random_generator_t& generator);
 
-    vec3 _gather(random_generator_t& generator, const EyeVertex& eye);
+    vec3 _gather(random_generator_t& generator, const EyeVertex& eye, const BSDFQuery& eye_bsdf, const EyeVertex& tentative);
 
     vec3 _merge(
         random_generator_t& generator,

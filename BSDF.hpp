@@ -11,14 +11,12 @@ struct BSDFQuery {
   float density = 0.0f;
   float densityRev = 0.0f;
   float specular = 0.0f;
+
+  BSDFQuery reverse() const;
 };
 
-struct BSDFSample {
+struct BSDFSample : BSDFQuery {
   vec3 omega = vec3(0.0f);
-  vec3 throughput = vec3(0.0f);
-  float density = 0.0f;
-  float densityRev = 0.0f;
-  float specular = 0.0f;
 };
 
 struct BSDFBoundedSample {

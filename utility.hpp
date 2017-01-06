@@ -73,7 +73,7 @@ template <class Stream> Stream& operator<<(Stream& stream, const metadata_t& met
         << "beta: " << meta.beta << "\n"
         << "epsilon: " << meta.epsilon << "\n"
         << "total time: " << meta.total_time << "s\n"
-        << "time per sample:        " << int(meta.total_time / meta.num_samples * 100) << "s\n"
+        << "time per sample:        " << meta.total_time / meta.num_samples << "s\n"
         << "    trace eye time:       " << int(meta.trace_eye_time / meta.total_time * 100) << "%% (" << meta.trace_eye_time / meta.num_samples << "s)\n"
         // << "        trace light time:   " << int(meta.trace_light_time / meta.total_time * 100) << " (" << meta.trace_light_time / meta.num_samples << "s)\n"
         << "        gather time:        " << int(meta.gather_time / meta.total_time * 100) << "%% (" << meta.gather_time / meta.num_samples << "s)\n"

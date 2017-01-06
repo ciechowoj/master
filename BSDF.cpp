@@ -4,6 +4,15 @@
 
 namespace haste {
 
+BSDFQuery BSDFQuery::reverse() const {
+  BSDFQuery result;
+  result.throughput = throughput;
+  result.density = densityRev;
+  result.densityRev = density;
+  result.specular = specular;
+  return result;
+}
+
 BSDF::BSDF() {}
 
 BSDF::~BSDF() {}
