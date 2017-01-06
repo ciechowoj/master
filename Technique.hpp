@@ -22,6 +22,7 @@ struct render_context_t {
 
     RandomEngine* generator;
     vec2 pixel_position;
+    std::size_t pixel_index;
 };
 
 class Technique {

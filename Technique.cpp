@@ -273,6 +273,7 @@ void Technique::_for_each_ray(
         for (int x = xBegin; x < xEnd; ++x) {
             const Ray ray = shoot(float(x), float(y));
             context.pixel_position = vec2(x, y);
+            context.pixel_index = y * view.width() + x;
             _eye_image[y * view.width() + x] += _traceEye(context, ray);
         }
 
@@ -282,6 +283,7 @@ void Technique::_for_each_ray(
             for (int x = rXBegin; x > rXEnd; --x) {
                 const Ray ray = shoot(float(x), float(y));
                 context.pixel_position = vec2(x, y);
+                context.pixel_index = y * view.width() + x;
                 _eye_image[y * view.width() + x] += _traceEye(context, ray);
             }
         }

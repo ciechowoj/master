@@ -57,12 +57,9 @@ private:
     vec3 _traceEye(render_context_t& context, Ray ray) override;
     void _preprocess(random_generator_t& generator, double num_samples) override;
 
-    template <bool First, class Appender>
-    void _traceLight(random_generator_t& generator, Appender& path);
-    void _traceLight(random_generator_t& generator, vector<LightVertex>& path);
-    void _traceLight(
-        random_generator_t& generator,
-        light_path_t& path);
+    LightVertex _sample_light(random_generator_t& generator);
+
+    void _traceLight(random_generator_t& generator, vector<LightVertex>& path, size_t& size);
 
     template <bool SkipDirectVM> float _weightVC(
         const LightVertex& light,
@@ -90,11 +87,9 @@ private:
     template <bool SkipDirectVM>
     vec3 _connect(const LightVertex& light, const EyeVertex& eye);
 
-    vec3 _connect(
-        const EyeVertex& eye,
-        const light_path_t& path);
+    vec3 _connect(random_generator_t& generator, const EyeVertex& eye, const std::size_t& tail);
 
-    vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const light_path_t& path);
+    vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const std::size_t& path);
     vec3 _gather_eye(render_context_t& context, const EyeVertex& eye);
 
     void _scatter(random_generator_t& generator);
@@ -129,6 +124,8 @@ private:
     float _radius;
     float _circle;
 
+    vector<LightVertex> _light_paths;
+    vector<std::size_t> _light_offsets;
     v3::HashGrid3D<LightVertex> _vertices;
 };
 

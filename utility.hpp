@@ -73,19 +73,19 @@ template <class Stream> Stream& operator<<(Stream& stream, const metadata_t& met
         << "beta: " << meta.beta << "\n"
         << "epsilon: " << meta.epsilon << "\n"
         << "total time: " << meta.total_time << "s\n"
-        << "time per sample: " << meta.total_time / meta.num_samples << "s\n"
-        << "    trace eye time: " << meta.trace_eye_time / meta.total_time << " (" << meta.trace_eye_time / meta.num_samples << "s)\n"
-        << "        trace light time: " << meta.trace_light_time / meta.total_time << " (" << meta.trace_light_time / meta.num_samples << "s)\n"
-        << "        gather time: " << meta.gather_time / meta.total_time << " (" << meta.gather_time / meta.num_samples << "s)\n"
-        << "            intersect time: " << meta.intersect_time / meta.total_time << " (" << meta.intersect_time / meta.num_samples << "s)\n"
-        << "            query time: " << query_time / meta.total_time << " (" << query_time / meta.num_samples << "s)\n"
-        << "            merge time: " << meta.merge_time / meta.total_time << " (" << meta.merge_time / meta.num_samples << "s)\n"
-        << "                density time: " << meta.density_time / meta.total_time << " (" << meta.density_time / meta.num_samples << "s)\n"
-        << "                rest time: " << merge_remaining_time / meta.total_time << " (" << merge_remaining_time / meta.num_samples << "s)\n"
-        << "        connection time: " << connection_time / meta.total_time << " (" << connection_time / meta.num_samples << "s)\n"
-        << "    scatter time: " << meta.scatter_time / meta.total_time << " (" << meta.scatter_time / meta.num_samples << "s)\n"
-        << "        generate time: " << generate_time / meta.total_time << " (" << generate_time / meta.num_samples << "s)\n"
-        << "        build time: " << meta.build_time / meta.total_time << " (" << meta.build_time / meta.num_samples << "s)";
+        << "time per sample:        " << int(meta.total_time / meta.num_samples * 100) << "s\n"
+        << "    trace eye time:       " << int(meta.trace_eye_time / meta.total_time * 100) << "%% (" << meta.trace_eye_time / meta.num_samples << "s)\n"
+        // << "        trace light time:   " << int(meta.trace_light_time / meta.total_time * 100) << " (" << meta.trace_light_time / meta.num_samples << "s)\n"
+        << "        gather time:        " << int(meta.gather_time / meta.total_time * 100) << "%% (" << meta.gather_time / meta.num_samples << "s)\n"
+        << "            intersect time:   " << int(meta.intersect_time / meta.total_time * 100) << "%% (" << meta.intersect_time / meta.num_samples << "s)\n"
+        << "            query time:       " << int(query_time / meta.total_time * 100) << "%% (" << query_time / meta.num_samples << "s)\n"
+        << "            merge time:       " << int(meta.merge_time / meta.total_time * 100) << "%% (" << meta.merge_time / meta.num_samples << "s)\n"
+        << "                density time:   " << int(meta.density_time / meta.total_time * 100) << "%% (" << meta.density_time / meta.num_samples << "s)\n"
+        << "                rest time:      " << int(merge_remaining_time / meta.total_time * 100) << "%% (" << merge_remaining_time / meta.num_samples << "s)\n"
+        << "        connection time:    " << int(connection_time / meta.total_time * 100) << "%% (" << connection_time / meta.num_samples << "s)\n"
+        << "    scatter time:         " << int(meta.scatter_time / meta.total_time * 100) << "%% (" << meta.scatter_time / meta.num_samples << "s)\n"
+        << "        generate time:      " << int(generate_time / meta.total_time * 100) << "%% (" << generate_time / meta.num_samples << "s)\n"
+        << "        build time:         " << int(meta.build_time / meta.total_time * 100) << "%% (" << meta.build_time / meta.num_samples << "s)";
 
 
     return stream;

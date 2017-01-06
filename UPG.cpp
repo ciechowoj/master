@@ -43,16 +43,10 @@ template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     time_scope_t _0(_metadata.trace_eye_time);
 
-    light_path_t light_path;
     vec3 radiance = vec3(0.0f);
 
     if (_russian_roulette(*context.generator)) {
         return radiance;
-    }
-
-    if (_enable_vc) {
-        time_scope_t _1(_metadata.trace_light_time);
-        _traceLight(*context.generator, light_path);
     }
 
     EyeVertex eye[2];
@@ -68,18 +62,17 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].D = 0;
 
     if (_enable_vm) {
-        radiance += _gather_eye(context, eye[prv]);
+        // radiance += _gather_eye(context, eye[prv]);
     }
 
     if (_enable_vc) {
-        radiance += _connect_eye(context, eye[prv], light_path);
+        radiance += _connect_eye(context, eye[prv], context.pixel_index);
     }
 
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
 
     while (surface.is_light()) {
         radiance += eye[prv].throughput * _lights * _scene->queryRadiance(surface, -ray.direction);
-
         surface = _scene->intersect(surface, ray.direction);
     }
 
@@ -100,7 +93,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[itr].specular = 0.0f;
     eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
     eye[itr].C = 0.0f;
-    eye[itr].d = 1.0f / Beta::beta(edge.fGeometry);
+    eye[itr].d = 0.0f; // 1.0f / Beta::beta(edge.fGeometry);
     eye[itr].D = 0.0f;
 
     std::swap(itr, prv);
@@ -112,7 +105,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
         }
 
         if (_enable_vc) {
-            radiance += _connect(eye[prv], light_path);
+            radiance += _connect(*context.generator, eye[prv], context.pixel_index);
         }
 
         auto bsdf = _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
@@ -195,118 +188,101 @@ void UPGBase<Beta, Mode>::_preprocess(random_generator_t& generator, double num_
     _scatter(generator);
 }
 
-template <class Beta, GatherMode Mode> template <bool First, class Appender>
-void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, Appender& path) {
-    size_t begin = path.size();
-    size_t itr = path.size() + 1, prv = path.size();
+template <class Beta, GatherMode Mode>
+typename UPGBase<Beta, Mode>::LightVertex UPGBase<Beta, Mode>::_sample_light(random_generator_t& generator) {
+    LightSample light = _scene->sampleLight(generator);
 
+    LightVertex vertex;
+    vertex.surface = light.surface;
+    vertex.omega = vertex.surface.normal();
+    vertex.throughput = light.radiance() / light.areaDensity() / _roulette;
+    vertex.specular = 0.0f;
+    vertex.a = 1.0f / Beta::beta(light.areaDensity());
+    vertex.A = 0.0f;
+    vertex.b = 0.0f;
+    vertex.B = 0.0f;
+
+    return vertex;
+}
+
+template <class Beta, GatherMode Mode>
+void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, vector<LightVertex>& path, size_t& size) {
     if (_russian_roulette(generator)) {
         return;
     }
 
-    LightSample light = _scene->sampleLight(generator);
+    path.resize(std::max(path.size(), size + _maxSubpath));
 
-    path.emplace_back();
-    path[prv].surface = light.surface;
-    path[prv].omega = path[prv].surface.normal();
-    path[prv].throughput = light.radiance() / light.areaDensity() / _roulette;
-    path[prv].specular = 0.0f;
-    path[prv].a = 1.0f / Beta::beta(light.areaDensity());
-    path[prv].A = 0.0f;
-    path[prv].b = 0.0f;
-    path[prv].B = 0.0f;
+    auto start = _sample_light(generator);
+
+    auto prv = &start;
+    auto begin = path.data() + size;
+    auto itr = begin;
 
     while (!_russian_roulette(generator)) {
-        auto bsdf = _scene->sampleBSDF(generator, path[prv].surface, path[prv].omega);
+        auto bsdf = _scene->sampleBSDF(generator, prv->surface, prv->omega);
 
-        auto surface = _scene->intersectMesh(path[prv].surface, bsdf.omega);
+        auto surface = _scene->intersectMesh(prv->surface, bsdf.omega);
 
         if (!surface.is_present()) {
             break;
         }
 
-        path.emplace_back();
+        itr->surface = surface;
+        itr->omega = -bsdf.omega;
 
-        path[itr].surface = surface;
-        path[itr].omega = -bsdf.omega;
+        auto edge = Edge(*prv, *itr);
 
-        auto edge = Edge(path[prv], path[itr]);
-
-        path[itr].throughput
-            = path[prv].throughput
+        itr->throughput
+            = prv->throughput
             * bsdf.throughput
             * edge.bCosTheta
             / _roulette;
 
-        if (l1Norm(path[itr].throughput) < FLT_EPSILON) {
-            path.pop_back();
+        if (l1Norm(itr->throughput) < FLT_EPSILON) {
             break;
         }
 
-        path[itr].throughput /= bsdf.density;
+        itr->throughput /= bsdf.density;
 
-        path[prv].specular = max(path[prv].specular, bsdf.specular);
-        path[itr].specular = bsdf.specular;
+        prv->specular = max(prv->specular, bsdf.specular);
+        itr->specular = bsdf.specular;
 
-        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
+        itr->a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
-        path[itr].A
-            = (path[prv].A
+        itr->A
+            = (prv->A
                 * Beta::beta(bsdf.densityRev)
-                + (1.0f - path[prv].specular) * path[prv].a)
+                + (1.0f - prv->specular) * prv->a)
             * Beta::beta(edge.bGeometry)
-            * path[itr].a;
+            * itr->a;
 
-        path[itr].b = itr - begin < 2 ? 0.0f : path[itr].a;
+        itr->b = itr - begin < 1 ? 0.0f : itr->a;
 
-        path[itr].B
-            = (path[prv].B
+        itr->B
+            = (prv->B
                 * Beta::beta(bsdf.densityRev)
                 + (1.0f - bsdf.specular)
-                * min(1.0f, Beta::beta(_circle * path[prv].bGeometry * bsdf.densityRev))
-                * path[prv].b)
+                * min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
+                * prv->b)
             * Beta::beta(edge.bGeometry)
-            * path[itr].b;
+            * itr->b;
 
-        path[itr].bGeometry = edge.bGeometry;
+        itr->bGeometry = edge.bGeometry;
 
-        if (bsdf.specular == 1.0f) {
-            path[prv] = path[itr];
-            path.pop_back();
-        }
-        else {
+        if (bsdf.specular != 1.0f) {
             prv = itr;
             ++itr;
         }
     }
 
-    auto bsdf = _scene->sampleBSDF(
-        generator,
-        path[prv].surface,
-        path[prv].omega);
+    auto bsdf = _scene->sampleBSDF(generator, prv->surface, prv->omega);
 
     if (bsdf.specular == 1.0f) {
-        path.pop_back();
+        --itr;
     }
 
-    if (!First) {
-        path[begin] = path[path.size() - 1];
-        path.pop_back();
-    }
-}
-
-template <class Beta, GatherMode Mode>
-void UPGBase<Beta, Mode>::_traceLight(
-    random_generator_t& generator,
-    vector<LightVertex>& path) {
-    _traceLight<false, vector<LightVertex>>(generator, path);
-}
-
-template <class Beta, GatherMode Mode>
-void UPGBase<Beta, Mode>::_traceLight(
-    random_generator_t& generator,
-    light_path_t& path) {
-    _traceLight<true, light_path_t>(generator, path);
+    size = itr - path.data();
 }
 
 template <class Beta, GatherMode Mode> template <bool SkipDirectVM>
@@ -424,16 +400,17 @@ vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& ey
 
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_connect(
+    random_generator_t& generator,
     const EyeVertex& eye,
-    const light_path_t& path) {
+    const std::size_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    if (path.size() != 0) {
-        radiance += _connect<true>(path[0], eye);
+    if (!_russian_roulette(generator)) {
+        radiance += _connect<true>(_sample_light(generator), eye);
     }
 
-    for (size_t i = 1; i < path.size(); ++i) {
-        radiance += _connect<false>(path[i], eye);
+    for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {
+        radiance += _connect<false>(_light_paths[i], eye);
     }
 
     return radiance;
@@ -443,23 +420,23 @@ template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_connect_eye(
     render_context_t& context,
     const EyeVertex& eye,
-    const light_path_t& path) {
+    const std::size_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    for (size_t i = 1; i < path.size(); ++i) {
-        vec3 omega = normalize(path[i].surface.position() - eye.surface.position());
+    for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {
+        vec3 omega = normalize(_light_paths[i].surface.position() - eye.surface.position());
 
         radiance += _accumulate(
             context,
             omega,
             [&] {
-                float correct_normal = abs(dot(omega, path[i].surface.gnormal)
-                    / dot(omega, path[i].surface.normal()));
+                float correct_normal = abs(dot(omega, _light_paths[i].surface.gnormal)
+                    / dot(omega, _light_paths[i].surface.normal()));
 
                 vec3 camera = eye.surface.toSurface(omega);
                 float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
 
-                return _connect<false>(path[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
+                return _connect<true>(_light_paths[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
             });
     }
 
@@ -519,35 +496,22 @@ vec3 UPGBase<Beta, Mode>::_gather_eye(
 
 template <class Beta, GatherMode Mode>
 void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
-    _num_scattered = 0;
+    _light_paths.clear();
+    _light_offsets.resize(1, 0);
+    size_t size = 0;
 
-    std::atomic<size_t> total_num_scattered(0);
+    for (std::size_t i = 0; i < _num_photons; ++i) {
+        _traceLight(generator, _light_paths, size);
+        _light_offsets.push_back(size);
+    }
 
-    vector<LightVertex> vertices = generate<LightVertex>(_threadpool, _num_photons,
-        [this, &total_num_scattered, &generator](size_t num_photons) {
-        auto local_generator = generator.clone();
-
-        size_t num_scattered = 0;
-
-        vector<LightVertex> vertices;
-
-        while (vertices.size() < num_photons) {
-            _traceLight(local_generator, vertices);
-            ++num_scattered;
-        }
-
-        total_num_scattered += num_scattered;
-
-        return vertices;
-    });
-
-    _num_scattered = total_num_scattered;
+    _num_scattered = _num_photons;
     _num_scattered_inv = 1.0f / float(_num_scattered);
-
-    _metadata.num_scattered += total_num_scattered;
+    _metadata.num_scattered += _num_scattered;
 
     time_scope_t _(_metadata.build_time);
-    _vertices = v3::HashGrid3D<LightVertex>(move(vertices), _radius);
+
+    _vertices = v3::HashGrid3D<LightVertex>(std::vector<LightVertex>(_light_paths), _radius);
 }
 
 template <class Beta, GatherMode Mode>
