@@ -25,7 +25,7 @@ LIBRARY_DIRS = \
 	-Lbuild/assimp/code
 
 CXX = g++
-CXXFLAGS = -march=native -g -O2 -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CXXFLAGS = -march=native -g -O1 -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \
@@ -124,7 +124,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxPhong.blend --UPG --beta=2 --max-radius=0.01 --parallel --num-samples=5 \
+	./build/master/master.bin models/CornellBoxDiffuse.blend --UPG --beta=2 --max-radius=0.0051 --parallel \
 	--reference="/home/wojciech/cornell boxes 28 dec/CornellBoxPhong.512.512.100000.PT.snapshot.exr"
 
 profile:

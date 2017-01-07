@@ -215,11 +215,11 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, vector<Ligh
 
     path.resize(std::max(path.size(), size + _maxSubpath));
 
-    auto start = _sample_light(generator);
-
-    auto prv = &start;
     auto begin = path.data() + size;
-    auto itr = begin;
+    auto prv = begin;
+    auto itr = begin + 1;
+
+    *prv = _sample_light(generator);
 
     while (!_russian_roulette(generator)) {
         auto bsdf = _scene->sampleBSDF(generator, prv->surface, prv->omega);
@@ -259,7 +259,7 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, vector<Ligh
             * Beta::beta(edge.bGeometry)
             * itr->a;
 
-        itr->b = itr - begin < 1 ? 0.0f : itr->a;
+        itr->b = itr - begin < 2 ? 0.0f : itr->a;
 
         itr->B
             = (prv->B
@@ -411,7 +411,7 @@ vec3 UPGBase<Beta, Mode>::_connect(
         radiance += _connect<true>(_sample_light(generator), eye);
     }
 
-    for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {
+    for (size_t i = _light_offsets[path] + 1, s = _light_offsets[path + 1]; i < s; ++i) {
         radiance += _connect<false>(_light_paths[i], eye);
     }
 
@@ -425,7 +425,7 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
     const std::size_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {
+    for (size_t i = _light_offsets[path] + 1, s = _light_offsets[path + 1]; i < s; ++i) {
         vec3 omega = normalize(_light_paths[i].surface.position() - eye.surface.position());
 
         radiance += _accumulate(
@@ -463,7 +463,9 @@ vec3 UPGBase<Beta, Mode>::_gather_eye(
     vec3 radiance = vec3(0.0f);
 
     _vertices.rQuery(
-        [&](const LightVertex& light) {
+        [&](uint32_t index) {
+            const LightVertex& light = _light_paths[index];
+
             time_scope_t _(_metadata.merge_time);
 
             vec3 omega = normalize(light.surface.position() - eye.surface.position());
@@ -578,7 +580,9 @@ vec3 UPGBase<Beta, Mode>::_gather(
     vec3 radiance = vec3(0.0f);
 
     _vertices.rQuery(
-        [&](const LightVertex& light) {
+        [&](uint32_t index) {
+            const LightVertex& light = _light_paths[index];
+
             time_scope_t _(_metadata.merge_time);
 
             if (Mode == GatherMode::Unbiased) {
