@@ -33,18 +33,18 @@ class BSDF {
   virtual BSDFQuery query(const SurfacePoint& surface, vec3 incident,
                           vec3 outgoing) const = 0;
 
-  virtual BSDFSample sample(random_generator_t& engine,
+  virtual BSDFSample sample(random_generator_t& generator,
                             const SurfacePoint& point, vec3 omega) const = 0;
 
   virtual BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                           const SurfacePoint& surface,
                                            bounding_sphere_t target,
                                            vec3 omega) const;
 
   virtual float gathering_density(random_generator_t& generator,
                                   const Intersector* Intersector,
                                   const SurfacePoint& surface,
-                                  const SurfacePoint& target,
-                                  float radius,
+                                  const SurfacePoint& target, float radius,
                                   vec3 omega) const;
 
   BSDF(const BSDF&) = delete;
@@ -59,6 +59,7 @@ class LightBSDF : public BSDF {
   BSDFQuery query(const SurfacePoint& surface, vec3 incident,
                   vec3 outgoing) const override;
   BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   const SurfacePoint& surface,
                                    bounding_sphere_t target,
                                    vec3 omega) const override;
 
@@ -73,6 +74,7 @@ class CameraBSDF : public BSDF {
   BSDFSample sample(random_generator_t& generator, const SurfacePoint& surface,
                     vec3 omega) const override;
   BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   const SurfacePoint& surface,
                                    bounding_sphere_t target,
                                    vec3 omega) const override;
 };
@@ -88,6 +90,7 @@ class DiffuseBSDF : public BSDF {
                     vec3 omega) const override;
 
   BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   const SurfacePoint& surface,
                                    bounding_sphere_t target,
                                    vec3 omega) const override;
 
@@ -108,6 +111,7 @@ class PhongBSDF : public BSDF {
                     vec3 omega) const override;
 
   BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   const SurfacePoint& surface,
                                    bounding_sphere_t target,
                                    vec3 omega) const override;
 

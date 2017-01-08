@@ -594,8 +594,8 @@ vec3 UPGBase<Beta, Mode>::_gather(
             time_scope_t _(_metadata.merge_time);
 
             if (Mode == GatherMode::Unbiased) {
-                // radiance += _merge(generator, eye, tentative, _light_paths[index - 1], light) * _num_scattered_inv;
-                radiance += _merge(generator, eye, light) * _num_scattered_inv;
+                radiance += _merge(generator, eye, tentative, _light_paths[index - 1], light) * _num_scattered_inv;
+                // radiance += _merge(generator, eye, light) * _num_scattered_inv;
             }
             else {
                 radiance += _merge(generator, light, eye, eye_bsdf.reverse()) * _num_scattered_inv;
@@ -634,11 +634,11 @@ vec3 UPGBase<Beta, Mode>::_merge(
     }
     else {
         vec3 omega = normalize(eye_fst.surface.position() - light_snd.surface.position());
-        auto edge = Edge(light_snd, eye_fst, omega);
+        auto edge2 = Edge(light_snd, eye_fst, omega);
         auto light_bsdf = _scene->queryBSDF(light_snd.surface, light_snd.omega, omega);
         auto eye_bsdf = _scene->queryBSDF(eye_fst.surface, -omega, eye_fst.omega);
 
-        auto weight = _weightVM(light_snd, light_bsdf, eye_fst, eye_bsdf, edge);
+        auto weight = _weightVM(light_snd, light_bsdf, eye_fst, eye_bsdf, edge2);
 
         // std::cout << int(1.0f / weight + 0.5f) << " " << light.length + eye.length << std::endl;
 

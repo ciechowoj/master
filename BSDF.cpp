@@ -18,6 +18,7 @@ BSDF::BSDF() {}
 BSDF::~BSDF() {}
 
 BSDFBoundedSample BSDF::sample_bounded(random_generator_t& generator,
+                                       const SurfacePoint& surface,
                                        bounding_sphere_t target,
                                        vec3 omega) const {
   runtime_assert(false);
@@ -27,24 +28,26 @@ BSDFBoundedSample BSDF::sample_bounded(random_generator_t& generator,
 float BSDF::gathering_density(random_generator_t& generator,
                               const Intersector* intersector,
                               const SurfacePoint& surface,
-                              const SurfacePoint& target,
-                              float radius, vec3 omega) const {
+                              const SurfacePoint& target, float radius,
+                              vec3 omega) const {
   const float L = 16777216.0f;
   float N = 1.0f;
 
   omega = surface.toSurface(omega);
 
   bounding_sphere_t local_target;
-  local_target.center = surface.toSurface(target.position() - surface.position());
+  local_target.center =
+      surface.toSurface(target.position() - surface.position());
   local_target.radius = radius;
 
   float target_length = length(local_target.center);
 
   while (N < L) {
-    auto sample = sample_bounded(generator, local_target, omega);
+    auto sample = sample_bounded(generator, surface, local_target, omega);
 
-    SurfacePoint isect = intersector->intersectMesh(
-        surface, surface.toWorld(sample.omega), target_length + local_target.radius);
+    SurfacePoint isect =
+        intersector->intersectMesh(surface, surface.toWorld(sample.omega),
+                                   target_length + local_target.radius);
 
     if (isect.is_present()) {
       vec3 tentative = surface.toSurface(isect.position() - surface.position());
@@ -101,9 +104,13 @@ BSDFQuery LightBSDF::query(const SurfacePoint& surface, vec3 incident,
 }
 
 BSDFBoundedSample LightBSDF::sample_bounded(random_generator_t& generator,
+                                            const SurfacePoint& surface,
                                             bounding_sphere_t target,
                                             vec3 omega) const {
-  auto sample = sample_lambert(generator, omega, target);
+  bounding_sphere_t local_sphere = {
+      surface.toSurface(_sphere.center - surface.position()), _sphere.radius};
+
+  auto sample = sample_lambert(generator, omega, local_sphere, target);
 
   BSDFBoundedSample result;
   result.omega = sample.direction;
@@ -135,6 +142,7 @@ BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
 }
 
 BSDFBoundedSample CameraBSDF::sample_bounded(random_generator_t& generator,
+                                             const SurfacePoint& surface,
                                              bounding_sphere_t target,
                                              vec3 omega) const {
   auto sample = sample_hemisphere(generator, target);
@@ -171,6 +179,7 @@ BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
 }
 
 BSDFBoundedSample DiffuseBSDF::sample_bounded(random_generator_t& generator,
+                                              const SurfacePoint& surface,
                                               bounding_sphere_t target,
                                               vec3 omega) const {
   auto sample = sample_lambert(generator, omega, target);
@@ -269,6 +278,7 @@ BSDFQuery PhongBSDF::_query(vec3 incident, vec3 outgoing) const {
 }
 
 BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
+                                            const SurfacePoint& surface,
                                             bounding_sphere_t target,
                                             vec3 omega) const {
   BSDFBoundedSample result;

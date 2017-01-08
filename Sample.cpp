@@ -25,7 +25,7 @@ angular_bound_t angular_bound(vec3 center, float radius) {
       theta_inf = theta_center - theta_radius;
       theta_sup = min(half_pi<float>(), theta_center + theta_radius);
 
-      float phi_center = atan2(center.z, center.x);
+      float phi_center = fract(atan2(center.z, center.x) * 0.5f * one_over_pi<float>() + 1.0f) * two_pi<float>();
       float phi_radius = asin(radius / lateral_distance);
 
       phi_inf = phi_center - phi_radius;
@@ -71,6 +71,37 @@ direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
   auto theta_range = uniform_theta_sup - uniform_theta_inf;
   auto phi_range = uniform_phi_sup - uniform_phi_inf;
   float adjust = theta_range * phi_range;
+
+  float y = sqrt(generator.sample() * theta_range + uniform_theta_inf);
+  float phi =
+      two_pi<float>() * (generator.sample() * phi_range + uniform_phi_inf);
+  float r = sqrt(1 - y * y);
+  float x = r * cos(phi);
+  float z = r * sin(phi);
+
+  return {vec3(x, y, z), adjust};
+}
+
+direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
+                                  bounding_sphere_t outer,
+                                  bounding_sphere_t inner) {
+  auto bound = angular_bound(inner);
+
+  // not so trivial
+  // auto outer_bound = angular_bound(outer);
+  // bound.theta_inf = max(outer_bound.theta_inf, bound.theta_inf);
+  // bound.theta_sup = min(outer_bound.theta_sup, bound.theta_sup);
+  // bound.phi_inf = max(outer_bound.phi_inf, bound.phi_inf);
+  // bound.phi_sup = min(outer_bound.phi_sup, bound.phi_sup);
+
+  auto uniform_theta_inf = cos(bound.theta_sup) * cos(bound.theta_sup);
+  auto uniform_theta_sup = cos(bound.theta_inf) * cos(bound.theta_inf);
+  auto uniform_phi_inf = bound.phi_inf * one_over_pi<float>() * 0.5f;
+  auto uniform_phi_sup = bound.phi_sup * one_over_pi<float>() * 0.5f;
+
+  auto theta_range = uniform_theta_sup - uniform_theta_inf;
+  auto phi_range = uniform_phi_sup - uniform_phi_inf;
+  float adjust = theta_range * phi_range / lambert_adjust(outer);
 
   float y = sqrt(generator.sample() * theta_range + uniform_theta_inf);
   float phi =
