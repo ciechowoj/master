@@ -103,8 +103,10 @@ private:
 
     vec3 _merge(
         random_generator_t& generator,
-        const LightVertex& light,
-        const EyeVertex& eye);
+        const EyeVertex& eye_fst,
+        const EyeVertex& eye_snd,
+        const LightVertex& light_fst,
+        const LightVertex& light_snd);
 
     vec3 _merge(
         random_generator_t& generator,

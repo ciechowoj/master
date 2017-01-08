@@ -100,7 +100,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[itr].D = 0.0f;
     eye[itr].length = 1;
 
-    float d = 0.0f;
+    float d = 1.0f;
 
     std::swap(itr, prv);
 
@@ -269,7 +269,7 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, vector<Ligh
             * Beta::beta(edge.bGeometry)
             * itr->a;
 
-        itr->b = itr - begin < 1 ? 0.0f : itr->a;
+        itr->b = itr - begin < 2 ? 0.0f : itr->a;
 
         itr->B
             = (prv->B
@@ -324,8 +324,6 @@ float UPGBase<Beta, Mode>::_weightVC(
     float Dp
         = (eye.D * Beta::beta(eyeBSDF.density) + (1.0f - eyeBSDF.specular) * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
         * Beta::beta(edge.fGeometry * lightBSDF.density);
-
-
 
     float weightInv
         = Ap + Beta::beta(_num_scattered) * Bp + Cp + Beta::beta(_num_scattered) * Dp
@@ -455,7 +453,7 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
     return radiance;
 }
 
-template <class Beta, GatherMode Mode>
+/*template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_gather_eye(
     render_context_t& context,
     const EyeVertex& eye) {
@@ -503,7 +501,7 @@ vec3 UPGBase<Beta, Mode>::_gather_eye(
         _radius);
 
     return radiance;
-}
+}*/
 
 template <class Beta, GatherMode Mode>
 void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
@@ -596,8 +594,8 @@ vec3 UPGBase<Beta, Mode>::_gather(
             time_scope_t _(_metadata.merge_time);
 
             if (Mode == GatherMode::Unbiased) {
-                radiance += _merge(generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
-                // radiance += _merge(generator, eye, light) * _num_scattered_inv;
+                // radiance += _merge(generator, eye, tentative, _light_paths[index - 1], light) * _num_scattered_inv;
+                radiance += _merge(generator, eye, light) * _num_scattered_inv;
             }
             else {
                 radiance += _merge(generator, light, eye, eye_bsdf.reverse()) * _num_scattered_inv;
@@ -612,19 +610,21 @@ vec3 UPGBase<Beta, Mode>::_gather(
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_merge(
     random_generator_t& generator,
-    const LightVertex& light,
-    const EyeVertex& eye) {
-    vec3 omega = normalize(eye.surface.position() - light.surface.position());
+    const EyeVertex& eye_fst,
+    const EyeVertex& eye_snd,
+    const LightVertex& light_fst,
+    const LightVertex& light_snd) {
+    vec3 omega = normalize(eye_snd.surface.position() - light_fst.surface.position());
 
-    auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
-    auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
+    auto lightBSDF = _scene->queryBSDF(light_fst.surface, light_fst.omega, omega);
+    auto eyeBSDF = _scene->queryBSDF(eye_snd.surface, -omega, eye_snd.omega);
 
-    auto edge = Edge(light, eye, omega);
+    auto edge = Edge(light_fst, eye_snd, omega);
 
-    vec3 result = _scene->occluded(eye.surface, light.surface)
-        * light.throughput
+    vec3 result = _scene->occluded(eye_snd.surface, light_fst.surface)
+        * light_fst.throughput
         * lightBSDF.throughput
-        * eye.throughput
+        * eye_snd.throughput
         * eyeBSDF.throughput
         * edge.bCosTheta
         * edge.fGeometry;
@@ -633,12 +633,17 @@ vec3 UPGBase<Beta, Mode>::_merge(
         return vec3(0.0f);
     }
     else {
-        auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
+        vec3 omega = normalize(eye_fst.surface.position() - light_snd.surface.position());
+        auto edge = Edge(light_snd, eye_fst, omega);
+        auto light_bsdf = _scene->queryBSDF(light_snd.surface, light_snd.omega, omega);
+        auto eye_bsdf = _scene->queryBSDF(eye_fst.surface, -omega, eye_fst.omega);
+
+        auto weight = _weightVM(light_snd, light_bsdf, eye_fst, eye_bsdf, edge);
 
         // std::cout << int(1.0f / weight + 0.5f) << " " << light.length + eye.length << std::endl;
 
         time_scope_t _(_metadata.density_time);
-        auto density = _density(generator, light.surface, light.omega, eye.surface);
+        auto density = _density(generator, light_fst.surface, light_fst.omega, eye_snd.surface);
 
         // auto density = 1.0f / (edge.fGeometry * lightBSDF.density * _circle);
 
