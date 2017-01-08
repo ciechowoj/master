@@ -394,13 +394,17 @@ void merge(const string& result, const string& path0, const string& path1) {
 
   data2.resize(data0.size());
 
+  float denom = float(metadata0.num_samples + metadata1.num_samples);
+  float alpha0 = float(metadata0.num_samples) / denom;
+  float alpha1=  float(metadata1.num_samples) / denom;
+
   for (size_t i = 0; i < data0.size(); ++i) {
     if (any(isnan(data0[i]))) {
       data2[i] = data1[i];
     } else if (any(isnan(data1[i]))) {
       data2[i] = data0[i];
     } else {
-      data2[i] = (data0[i] + data1[i]) / 2.0f;
+      data2[i] = (alpha0 * data0[i] + alpha1 * data1[i]);
     }
   }
 

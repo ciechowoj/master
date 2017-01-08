@@ -196,7 +196,9 @@ double Technique::_commit_images(ImageView& view) {
                 dvec3 delta = new_dst.rgb() / new_dst.a - dst_itr->rgb() / dst_itr->a;
                 local_epsilon += l1Norm(delta * delta);
 
-                *dst_itr = new_dst;
+                if (!any(isnan(new_dst))) {
+                    *dst_itr = new_dst;
+                }
 
                 *light_itr = dvec3(0.0f);
                 *eye_itr = dvec3(0.0f);
