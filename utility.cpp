@@ -168,7 +168,7 @@ void loadEXR(const string& path, metadata_t& metadata, vector<vec3>& data) {
     std::vector<std::string> history = split(comments->value(), ';');
     metadata.num_samples = history.size();
   } else {
-    metadata.num_samples = num_samples ? num_samples->value() : std::size_t(0);
+    metadata.num_samples = num_samples ? num_samples->value() : std::size_t(1);
   }
 
   metadata.num_basic_rays =

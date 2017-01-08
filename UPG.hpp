@@ -37,6 +37,7 @@ private:
         float specular;
         float a, A, b, B;
         float bGeometry;
+        int length;
 
         const vec3& position() const {
             return surface.position();
@@ -53,6 +54,7 @@ private:
         vec3 throughput;
         float specular;
         float c, C, d, D;
+        int length;
     };
 
     static const size_t _maxSubpath = 1024;
@@ -81,10 +83,9 @@ private:
 
     float _density(
         random_generator_t& generator,
-        const LightVertex& light,
-        const EyeVertex& eye,
-        const BSDFQuery& eyeQuery,
-        const Edge& edge);
+        const SurfacePoint& from,
+        vec3 omega,
+        const SurfacePoint& target);
 
     vec3 _connect_light(const EyeVertex& eye);
 
@@ -104,6 +105,11 @@ private:
         random_generator_t& generator,
         const LightVertex& light,
         const EyeVertex& eye);
+
+    vec3 _merge(
+        random_generator_t& generator,
+        const EyeVertex& eye,
+        const LightVertex& light);
 
     vec3 _merge(
         random_generator_t& generator,

@@ -27,27 +27,31 @@ BSDFBoundedSample BSDF::sample_bounded(random_generator_t& generator,
 float BSDF::gathering_density(random_generator_t& generator,
                               const Intersector* intersector,
                               const SurfacePoint& surface,
-                              bounding_sphere_t target, vec3 omega) const {
+                              const SurfacePoint& target,
+                              float radius, vec3 omega) const {
   const float L = 16777216.0f;
   float N = 1.0f;
 
   omega = surface.toSurface(omega);
-  target.center = surface.toSurface(target.center - surface.position());
 
-  float target_length = length(target.center);
+  bounding_sphere_t local_target;
+  local_target.center = surface.toSurface(target.position() - surface.position());
+  local_target.radius = radius;
+
+  float target_length = length(local_target.center);
 
   while (N < L) {
-    auto sample = sample_bounded(generator, target, omega);
+    auto sample = sample_bounded(generator, local_target, omega);
 
     SurfacePoint isect = intersector->intersectMesh(
-        surface, surface.toWorld(sample.omega), target_length + target.radius);
+        surface, surface.toWorld(sample.omega), target_length + local_target.radius);
 
     if (isect.is_present()) {
       vec3 tentative = surface.toSurface(isect.position() - surface.position());
 
-      float distance_sq = distance2(target.center, tentative);
+      float distance_sq = distance2(local_target.center, tentative);
 
-      if (distance_sq < target.radius * target.radius) {
+      if (distance_sq < local_target.radius * local_target.radius) {
         return N / sample.adjust;
       }
     }
@@ -96,6 +100,18 @@ BSDFQuery LightBSDF::query(const SurfacePoint& surface, vec3 incident,
   return query;
 }
 
+BSDFBoundedSample LightBSDF::sample_bounded(random_generator_t& generator,
+                                            bounding_sphere_t target,
+                                            vec3 omega) const {
+  auto sample = sample_lambert(generator, omega, target);
+
+  BSDFBoundedSample result;
+  result.omega = sample.direction;
+  result.adjust = sample.adjust;
+
+  return result;
+}
+
 BSDFSample CameraBSDF::sample(random_generator_t& generator,
                               const SurfacePoint& surface, vec3 omega) const {
   runtime_assert(false);
@@ -108,8 +124,8 @@ BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
 
   vec3 local_incident = surface.toSurface(incident);
 
-  query.throughput =
-      vec3(local_incident.y > 0.0f ? 1.0f : 0.0f) / pow(abs(local_incident.y), 1.0f);
+  query.throughput = vec3(local_incident.y > 0.0f ? 1.0f : 0.0f) /
+                     pow(abs(local_incident.y), 1.0f);
 
   query.density = 0.0f;
 

@@ -124,8 +124,8 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --UPG --beta=2 --max-radius=0.0051 --parallel \
-	--reference="/home/wojciech/cornell boxes 28 dec/CornellBoxPhong.512.512.100000.PT.snapshot.exr"
+	./build/master/master.bin models/CornellBoxDiffuse.blend --UPG --beta=0 --max-radius=0.005 --parallel --no-vc --no-lights --roulette=0.75 \
+	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.100000.PT.indirect.exr"
 
 profile:
 	valgrind \

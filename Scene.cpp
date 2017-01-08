@@ -104,6 +104,8 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
         point._materialId = int32_t(isect.primId()) - materials.lights_offset;
         point.gnormal = point._tangent[1];
 
+        runtime_assert(point._materialId != 0);
+
         return point;
     }
     else {
