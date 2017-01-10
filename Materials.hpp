@@ -12,7 +12,6 @@ struct SurfacePoint;
 
 class Materials {
 public:
-    int32_t lights_offset = 0;
     vector<string> names;
     vector<unique<BSDF>> bsdfs;
 

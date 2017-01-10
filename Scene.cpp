@@ -9,13 +9,11 @@ Scene::Scene(
     Cameras&& cameras,
     Materials&& materials,
     vector<Mesh>&& meshes,
-    AreaLights&& areaLights,
-    const bounding_sphere_t& bounding_sphere)
+    AreaLights&& areaLights)
     : _cameras(cameras)
     , meshes(move(meshes))
     , lights(move(areaLights))
     , materials(move(materials))
-    , _bounding_sphere(bounding_sphere)
 {
     rtcScene = nullptr;
 
@@ -50,6 +48,8 @@ unsigned makeRTCMesh(RTCScene rtcScene, size_t i, const vector<Mesh>& meshes) {
 
     rtcUnmapBuffer(rtcScene, geomID, RTC_INDEX_BUFFER);
 
+    rtcSetMask(rtcScene, geomID, 1u << (meshes[i].material_id & 3u));
+
     return geomID;
 }
 
@@ -67,12 +67,9 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
         throw std::runtime_error("Cannot create RTCScene.");
     }
 
-    unsigned geomID = newMesh(rtcScene, scene.lights);
-    runtime_assert(geomID == 0, "Area lights have to get 0 primID.");
-
     for (size_t i = 0; i < scene.meshes.size(); ++i) {
         unsigned geomID = makeRTCMesh(rtcScene, i, scene.meshes);
-        runtime_assert(geomID == i + 1, "Geometry ID doesn't correspond to mesh index.");
+        runtime_assert(geomID == i, "Geometry ID doesn't correspond to mesh index.");
     }
 
     rtcCommit(rtcScene);
@@ -81,30 +78,18 @@ void updateRTCScene(RTCScene& rtcScene, RTCDevice device, const Scene& scene) {
 void Scene::buildAccelStructs(RTCDevice device) {
     if (rtcScene == nullptr) {
         updateRTCScene(rtcScene, device, *this);
-        lights.init(this, _bounding_sphere);
+        lights.init(this);
     }
 }
 
 const BSDF& Scene::queryBSDF(const SurfacePoint& surface) const {
-    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
-    return *materials.bsdfs[surface.materialId() + materials.lights_offset].get();
+    runtime_assert(surface.material_index() < materials.bsdfs.size());
+    return *materials.bsdfs[surface.material_index()].get();
 }
 
 SurfacePoint Scene::querySurface(const RayIsect& isect) const {
     if (!isect.isPresent()) {
-        SurfacePoint surface;
-        surface._materialId = INT32_MIN;
-        return surface;
-    }
-    else if (isect.isLight()) {
-        SurfacePoint point;
-
-        point._position = (vec3&)isect.org + (vec3&)isect.dir * isect.tfar;
-        point._tangent = lights.light_to_world_mat3(isect.primId());
-        point._materialId = int32_t(isect.primId()) - materials.lights_offset;
-        point.gnormal = point._tangent[1];
-
-        return point;
+        return SurfacePoint();
     }
     else {
         runtime_assert(isect.meshId() < meshes.size());
@@ -146,7 +131,7 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
             = point.gnormal
             * (dot(isect.omega(), point.gnormal) < 0.0f ? -1.0f : 1.0f);
 
-        point._materialId = mesh.materialID;
+        point.material_id = mesh.material_id;
 
         return point;
     }
@@ -155,37 +140,32 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
 vec3 Scene::queryRadiance(
     const SurfacePoint& surface,
     const vec3& direction) const {
-    return lights.queryRadiance(
-        _material_id_to_light_id(surface.materialId()), direction);
+    return lights.queryRadiance(queryBSDF(surface).light_id(), direction);
 }
 
 const LSDFQuery Scene::queryLSDF(
     const SurfacePoint& surface,
-    const vec3& omega) const
-{
-    runtime_assert(surface.materialId() < 0);
-    return lights.queryLSDF(surface.materialId() + materials.lights_offset, omega);
+    const vec3& omega) const {
+    return lights.queryLSDF(queryBSDF(surface).light_id(), omega);
 }
 
 const BSDFSample Scene::sampleBSDF(
     RandomEngine& engine,
     const SurfacePoint& surface,
-    const vec3& omega) const
-{
-    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
+    const vec3& omega) const {
+    runtime_assert(surface.material_index() < materials.bsdfs.size());
 
-    auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
+    auto bsdf = materials.bsdfs[surface.material_index()].get();
     return bsdf->sample(engine, surface, omega);
 }
 
 const BSDFQuery Scene::queryBSDF(
     const SurfacePoint& surface,
     const vec3& incident,
-    const vec3& outgoing) const
-{
-    runtime_assert(surface.materialId() + materials.lights_offset < int32_t(materials.bsdfs.size()));
+    const vec3& outgoing) const {
+    runtime_assert(surface.material_index() < materials.bsdfs.size());
 
-    auto bsdf = materials.bsdfs[surface.materialId() + materials.lights_offset].get();
+    auto bsdf = materials.bsdfs[surface.material_index()].get();
     return bsdf->query(surface, incident, outgoing);
 }
 
@@ -204,7 +184,7 @@ float Scene::occluded(
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
-    rtcRay.mask = RayIsect::occluderMask();
+    rtcRay.mask = 1u << uint32_t(entity_type::mesh);
     rtcRay.time = 0.f;
     rtcOccluded(rtcScene, rtcRay);
 
@@ -250,14 +230,6 @@ const LightSample Scene::sampleLight(
         RandomEngine& engine) const
 {
     return lights.sample(engine);
-}
-
-int32_t Scene::_material_id_to_light_id(int32_t id) const {
-    return id + materials.lights_offset;
-}
-
-int32_t Scene::_light_id_to_material_id(int32_t id) const {
-    return id - materials.lights_offset;
 }
 
 }

@@ -23,18 +23,41 @@ namespace haste {
 // v1 ************************************** v2
 //
 
-std::unique_ptr<BSDF> AreaLight::create_bsdf(const bounding_sphere_t& bounding_sphere) const {
-    return std::unique_ptr<BSDF>(new LightBSDF(bounding_sphere));
+std::unique_ptr<BSDF> AreaLight::create_bsdf(const bounding_sphere_t& bounding_sphere, uint32_t light_id) const {
+    return std::unique_ptr<BSDF>(new LightBSDF(bounding_sphere, light_id));
 }
 
-void AreaLights::init(const Intersector* intersector, bounding_sphere_t sphere) {
+Mesh AreaLight::create_mesh(uint32_t material_index, const string& name) const {
+    Mesh mesh;
+    mesh.name = name;
+    mesh.material_id = encode_material(material_index, entity_type::light);
+    mesh.indices = { 0, 1, 2, 2, 3, 0 };
+    mesh.vertices.resize(4);
+    mesh.tangents.resize(4);
+
+    vec3 left = tangent[0] * 0.5f;
+    vec3 up = tangent[2] * 0.5f;
+
+    mesh.vertices[0] = vec4(position - size.x * left - size.y * up, 1.0f);
+    mesh.vertices[1] = vec4(position + size.x * left - size.y * up, 1.0f);
+    mesh.vertices[2] = vec4(position + size.x * left + size.y * up, 1.0f);
+    mesh.vertices[3] = vec4(position - size.x * left + size.y * up, 1.0f);
+
+    mesh.tangents[0] = tangent;
+    mesh.tangents[1] = tangent;
+    mesh.tangents[2] = tangent;
+    mesh.tangents[3] = tangent;
+
+    return mesh;
+}
+
+void AreaLights::init(const Intersector* intersector) {
     _intersector = intersector;
-    _scene_bound = sphere;
 }
 
 const size_t AreaLights::addLight(
     const string& name,
-    int32_t materialId,
+    uint32_t material_index,
     const vec3& position,
     const vec3& direction,
     const vec3& up,
@@ -50,7 +73,7 @@ const size_t AreaLights::addLight(
     light.tangent[2] = up;
     light.size = size;
     light.exitance = exitance;
-    light.materialId = materialId;
+    light.material_id = encode_material(material_index, entity_type::light);
 
     _names.push_back(name);
     _lights.push_back(light);
@@ -96,7 +119,7 @@ LightSample AreaLights::sample(
     result.surface._position = _samplePosition(light_id, engine);
     result.surface._tangent = light.tangent;
     result.surface.gnormal = light.normal();
-    result.surface._materialId = light.materialId;
+    result.surface.material_id = light.material_id;
 
     result._radiance = light.radiance();
     result._areaDensity = _weights[light_id] / light.area();

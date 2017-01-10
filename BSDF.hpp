@@ -45,20 +45,25 @@ class BSDF {
                                   const SurfacePoint& surface,
                                   bounding_sphere_t target, vec3 omega) const;
 
+  virtual uint32_t light_id() const;
+
   BSDF(const BSDF&) = delete;
   BSDF& operator=(const BSDF&) = delete;
 };
 
 class LightBSDF : public BSDF {
  public:
-  LightBSDF(bounding_sphere_t sphere);
+  LightBSDF(bounding_sphere_t sphere, uint32_t light_id);
   BSDFSample sample(random_generator_t& generator, const SurfacePoint& surface,
                     vec3 omega) const override;
   BSDFQuery query(const SurfacePoint& surface, vec3 incident,
                   vec3 outgoing) const override;
 
+  uint32_t light_id() const override;
+
  private:
   bounding_sphere_t _sphere;
+  uint32_t _light_id;
 };
 
 class CameraBSDF : public BSDF {
@@ -68,7 +73,8 @@ class CameraBSDF : public BSDF {
   BSDFSample sample(random_generator_t& generator, const SurfacePoint& surface,
                     vec3 omega) const override;
   BSDFBoundedSample sample_bounded(random_generator_t& generator,
-                                   bounding_sphere_t target, vec3 omega) const override;
+                                   bounding_sphere_t target,
+                                   vec3 omega) const override;
 };
 
 class DiffuseBSDF : public BSDF {

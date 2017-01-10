@@ -58,7 +58,13 @@ float BSDF::gathering_density(random_generator_t& generator,
   return INFINITY;
 }
 
-LightBSDF::LightBSDF(bounding_sphere_t sphere) : _sphere(sphere) {}
+uint32_t BSDF::light_id() const {
+  runtime_assert(false);
+  return UINT32_MAX;
+}
+
+LightBSDF::LightBSDF(bounding_sphere_t sphere, uint32_t light_id)
+    : _sphere(sphere), _light_id(light_id) {}
 
 BSDFSample LightBSDF::sample(random_generator_t& generator,
                              const SurfacePoint& surface, vec3 omega) const {
@@ -96,6 +102,8 @@ BSDFQuery LightBSDF::query(const SurfacePoint& surface, vec3 incident,
   return query;
 }
 
+uint32_t LightBSDF::light_id() const { return _light_id; }
+
 BSDFSample CameraBSDF::sample(random_generator_t& generator,
                               const SurfacePoint& surface, vec3 omega) const {
   runtime_assert(false);
@@ -108,8 +116,8 @@ BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
 
   vec3 local_incident = surface.toSurface(incident);
 
-  query.throughput =
-      vec3(local_incident.y > 0.0f ? 1.0f : 0.0f) / pow(abs(local_incident.y), 1.0f);
+  query.throughput = vec3(local_incident.y > 0.0f ? 1.0f : 0.0f) /
+                     pow(abs(local_incident.y), 1.0f);
 
   query.density = 0.0f;
 

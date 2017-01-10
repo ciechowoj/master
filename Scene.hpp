@@ -23,22 +23,13 @@ using std::move;
 
 struct Ray;
 
-struct Mesh {
-    string name;
-    unsigned materialID;
-    vector<int> indices;
-    vector<vec3> vertices;
-    vector<mat3> tangents;
-};
-
 class Scene : public Intersector {
 public:
     Scene(
         Cameras&& cameras,
         Materials&& materials,
         vector<Mesh>&& meshes,
-        AreaLights&& areaLights,
-        const bounding_sphere_t& bounding_sphere);
+        AreaLights&& areaLights);
 
     Cameras _cameras;
     const vector<Mesh> meshes;
@@ -88,13 +79,9 @@ public:
         const vec3& incident,
         const vec3& outgoing) const;
 
-    bounding_sphere_t bounding_sphere() const;
-
 private:
     int32_t _material_id_to_light_id(int32_t) const;
     int32_t _light_id_to_material_id(int32_t) const;
-
-    bounding_sphere_t _bounding_sphere;
 
     mutable std::atomic<size_t> _numIntersectRays;
     mutable std::atomic<size_t> _numOccludedRays;

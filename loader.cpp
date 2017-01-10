@@ -286,35 +286,7 @@ bool isEmissive(const aiScene* scene, size_t meshID) {
     return emissive(material) != vec3(0.0f);
 }
 
-AreaLights loadAreaLights(const aiScene* scene, Materials& materials, const bounding_sphere_t& bounding_sphere) {
-    AreaLights result;
-
-    materials.lights_offset = scene->mNumLights + 1;
-
-    for (size_t i = 0; i < scene->mNumLights; ++i) {
-        if (scene->mLights[i]->mType == aiLightSource_AREA) {
-            auto light = scene->mLights[i];
-
-            result.addLight(
-                toString(light->mName),
-                int32_t(materials.bsdfs.size()) - materials.lights_offset,
-                toVec3(light->mPosition),
-                normalize(toVec3(light->mDirection)),
-                normalize(toVec3(light->mUp)),
-                toVec3(light->mColorDiffuse),
-                toVec2(light->mSize));
-
-            materials.names.push_back(toString(light->mName));
-            materials.bsdfs.push_back(result.light(i).create_bsdf(bounding_sphere));
-        }
-    }
-
-    return result;
-}
-
-Cameras loadCameras(const aiScene* scene) {
-    Cameras cameras;
-
+void load_cameras(const aiScene* scene, Materials& materials, Cameras& cameras) {
     for (size_t i = 0; i < scene->mNumCameras; ++i) {
         auto camera = scene->mCameras[i];
 
@@ -326,12 +298,13 @@ Cameras loadCameras(const aiScene* scene) {
             camera->mHorizontalFOV * 2.0f,
             camera->mClipPlaneNear,
             camera->mClipPlaneFar);
-    }
 
-    return cameras;
+        materials.names.push_back("camera");
+        materials.bsdfs.push_back(unique<BSDF>(new CameraBSDF()));
+    }
 }
 
-Mesh aiMeshToMesh(const aiMesh* mesh) {
+Mesh aiMeshToMesh(const aiMesh* mesh, uint32_t materials_base, entity_type type) {
     runtime_assert(mesh != nullptr);
     runtime_assert(mesh->mNormals != nullptr);
     runtime_assert(mesh->mVertices != nullptr);
@@ -388,19 +361,42 @@ Mesh aiMeshToMesh(const aiMesh* mesh) {
     }
 
     result.name = mesh->mName.C_Str();
-    result.materialID = mesh->mMaterialIndex;
+    result.material_id = encode_material(mesh->mMaterialIndex + materials_base, type);
 
     return result;
 }
 
-vector<Mesh> aiMeshes_to_Meshes(aiMesh const *const *const meshes, std::size_t num_meshes) {
-    vector<Mesh> result;
+void load_meshes(const aiScene* scene, Materials& materials, vector<Mesh>& meshes) {
+    uint32_t materials_base = materials.names.size();
 
-    for (size_t i = 0; i < num_meshes; ++i) {
-        result.push_back(aiMeshToMesh(meshes[i]));
+    for (size_t i = 0; i < scene->mNumMaterials; ++i) {
+        const aiMaterial* material = scene->mMaterials[i];
+
+        materials.names.push_back(name(scene->mMaterials[i]));
+
+        if (property<bool>(material, "$mat.blend.transparency.use")) {
+            float ior = property<float>(material, "$mat.blend.transparency.ior");
+            auto bsdf = unique<BSDF>(new TransmissionBSDF(ior, 1.0f));
+            materials.bsdfs.push_back(std::move(bsdf));
+        }
+        else if (property<bool>(material, "$mat.blend.mirror.use")) {
+            materials.bsdfs.push_back(unique<BSDF>(new ReflectionBSDF()));
+        }
+        else if (specular(material) == vec3(0.0f)) {
+            materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(diffuse(material))));
+        }
+        else {
+            materials.bsdfs.push_back(
+                unique<BSDF>(new PhongBSDF(
+                    diffuse(material),
+                    specular(material),
+                    shininess(material))));
+        }
     }
 
-    return result;
+    for (size_t i = 0; i < scene->mNumMeshes; ++i) {
+        meshes.push_back(aiMeshToMesh(scene->mMeshes[i], materials_base, entity_type::mesh));
+    }
 }
 
 bounding_sphere_t compute_bounding_sphere(const std::vector<Mesh>& meshes) {
@@ -428,6 +424,30 @@ bounding_sphere_t compute_bounding_sphere(const std::vector<Mesh>& meshes) {
     return result;
 }
 
+void load_lights(const aiScene* scene, Materials& materials, AreaLights& lights, vector<Mesh>& meshes) {
+    auto bounding_sphere = compute_bounding_sphere(meshes);
+
+    for (size_t i = 0; i < scene->mNumLights; ++i) {
+        if (scene->mLights[i]->mType == aiLightSource_AREA) {
+            auto light = scene->mLights[i];
+
+            lights.addLight(
+                toString(light->mName),
+                materials.names.size(),
+                toVec3(light->mPosition),
+                normalize(toVec3(light->mDirection)),
+                normalize(toVec3(light->mUp)),
+                toVec3(light->mColorDiffuse),
+                toVec2(light->mSize));
+
+            meshes.push_back(lights.light(i).create_mesh(materials.names.size(), toString(light->mName)));
+
+            materials.names.push_back(toString(light->mName));
+            materials.bsdfs.push_back(lights.light(i).create_bsdf(bounding_sphere, i));
+        }
+    }
+}
+
 shared<Scene> loadScene(string path) {
     Assimp::Importer importer;
 
@@ -445,47 +465,22 @@ shared<Scene> loadScene(string path) {
         throw std::runtime_error("Cannot load \"" + path + "\" scene.");
     }
 
-    vector<Mesh> meshes = aiMeshes_to_Meshes(scene->mMeshes, scene->mNumMeshes);
-    bounding_sphere_t meshes_bounding_sphere = compute_bounding_sphere(meshes);
-
     Materials materials;
 
-    AreaLights lights = loadAreaLights(scene, materials, meshes_bounding_sphere);
+    Cameras cameras;
+    load_cameras(scene, materials, cameras);
 
-    materials.names.push_back("camera");
-    materials.bsdfs.push_back(unique<BSDF>(new CameraBSDF()));
+    vector<Mesh> meshes;
+    load_meshes(scene, materials, meshes);
 
-    for (size_t i = 0; i < scene->mNumMaterials; ++i) {
-        const aiMaterial* material = scene->mMaterials[i];
-
-        materials.names.push_back(name(scene->mMaterials[i]));
-
-        if (property<bool>(material, "$mat.blend.transparency.use")) {
-            float ior = property<float>(material, "$mat.blend.transparency.ior");
-            auto bsdf = unique<BSDF>(new TransmissionBSDF(ior, 1.0f));
-            materials.bsdfs.push_back(std::move(bsdf));
-        }
-        else if (property<bool>(material, "$mat.blend.mirror.use")) {
-            materials.bsdfs.push_back(unique<BSDF>(new ReflectionBSDF()));
-        }
-        else if (specular(material) == vec3(0.0f)) {
-            materials.bsdfs.push_back(unique<BSDF>(new DiffuseBSDF(diffuse(material))));
-        }
-        else {
-            materials.bsdfs.push_back(
-                unique<BSDF>(new PhongBSDF(
-                    diffuse(material),
-                    specular(material),
-                    shininess(material))));
-        }
-    }
+    AreaLights lights;
+    load_lights(scene, materials, lights, meshes);
 
     shared<Scene> result = make_shared<Scene>(
-        loadCameras(scene),
+        move(cameras),
         move(materials),
         move(meshes),
-        move(lights),
-        meshes_bounding_sphere);
+        move(lights));
 
     return result;
 }

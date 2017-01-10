@@ -7,6 +7,14 @@
 
 namespace haste {
 
+struct Mesh {
+    string name;
+    uint32_t material_id;
+    vector<int> indices;
+    vector<vec3> vertices;
+    vector<mat3> tangents;
+};
+
 struct LightSample {
     SurfacePoint surface;
     vec3 _radiance;
@@ -29,23 +37,25 @@ struct AreaLight {
     mat3 tangent;
     vec2 size;
     vec3 exitance;
-    int32_t materialId;
+    uint32_t material_id;
 
     float area() const { return size.x * size.y; }
     float power() const { return area() * l1Norm(exitance); }
     float radius() const { return length(size) * 0.5f; }
     vec3 radiance() const { return exitance * one_over_pi<float>(); }
     vec3 normal() const { return tangent[1]; }
-    std::unique_ptr<BSDF> create_bsdf(const bounding_sphere_t&) const;
+
+    std::unique_ptr<BSDF> create_bsdf(const bounding_sphere_t&, uint32_t light_id) const;
+    Mesh create_mesh(uint32_t material_index, const string& name) const;
 };
 
 class AreaLights : public Geometry {
 public:
-    void init(const Intersector* intersector, bounding_sphere_t sphere);
+    void init(const Intersector* intersector);
 
     const size_t addLight(
         const string& name,
-        int32_t _materialId,
+        uint32_t material_index,
         const vec3& position,
         const vec3& direction,
         const vec3& up,
@@ -80,7 +90,6 @@ public:
     vector<float> _weights;
     float _totalPower = 0.0f;
     float _totalArea = 0.0f;
-    bounding_sphere_t _scene_bound;
 
     void _updateSampler();
     const size_t _sampleLight(RandomEngine& engine) const;
