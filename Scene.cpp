@@ -124,8 +124,8 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
         point.gnormal = isect.gnormal();
 
         point._tangent[1]
-            = point._tangent[1]
-            * (dot(isect.omega(), point._tangent[1]) < 0.0f ? -1.0f : 1.0f);
+            = normalize(point._tangent[1]
+            * (dot(isect.omega(), point._tangent[1]) < 0.0f ? -1.0f : 1.0f));
 
         point.gnormal
             = point.gnormal
@@ -173,8 +173,10 @@ float Scene::occluded(
     const SurfacePoint& origin,
     const SurfacePoint& target) const
 {
-    vec3 adjusted_origin = origin.position() + origin.normal() * 0.001f;
-    vec3 adjusted_target = target.position() + target.normal() * 0.001f;
+    vec3 direction = normalize(target.position() - origin.position());
+
+    vec3 adjusted_origin = origin.position() + (dot(origin.gnormal, direction) > 0.0f ? 1.0f : -1.0f) * origin.gnormal * 0.0001f;
+    vec3 adjusted_target = target.position() + (dot(target.gnormal, direction) < 0.0f ? 1.0f : -1.0f) * target.gnormal * 0.0001f;
 
     RTCRay rtcRay;
     (*(vec3*)rtcRay.org) = adjusted_origin;
@@ -198,9 +200,9 @@ SurfacePoint Scene::intersect(
     vec3 direction,
     float tfar) const {
     RayIsect rtcRay;
-    (*(vec3*)rtcRay.org) = surface.position();
+    (*(vec3*)rtcRay.org) = surface.position() + (dot(surface.gnormal, direction) > 0.0f ? 1.0f : -1.0f) * surface.gnormal * 0.0001f;
     (*(vec3*)rtcRay.dir) = direction;
-    rtcRay.tnear = 0.0005f;
+    rtcRay.tnear = 0.0f;
     rtcRay.tfar = tfar;
     rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
     rtcRay.primID = RTC_INVALID_GEOMETRY_ID;

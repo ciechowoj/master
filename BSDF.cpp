@@ -106,8 +106,14 @@ uint32_t LightBSDF::light_id() const { return _light_id; }
 
 BSDFSample CameraBSDF::sample(random_generator_t& generator,
                               const SurfacePoint& surface, vec3 omega) const {
-  runtime_assert(false);
-  return BSDFSample();
+  BSDFSample sample;
+  sample.omega = -omega;
+  sample.throughput = vec3(1.0f) / abs(dot(surface.normal(), omega));
+  sample.density = 1.0f;
+  sample.densityRev = 0.0f;
+  sample.specular = 0.0f;
+
+  return sample;
 }
 
 BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
@@ -142,7 +148,8 @@ DiffuseBSDF::DiffuseBSDF(vec3 diffuse) : _diffuse(diffuse) {}
 
 BSDFQuery DiffuseBSDF::query(const SurfacePoint& surface, vec3 incident,
                              vec3 outgoing) const {
-  return _query(surface.toSurface(incident), surface.toSurface(outgoing));
+  return _query(surface.toSurface(surface.gnormal), surface.toSurface(incident),
+                surface.toSurface(outgoing));
 }
 
 BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
@@ -152,7 +159,8 @@ BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
   BSDFSample sample;
   sample.omega = sample_lambert(generator, local_omega).direction;
 
-  BSDFQuery query = _query(local_omega, sample.omega);
+  BSDFQuery query =
+      _query(surface.toSurface(surface.gnormal), local_omega, sample.omega);
   sample.omega = surface.toWorld(sample.omega);
   sample.throughput = query.throughput;
   sample.density = query.density;
@@ -174,8 +182,10 @@ BSDFBoundedSample DiffuseBSDF::sample_bounded(random_generator_t& generator,
   return result;
 }
 
-BSDFQuery DiffuseBSDF::_query(vec3 incident, vec3 outgoing) const {
-  float same_side = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
+BSDFQuery DiffuseBSDF::_query(vec3 gnormal, vec3 incident,
+                              vec3 outgoing) const {
+  float same_side =
+      dot(incident, gnormal) * dot(outgoing, gnormal) > 0.0f ? 1.0f : 0.0f;
 
   BSDFQuery query;
   query.throughput = _diffuse * one_over_pi<float>() * same_side;

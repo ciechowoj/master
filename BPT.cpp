@@ -1,5 +1,7 @@
 #include <BPT.hpp>
 #include <Edge.hpp>
+#include <iostream>
+#include <streamops.hpp>
 
 namespace haste {
 
@@ -29,44 +31,23 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     EyeVertex eye[2];
     size_t itr = 0, prv = 1;
 
-    eye[prv].surface = _camera_surface(context);
+    SurfacePoint surface = _camera_surface(context);
+    eye[prv].surface = surface;
     eye[prv].omega = -ray.direction;
     eye[prv].throughput = vec3(1.0f) / _roulette;
     eye[prv].specular = 0.0f;
     eye[prv].c = 0;
     eye[prv].C = 0;
 
-    radiance += _connect_eye(context, eye[prv], light_path);
-
-    SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
-
-    while (surface.is_light()) {
-        radiance += eye[prv].throughput * _lights * _scene->queryRadiance(surface, -ray.direction);
-        surface = _scene->intersect(surface, ray.direction);
-    }
-
-    if (!surface.is_present()) {
-        return radiance;
-    }
-
-    if (_russian_roulette(*context.generator)) {
-        return radiance;
-    }
-
-    eye[itr].surface = surface;
-    eye[itr].omega = -ray.direction;
-
-    auto edge = Edge(eye[prv], eye[itr]);
-
-    eye[itr].throughput = eye[prv].throughput / _roulette;
-    eye[itr].specular = 0.0f;
-    eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
-    eye[itr].C = 0.0f;
-
-    std::swap(itr, prv);
+    float length = 0.0f;
 
     while (true) {
-        radiance += _connect(eye[prv], light_path);
+        if (eye[prv].surface.is_camera()) {
+            return radiance += _connect_eye(context, eye[prv], light_path);
+        }
+        else {
+            radiance += _connect(eye[prv], light_path);
+        }
 
         auto bsdf = _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
 
@@ -95,7 +76,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             eye[prv].specular = max(eye[prv].specular, bsdf.specular);
             eye[itr].specular = bsdf.specular;
-            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
+            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density); // * (length < 1.0f ? 0.0f : 1.0f);
 
             eye[itr].C
                 = (eye[prv].C
@@ -111,6 +92,8 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
                 break;
             }
         }
+
+        length += 1.0f;
 
         std::swap(itr, prv);
 
@@ -213,15 +196,15 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     auto edge = Edge(light, eye, omega);
 
-    float Ap
+    /*float Ap
         = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
         = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(edge.fGeometry * lightBSDF.density);
+        * Beta::beta(edge.fGeometry * lightBSDF.density);*/
 
-    float weightInv = Ap + Cp + 1.0f;
+    float weightInv = /* Ap + Cp + */ 1.0f;
 
     vec3 result = _scene->occluded(eye.surface, light.surface)
         * light.throughput
@@ -278,13 +261,16 @@ vec3 BPTBase<Beta>::_connect_eye(
             context,
             omega,
             [&] {
-                float correct_normal = abs(dot(omega, path[i].surface.gnormal)
-                    / dot(omega, path[i].surface.normal()));
+                float correct_normal = abs(dot(omega, path[i].surface.gnormal))
+                    / abs(dot(omega, path[i].surface.normal()));
+
+                float foo = abs(dot(path[i].omega, path[i].surface.normal())) /
+                    abs(dot(path[i].omega, path[i].surface.gnormal));
 
                 vec3 camera = eye.surface.toSurface(omega);
                 float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
 
-                return _connect(eye, path[i]) * context.focal_factor_y * correct_normal * correct_cos_inv;
+                return _connect(eye, path[i]) * context.focal_factor_y * foo * correct_normal * correct_cos_inv;
             });
     }
 

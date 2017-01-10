@@ -92,7 +92,7 @@ class DiffuseBSDF : public BSDF {
                                    vec3 omega) const override;
 
  private:
-  BSDFQuery _query(vec3 incident, vec3 outgoing) const;
+  BSDFQuery _query(vec3 gnormal, vec3 incident, vec3 outgoing) const;
 
   vec3 _diffuse;
 };
