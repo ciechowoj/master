@@ -60,6 +60,9 @@ private:
     static const size_t _maxSubpath = 1024;
     using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
 
+    float clamp(float x) const;
+    float beta(float x) const;
+
     vec3 _traceEye(render_context_t& context, Ray ray) override;
     void _preprocess(random_generator_t& generator, double num_samples) override;
 

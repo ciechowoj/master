@@ -6,7 +6,7 @@ namespace haste {
 using namespace std;
 using namespace glm;
 
-template <int C> float FixedBeta<C>::beta(float x) {
+template <int C> float FixedBeta<C>::beta(float x) const {
     return pow(x, float(C));
 }
 

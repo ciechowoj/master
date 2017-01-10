@@ -42,6 +42,16 @@ string UPGBase<Beta, Mode>::name() const {
 }
 
 template <class Beta, GatherMode Mode>
+float UPGBase<Beta, Mode>::clamp(float x) const {
+    return min(1.0f, x);
+}
+
+template <class Beta, GatherMode Mode>
+float UPGBase<Beta, Mode>::beta(float x) const {
+    return Beta::beta(x);
+}
+
+template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     time_scope_t _0(_metadata.trace_eye_time);
 
@@ -275,7 +285,8 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, vector<Ligh
             = (prv->B
                 * Beta::beta(bsdf.densityRev)
                 + (1.0f - bsdf.specular)
-                * min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
+                * min(1.0f, beta(_circle * prv->bGeometry * bsdf.densityRev))
+                * min(1.0f, beta(_circle * ))
                 * prv->b)
             * Beta::beta(edge.bGeometry)
             * itr->b;
@@ -307,7 +318,7 @@ float UPGBase<Beta, Mode>::_weightVC(
     const BSDFQuery& eyeBSDF,
     const Edge& edge) {
 
-    float skip_direct_vm = SkipDirectVM ? 1.0f : 1.0f;
+    float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
 
     float Ap = 0.0f;
         /*= (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
