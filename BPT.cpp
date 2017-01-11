@@ -43,7 +43,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
     while (true) {
         if (eye[prv].surface.is_camera()) {
-            return radiance += _connect_eye(context, eye[prv], light_path);
+            radiance += _connect_eye(context, eye[prv], light_path);
         }
         else {
             radiance += _connect(eye[prv], light_path);
@@ -76,7 +76,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             eye[prv].specular = max(eye[prv].specular, bsdf.specular);
             eye[itr].specular = bsdf.specular;
-            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density); // * (length < 1.0f ? 0.0f : 1.0f);
+            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
             eye[itr].C
                 = (eye[prv].C
@@ -196,15 +196,15 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 
     auto edge = Edge(light, eye, omega);
 
-    /*float Ap
+    float Ap
         = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
         = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
-        * Beta::beta(edge.fGeometry * lightBSDF.density);*/
+        * Beta::beta(edge.fGeometry * lightBSDF.density);
 
-    float weightInv = /* Ap + Cp + */ 1.0f;
+    float weightInv = Ap + Cp + 1.0f;
 
     vec3 result = _scene->occluded(eye.surface, light.surface)
         * light.throughput
@@ -254,7 +254,7 @@ vec3 BPTBase<Beta>::_connect_eye(
     const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    for (size_t i = 1; i < path.size(); ++i) {
+    for (size_t i = 0; i < path.size(); ++i) {
         vec3 omega = normalize(path[i].surface.position() - eye.surface.position());
 
         radiance += _accumulate(

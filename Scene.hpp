@@ -62,6 +62,13 @@ public:
         vec3 direction,
         float tfar) const override;
 
+    virtual SurfacePoint intersectMesh(
+        const SurfacePoint& surface,
+        vec3 direction,
+        float tfar) const override;
+
+    using Intersector::intersectMesh;
+
     const size_t numNormalRays() const;
     const size_t numShadowRays() const;
     const size_t numRays() const;

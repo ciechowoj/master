@@ -209,20 +209,32 @@ PhongBSDF::PhongBSDF(vec3 diffuse, vec3 specular, float power)
 
 BSDFQuery PhongBSDF::query(const SurfacePoint& surface, vec3 incident,
                            vec3 outgoing) const {
-  return _query(surface.toSurface(incident), surface.toSurface(outgoing));
+  float same_side =
+      dot(incident, surface.gnormal) * dot(outgoing, surface.gnormal) > 0.0f
+          ? 1.0f
+          : 0.0f;
+
+  return _query(surface.toSurface(incident), surface.toSurface(outgoing),
+                same_side);
 }
 
 BSDFSample PhongBSDF::sample(random_generator_t& generator,
                              const SurfacePoint& surface, vec3 omega) const {
   vec3 local_omega = surface.toSurface(omega);
 
-  BSDFSample sample;
-  sample.omega = generator.sample() < _diffuse_probability
-                     ? sample_lambert(generator, local_omega).direction
-                     : sample_phong(generator, local_omega, _power).direction;
+  vec3 direction = generator.sample() < _diffuse_probability
+                       ? sample_lambert(generator, local_omega).direction
+                       : sample_phong(generator, local_omega, _power).direction;
 
-  BSDFQuery query = _query(local_omega, sample.omega);
-  sample.omega = surface.toWorld(sample.omega);
+  BSDFSample sample;
+  sample.omega = surface.toWorld(direction);
+
+  float same_side =
+      dot(omega, surface.gnormal) * dot(sample.omega, surface.gnormal) > 0.0f
+          ? 1.0f
+          : 0.0f;
+
+  BSDFQuery query = _query(local_omega, direction, same_side);
   sample.throughput = query.throughput;
   sample.density = query.density;
   sample.densityRev = query.densityRev;
@@ -231,11 +243,12 @@ BSDFSample PhongBSDF::sample(random_generator_t& generator,
   return sample;
 }
 
-BSDFQuery PhongBSDF::_query(vec3 incident, vec3 outgoing) const {
+BSDFQuery PhongBSDF::_query(vec3 incident, vec3 outgoing,
+                            float same_side) const {
   float diffuse_density_factor = _diffuse_probability;
   float specular_density_factor = 1.0f - _diffuse_probability;
 
-  float same_side = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
+  // float same_side = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
 
   // diffuse
   float diffuse_density = abs(outgoing.y * one_over_pi<float>());

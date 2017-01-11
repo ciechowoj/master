@@ -216,6 +216,27 @@ SurfacePoint Scene::intersect(
     return querySurface(rtcRay);
 }
 
+SurfacePoint Scene::intersectMesh(
+    const SurfacePoint& surface,
+    vec3 direction,
+    float tfar) const {
+    RayIsect rtcRay;
+    (*(vec3*)rtcRay.org) = surface.position() + (dot(surface.gnormal, direction) > 0.0f ? 1.0f : -1.0f) * surface.gnormal * 0.0001f;
+    (*(vec3*)rtcRay.dir) = direction;
+    rtcRay.tnear = 0.0f;
+    rtcRay.tfar = tfar;
+    rtcRay.geomID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.primID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.instID = RTC_INVALID_GEOMETRY_ID;
+    rtcRay.mask = 1u << uint32_t(entity_type::mesh);
+    rtcRay.time = 0.f;
+    rtcIntersect(rtcScene, rtcRay);
+
+    ++_numIntersectRays;
+
+    return querySurface(rtcRay);
+}
+
 const size_t Scene::numNormalRays() const {
     return _numIntersectRays;
 }

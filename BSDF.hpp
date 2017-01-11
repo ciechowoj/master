@@ -112,7 +112,7 @@ class PhongBSDF : public BSDF {
                                    vec3 omega) const override;
 
  private:
-  BSDFQuery _query(vec3 incident, vec3 outgoing) const;
+  BSDFQuery _query(vec3 incident, vec3 outgoing, float same_side) const;
 
   vec3 _diffuse;
   vec3 _specular;

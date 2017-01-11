@@ -22,7 +22,7 @@ SurfacePoint Intersector::intersectMesh(const SurfacePoint& origin,
 
 SurfacePoint Intersector::intersectMesh(const SurfacePoint& origin,
                                         vec3 direction) const {
-	return Intersector::intersectMesh(origin, direction, INFINITY);
+	return intersectMesh(origin, direction, INFINITY);
 }
 
 }
