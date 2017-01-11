@@ -71,7 +71,7 @@ BSDFSample LightBSDF::sample(random_generator_t& generator,
   bounding_sphere_t local_sphere = {
       surface.toSurface(_sphere.center - surface.position()), _sphere.radius};
 
-  auto sample = sample_lambert(generator, vec3(0.0f, 1.0f, 0.0f), local_sphere);
+  auto sample = sample_lambert(generator, local_sphere);
 
   BSDFSample result;
   result.throughput = vec3(1.0f);
@@ -157,7 +157,7 @@ BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
   vec3 local_omega = surface.toSurface(omega);
 
   BSDFSample sample;
-  sample.omega = sample_lambert(generator, local_omega).direction;
+  sample.omega = sample_lambert(generator).direction;
 
   BSDFQuery query =
       _query(surface.toSurface(surface.gnormal), local_omega, sample.omega);
@@ -173,7 +173,7 @@ BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
 BSDFBoundedSample DiffuseBSDF::sample_bounded(random_generator_t& generator,
                                               bounding_sphere_t target,
                                               vec3 omega) const {
-  auto sample = sample_lambert(generator, omega, target);
+  auto sample = sample_lambert(generator, target);
 
   BSDFBoundedSample result;
   result.omega = sample.direction;
@@ -223,7 +223,7 @@ BSDFSample PhongBSDF::sample(random_generator_t& generator,
   vec3 local_omega = surface.toSurface(omega);
 
   vec3 direction = generator.sample() < _diffuse_probability
-                       ? sample_lambert(generator, local_omega).direction
+                       ? sample_lambert(generator).direction
                        : sample_phong(generator, local_omega, _power).direction;
 
   BSDFSample sample;
@@ -294,7 +294,7 @@ BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
                                specular_adjust * (1.0f - _diffuse_probability));
 
   if (generator.sample() < diffuse_probability) {
-    auto sample = sample_lambert(generator, omega, target);
+    auto sample = sample_lambert(generator, target);
 
     result.omega = sample.direction;
     result.adjust = sample.adjust * _diffuse_probability +

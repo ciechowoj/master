@@ -404,7 +404,7 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
     size_t path = context.pixel_index;
     vec3 radiance = vec3(0.0f);
 
-    for (size_t i = _light_offsets[path] + 1, s = _light_offsets[path + 1]; i < s; ++i) {
+    for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {
         vec3 omega = normalize(_light_paths[i].surface.position() - eye.surface.position());
 
         radiance += _accumulate(

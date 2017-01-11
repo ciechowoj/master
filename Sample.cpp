@@ -49,8 +49,8 @@ mat3 reflection_to_surface(vec3 reflection) {
   return matrix;
 }
 
-direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega) {
-  float y = sqrt(generator.sample()) * (omega.y > 0.0f ? 1.0f : -1.0f);
+direction_sample_t sample_lambert(random_generator_t& generator) {
+  float y = sqrt(generator.sample());
   float r = sqrt(1.0f - y * y);
   float phi = generator.sample() * 2.0f * pi<float>();
   float x = r * cos(phi);
@@ -59,7 +59,7 @@ direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega) {
   return {vec3(x, y, z), 1.0f};
 }
 
-direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
+direction_sample_t sample_lambert(random_generator_t& generator,
                                   bounding_sphere_t sphere) {
   auto bound = angular_bound(sphere);
 

@@ -90,7 +90,6 @@ class DiffuseBSDF : public BSDF {
   BSDFBoundedSample sample_bounded(random_generator_t& generator,
                                    bounding_sphere_t target,
                                    vec3 omega) const override;
-
  private:
   BSDFQuery _query(vec3 gnormal, vec3 incident, vec3 outgoing) const;
 

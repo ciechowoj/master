@@ -50,9 +50,9 @@ struct direction_sample_t {
 
 mat3 reflection_to_surface(vec3 reflection);
 
-direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega);
+direction_sample_t sample_lambert(random_generator_t& generator);
 
-direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
+direction_sample_t sample_lambert(random_generator_t& generator,
                                   bounding_sphere_t sphere);
 
 float lambert_adjust(bounding_sphere_t sphere);
@@ -68,5 +68,5 @@ direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
 float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere);
 
 direction_sample_t sample_hemisphere(random_generator_t& generator,
-                                 bounding_sphere_t sphere);
+                                     bounding_sphere_t sphere);
 }
