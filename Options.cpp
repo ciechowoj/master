@@ -694,6 +694,7 @@ template <class T>
 shared<Technique> make_upg_technique(const shared<const Scene>& scene, const Options& options) {
     return std::make_shared<T>(
         scene,
+        options.technique == Options::UPG,
         options.enable_vc,
         options.enable_vm,
         options.lights,
@@ -731,19 +732,6 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
                 options.numThreads);
 
         case Options::VCM:
-            if (options.beta == 0.0f) {
-                return make_upg_technique<VCM0>(scene, options);
-            }
-            else if (options.beta == 1.0f) {
-                return make_upg_technique<VCM1>(scene, options);
-            }
-            else if (options.beta == 2.0f) {
-                return make_upg_technique<VCM2>(scene, options);
-            }
-            else {
-                return make_upg_technique<VCMb>(scene, options);
-            }
-
         case Options::UPG:
             if (options.beta == 0.0f) {
                 return make_upg_technique<UPG0>(scene, options);

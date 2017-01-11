@@ -8,15 +8,11 @@ namespace haste {
 
 struct Edge;
 
-enum class GatherMode {
-    Unbiased,
-    Biased,
-};
-
-template <class Beta, GatherMode Mode> class UPGBase : public Technique, protected Beta {
+template <class Beta> class UPGBase : public Technique, protected Beta {
 public:
     UPGBase(
         const shared<const Scene>& scene,
+        bool unbiased,
         bool enable_vc,
         bool enable_vm,
         float lights,
@@ -120,6 +116,7 @@ private:
     bool _russian_roulette(random_generator_t& generator) const;
 
     const size_t _num_photons;
+    const bool _unbiased;
     const bool _enable_vc;
     const bool _enable_vm;
     const float _lights;
@@ -137,14 +134,15 @@ private:
     v3::HashGrid3D<LightVertex> _vertices;
 };
 
-using UPG0 = UPGBase<FixedBeta<0>, GatherMode::Unbiased>;
-using UPG1 = UPGBase<FixedBeta<1>, GatherMode::Unbiased>;
-using UPG2 = UPGBase<FixedBeta<2>, GatherMode::Unbiased>;
+using UPG0 = UPGBase<FixedBeta<0>>;
+using UPG1 = UPGBase<FixedBeta<1>>;
+using UPG2 = UPGBase<FixedBeta<2>>;
 
-class UPGb : public UPGBase<VariableBeta, GatherMode::Unbiased> {
+class UPGb : public UPGBase<VariableBeta> {
 public:
     UPGb(
         const shared<const Scene>& scene,
+        bool unbiased,
         bool enable_vc,
         bool enable_vm,
         float lights,
@@ -155,25 +153,5 @@ public:
         float beta,
         size_t numThreads);
 };
-
-using VCM0 = UPGBase<FixedBeta<0>, GatherMode::Biased>;
-using VCM1 = UPGBase<FixedBeta<1>, GatherMode::Biased>;
-using VCM2 = UPGBase<FixedBeta<2>, GatherMode::Biased>;
-
-class VCMb : public UPGBase<VariableBeta, GatherMode::Biased> {
-public:
-    VCMb(
-        const shared<const Scene>& scene,
-        bool enable_vc,
-        bool enable_vm,
-        float lights,
-        float roulette,
-        size_t numPhotons,
-        float radius,
-        float alpha,
-        float beta,
-        size_t numThreads);
-};
-
 
 }

@@ -4,9 +4,10 @@
 
 namespace haste {
 
-template <class Beta, GatherMode Mode>
-UPGBase<Beta, Mode>::UPGBase(
+template <class Beta>
+UPGBase<Beta>::UPGBase(
     const shared<const Scene>& scene,
+    bool unbiased,
     bool enable_vc,
     bool enable_vm,
     float lights,
@@ -18,6 +19,7 @@ UPGBase<Beta, Mode>::UPGBase(
     size_t num_threads)
     : Technique(scene, num_threads)
     , _num_photons(numPhotons)
+    , _unbiased(unbiased)
     , _enable_vc(enable_vc)
     , _enable_vm(enable_vm)
     , _lights(lights)
@@ -35,13 +37,13 @@ UPGBase<Beta, Mode>::UPGBase(
     _metadata.beta = beta;
 }
 
-template <class Beta, GatherMode Mode>
-string UPGBase<Beta, Mode>::name() const {
-    return Mode == GatherMode::Unbiased ? "Unbiased Photon Gathering" : "Vertex Connection and Merging";
+template <class Beta>
+string UPGBase<Beta>::name() const {
+    return _unbiased ? "Unbiased Photon Gathering" : "Vertex Connection and Merging";
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
+template <class Beta>
+vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     time_scope_t _0(_metadata.trace_eye_time);
 
     vec3 radiance = vec3(0.0f);
@@ -157,11 +159,11 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     return radiance;
 }
 
-template <class Beta, GatherMode Mode>
-void UPGBase<Beta, Mode>::_preprocess(random_generator_t& generator, double num_samples) {
+template <class Beta>
+void UPGBase<Beta>::_preprocess(random_generator_t& generator, double num_samples) {
     time_scope_t _0(_metadata.scatter_time);
 
-    if (Mode == GatherMode::Biased) {
+    if (!_unbiased) {
         _radius = _initial_radius * pow((num_samples + 1.0f), _alpha * 0.5f - 0.5f);
         _circle = pi<float>() * _radius * _radius;
     }
@@ -169,8 +171,8 @@ void UPGBase<Beta, Mode>::_preprocess(random_generator_t& generator, double num_
     _scatter(generator);
 }
 
-template <class Beta, GatherMode Mode>
-typename UPGBase<Beta, Mode>::LightVertex UPGBase<Beta, Mode>::_sample_light(random_generator_t& generator) {
+template <class Beta>
+typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_light(random_generator_t& generator) {
     LightSample light = _scene->sampleLight(generator);
 
     LightVertex vertex;
@@ -186,8 +188,8 @@ typename UPGBase<Beta, Mode>::LightVertex UPGBase<Beta, Mode>::_sample_light(ran
     return vertex;
 }
 
-template <class Beta, GatherMode Mode>
-void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, vector<LightVertex>& path, size_t& size) {
+template <class Beta>
+void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVertex>& path, size_t& size) {
     if (_russian_roulette(generator)) {
         return;
     }
@@ -266,8 +268,8 @@ void UPGBase<Beta, Mode>::_traceLight(random_generator_t& generator, vector<Ligh
     size = itr - path.data();
 }
 
-template <class Beta, GatherMode Mode> template <bool SkipDirectVM>
-float UPGBase<Beta, Mode>::_weightVC(
+template <class Beta> template <bool SkipDirectVM>
+float UPGBase<Beta>::_weightVC(
     const LightVertex& light,
     const BSDFQuery& lightBSDF,
     const EyeVertex& eye,
@@ -299,8 +301,8 @@ float UPGBase<Beta, Mode>::_weightVC(
     return 1.0f / weightInv;
 }
 
-template <class Beta, GatherMode Mode>
-float UPGBase<Beta, Mode>::_weightVM(
+template <class Beta>
+float UPGBase<Beta>::_weightVM(
     const LightVertex& light,
     const BSDFQuery& lightBSDF,
     const EyeVertex& eye,
@@ -311,15 +313,15 @@ float UPGBase<Beta, Mode>::_weightVM(
     return Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev)) * weight;
 }
 
-template <class Beta, GatherMode Mode>
-float UPGBase<Beta, Mode>::_density(
+template <class Beta>
+float UPGBase<Beta>::_density(
     random_generator_t& generator,
     const LightVertex& light,
     const EyeVertex& eye,
     const BSDFQuery& eyeQuery,
     const Edge& edge) {
 
-    if (Mode == GatherMode::Unbiased) {
+    if (_unbiased) {
         return _scene->queryBSDF(eye.surface).gathering_density(
             generator,
             _scene.get(),
@@ -332,8 +334,8 @@ float UPGBase<Beta, Mode>::_density(
     }
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_connect(
+template <class Beta>
+vec3 UPGBase<Beta>::_connect(
     const LightVertex& light, const BSDFQuery& light_bsdf,
     const EyeVertex& eye, const BSDFQuery& eye_bsdf, const Edge& edge) {
     return _scene->occluded(eye.surface, light.surface)
@@ -345,8 +347,8 @@ vec3 UPGBase<Beta, Mode>::_connect(
         * edge.fGeometry;
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_connect_light(const EyeVertex& eye) {
+template <class Beta>
+vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
     if (!eye.surface.is_light()) {
         return vec3(0.0f);
     }
@@ -368,8 +370,8 @@ vec3 UPGBase<Beta, Mode>::_connect_light(const EyeVertex& eye) {
 }
 
 
-template <class Beta, GatherMode Mode> template <bool SkipDirectVM>
-vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& eye) {
+template <class Beta> template <bool SkipDirectVM>
+vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
@@ -382,8 +384,8 @@ vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& ey
     return _combine(_connect(light, lightBSDF, eye, eyeBSDF, edge), weight);
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_connect(
+template <class Beta>
+vec3 UPGBase<Beta>::_connect(
     render_context_t& context,
     const EyeVertex& eye) {
     size_t path = context.pixel_index;
@@ -400,8 +402,8 @@ vec3 UPGBase<Beta, Mode>::_connect(
     return radiance;
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_connect_eye(
+template <class Beta>
+vec3 UPGBase<Beta>::_connect_eye(
     render_context_t& context,
     const EyeVertex& eye) {
     size_t path = context.pixel_index;
@@ -430,8 +432,8 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
     return radiance;
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_gather_eye(
+template <class Beta>
+vec3 UPGBase<Beta>::_gather_eye(
     render_context_t& context,
     const EyeVertex& eye) {
     SurfacePoint surface;
@@ -462,16 +464,8 @@ vec3 UPGBase<Beta, Mode>::_gather_eye(
                 float correct_normal = abs(dot(omega, light.surface.gnormal)
                     / dot(omega, light.surface.normal()));
 
-                if (Mode == GatherMode::Unbiased) {
-                    return _merge(*context.generator, light, eye)
+                return _merge(*context.generator, light, eye)
                     * _num_scattered_inv * correct_normal;
-                }
-                else {
-
-                    BSDFQuery query = CameraBSDF().query(eye.surface, omega, eye.omega);
-                    return _merge(*context.generator, light, eye, query)
-                    * _num_scattered_inv * correct_normal;
-                }
             });
         },
         surface.position(),
@@ -480,8 +474,8 @@ vec3 UPGBase<Beta, Mode>::_gather_eye(
     return radiance;
 }
 
-template <class Beta, GatherMode Mode>
-void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
+template <class Beta>
+void UPGBase<Beta>::_scatter(random_generator_t& generator) {
     std::mutex mutex;
     std::condition_variable condition;
     std::atomic<size_t> counter(0);
@@ -556,8 +550,8 @@ void UPGBase<Beta, Mode>::_scatter(random_generator_t& generator) {
     _vertices = v3::HashGrid3D<LightVertex>(&_light_paths, _radius);
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_gather(
+template <class Beta>
+vec3 UPGBase<Beta>::_gather(
     random_generator_t& generator,
     const EyeVertex& eye,
     const BSDFQuery& eye_bsdf,
@@ -569,13 +563,7 @@ vec3 UPGBase<Beta, Mode>::_gather(
             const LightVertex& light = _light_paths[index];
 
             time_scope_t _(_metadata.merge_time);
-
-            if (Mode == GatherMode::Unbiased) {
-                radiance += _merge(generator, light, eye) * _num_scattered_inv;
-            }
-            else {
-                radiance += _merge(generator, light, eye, eye_bsdf.reverse()) * _num_scattered_inv;
-            }
+            radiance += _merge(generator, light, eye) * _num_scattered_inv;
         },
         tentative.surface.position(),
         _radius);
@@ -583,8 +571,8 @@ vec3 UPGBase<Beta, Mode>::_gather(
     return radiance;
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_merge(
+template <class Beta>
+vec3 UPGBase<Beta>::_merge(
     random_generator_t& generator,
     const LightVertex& light,
     const EyeVertex& eye) {
@@ -609,8 +597,8 @@ vec3 UPGBase<Beta, Mode>::_merge(
     }
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_merge(
+template <class Beta>
+vec3 UPGBase<Beta>::_merge(
     random_generator_t& generator,
     const LightVertex& light,
     const EyeVertex& eye,
@@ -621,26 +609,32 @@ vec3 UPGBase<Beta, Mode>::_merge(
 
     auto edge = Edge(light, eye, omega);
 
-    auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
-    auto density = 1.0f / (edge.bGeometry * eyeBSDF.densityRev * _circle);
-
     vec3 result = _connect(light, lightBSDF, eye, eyeBSDF, edge);
 
-    return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
+    if (l1Norm(result) < FLT_EPSILON) {
+        return vec3(0.0f);
+    }
+    else {
+        auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
+        auto density = 1.0f / (edge.bGeometry * eyeBSDF.densityRev * _circle);
+
+        return _combine(result * density, weight);
+    }
 }
 
-template <class Beta, GatherMode Mode>
-vec3 UPGBase<Beta, Mode>::_combine(vec3 throughput, float weight) {
+template <class Beta>
+vec3 UPGBase<Beta>::_combine(vec3 throughput, float weight) {
     return l1Norm(throughput) < FLT_EPSILON ? vec3(0.0f) : throughput * weight;
 }
 
-template <class Beta, GatherMode Mode>
-bool UPGBase<Beta, Mode>::_russian_roulette(random_generator_t& generator) const {
+template <class Beta>
+bool UPGBase<Beta>::_russian_roulette(random_generator_t& generator) const {
     return _roulette < generator.sample();
 }
 
 UPGb::UPGb(
     const shared<const Scene>& scene,
+    bool unbiased,
     bool enable_vc,
     bool enable_vm,
     float lights,
@@ -650,8 +644,9 @@ UPGb::UPGb(
     float alpha,
     float beta,
     size_t num_threads)
-    : UPGBase<VariableBeta, GatherMode::Unbiased>(
+    : UPGBase<VariableBeta>(
         scene,
+        unbiased,
         enable_vc,
         enable_vm,
         lights,
@@ -664,39 +659,9 @@ UPGb::UPGb(
     VariableBeta::init(beta);
 }
 
-template class UPGBase<FixedBeta<0>, GatherMode::Unbiased>;
-template class UPGBase<FixedBeta<1>, GatherMode::Unbiased>;
-template class UPGBase<FixedBeta<2>, GatherMode::Unbiased>;
-template class UPGBase<VariableBeta, GatherMode::Unbiased>;
-
-VCMb::VCMb(
-    const shared<const Scene>& scene,
-    bool enable_vc,
-    bool enable_vm,
-    float lights,
-    float roulette,
-    size_t numPhotons,
-    float radius,
-    float alpha,
-    float beta,
-    size_t num_threads)
-    : UPGBase<VariableBeta, GatherMode::Biased>(
-        scene,
-        enable_vc,
-        enable_vm,
-        lights,
-        roulette,
-        numPhotons,
-        radius,
-        alpha,
-        beta,
-        num_threads) {
-    VariableBeta::init(beta);
-}
-
-template class UPGBase<FixedBeta<0>, GatherMode::Biased>;
-template class UPGBase<FixedBeta<1>, GatherMode::Biased>;
-template class UPGBase<FixedBeta<2>, GatherMode::Biased>;
-template class UPGBase<VariableBeta, GatherMode::Biased>;
+template class UPGBase<FixedBeta<0>>;
+template class UPGBase<FixedBeta<1>>;
+template class UPGBase<FixedBeta<2>>;
+template class UPGBase<VariableBeta>;
 
 }
