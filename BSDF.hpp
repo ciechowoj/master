@@ -37,6 +37,7 @@ class BSDF {
                             const SurfacePoint& point, vec3 omega) const = 0;
 
   virtual BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                           const SurfacePoint& surface,
                                            bounding_sphere_t target,
                                            vec3 omega) const;
 
@@ -59,6 +60,11 @@ class LightBSDF : public BSDF {
   BSDFQuery query(const SurfacePoint& surface, vec3 incident,
                   vec3 outgoing) const override;
 
+  BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   const SurfacePoint& surface,
+                                   bounding_sphere_t target,
+                                   vec3 omega) const override;
+
   uint32_t light_id() const override;
 
  private:
@@ -73,6 +79,7 @@ class CameraBSDF : public BSDF {
   BSDFSample sample(random_generator_t& generator, const SurfacePoint& surface,
                     vec3 omega) const override;
   BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   const SurfacePoint& surface,
                                    bounding_sphere_t target,
                                    vec3 omega) const override;
 };
@@ -88,8 +95,10 @@ class DiffuseBSDF : public BSDF {
                     vec3 omega) const override;
 
   BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   const SurfacePoint& surface,
                                    bounding_sphere_t target,
                                    vec3 omega) const override;
+
  private:
   BSDFQuery _query(vec3 gnormal, vec3 incident, vec3 outgoing) const;
 
@@ -107,6 +116,7 @@ class PhongBSDF : public BSDF {
                     vec3 omega) const override;
 
   BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   const SurfacePoint& surface,
                                    bounding_sphere_t target,
                                    vec3 omega) const override;
 

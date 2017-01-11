@@ -576,7 +576,7 @@ vec3 UPGBase<Beta>::_merge(
     const EyeVertex& eye1) {
 
     return _merge_eye(generator, light1, eye0);
-    // return merge_light(generator, light0, eye1);
+    // return _merge_light(generator, light0, eye1);
 }
 
 template <class Beta>
@@ -630,9 +630,6 @@ vec3 UPGBase<Beta>::_merge_eye(
         return _combine(throughput * density, weight);
     }
 }
-
-
-
 
 template <class Beta>
 vec3 UPGBase<Beta>::_combine(vec3 throughput, float weight) {
