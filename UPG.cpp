@@ -598,31 +598,6 @@ vec3 UPGBase<Beta>::_merge(
 }
 
 template <class Beta>
-vec3 UPGBase<Beta>::_merge(
-    random_generator_t& generator,
-    const LightVertex& light,
-    const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF) {
-    vec3 omega = normalize(eye.surface.position() - light.surface.position());
-
-    auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
-
-    auto edge = Edge(light, eye, omega);
-
-    vec3 result = _connect(light, lightBSDF, eye, eyeBSDF, edge);
-
-    if (l1Norm(result) < FLT_EPSILON) {
-        return vec3(0.0f);
-    }
-    else {
-        auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
-        auto density = 1.0f / (edge.bGeometry * eyeBSDF.densityRev * _circle);
-
-        return _combine(result * density, weight);
-    }
-}
-
-template <class Beta>
 vec3 UPGBase<Beta>::_combine(vec3 throughput, float weight) {
     return l1Norm(throughput) < FLT_EPSILON ? vec3(0.0f) : throughput * weight;
 }

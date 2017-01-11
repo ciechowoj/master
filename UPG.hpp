@@ -105,12 +105,6 @@ private:
         const LightVertex& light,
         const EyeVertex& eye);
 
-    vec3 _merge(
-        random_generator_t& generator,
-        const LightVertex& light,
-        const EyeVertex& eye,
-        const BSDFQuery& eyeBSDF);
-
     vec3 _combine(vec3 throughput, float weight);
 
     bool _russian_roulette(random_generator_t& generator) const;
