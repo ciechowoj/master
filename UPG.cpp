@@ -53,7 +53,8 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     EyeVertex eye[2];
     size_t itr = 0, prv = 1;
 
-    eye[prv].surface = _camera_surface(context);
+    SurfacePoint surface = _camera_surface(context);
+    eye[prv].surface = surface;
     eye[prv].omega = -ray.direction;
     eye[prv].throughput = vec3(1.0f) / _roulette;
     eye[prv].specular = 0.0f;
@@ -62,46 +63,16 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].d = 0;
     eye[prv].D = 0;
 
-    if (_enable_vm) {
-        // radiance += _gather_eye(context, eye[prv]);
-    }
-
-    if (_enable_vc) {
-        radiance += _connect_eye(context, eye[prv]);
-    }
-
-    SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
-
-    while (surface.is_light()) {
-        radiance += eye[prv].throughput * _lights * _scene->queryRadiance(surface, -ray.direction);
-        surface = _scene->intersect(surface, ray.direction);
-    }
-
-    if (!surface.is_present()) {
-        return radiance;
-    }
-
-    if (_russian_roulette(*context.generator)) {
-        return radiance;
-    }
-
-    eye[itr].surface = surface;
-    eye[itr].omega = -ray.direction;
-
-    auto edge = Edge(eye[prv], eye[itr]);
-
-    eye[itr].throughput = eye[prv].throughput / _roulette;
-    eye[itr].specular = 0.0f;
-    eye[itr].c = 1.0f / Beta::beta(edge.fGeometry);
-    eye[itr].C = 0.0f;
-    eye[itr].d = 0.0f; // 1.0f / Beta::beta(edge.fGeometry);
-    eye[itr].D = 0.0f;
-
-    std::swap(itr, prv);
+    float d = 0.0f;
 
     while (true) {
         if (_enable_vc) {
-            radiance += _connect(context, eye[prv]);
+            if (eye[prv].surface.is_camera()) {
+                radiance += _connect_eye(context, eye[prv]);
+            }
+            else {
+                radiance += _connect(context, eye[prv]);
+            }
         }
 
         auto bsdf = _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
@@ -140,7 +111,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
                 * Beta::beta(edge.bGeometry)
                 * eye[itr].c;
 
-            eye[itr].d = eye[itr].c;
+            eye[itr].d = eye[itr].c * d;
 
             eye[itr].D
                 = (eye[prv].D
@@ -163,8 +134,16 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
         if (_enable_vm) {
             time_scope_t _2(_metadata.gather_time);
-            radiance += _gather(*context.generator, eye[prv], bsdf, eye[itr]);
+
+            if (eye[prv].surface.is_camera()) {
+                // noop
+            }
+            else {
+                radiance += _gather(*context.generator, eye[prv], bsdf, eye[itr]);
+            }
         }
+
+        d = 1.0f;
 
         std::swap(itr, prv);
 
