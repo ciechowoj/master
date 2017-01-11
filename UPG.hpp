@@ -87,9 +87,9 @@ private:
     template <bool SkipDirectVM>
     vec3 _connect(const LightVertex& light, const EyeVertex& eye);
 
-    vec3 _connect(random_generator_t& generator, const EyeVertex& eye, const std::size_t& tail);
+    vec3 _connect(render_context_t& context, const EyeVertex& eye);
+    vec3 _connect_eye(render_context_t& context, const EyeVertex& eye);
 
-    vec3 _connect_eye(render_context_t& context, const EyeVertex& eye, const std::size_t& path);
     vec3 _gather_eye(render_context_t& context, const EyeVertex& eye);
 
     void _scatter(random_generator_t& generator);

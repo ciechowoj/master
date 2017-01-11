@@ -67,7 +67,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
     }
 
     if (_enable_vc) {
-        radiance += _connect_eye(context, eye[prv], context.pixel_index);
+        radiance += _connect_eye(context, eye[prv]);
     }
 
     SurfacePoint surface = _scene->intersect(eye[prv].surface, ray.direction);
@@ -101,7 +101,7 @@ vec3 UPGBase<Beta, Mode>::_traceEye(render_context_t& context, Ray ray) {
 
     while (true) {
         if (_enable_vc) {
-            radiance += _connect(*context.generator, eye[prv], context.pixel_index);
+            radiance += _connect(context, eye[prv]);
         }
 
         auto bsdf = _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
@@ -402,13 +402,13 @@ vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& ey
 
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_connect(
-    random_generator_t& generator,
-    const EyeVertex& eye,
-    const std::size_t& path) {
+    render_context_t& context,
+    const EyeVertex& eye) {
+    size_t path = context.pixel_index;
     vec3 radiance = vec3(0.0f);
 
-    if (!_russian_roulette(generator)) {
-        radiance += _connect<true>(_sample_light(generator), eye);
+    if (!_russian_roulette(*context.generator)) {
+        radiance += _connect<true>(_sample_light(*context.generator), eye);
     }
 
     for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {
@@ -421,8 +421,8 @@ vec3 UPGBase<Beta, Mode>::_connect(
 template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_connect_eye(
     render_context_t& context,
-    const EyeVertex& eye,
-    const std::size_t& path) {
+    const EyeVertex& eye) {
+    size_t path = context.pixel_index;
     vec3 radiance = vec3(0.0f);
 
     for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {

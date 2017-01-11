@@ -37,8 +37,6 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].c = 0;
     eye[prv].C = 0;
 
-    float length = 0.0f;
-
     while (true) {
         if (eye[prv].surface.is_camera()) {
             radiance += _connect_eye(context, eye[prv], light_path);
@@ -90,8 +88,6 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
                 break;
             }
         }
-
-        length += 1.0f;
 
         std::swap(itr, prv);
 
