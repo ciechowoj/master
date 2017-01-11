@@ -432,8 +432,11 @@ vec3 UPGBase<Beta, Mode>::_connect_eye(
             context,
             omega,
             [&] {
-                float correct_normal = abs(dot(omega, _light_paths[i].surface.gnormal)
-                    / dot(omega, _light_paths[i].surface.normal()));
+                float correct_normal = abs(
+                    (dot(omega, _light_paths[i].surface.gnormal)) *
+                    dot(_light_paths[i].omega, _light_paths[i].surface.normal()) /
+                    (dot(omega, _light_paths[i].surface.normal()) *
+                    dot(_light_paths[i].omega, _light_paths[i].surface.gnormal)));
 
                 vec3 camera = eye.surface.toSurface(omega);
                 float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);

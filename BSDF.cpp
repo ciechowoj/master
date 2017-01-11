@@ -248,8 +248,6 @@ BSDFQuery PhongBSDF::_query(vec3 incident, vec3 outgoing,
   float diffuse_density_factor = _diffuse_probability;
   float specular_density_factor = 1.0f - _diffuse_probability;
 
-  // float same_side = incident.y * outgoing.y > 0.0f ? 1.0f : 0.0f;
-
   // diffuse
   float diffuse_density = abs(outgoing.y * one_over_pi<float>());
   float diffuse_density_rev = abs(incident.y * one_over_pi<float>());

@@ -124,7 +124,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/Bearings.blend --BPT --beta=2 --parallel \
+	./build/master/master.bin models/TestCase8.blend --UPG --beta=2 --parallel \
 	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.212000.PT.snapshot.exr"
 
 profile:

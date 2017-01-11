@@ -1,7 +1,5 @@
 #include <BPT.hpp>
 #include <Edge.hpp>
-#include <iostream>
-#include <streamops.hpp>
 
 namespace haste {
 
@@ -261,16 +259,16 @@ vec3 BPTBase<Beta>::_connect_eye(
             context,
             omega,
             [&] {
-                float correct_normal = abs(dot(omega, path[i].surface.gnormal))
-                    / abs(dot(omega, path[i].surface.normal()));
-
-                float foo = abs(dot(path[i].omega, path[i].surface.normal())) /
-                    abs(dot(path[i].omega, path[i].surface.gnormal));
+                float correct_normal = abs(
+                    (dot(omega, path[i].surface.gnormal)) *
+                    dot(path[i].omega, path[i].surface.normal()) /
+                    (dot(omega, path[i].surface.normal()) *
+                    dot(path[i].omega, path[i].surface.gnormal)));
 
                 vec3 camera = eye.surface.toSurface(omega);
                 float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
 
-                return _connect(eye, path[i]) * context.focal_factor_y * foo * correct_normal * correct_cos_inv;
+                return _connect(eye, path[i]) * context.focal_factor_y * correct_normal * correct_cos_inv;
             });
     }
 
