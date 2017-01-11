@@ -121,10 +121,13 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
                 = (prv->D
                     * Beta::beta(bsdf.densityRev)
                     + (1.0f - bsdf.specular)
-                    * min(1.0f, Beta::beta(_circle) / prv->d)
+                    // * min(1.0f, Beta::beta(_circle) / prv->d)
+                    * min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
                     * prv->d)
                 * Beta::beta(edge.bGeometry)
                 * itr->d;
+
+            itr->bGeometry = edge.bGeometry;
 
             if (surface.is_light()) {
                 if (_enable_vc) {
@@ -248,7 +251,8 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
             = (prv->B
                 * Beta::beta(bsdf.densityRev)
                 + (1.0f - bsdf.specular)
-                * min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
+                // * min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
+                * min(1.0f, Beta::beta(_circle) / prv->b)
                 * prv->b)
             * Beta::beta(edge.bGeometry)
             * itr->b;
@@ -285,7 +289,9 @@ float UPGBase<Beta>::_weightVC(
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);*/
 
     float Bp
-        = (light.B * Beta::beta(lightBSDF.densityRev) + (1.0f - lightBSDF.specular) * min(1.0f, Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev)) * light.b)
+        = (light.B * Beta::beta(lightBSDF.densityRev) + (1.0f - lightBSDF.specular)
+            // * min(1.0f, Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev)) * light.b)
+            * min(1.0f, Beta::beta(_circle) / light.b) * light.b)
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp = 0.0f;
@@ -293,12 +299,17 @@ float UPGBase<Beta>::_weightVC(
         * Beta::beta(edge.fGeometry * lightBSDF.density); */
 
     float Dp
-        = (eye.D * Beta::beta(eyeBSDF.density) + (1.0f - eyeBSDF.specular) * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
+        = (eye.D * Beta::beta(eyeBSDF.density) + (1.0f - eyeBSDF.specular)
+            // * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
+            * min(1.0f, Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) * eye.d)
         * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float weightInv
         = Ap + Beta::beta(_num_scattered) * Bp + Cp + Beta::beta(_num_scattered) * Dp
-        + Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev)) * skip_direct_vm; // + 1.0f;
+        + Beta::beta(float(_num_scattered)
+        // * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev))
+        * min(1.0f, _circle * edge.fGeometry * lightBSDF.density))
+        * skip_direct_vm; // + 1.0f;
 
     return 1.0f / weightInv;
 }
@@ -312,7 +323,8 @@ float UPGBase<Beta>::_weightVM(
     const Edge& edge) {
     float weight = _weightVC<false>(light, lightBSDF, eye, eyeBSDF, edge);
 
-    return Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev)) * weight;
+    // return Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev)) * weight;
+    return Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.fGeometry * lightBSDF.density)) * weight;
 }
 
 template <class Beta>
@@ -330,7 +342,7 @@ float UPGBase<Beta>::_density(
     }
     else {
         // return 1.0f / (edge.bGeometry * bsdf.densityRev * _circle);
-        return 1.0f / (edge.fGeometry * bsdf.density * _circle);
+        return 1.0f / (_circle * edge.fGeometry * bsdf.density);
     }
 }
 
@@ -603,15 +615,6 @@ vec3 UPGBase<Beta>::_merge_light(
         time_scope_t _(_metadata.density_time);
         auto density = _density(generator, light.omega,
             light.surface, light_bsdf, eye.surface.position(), edge);
-
-
-        // weight = 1.0f / (1.0f / weight - 1.0f);
-
-        /*std::cout << "weight: " << 1.0f / weight << "\n";
-        std::cout << "density: " << density << "\n";
-        std::cout << "throughput: " << throughput << "\n";
-        std::cout << "\n"*/;
-
 
         return _combine(throughput * density, weight);
     }

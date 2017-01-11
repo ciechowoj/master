@@ -49,6 +49,7 @@ private:
         vec3 throughput;
         float specular;
         float c, C, d, D;
+        float bGeometry;
     };
 
     static const size_t _maxSubpath = 1024;
