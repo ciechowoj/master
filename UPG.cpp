@@ -1,6 +1,7 @@
 #include <UPG.hpp>
 #include <Edge.hpp>
 #include <condition_variable>
+#include <streamops.hpp>
 
 namespace haste {
 
@@ -134,11 +135,13 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             }
         }
 
+        eye[itr].throughput /= _roulette;
+
         if (_enable_vm) {
             time_scope_t _2(_metadata.gather_time);
 
             if (eye[prv].surface.is_camera()) {
-                // noop
+                radiance += _gather(*context.generator, eye[prv], bsdf, eye[itr]);
             }
             else {
                 radiance += _gather(*context.generator, eye[prv], bsdf, eye[itr]);
@@ -152,8 +155,6 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
         if (_russian_roulette(*context.generator)) {
             return radiance;
         }
-
-        eye[prv].throughput /= _roulette;
     }
 
     return radiance;
@@ -240,7 +241,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
             * Beta::beta(edge.bGeometry)
             * itr->a;
 
-        itr->b = itr - begin < 2 ? 0.0f : itr->a;
+        itr->b = itr - begin < 1 ? 0.0f : itr->a;
 
         itr->B
             = (prv->B
@@ -278,17 +279,17 @@ float UPGBase<Beta>::_weightVC(
 
     float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
 
-    float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
+    float Ap = 0.0f;
+        /* = (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);*/
 
     float Bp
         = (light.B * Beta::beta(lightBSDF.densityRev) + (1.0f - lightBSDF.specular) * min(1.0f, Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev)) * light.b)
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
-    float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
-        * Beta::beta(edge.fGeometry * lightBSDF.density);
+    float Cp = 0.0f;
+        /* = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
+        * Beta::beta(edge.fGeometry * lightBSDF.density); */
 
     float Dp
         = (eye.D * Beta::beta(eyeBSDF.density) + (1.0f - eyeBSDF.specular) * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
@@ -296,7 +297,7 @@ float UPGBase<Beta>::_weightVC(
 
     float weightInv
         = Ap + Beta::beta(_num_scattered) * Bp + Cp + Beta::beta(_num_scattered) * Dp
-        + Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev)) * skip_direct_vm + 1.0f;
+        + Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev)) * skip_direct_vm; // + 1.0f;
 
     return 1.0f / weightInv;
 }
@@ -327,7 +328,8 @@ float UPGBase<Beta>::_density(
             surface, { target, _radius }, omega);
     }
     else {
-        return 1.0f / (edge.bGeometry * bsdf.densityRev * _circle);
+        // return 1.0f / (edge.bGeometry * bsdf.densityRev * _circle);
+        return 1.0f / (edge.fGeometry * bsdf.density * _circle);
     }
 }
 
@@ -575,8 +577,8 @@ vec3 UPGBase<Beta>::_merge(
     const EyeVertex& eye0,
     const EyeVertex& eye1) {
 
-    return _merge_eye(generator, light1, eye0);
-    // return _merge_light(generator, light0, eye1);
+    // return _merge_eye(generator, light1, eye0);
+    return _merge_light(generator, light0, eye1);
 }
 
 template <class Beta>
@@ -600,6 +602,15 @@ vec3 UPGBase<Beta>::_merge_light(
         time_scope_t _(_metadata.density_time);
         auto density = _density(generator, light.omega,
             light.surface, light_bsdf, eye.surface.position(), edge);
+
+
+        // weight = 1.0f / (1.0f / weight - 1.0f);
+
+        /*std::cout << "weight: " << 1.0f / weight << "\n";
+        std::cout << "density: " << density << "\n";
+        std::cout << "throughput: " << throughput << "\n";
+        std::cout << "\n"*/;
+
 
         return _combine(throughput * density, weight);
     }
