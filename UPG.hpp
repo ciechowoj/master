@@ -86,6 +86,10 @@ private:
         const BSDFQuery& eyeQuery,
         const Edge& edge);
 
+    vec3 _connect(
+        const LightVertex& light, const BSDFQuery& light_bsdf,
+        const EyeVertex& eye, const BSDFQuery& eye_bsdf, const Edge& edge);
+
     vec3 _connect_light(const EyeVertex& eye);
 
     template <bool SkipDirectVM>

@@ -333,6 +333,19 @@ float UPGBase<Beta, Mode>::_density(
 }
 
 template <class Beta, GatherMode Mode>
+vec3 UPGBase<Beta, Mode>::_connect(
+    const LightVertex& light, const BSDFQuery& light_bsdf,
+    const EyeVertex& eye, const BSDFQuery& eye_bsdf, const Edge& edge) {
+    return _scene->occluded(eye.surface, light.surface)
+        * light.throughput
+        * light_bsdf.throughput
+        * eye.throughput
+        * eye_bsdf.throughput
+        * edge.bCosTheta
+        * edge.fGeometry;
+}
+
+template <class Beta, GatherMode Mode>
 vec3 UPGBase<Beta, Mode>::_connect_light(const EyeVertex& eye) {
     if (!eye.surface.is_light()) {
         return vec3(0.0f);
@@ -366,17 +379,7 @@ vec3 UPGBase<Beta, Mode>::_connect(const LightVertex& light, const EyeVertex& ey
 
     auto weight = _weightVC<SkipDirectVM>(light, lightBSDF, eye, eyeBSDF, edge);
 
-    vec3 radiance = _combine(
-        _scene->occluded(eye.surface, light.surface)
-            * light.throughput
-            * lightBSDF.throughput
-            * eye.throughput
-            * eyeBSDF.throughput
-            * edge.bCosTheta
-            * edge.fGeometry,
-        weight);
-
-    return radiance;
+    return _combine(_connect(light, lightBSDF, eye, eyeBSDF, edge), weight);
 }
 
 template <class Beta, GatherMode Mode>
@@ -592,13 +595,7 @@ vec3 UPGBase<Beta, Mode>::_merge(
 
     auto edge = Edge(light, eye, omega);
 
-    vec3 result = _scene->occluded(eye.surface, light.surface)
-        * light.throughput
-        * lightBSDF.throughput
-        * eye.throughput
-        * eyeBSDF.throughput
-        * edge.bCosTheta
-        * edge.fGeometry;
+    vec3 result = _connect(light, lightBSDF, eye, eyeBSDF, edge);
 
     if (l1Norm(result) < FLT_EPSILON) {
         return vec3(0.0f);
@@ -625,14 +622,9 @@ vec3 UPGBase<Beta, Mode>::_merge(
     auto edge = Edge(light, eye, omega);
 
     auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
-    auto density = 1.0f / (eyeBSDF.densityRev * _circle);
+    auto density = 1.0f / (edge.bGeometry * eyeBSDF.densityRev * _circle);
 
-    vec3 result = _scene->occluded(light.surface, eye.surface)
-        * light.throughput
-        * lightBSDF.throughput
-        * eye.throughput
-        * eyeBSDF.throughput
-        * edge.fCosTheta;
+    vec3 result = _connect(light, lightBSDF, eye, eyeBSDF, edge);
 
     return _combine(std::isfinite(density) ? result * density : vec3(0.0f), weight);
 }
