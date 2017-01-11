@@ -77,9 +77,10 @@ private:
 
     float _density(
         random_generator_t& generator,
-        const LightVertex& light,
-        const EyeVertex& eye,
-        const BSDFQuery& eyeQuery,
+        const vec3& omega,
+        const SurfacePoint& surface,
+        const BSDFQuery& bsdf,
+        const vec3& target,
         const Edge& edge);
 
     vec3 _connect(
@@ -101,6 +102,18 @@ private:
     vec3 _gather(random_generator_t& generator, const EyeVertex& eye, const BSDFQuery& eye_bsdf, const EyeVertex& tentative);
 
     vec3 _merge(
+        random_generator_t& generator,
+        const LightVertex& light0,
+        const LightVertex& light1,
+        const EyeVertex& eye0,
+        const EyeVertex& eye1);
+
+    vec3 _merge_light(
+        random_generator_t& generator,
+        const LightVertex& light,
+        const EyeVertex& eye);
+
+    vec3 _merge_eye(
         random_generator_t& generator,
         const LightVertex& light,
         const EyeVertex& eye);

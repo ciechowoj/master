@@ -316,21 +316,18 @@ float UPGBase<Beta>::_weightVM(
 template <class Beta>
 float UPGBase<Beta>::_density(
     random_generator_t& generator,
-    const LightVertex& light,
-    const EyeVertex& eye,
-    const BSDFQuery& eyeQuery,
-    const Edge& edge) {
-
+        const vec3& omega,
+        const SurfacePoint& surface,
+        const BSDFQuery& bsdf,
+        const vec3& target,
+        const Edge& edge) {
     if (_unbiased) {
-        return _scene->queryBSDF(eye.surface).gathering_density(
-            generator,
-            _scene.get(),
-            eye.surface,
-            { light.surface.position(), _radius },
-            eye.omega);
+        return _scene->queryBSDF(surface).gathering_density(
+            generator, _scene.get(),
+            surface, { target, _radius }, omega);
     }
     else {
-        return 1.0f / (edge.bGeometry * eyeQuery.densityRev * _circle);
+        return 1.0f / (edge.bGeometry * bsdf.densityRev * _circle);
     }
 }
 
@@ -432,7 +429,7 @@ vec3 UPGBase<Beta>::_connect_eye(
     return radiance;
 }
 
-template <class Beta>
+/*template <class Beta>
 vec3 UPGBase<Beta>::_gather_eye(
     render_context_t& context,
     const EyeVertex& eye) {
@@ -472,7 +469,7 @@ vec3 UPGBase<Beta>::_gather_eye(
         _radius);
 
     return radiance;
-}
+}*/
 
 template <class Beta>
 void UPGBase<Beta>::_scatter(random_generator_t& generator) {
@@ -560,10 +557,9 @@ vec3 UPGBase<Beta>::_gather(
 
     _vertices.rQuery(
         [&](uint32_t index) {
-            const LightVertex& light = _light_paths[index];
-
             time_scope_t _(_metadata.merge_time);
-            radiance += _merge(generator, light, eye) * _num_scattered_inv;
+            radiance += _merge(generator,
+                _light_paths[index - 1], _light_paths[index], eye, tentative) * _num_scattered_inv;
         },
         tentative.surface.position(),
         _radius);
@@ -574,28 +570,69 @@ vec3 UPGBase<Beta>::_gather(
 template <class Beta>
 vec3 UPGBase<Beta>::_merge(
     random_generator_t& generator,
+    const LightVertex& light0,
+    const LightVertex& light1,
+    const EyeVertex& eye0,
+    const EyeVertex& eye1) {
+
+    return _merge_eye(generator, light1, eye0);
+    // return merge_light(generator, light0, eye1);
+}
+
+template <class Beta>
+vec3 UPGBase<Beta>::_merge_light(
+    random_generator_t& generator,
     const LightVertex& light,
     const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
-    auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
-    auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
-
+    auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
+    auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
     auto edge = Edge(light, eye, omega);
 
-    vec3 result = _connect(light, lightBSDF, eye, eyeBSDF, edge);
+    vec3 throughput = _connect(light, light_bsdf, eye, eye_bsdf, edge);
 
-    if (l1Norm(result) < FLT_EPSILON) {
+    if (l1Norm(throughput) < FLT_EPSILON) {
         return vec3(0.0f);
     }
     else {
-        auto weight = _weightVM(light, lightBSDF, eye, eyeBSDF, edge);
+        auto weight = _weightVM(light, light_bsdf, eye, eye_bsdf, edge);
         time_scope_t _(_metadata.density_time);
-        auto density = _density(generator, light, eye, eyeBSDF, edge);
+        auto density = _density(generator, light.omega,
+            light.surface, light_bsdf, eye.surface.position(), edge);
 
-        return _combine(result * density, weight);
+        return _combine(throughput * density, weight);
     }
 }
+
+template <class Beta>
+vec3 UPGBase<Beta>::_merge_eye(
+    random_generator_t& generator,
+    const LightVertex& light,
+    const EyeVertex& eye) {
+    vec3 omega = normalize(eye.surface.position() - light.surface.position());
+
+    auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
+    auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
+    auto edge = Edge(light, eye, omega);
+
+    vec3 throughput = _connect(light, light_bsdf, eye, eye_bsdf, edge);
+
+    if (l1Norm(throughput) < FLT_EPSILON) {
+        return vec3(0.0f);
+    }
+    else {
+        auto weight = _weightVM(light, light_bsdf, eye, eye_bsdf, edge);
+        time_scope_t _(_metadata.density_time);
+        auto density = _density(generator, eye.omega,
+            eye.surface, eye_bsdf, light.surface.position(), edge);
+
+        return _combine(throughput * density, weight);
+    }
+}
+
+
+
 
 template <class Beta>
 vec3 UPGBase<Beta>::_combine(vec3 throughput, float weight) {
