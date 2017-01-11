@@ -317,7 +317,7 @@ public:
                 if (cell != _ranges.end()) {
                     for (uint32_t i = cell->second.begin; i < cell->second.end; ++i) {
                         if (distance2(query, _points[i].cell) < radiusSq) {
-                            callback(_data->operator[](_points[i].index));
+                            callback(_points[i].index);
                         }
                     }
                 }
@@ -431,11 +431,12 @@ private:
 
         const float radius_inv = 1.0f / radius;
 
-        _points.resize(data.size());
+        _points.reserve(data.size());
 
         for (size_t i = 0; i < data.size(); ++i) {
-            _points[i].cell = floor(data[i].position() * radius_inv);
-            _points[i].index = i;
+            if (!data[i].is_light()) {
+                _points.push_back({ floor(data[i].position() * radius_inv), uint32_t(i) });
+            }
         }
 
         sort(_points.begin(), _points.end(), [](const Point& a, const Point& b) {

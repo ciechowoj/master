@@ -41,6 +41,10 @@ private:
         const vec3& position() const {
             return surface.position();
         }
+
+        bool is_light() const {
+            return surface.is_light();
+        }
     };
 
     struct EyeVertex {

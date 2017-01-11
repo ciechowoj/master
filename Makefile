@@ -25,7 +25,7 @@ LIBRARY_DIRS = \
 	-Lbuild/assimp/code
 
 CXX = g++
-CXXFLAGS = -march=native -g -O2 -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CXXFLAGS = -march=native -g -O1 -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \
