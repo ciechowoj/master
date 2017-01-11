@@ -54,31 +54,32 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     }
 
     EyeVertex eye[2];
-    size_t itr = 0, prv = 1;
+    auto prv = &eye[0];
+    auto itr = &eye[1];
 
     SurfacePoint surface = _camera_surface(context);
-    eye[prv].surface = surface;
-    eye[prv].omega = -ray.direction;
-    eye[prv].throughput = vec3(1.0f) / _roulette;
-    eye[prv].specular = 0.0f;
-    eye[prv].c = 0;
-    eye[prv].C = 0;
-    eye[prv].d = 0;
-    eye[prv].D = 0;
+    prv->surface = surface;
+    prv->omega = -ray.direction;
+    prv->throughput = vec3(1.0f) / _roulette;
+    prv->specular = 0.0f;
+    prv->c = 0;
+    prv->C = 0;
+    prv->d = 0;
+    prv->D = 0;
 
     float d = 0.0f;
 
     while (true) {
         if (_enable_vc) {
-            if (eye[prv].surface.is_camera()) {
-                radiance += _connect_eye(context, eye[prv]);
+            if (prv->surface.is_camera()) {
+                radiance += _connect_eye(context, *prv);
             }
             else {
-                radiance += _connect(context, eye[prv]);
+                radiance += _connect(context, *prv);
             }
         }
 
-        auto bsdf = _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
+        auto bsdf = _scene->sampleBSDF(*context.generator, prv->surface, prv->omega);
 
         while (true) {
             surface = _scene->intersect(surface, bsdf.omega);
@@ -87,47 +88,47 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
                 return radiance;
             }
 
-            eye[itr].surface = surface;
-            eye[itr].omega = -bsdf.omega;
+            itr->surface = surface;
+            itr->omega = -bsdf.omega;
 
-            auto edge = Edge(eye[prv], eye[itr]);
+            auto edge = Edge(*prv, *itr);
 
-            eye[itr].throughput
-                = eye[prv].throughput
+            itr->throughput
+                = prv->throughput
                 * bsdf.throughput
                 * edge.bCosTheta;
 
-            if (l1Norm(eye[itr].throughput) < FLT_EPSILON) {
+            if (l1Norm(itr->throughput) < FLT_EPSILON) {
               return radiance;
             }
 
-            eye[itr].throughput /= bsdf.density;
+            itr->throughput /= bsdf.density;
 
-            eye[prv].specular = max(eye[prv].specular, bsdf.specular);
-            eye[itr].specular = bsdf.specular;
-            eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
+            prv->specular = max(prv->specular, bsdf.specular);
+            itr->specular = bsdf.specular;
+            itr->c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
-            eye[itr].C
-                = (eye[prv].C
+            itr->C
+                = (prv->C
                     * Beta::beta(bsdf.densityRev)
-                    + (1.0f - eye[prv].specular) * eye[prv].c)
+                    + (1.0f - prv->specular) * prv->c)
                 * Beta::beta(edge.bGeometry)
-                * eye[itr].c;
+                * itr->c;
 
-            eye[itr].d = eye[itr].c * d;
+            itr->d = itr->c * d;
 
-            eye[itr].D
-                = (eye[prv].D
+            itr->D
+                = (prv->D
                     * Beta::beta(bsdf.densityRev)
                     + (1.0f - bsdf.specular)
-                    * min(1.0f, Beta::beta(_circle) / eye[prv].d)
-                    * eye[prv].d)
+                    * min(1.0f, Beta::beta(_circle) / prv->d)
+                    * prv->d)
                 * Beta::beta(edge.bGeometry)
-                * eye[itr].d;
+                * itr->d;
 
             if (surface.is_light()) {
                 if (_enable_vc) {
-                    radiance += _connect_light(eye[itr]);
+                    radiance += _connect_light(*itr);
                 }
             }
             else {
@@ -135,16 +136,16 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             }
         }
 
-        eye[itr].throughput /= _roulette;
+        itr->throughput /= _roulette;
 
         if (_enable_vm) {
             time_scope_t _2(_metadata.gather_time);
 
-            if (eye[prv].surface.is_camera()) {
-                radiance += _gather(*context.generator, eye[prv], bsdf, eye[itr]);
+            if (prv->surface.is_camera()) {
+                radiance += _gather(*context.generator, *prv, bsdf, *itr);
             }
             else {
-                radiance += _gather(*context.generator, eye[prv], bsdf, eye[itr]);
+                radiance += _gather(*context.generator, *prv, bsdf, *itr);
             }
         }
 
