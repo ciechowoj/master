@@ -31,6 +31,10 @@ struct TestStruct
         _position = position;
     }
 
+    bool is_light() const {
+        return false;
+    }
+
     float& operator[](size_t index)
     {
         return _position[index];
@@ -348,7 +352,7 @@ template <template <class> class T> void run_test_case(ifstream& stream) {
 
     auto start = chrono::high_resolution_clock::now();
 
-    T<TestStruct> accel_struct(testData, radius);
+    T<TestStruct> accel_struct(&testData, radius);
 
     // v2::KDTree3D<TestStruct> kdtree(testData);
     // v3::HashGrid3D<TestStruct> grid(testData, radius);

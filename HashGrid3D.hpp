@@ -328,8 +328,8 @@ public:
     size_t rQuery(T* result, const vec3& query, const float radius) const {
         size_t itr = 0;
 
-        auto callback = [&](const T& value) {
-            result[itr] = value;
+        auto callback = [&](uint32_t index) {
+            result[itr] = _data->operator[](index);
             ++itr;
         };
 
