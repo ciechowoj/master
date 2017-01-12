@@ -130,7 +130,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             itr->bGeometry = edge.bGeometry;
 
             if (surface.is_light()) {
-                if (_enable_vc) {
+                if (_enable_vc /* && !prv->surface.is_camera() */) {
                     radiance += _connect_light(*itr);
                 }
             }
@@ -284,9 +284,9 @@ float UPGBase<Beta>::_weightVC(
 
     float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
 
-    float Ap = 0.0f;
+    float Ap = 0.f;
         /* = (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);*/
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev); */
 
     float Bp
         = (light.B * Beta::beta(lightBSDF.densityRev) + (1.0f - lightBSDF.specular)
@@ -294,7 +294,7 @@ float UPGBase<Beta>::_weightVC(
             * min(1.0f, Beta::beta(_circle) / light.b) * light.b)
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
-    float Cp = 0.0f;
+    float Cp = 0.f;
         /* = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
         * Beta::beta(edge.fGeometry * lightBSDF.density); */
 
@@ -372,7 +372,13 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
         = (eye.C * Beta::beta(bsdf.density) + eye.c * (1.0f - eye.specular))
         * Beta::beta(lsdf.density);
 
-    float Dp = eye.D / eye.c * Beta::beta(bsdf.density);
+    // float Dp = eye.D / eye.c * Beta::beta(bsdf.density);
+
+    float Dp
+        = (eye.D * Beta::beta(bsdf.density) + (1.0f - bsdf.specular)
+            // * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
+            * min(1.0f, Beta::beta(_circle * eye.bGeometry * bsdf.density)) * eye.d)
+        * Beta::beta(lsdf.density);
 
     float weightInv = Cp + Beta::beta(float(_num_scattered)) * Dp + 1.0f;
 
@@ -404,7 +410,7 @@ vec3 UPGBase<Beta>::_connect(
     vec3 radiance = vec3(0.0f);
 
     if (!_russian_roulette(*context.generator)) {
-        radiance += _connect<true>(_sample_light(*context.generator), eye);
+        radiance += _connect<false>(_sample_light(*context.generator), eye);
     }
 
     for (size_t i = _light_offsets[path] + 1, s = _light_offsets[path + 1]; i < s; ++i) {
@@ -573,8 +579,10 @@ vec3 UPGBase<Beta>::_gather(
     _vertices.rQuery(
         [&](uint32_t index) {
             time_scope_t _(_metadata.merge_time);
-            radiance += _merge(generator,
-                _light_paths[index - 1], _light_paths[index], eye, tentative) * _num_scattered_inv;
+            radiance += vec3(1000.0f);
+
+            /*_merge(generator,
+                _light_paths[index - 1], _light_paths[index], eye, tentative) * _num_scattered_inv;*/
         },
         tentative.surface.position(),
         _radius);
