@@ -421,8 +421,6 @@ bounding_sphere_t compute_bounding_sphere(const std::vector<Mesh>& meshes) {
 
     result.radius = glm::sqrt(result.radius);
 
-    result.radius = 1000000.0f;
-
     return result;
 }
 

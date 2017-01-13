@@ -284,9 +284,9 @@ float UPGBase<Beta>::_weightVC(
 
     float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
 
-    float Ap = 0.f;
-        /* = (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev); */
+    float Ap
+        = (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Bp
         = (light.B * Beta::beta(lightBSDF.densityRev) + (1.0f - lightBSDF.specular)
@@ -294,9 +294,9 @@ float UPGBase<Beta>::_weightVC(
             * min(1.0f, Beta::beta(_circle) / light.b) * light.b)
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
-    float Cp = 0.f;
-        /* = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
-        * Beta::beta(edge.fGeometry * lightBSDF.density); */
+    float Cp
+        = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
+        * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float Dp
         = (eye.D * Beta::beta(eyeBSDF.density) + (1.0f - eyeBSDF.specular)
@@ -309,7 +309,7 @@ float UPGBase<Beta>::_weightVC(
         + Beta::beta(float(_num_scattered)
         // * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev))
         * min(1.0f, _circle * edge.fGeometry * lightBSDF.density))
-        * skip_direct_vm; // + 1.0f;
+        * skip_direct_vm + 1.0f;
 
     return 1.0f / weightInv;
 }
@@ -579,10 +579,8 @@ vec3 UPGBase<Beta>::_gather(
     _vertices.rQuery(
         [&](uint32_t index) {
             time_scope_t _(_metadata.merge_time);
-            radiance += vec3(1000.0f);
-
-            /*_merge(generator,
-                _light_paths[index - 1], _light_paths[index], eye, tentative) * _num_scattered_inv;*/
+            radiance += _merge(generator,
+                _light_paths[index - 1], _light_paths[index], eye, tentative) * _num_scattered_inv;
         },
         tentative.surface.position(),
         _radius);
