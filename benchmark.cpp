@@ -12,6 +12,7 @@
 #include <KDTree3D.hpp>
 #include <KDTree3Dv2.hpp>
 #include <HashGrid3D.hpp>
+#include <streamops.hpp>
 
 using namespace std;
 using namespace glm;
@@ -88,23 +89,6 @@ template <class Stream> Stream& operator<<(
     return stream;
 }
 
-template <class Stream> Stream& operator<<(
-    Stream& stream,
-    const vector<vec3>& value)
-{
-    stream << "[";
-
-    if (value.size() != 0)
-        stream << value[0];
-
-    for (size_t i = 1; i < value.size(); ++i)
-        stream << ", " << value[i];
-
-    stream << "]";
-
-    return stream;
-}
-
 template <class T> vector<T> makeUniformTestCase(size_t n, size_t seed, float half) {
     mt19937 generator(seed);
     uniform_real_distribution<float> distribution(-half, half);
@@ -123,8 +107,8 @@ template <class T> vector<T> makeUniformTestCase(size_t n, size_t seed, float ha
     return result;
 }
 
-vector<vec3> makeCornellTestCase(size_t n, size_t seed) {
-    auto triangles = loadTriangles("models/CornellBoxDiffuse.blend");
+vector<vec3> makeModelTestCase(size_t n, size_t seed, string model) {
+    auto triangles = loadTriangles(model);
 
     vector<float> areaSums(triangles.size());
 
@@ -283,27 +267,47 @@ void loadTestCase(
         sizeof(radius));
 }
 
-void prepareCornellTestCase(
+vector<vec3> wiggle(const vector<vec3>& photons, size_t seed, size_t num_queries, float radius) {
+    vector<vec3> result;
+
+    mt19937 generator(seed);
+    uniform_real_distribution<float> fdistr(-1.5f * radius, 1.5f * radius);
+    uniform_int_distribution<size_t> idistr(0, photons.size() - 1);
+
+    for (size_t i = 0; i < num_queries; ++i) {
+        result.push_back(photons[idistr(generator)] + vec3(
+            fdistr(generator),
+            fdistr(generator),
+            fdistr(generator)));
+    }
+
+    return result;
+}
+
+void prepareModelTestCase(
     ofstream& stream,
     size_t numData,
     size_t numQueries,
-    float radius)
+    float radius,
+    string model)
 {
-    auto data = makeCornellTestCase(numData, 31415);
-    auto queries = makeCornellTestCase(numQueries, 51413);
+    auto data = makeModelTestCase(numData, 31415, model);
+    // auto queries = makeModelTestCase(numQueries, 51413, model);
+    auto queries = wiggle(data, 51413, numQueries, radius);
     auto result = solveNaive(data, queries, radius);
 
     saveTestCase(stream, data, queries, result, radius);
 }
 
-void prepareCornellTestCase(
+void prepareModelTestCase(
     string path,
     size_t numData,
     size_t numQueries,
-    float radius)
+    float radius,
+    string model)
 {
     ofstream stream(path, ofstream::binary);
-    prepareCornellTestCase(stream, numData, numQueries, radius);
+    prepareModelTestCase(stream, numData, numQueries, radius, model);
 }
 
 template <class T> bool equal(const vector<T>& a, const vector<T>& b)
@@ -427,7 +431,14 @@ void test_case_header() {
 
 int main(int argc, char **argv) {
 
-    // prepareCornellTestCase("test_case_3.dat", 200, 20, 15.f);
+    // prepareModelTestCase("test_case_A.dat", 1, 2000, 0.1f, "models/TestCase9.blend");
+    // prepareModelTestCase("test_case_B.dat", 2, 2000, 0.1f, "models/TestCase9.blend");
+    // prepareModelTestCase("test_case_C.dat", 3, 2000, 0.1f, "models/TestCase9.blend");
+    // prepareModelTestCase("test_case_D.dat", 4, 2000, 0.1f, "models/TestCase9.blend");
+    // prepareModelTestCase("test_case_E.dat", 5, 2000, 0.1f, "models/TestCase9.blend");
+    // prepareModelTestCase("test_case_F.dat", 500000, 2000, 1.0f, "models/TestCase9.blend");
+    // prepareModelTestCase("test_case_G.dat", 500000, 2000, 2.0f, "models/TestCase9.blend");
+    // prepareModelTestCase("test_case_3.dat", 200, 20, 15.f, "models/CornellBoxDiffuse.blend");
 
     test_case_header();
 
@@ -455,7 +466,15 @@ int main(int argc, char **argv) {
     cout << "smallVCM   v10          500000            2000               1      0.4732s      0.0370s      0.5102s" << endl;
     // v7 with improved construction time
     cout << "       v7b v11          500000            2000               1      0.4774s      0.0258s      0.5033s" << endl;
+    cout << "     <current>          500000            2000          1.0000      0.2119s      0.0332s      0.2451s" << endl;
 
+    run_test_case("test_case_A.dat");
+    run_test_case("test_case_B.dat");
+    run_test_case("test_case_C.dat");
+    run_test_case("test_case_D.dat");
+    run_test_case("test_case_E.dat");
+    run_test_case("test_case_F.dat");
+    run_test_case("test_case_G.dat");
     run_test_case("test_case_3.dat");
 
     return 0;

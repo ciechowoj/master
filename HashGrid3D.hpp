@@ -444,60 +444,60 @@ private:
             return comparator(a.cell, b.cell);
         });
 
-        iterate_ranges(_points,
-            [&](uint32_t fst, uint32_t snd, uint32_t trd) {
-                bool next = _points[fst].cell.x + 1.0f == _points[snd].cell.x;
 
-                if (next) {
-                    _ranges[_points[fst].cell] = { fst, trd };
-                    _ranges[_points[snd].cell - vec3(1, 0, 0)] = { fst, snd };
+        vector<uint32_t> slabs(1, 0);
+        vector<uint32_t> cells(1, 0);
+
+        for (uint32_t i = 1; i < _points.size(); ++i) {
+            if (_points[i - 1].cell.y != _points[i].cell.y ||
+                _points[i - 1].cell.z != _points[i].cell.z) {
+                slabs.push_back(cells.size());
+                cells.push_back(i);
+            }
+            else if(_points[i - 1]. cell.x != _points[i].cell.x) {
+                cells.push_back(i);
+            }
+        }
+
+        slabs.push_back(cells.size());
+        cells.push_back(_points.size());
+
+
+        for (uint32_t j = 1; j < slabs.size(); ++j) {
+            uint32_t slab_begin = slabs[j - 1];
+            uint32_t slab_end = slabs[j];
+
+            vec3 first = _points[cells[slab_begin]].cell;
+
+            _ranges[first - vec3(1, 0, 0)] = { cells[slab_begin], cells[slab_begin + 1] };
+            _ranges[first] = { cells[slab_begin], cells[slab_begin + 1] };
+
+            for (uint32_t i = slab_begin + 1; i < slab_end; ++i) {
+                vec3 prev = _points[cells[i - 1]].cell;
+                vec3 curr = _points[cells[i]].cell;
+                float diff = curr.x - prev.x;
+
+                if (diff == 1.0f) {
+                    // adjacent
+                    _ranges[prev].end = cells[i + 1];
+                    _ranges[curr] = { cells[i - 1], cells[i + 1] };
+                }
+                else if (diff == 2.0f) {
+                    // single space
+                    _ranges[curr - vec3(1, 0, 0)] = { cells[i - 1], cells[i + 1] };
+                    _ranges[curr] = { cells[i], cells[i + 1] };
                 }
                 else {
-                    _ranges[_points[fst].cell] = { fst, snd };
+                    _ranges[prev + vec3(1, 0, 0)] = { cells[i - 1], cells[i] };
+                    _ranges[curr - vec3(1, 0, 0)] = { cells[i], cells[i + 1] };
+                    _ranges[curr] = { cells[i], cells[i + 1] };
                 }
-            },
-            [&](uint32_t fst, uint32_t snd, uint32_t trd, uint32_t fth) {
-                bool prev = _points[fst].cell.x + 1.0f == _points[snd].cell.x;
-                bool next = _points[snd].cell.x + 1.0f == _points[trd].cell.x;
+            }
 
-                if (prev && next) {
-                    _ranges[_points[snd].cell] = { fst, fth };
-                }
-                else if (prev) {
-                    _ranges[_points[snd].cell] = { fst, trd };
-                    _ranges[_points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
-                }
-                else {
-                    if (next) {
-                        _ranges[_points[snd].cell] = { snd, fth };
-                        _ranges[_points[snd].cell - vec3(1, 0, 0)] = { snd, trd };
-                    }
-                    else {
-                        _ranges[_points[snd].cell] = { snd, trd };
-                        _ranges[_points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
-                        _ranges[_points[snd].cell - vec3(1, 0, 0)] = { snd, trd };
-                    }
+            vec3 last = _points[cells[slab_end - 1]].cell;
+            _ranges[last + vec3(1, 0, 0)] = { cells[slab_end - 1], cells[slab_end] };
+        }
 
-                    if (_points[fst].cell.x + 1.0f == _points[snd].cell.x - 1.0f) {
-                        _ranges[_points[snd].cell - vec3(1, 0, 0)] = { fst, trd };
-                    }
-                }
-            },
-            [&](uint32_t fst, uint32_t snd, uint32_t trd) {
-                bool prev = _points[fst].cell.x + 1.0f == _points[snd].cell.x;
-
-                if (prev) {
-                    _ranges[_points[snd].cell] = { fst, trd };
-                    _ranges[_points[snd].cell + vec3(1, 0, 0)] = { snd, trd };
-                }
-                else {
-                    _ranges[_points[snd].cell] = { snd, trd };
-
-                    if (_points[fst].cell.x + 1.0f == _points[snd].cell.x - 1.0f) {
-                        _ranges[_points[snd].cell - vec3(1, 0, 0)] = { fst, trd };
-                    }
-                }
-            });
 
         for (uint32_t i = 0; i < _points.size(); ++i) {
             _points[i].cell = _data->operator[](_points[i].index).position();
