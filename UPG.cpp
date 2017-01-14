@@ -66,6 +66,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     prv->C = 0;
     prv->d = 0;
     prv->D = 0;
+    prv->length = 0;
 
     float d = 0.0f;
 
@@ -128,6 +129,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
                 * itr->d;
 
             itr->bGeometry = edge.bGeometry;
+            itr->length = prv->length + 1.0f;
 
             if (surface.is_light()) {
                 if (_enable_vc /* && !prv->surface.is_camera() */) {
@@ -189,6 +191,7 @@ typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_light(random_generato
     vertex.A = 0.0f;
     vertex.b = 0.0f;
     vertex.B = 0.0f;
+    vertex.length = 0.0f;
 
     return vertex;
 }
@@ -258,6 +261,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
             * itr->b;
 
         itr->bGeometry = edge.bGeometry;
+        itr->length += 1.0f;
 
         if (bsdf.specular != 1.0f) {
             prv = itr;
@@ -282,7 +286,7 @@ float UPGBase<Beta>::_weightVC(
     const BSDFQuery& eyeBSDF,
     const Edge& edge) {
 
-    float skip_direct_vm = SkipDirectVM ? 0.0f : 1.0f;
+    float skip_direct_vm = (SkipDirectVM ? 0.0f : 1.0f) * ((eye.length + light.length) < 2 ? 0.0f : 1.0f);
 
     float Ap
         = (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
@@ -579,8 +583,11 @@ vec3 UPGBase<Beta>::_gather(
     _vertices.rQuery(
         [&](uint32_t index) {
             time_scope_t _(_metadata.merge_time);
-            radiance += _merge(generator,
-                _light_paths[index - 1], _light_paths[index], eye, tentative) * _num_scattered_inv;
+
+            if (!eye.surface.is_camera() || !_light_paths[index - 1].surface.is_light()) {
+                radiance += _merge(generator,
+                    _light_paths[index - 1], _light_paths[index], eye, tentative) * _num_scattered_inv;
+            }
         },
         tentative.surface.position(),
         _radius);

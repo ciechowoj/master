@@ -33,6 +33,7 @@ private:
         float specular;
         float a, A, b, B;
         float bGeometry;
+        float length;
 
         const vec3& position() const {
             return surface.position();
@@ -50,6 +51,7 @@ private:
         float specular;
         float c, C, d, D;
         float bGeometry;
+        float length;
     };
 
     static const size_t _maxSubpath = 1024;
