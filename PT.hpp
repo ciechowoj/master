@@ -11,6 +11,7 @@ class PathTracing : public Technique {
   vec3 _traceEye(render_context_t& context, Ray ray) override;
 
   string name() const override;
+  string id() const override;
 
  private:
   struct EyeVertex {

@@ -18,7 +18,8 @@ def get_time(path):
 
 def get_errors(path, reference):
 	result = subprocess.run(["master", "errors", path, reference], stdout = subprocess.PIPE)
-	return tuple(map(float, result.stdout.strip().split()))
+	split = result.stdout.strip().split()
+	return tuple(map(float, split[0:4])) + tuple(split[4:])
 
 def get_technique(path):
 	TECHNIQUES = ["BPT", "VCM", "UPG", "PT"]

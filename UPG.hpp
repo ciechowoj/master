@@ -24,6 +24,7 @@ public:
         size_t numThreads);
 
     string name() const override;
+    string id() const override;
 
 private:
     struct LightVertex {

@@ -45,7 +45,7 @@ double Technique::render(
     _frame_time = current - _previous_frame_time;
     _previous_frame_time = current;
 
-    _metadata.technique = name();
+    _metadata.technique = id();
     ++_metadata.num_samples;
     _metadata.num_basic_rays += _scene->numNormalRays() - num_basic_rays;
     _metadata.num_shadow_rays += _scene->numShadowRays() - num_shadow_rays;

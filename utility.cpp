@@ -396,7 +396,7 @@ void merge(const string& result, const string& path0, const string& path1) {
 
   float denom = float(metadata0.num_samples + metadata1.num_samples);
   float alpha0 = float(metadata0.num_samples) / denom;
-  float alpha1=  float(metadata1.num_samples) / denom;
+  float alpha1 = float(metadata1.num_samples) / denom;
 
   for (size_t i = 0; i < data0.size(); ++i) {
     if (any(isnan(data0[i]))) {
@@ -461,13 +461,15 @@ compute_errors_t compute_errors(const string& path0, const string& path1) {
     }
   }
 
-  return {abs_sum / num, sqrt(rms_sum / num)};
+  return {abs_sum / num,        sqrt(rms_sum / num), metadata0.total_time,
+          metadata1.total_time, metadata0.technique, metadata1.technique};
 }
 
 void print_errors(const string& path0, const string& path1) {
   auto errors = compute_errors(path0, path1);
-  std::cout << std::setprecision(10) << errors.abs << " " << errors.rms
-            << std::endl;
+  std::cout << std::setprecision(10) << errors.abs << " " << errors.rms << " "
+            << errors.time0 << " " << errors.time1 << " " << errors.id0 << " "
+            << errors.id1 << std::endl;
 }
 
 void filter_out_nan(const string& source, const string& target) {

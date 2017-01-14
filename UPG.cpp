@@ -44,6 +44,14 @@ string UPGBase<Beta>::name() const {
 }
 
 template <class Beta>
+string UPGBase<Beta>::id() const {
+    return string(_unbiased ? "UPG" : "VCM")
+        + "_r" + std::to_string(_initial_radius)
+        + "_a" + std::to_string(_metadata.alpha)
+        + "_b" + std::to_string(_metadata.beta);
+}
+
+template <class Beta>
 vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     time_scope_t _0(_metadata.trace_eye_time);
 

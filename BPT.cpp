@@ -3,7 +3,8 @@
 
 namespace haste {
 
-template <class Beta> BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, float lights, float roulette, float beta, size_t num_threads)
+template <class Beta>
+BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, float lights, float roulette, float beta, size_t num_threads)
     : Technique(scene, num_threads)
     , _roulette(roulette)
     , _lights(lights) {
@@ -11,9 +12,16 @@ template <class Beta> BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, f
     _metadata.beta = beta;
 }
 
-template <class Beta> string BPTBase<Beta>::name() const {
+template <class Beta>
+string BPTBase<Beta>::name() const {
     return Beta::name();
 }
+
+template <class Beta>
+string BPTBase<Beta>::id() const {
+    return string("BPT_b") + std::to_string(_metadata.beta);
+}
+
 
 template <class Beta>
 vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {

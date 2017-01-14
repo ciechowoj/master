@@ -25,4 +25,8 @@ string Viewer::name() const {
     return "Viewer";
 }
 
+string Viewer::id() const {
+    return "Viewer";
+}
+
 }

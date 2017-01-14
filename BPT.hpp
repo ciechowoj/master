@@ -10,6 +10,7 @@ public:
     BPTBase(const shared<const Scene>& scene, float lights, float roulette, float beta, size_t num_threads);
 
     string name() const override;
+    string id() const override;
 
 private:
     struct LightVertex {

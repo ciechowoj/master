@@ -36,6 +36,7 @@ public:
         size_t cameraId);
 
     virtual string name() const = 0;
+    virtual string id() const = 0;
 
     const metadata_t& metadata() const;
     double frame_time() const;

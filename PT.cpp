@@ -122,4 +122,9 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
 }
 
 string PathTracing::name() const { return "Path Tracing"; }
+
+string PathTracing::id() const {
+    return string("PT_b") + std::to_string(_metadata.beta);
+}
+
 }
