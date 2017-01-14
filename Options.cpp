@@ -47,9 +47,10 @@ R"(
       --num-seconds=<n>      Terminate after n seconds.
       --num-minutes=<n>      Terminate after n minutes.
       --parallel             Use multi-threading.
-      --snapshot=<n>         Save output every n seconds (tags output file with time).
       --output=<path>        Output file. <input>.<width>.<height>.<time>.<technique>.exr if not specified.
       --reference=<path>     Reference file for comparison.
+      --seed=<n>             Seed random number generator (for single threaded BPT only).
+      --snapshot=<n>         Save output every n seconds (tags output file with time).
       --camera=<id>          Use camera with given id. [default: 0]
       --resolution=<WxH>     Resolution of output image. [default: 512x512]
 
@@ -593,6 +594,28 @@ Options parseArgs(int argc, char const* const* argv) {
             else {
                 options.reference = dict["--reference"];
                 dict.erase("--reference");
+            }
+        }
+
+        if (dict.count("--seed")) {
+            if (options.technique != Options::BPT) {
+                options.displayHelp = true;
+                options.displayMessage = "--seed is only valid with --BPT.";
+                return options;
+            }
+            else if (options.numThreads != 1) {
+                options.displayHelp = true;
+                options.displayMessage = "--seed is invalid with --parallel.";
+                return options;
+            }
+            else if (!isUnsigned(dict["--seed"])) {
+                options.displayHelp = true;
+                options.displayMessage = "Invalid value for --seed.";
+                return options;
+            }
+            else {
+                options.seed = atoi(dict["--seed"].c_str());
+                dict.erase("--seed");
             }
         }
 

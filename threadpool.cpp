@@ -193,29 +193,42 @@ void exec2d(threadpool_t& pool, size_t width, size_t height, size_t batch,
   size_t num_rows = (height + batch - 1) / batch;
   size_t num_cells = num_cols * num_rows;
 
-  std::mutex mutex;
-  std::condition_variable condition;
-  std::atomic<size_t> counter(0);
-
-  for (size_t col = 0; col < num_cols; ++col) {
-    for (size_t row = 0; row < num_rows; ++row) {
-      pool.exec([=, &mutex, &counter, &condition] {
+  if (pool.num_threads() == 1) {
+    for (size_t col = 0; col < num_cols; ++col) {
+      for (size_t row = 0; row < num_rows; ++row) {
         size_t x0 = col * batch;
         size_t x1 = std::min(width, x0 + batch);
         size_t y0 = row * batch;
         size_t y1 = std::min(height, y0 + batch);
         callback(closure, x0, x1, y0, y1);
-
-        if (counter.fetch_add(1) == num_cells - 1) {
-          std::unique_lock<std::mutex> lock(mutex);
-          condition.notify_one();
-        }
-      });
+      }
     }
   }
+  else {
+    std::mutex mutex;
+    std::condition_variable condition;
+    std::atomic<size_t> counter(0);
 
-  std::unique_lock<std::mutex> lock(mutex);
-  condition.wait(lock, [&] { return counter == num_cells; });
+    for (size_t col = 0; col < num_cols; ++col) {
+      for (size_t row = 0; row < num_rows; ++row) {
+        pool.exec([=, &mutex, &counter, &condition] {
+          size_t x0 = col * batch;
+          size_t x1 = std::min(width, x0 + batch);
+          size_t y0 = row * batch;
+          size_t y1 = std::min(height, y0 + batch);
+          callback(closure, x0, x1, y0, y1);
+
+          if (counter.fetch_add(1) == num_cells - 1) {
+            std::unique_lock<std::mutex> lock(mutex);
+            condition.notify_one();
+          }
+        });
+      }
+    }
+
+    std::unique_lock<std::mutex> lock(mutex);
+    condition.wait(lock, [&] { return counter == num_cells; });
+  }
 }
 
 void exec_in_bands(threadpool_t& pool, size_t width, size_t height,

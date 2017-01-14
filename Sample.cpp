@@ -214,6 +214,24 @@ direction_sample_t sample_hemisphere(random_generator_t& generator,
   return {vec3(x, y, z), adjust};
 }
 
+piecewise_sampler_t::piecewise_sampler_t() {}
+
+piecewise_sampler_t::piecewise_sampler_t(const float* weightsBegin,
+                                         const float* weightsEnd) {
+  size_t numWeights = weightsEnd - weightsBegin;
+
+  auto lambda = [&](float x) {
+    return weightsBegin[min(size_t(x * numWeights), numWeights - 1)];
+  };
+
+  distribution =
+      std::piecewise_constant_distribution<float>(numWeights, 0.f, 1.f, lambda);
+}
+
+float piecewise_sampler_t::sample(random_generator_t& generator) {
+  return distribution.operator()(generator.engine);
+}
+
 random_generator_t::random_generator_t() {
   std::random_device device;
   engine.seed(device());
@@ -236,11 +254,12 @@ random_generator_t random_generator_t::clone() {
 
 template <>
 vec2 random_generator_t::sample<vec2>() {
-  return vec2(std::uniform_real_distribution<float>()(engine),
-              std::uniform_real_distribution<float>()(engine));
+  return vec2(sample<float>(), sample<float>());
 }
 
 std::uint_fast32_t random_generator_t::operator()() {
   return engine.operator()();
 }
+
+void random_generator_t::seed(std::size_t seed) { engine.seed(seed); }
 }

@@ -109,14 +109,14 @@ const float AreaLights::totalPower() const {
 }
 
 LightSample AreaLights::sample(
-    RandomEngine& engine) const
+    random_generator_t& generator) const
 {
-    size_t light_id = _sampleLight(engine);
+    size_t light_id = _sampleLight(generator);
     const auto& light = this->light(light_id);
 
     LightSample result;
 
-    result.surface._position = _samplePosition(light_id, engine);
+    result.surface._position = _samplePosition(light_id, generator);
     result.surface._tangent = light.tangent;
     result.surface.gnormal = light.normal();
     result.surface.material_id = light.material_id;
@@ -206,20 +206,20 @@ void AreaLights::_updateSampler() {
         _weights[i] = power * totalPowerInv;
     }
 
-    lightSampler = PiecewiseSampler(
+    _light_sampler = piecewise_sampler_t(
         _weights.data(),
         _weights.data() + _weights.size());
 }
 
-const size_t AreaLights::_sampleLight(RandomEngine& engine) const {
+const size_t AreaLights::_sampleLight(random_generator_t& generator) const {
     runtime_assert(num_lights() != 0);
 
-    auto sample = lightSampler.sample();
+    auto sample = _light_sampler.sample(generator);
     return min(size_t(sample * num_lights()), num_lights() - 1);
 }
 
-const vec3 AreaLights::_samplePosition(size_t lightId, RandomEngine& engine) const {
-    auto sample = vec2(engine.sample(), engine.sample());
+const vec3 AreaLights::_samplePosition(size_t lightId, random_generator_t& generator) const {
+    auto sample = vec2(generator.sample(), generator.sample());
     auto uniform = (sample - vec2(0.5f)) * _lights[lightId].size;
 
     const vec3 up = _lights[lightId].tangent[0];

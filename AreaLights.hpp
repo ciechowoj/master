@@ -83,7 +83,7 @@ public:
     void updateBuffers(int* indices, vec4* vertices) const override;
 public:
     const Intersector* _intersector = nullptr;
-    mutable PiecewiseSampler lightSampler;
+    mutable piecewise_sampler_t _light_sampler;
 
     vector<string> _names;
     vector<AreaLight> _lights;

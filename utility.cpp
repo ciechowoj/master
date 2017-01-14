@@ -6,28 +6,6 @@
 #include <stdexcept>
 #include <utility.hpp>
 
-namespace haste {
-
-PiecewiseSampler::PiecewiseSampler() {}
-
-PiecewiseSampler::PiecewiseSampler(const float* weightsBegin,
-                                   const float* weightsEnd) {
-  std::random_device device;
-  engine.seed(device());
-
-  size_t numWeights = weightsEnd - weightsBegin;
-
-  auto lambda = [&](float x) {
-    return weightsBegin[min(size_t(x * numWeights), numWeights - 1)];
-  };
-
-  distribution =
-      std::piecewise_constant_distribution<float>(numWeights, 0.f, 1.f, lambda);
-}
-
-float PiecewiseSampler::sample() { return distribution(engine); }
-}
-
 #include <ImfArray.h>
 #include <ImfChannelList.h>
 #include <ImfDoubleAttribute.h>

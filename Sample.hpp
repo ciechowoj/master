@@ -4,6 +4,8 @@
 
 namespace haste {
 
+struct piecewise_sampler_t;
+
 struct random_generator_t {
  public:
   random_generator_t();
@@ -17,10 +19,15 @@ struct random_generator_t {
 
   std::uint_fast32_t operator()();
 
+  void seed(std::size_t seed);
+
  private:
   std::mt19937 engine;
+
   random_generator_t(const random_generator_t&) = delete;
   random_generator_t& operator=(const random_generator_t&) = delete;
+
+  friend class piecewise_sampler_t;
 };
 
 template <>
@@ -29,6 +36,17 @@ template <>
 vec2 random_generator_t::sample<vec2>();
 
 using RandomEngine = random_generator_t;
+
+class piecewise_sampler_t {
+ public:
+  piecewise_sampler_t();
+  piecewise_sampler_t(const float* weightsBegin, const float* weightsEnd);
+
+  float sample(random_generator_t& generator);
+
+ private:
+  std::piecewise_constant_distribution<float> distribution;
+};
 
 struct bounding_sphere_t {
   vec3 center;

@@ -13,17 +13,6 @@ using std::string;
 using std::pair;
 using namespace glm;
 
-class PiecewiseSampler {
- public:
-  PiecewiseSampler();
-  PiecewiseSampler(const float* weightsBegin, const float* weightsEnd);
-  float sample();
-
- private:
-  std::minstd_rand engine;
-  std::piecewise_constant_distribution<float> distribution;
-};
-
 struct metadata_t {
   std::string technique;
   size_t num_samples = 0;
