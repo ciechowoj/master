@@ -47,7 +47,7 @@ R"(
       --num-seconds=<n>      Terminate after n seconds.
       --num-minutes=<n>      Terminate after n minutes.
       --parallel             Use multi-threading.
-      --snapshot=<n>         Save output every n samples (adds number of samples to output file).
+      --snapshot=<n>         Save output every n seconds (tags output file with time).
       --output=<path>        Output file. <input>.<width>.<height>.<samples>.<technique>.exr if not specified.
       --reference=<path>     Reference file for comparison.
       --camera=<id>          Use camera with given id. [default: 0]

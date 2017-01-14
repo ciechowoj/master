@@ -28,6 +28,7 @@ class Application : public Framework {
   void _save(const ImageView& view, size_t numSamples, bool snapshot);
 
   std::size_t _num_samples() const;
+  double _num_seconds() const;
 
   Options _options;
   RTCDevice _device;
@@ -36,6 +37,7 @@ class Application : public Framework {
   shared<Scene> _scene;
   shared<UserInterface> _ui;
   size_t _modificationTime;
+  double _num_seconds_saved;
   vector<dvec4> _reference;
 };
 }

@@ -160,6 +160,7 @@ bool Application::updateScene() {
       }
 
       _modificationTime = modificationTime;
+      _num_seconds_saved = 0.0;
       return true;
     }
   }
@@ -191,8 +192,9 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
       _save(view, num_samples, false);
     } else if (_options.numSeconds != 0.0 && _options.numSeconds <= elapsed) {
       _save(view, num_samples, false);
-    } else if (_options.snapshot > 1 && num_samples % _options.snapshot == 0) {
+    } else if (_options.snapshot != 0 && _num_seconds_saved + _options.snapshot < _num_seconds()) {
       _save(view, num_samples, true);
+      _num_seconds_saved += _options.snapshot;
     }
   }
 }
@@ -210,10 +212,15 @@ void Application::_save(const ImageView& view, size_t numSamples,
   bool hasSamples = false;
 
   if (_options.output.empty()) {
+    auto num_seconds = _num_seconds();
+    auto unum_seconds = uint64_t(num_seconds);
+    auto unum_miliseconds = uint64_t((num_seconds - unum_seconds) * 1000);
+
     auto split = splitext(_options.input0);
     std::stringstream stream;
     stream << split.first << "." << view.width() << "." << view.height() << "."
-           << numSamples << "." << techniqueString(_options) << ".exr";
+           << unsigned(unum_seconds) << "_" << unsigned(unum_miliseconds) << "."
+           << techniqueString(_options) << ".exr";
     path = stream.str();
     hasSamples = true;
   } else {
@@ -246,5 +253,6 @@ void Application::_save(const ImageView& view, size_t numSamples,
 }
 
 std::size_t Application::_num_samples() const { return _technique->metadata().num_samples; }
+double Application::_num_seconds() const { return _technique->metadata().total_time; }
 
 }
