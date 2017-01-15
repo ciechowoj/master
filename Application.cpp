@@ -35,7 +35,11 @@ Application::~Application() { rtcDeleteDevice(_device); }
 void Application::render(size_t width, size_t height, glm::dvec4* data) {
   auto view = ImageView(data, width, height);
 
-  double epsilon = _technique->render(view, _engine, _options.cameraId);
+  if (_options.seed != 0) {
+    _generator.seed(_options.seed + _num_samples());
+  }
+
+  double epsilon = _technique->render(view, _generator, _options.cameraId);
 
   if (_options.technique != Options::Viewer) {
     _printStatistics(view, _technique->frame_time(), _technique->metadata().total_time, epsilon, false);

@@ -32,7 +32,7 @@ class Application : public Framework {
 
   Options _options;
   RTCDevice _device;
-  RandomEngine _engine;
+  random_generator_t _generator;
   shared<Technique> _technique;
   shared<Scene> _scene;
   shared<UserInterface> _ui;

@@ -13,7 +13,7 @@ Technique::~Technique() { }
 
 double Technique::render(
     ImageView& view,
-    RandomEngine& engine,
+    random_generator_t& generator,
     size_t cameraId)
 {
     auto& cameras = _scene->cameras();
@@ -26,7 +26,7 @@ double Technique::render(
     context.resolution_y_inv = 1.0f / context.resolution.y;
     context.focal_length_y = cameras.focal_length_y(cameraId, context.resolution.x / context.resolution.y);
     context.focal_factor_y = context.focal_length_y * context.focal_length_y * 0.25f;
-    context.generator = &engine;
+    context.generator = &generator;
 
     if (!std::isfinite(_rendering_start_time)) {
         _rendering_start_time = high_resolution_time();
@@ -37,7 +37,7 @@ double Technique::render(
     size_t num_shadow_rays = _scene->numShadowRays();
 
     _adjust_helper_image(view);
-    _preprocess(engine, _metadata.num_samples);
+    _preprocess(generator, _metadata.num_samples);
     _trace_paths(view, context, cameraId);
     double epsilon = _commit_images(view);
 
@@ -75,7 +75,7 @@ vec3 Technique::_traceEye(
     return vec3(1.0f, 0.0f, 1.0f);
 }
 
-void Technique::_preprocess(RandomEngine& engine, double num_samples) {
+void Technique::_preprocess(random_generator_t& generator, double num_samples) {
 
 }
 
@@ -142,8 +142,11 @@ void Technique::_trace_paths(
     exec2d(_threadpool, view.xWindow(), view.yWindow(), 32,
         [&](size_t x0, size_t x1, size_t y0, size_t y1) {
         render_context_t local_context = context;
-        RandomEngine engine;
-        local_context.generator = &engine;
+        random_generator_t generator;
+
+        if (_threadpool.num_threads() > 1) {
+            local_context.generator = &generator;
+        }
 
         ImageView subview = view;
 
