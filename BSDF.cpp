@@ -15,6 +15,8 @@ BSDFQuery BSDFQuery::reverse() const {
 
 BSDF::BSDF() {}
 
+BSDF::BSDF(float glossines) : _glossines(glossines) {}
+
 BSDF::~BSDF() {}
 
 BSDFBoundedSample BSDF::sample_bounded(random_generator_t& generator,
@@ -65,7 +67,7 @@ uint32_t BSDF::light_id() const {
 }
 
 LightBSDF::LightBSDF(bounding_sphere_t sphere, uint32_t light_id)
-    : _sphere(sphere), _light_id(light_id) {}
+    : BSDF(0.0f), _sphere(sphere), _light_id(light_id) {}
 
 BSDFSample LightBSDF::sample(random_generator_t& generator,
                              const SurfacePoint& surface, vec3 omega) const {
@@ -121,6 +123,8 @@ BSDFBoundedSample LightBSDF::sample_bounded(random_generator_t& generator,
 
 uint32_t LightBSDF::light_id() const { return _light_id; }
 
+CameraBSDF::CameraBSDF() : BSDF(INFINITY) {}
+
 BSDFSample CameraBSDF::sample(random_generator_t& generator,
                               const SurfacePoint& surface, vec3 omega) const {
   BSDFSample sample;
@@ -162,7 +166,7 @@ BSDFBoundedSample CameraBSDF::sample_bounded(random_generator_t& generator,
   return result;
 }
 
-DiffuseBSDF::DiffuseBSDF(vec3 diffuse) : _diffuse(diffuse) {}
+DiffuseBSDF::DiffuseBSDF(vec3 diffuse) : BSDF(1.0f), _diffuse(diffuse) {}
 
 BSDFQuery DiffuseBSDF::query(const SurfacePoint& surface, vec3 incident,
                              vec3 outgoing) const {
@@ -216,7 +220,7 @@ BSDFQuery DiffuseBSDF::_query(vec3 gnormal, vec3 incident,
 }
 
 PhongBSDF::PhongBSDF(vec3 diffuse, vec3 specular, float power)
-    : _diffuse(diffuse), _specular(specular), _power(power) {
+    : BSDF(power), _diffuse(diffuse), _specular(specular), _power(power) {
   float diffuse_reflectivity = l1Norm(_diffuse) * one_over_pi<float>();
   float specular_reflectivity =
       l1Norm(_specular) * 2.0f * pi<float>() / (_power + 1.0f);
@@ -329,6 +333,8 @@ BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
 
   return result;
 }
+
+DeltaBSDF::DeltaBSDF() : BSDF(INFINITY) { }
 
 BSDFQuery DeltaBSDF::query(const SurfacePoint& surface, vec3 incident,
                            vec3 outgoing) const {

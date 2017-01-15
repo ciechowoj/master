@@ -27,6 +27,7 @@ struct BSDFBoundedSample {
 class BSDF {
  public:
   BSDF();
+  BSDF(float glossines);
 
   virtual ~BSDF();
 
@@ -50,6 +51,11 @@ class BSDF {
 
   BSDF(const BSDF&) = delete;
   BSDF& operator=(const BSDF&) = delete;
+
+  float glossines() const { return _glossines; }
+
+private:
+  float _glossines = 0.0f;
 };
 
 class LightBSDF : public BSDF {
@@ -74,6 +80,8 @@ class LightBSDF : public BSDF {
 
 class CameraBSDF : public BSDF {
  public:
+  CameraBSDF();
+
   BSDFQuery query(const SurfacePoint& surface, vec3 incident,
                   vec3 outgoing) const override;
   BSDFSample sample(random_generator_t& generator, const SurfacePoint& surface,
@@ -131,6 +139,8 @@ class PhongBSDF : public BSDF {
 
 class DeltaBSDF : public BSDF {
  public:
+  DeltaBSDF();
+
   BSDFQuery query(const SurfacePoint& surface, vec3 incident,
                   vec3 outgoing) const override;
 };
