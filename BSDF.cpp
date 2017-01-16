@@ -10,12 +10,11 @@ BSDFQuery BSDFQuery::reverse() const {
   result.density = densityRev;
   result.densityRev = density;
   result.specular = specular;
+  result.glossiness = glossiness;
   return result;
 }
 
 BSDF::BSDF() {}
-
-BSDF::BSDF(float glossines) : _glossines(glossines) {}
 
 BSDF::~BSDF() {}
 
@@ -67,7 +66,7 @@ uint32_t BSDF::light_id() const {
 }
 
 LightBSDF::LightBSDF(bounding_sphere_t sphere, uint32_t light_id)
-    : BSDF(0.0f), _sphere(sphere), _light_id(light_id) {}
+    : _sphere(sphere), _light_id(light_id) {}
 
 BSDFSample LightBSDF::sample(random_generator_t& generator,
                              const SurfacePoint& surface, vec3 omega) const {
@@ -82,6 +81,7 @@ BSDFSample LightBSDF::sample(random_generator_t& generator,
   result.density = lambert_density(sample);
   result.densityRev = 0.0f;
   result.specular = 0.0f;
+  result.glossiness = 0.0f;
 
   return result;
 }
@@ -101,6 +101,8 @@ BSDFQuery LightBSDF::query(const SurfacePoint& surface, vec3 incident,
                   one_over_pi<float>() / lambert_adjust(local_sphere);
 
   query.densityRev = 0.0f;
+
+  query.glossiness = 0.0f;
 
   return query;
 }
@@ -123,7 +125,7 @@ BSDFBoundedSample LightBSDF::sample_bounded(random_generator_t& generator,
 
 uint32_t LightBSDF::light_id() const { return _light_id; }
 
-CameraBSDF::CameraBSDF() : BSDF(INFINITY) {}
+CameraBSDF::CameraBSDF() {}
 
 BSDFSample CameraBSDF::sample(random_generator_t& generator,
                               const SurfacePoint& surface, vec3 omega) const {
@@ -133,22 +135,21 @@ BSDFSample CameraBSDF::sample(random_generator_t& generator,
   sample.density = 1.0f;
   sample.densityRev = 0.0f;
   sample.specular = 0.0f;
+  sample.glossiness = INFINITY;
 
   return sample;
 }
 
 BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
                             vec3 outgoing) const {
-  BSDFQuery query;
-
   vec3 local_incident = surface.toSurface(incident);
 
+  BSDFQuery query;
   query.throughput = vec3(local_incident.y > 0.0f ? 1.0f : 0.0f) /
                      pow(abs(local_incident.y), 1.0f);
-
   query.density = 0.0f;
-
   query.densityRev = 1.0f;
+  query.glossiness = INFINITY;
 
   return query;
 }
@@ -166,7 +167,7 @@ BSDFBoundedSample CameraBSDF::sample_bounded(random_generator_t& generator,
   return result;
 }
 
-DiffuseBSDF::DiffuseBSDF(vec3 diffuse) : BSDF(1.0f), _diffuse(diffuse) {}
+DiffuseBSDF::DiffuseBSDF(vec3 diffuse) : _diffuse(diffuse) {}
 
 BSDFQuery DiffuseBSDF::query(const SurfacePoint& surface, vec3 incident,
                              vec3 outgoing) const {
@@ -188,6 +189,7 @@ BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
   sample.density = query.density;
   sample.densityRev = query.densityRev;
   sample.specular = query.specular;
+  sample.glossiness = query.glossiness;
 
   return sample;
 }
@@ -215,12 +217,13 @@ BSDFQuery DiffuseBSDF::_query(vec3 gnormal, vec3 incident,
   query.density = abs(outgoing.y * one_over_pi<float>()) * same_side;
   query.densityRev = abs(incident.y * one_over_pi<float>()) * same_side;
   query.specular = 0.0f;
+  query.glossiness = 0.0f;
 
   return query;
 }
 
 PhongBSDF::PhongBSDF(vec3 diffuse, vec3 specular, float power)
-    : BSDF(power), _diffuse(diffuse), _specular(specular), _power(power) {
+    : _diffuse(diffuse), _specular(specular), _power(power) {
   float diffuse_reflectivity = l1Norm(_diffuse) * one_over_pi<float>();
   float specular_reflectivity =
       l1Norm(_specular) * 2.0f * pi<float>() / (_power + 1.0f);
@@ -262,6 +265,7 @@ BSDFSample PhongBSDF::sample(random_generator_t& generator,
   sample.density = query.density;
   sample.densityRev = query.densityRev;
   sample.specular = query.specular;
+  sample.glossiness = query.glossiness;
 
   return sample;
 }
@@ -300,6 +304,8 @@ BSDFQuery PhongBSDF::_query(vec3 incident, vec3 outgoing,
   query.throughput = same_side * (diffuse + specular);
 
   query.specular = 0.0f;
+  query.glossiness = _power;
+
 
   return query;
 }
@@ -334,7 +340,7 @@ BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
   return result;
 }
 
-DeltaBSDF::DeltaBSDF() : BSDF(INFINITY) { }
+DeltaBSDF::DeltaBSDF() { }
 
 BSDFQuery DeltaBSDF::query(const SurfacePoint& surface, vec3 incident,
                            vec3 outgoing) const {
@@ -343,6 +349,8 @@ BSDFQuery DeltaBSDF::query(const SurfacePoint& surface, vec3 incident,
   query.density = 0.0f;
   query.densityRev = 0.0f;
   query.specular = 1.0f;
+  query.glossiness = INFINITY;
+
   return query;
 }
 
@@ -358,6 +366,8 @@ BSDFSample ReflectionBSDF::sample(random_generator_t& generator,
   sample.density = 1.0f;
   sample.densityRev = 1.0f;
   sample.specular = 1.0f;
+  sample.glossiness = INFINITY;
+
   return sample;
 }
 
@@ -391,6 +401,7 @@ BSDFSample TransmissionBSDF::sample(random_generator_t& generator,
   result.density = 1.0f;
   result.densityRev = 1.0f;
   result.specular = 1.0f;
+  result.glossiness = INFINITY;
 
   return result;
 }

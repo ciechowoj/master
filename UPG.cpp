@@ -130,13 +130,14 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
                 = (prv->D
                     * Beta::beta(bsdf.densityRev)
                     + (1.0f - bsdf.specular)
-                    // * min(1.0f, Beta::beta(_circle) / prv->d)
-                    * min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
+                    * min(1.0f, Beta::beta(_circle) / prv->d)
+                    // * min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
                     * prv->d)
                 * Beta::beta(edge.bGeometry)
                 * itr->d;
 
             itr->bGeometry = edge.bGeometry;
+            itr->pGlossiness = bsdf.glossiness;
             itr->length = prv->length + 1.0f;
 
             if (surface.is_light()) {
@@ -256,19 +257,20 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
             * Beta::beta(edge.bGeometry)
             * itr->a;
 
-        itr->b = itr - begin < 1 ? 0.0f : itr->a;
+        itr->b = itr - begin < 2 ? 0.0f : itr->a;
 
         itr->B
             = (prv->B
                 * Beta::beta(bsdf.densityRev)
                 + (1.0f - bsdf.specular)
-                // * min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
-                * min(1.0f, Beta::beta(_circle) / prv->b)
+                * min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
+                // * min(1.0f, Beta::beta(_circle) / prv->b)
                 * prv->b)
             * Beta::beta(edge.bGeometry)
             * itr->b;
 
         itr->bGeometry = edge.bGeometry;
+        itr->pGlossiness = bsdf.glossiness;
         itr->length += 1.0f;
 
         if (bsdf.specular != 1.0f) {
@@ -302,8 +304,8 @@ float UPGBase<Beta>::_weightVC(
 
     float Bp
         = (light.B * Beta::beta(lightBSDF.densityRev) + (1.0f - lightBSDF.specular)
-            // * min(1.0f, Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev)) * light.b)
-            * min(1.0f, Beta::beta(_circle) / light.b) * light.b)
+            * min(1.0f, Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev)) * light.b)
+            // * min(1.0f, Beta::beta(_circle) / light.b) * light.b)
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
@@ -312,15 +314,15 @@ float UPGBase<Beta>::_weightVC(
 
     float Dp
         = (eye.D * Beta::beta(eyeBSDF.density) + (1.0f - eyeBSDF.specular)
-            // * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
-            * min(1.0f, Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) * eye.d)
+            * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
+            //* min(1.0f, Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) * eye.d)
         * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float weightInv
         = Ap + Beta::beta(_num_scattered) * Bp + Cp + Beta::beta(_num_scattered) * Dp
         + Beta::beta(float(_num_scattered)
-        // * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev))
-        * min(1.0f, _circle * edge.fGeometry * lightBSDF.density))
+        * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev))
+        //* min(1.0f, _circle * edge.fGeometry * lightBSDF.density))
         * skip_direct_vm + 1.0f;
 
     return 1.0f / weightInv;
@@ -335,8 +337,8 @@ float UPGBase<Beta>::_weightVM(
     const Edge& edge) {
     float weight = _weightVC<false>(light, lightBSDF, eye, eyeBSDF, edge);
 
-    // return Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev)) * weight;
-    return Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.fGeometry * lightBSDF.density)) * weight;
+    return Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev)) * weight;
+    // return Beta::beta(float(_num_scattered) * min(1.0f, _circle * edge.fGeometry * lightBSDF.density)) * weight;
 }
 
 template <class Beta>
@@ -353,8 +355,8 @@ float UPGBase<Beta>::_density(
             surface, { target, _radius }, omega);
     }
     else {
-        // return 1.0f / (edge.bGeometry * bsdf.densityRev * _circle);
-        return 1.0f / (_circle * edge.fGeometry * bsdf.density);
+        return 1.0f / (edge.bGeometry * bsdf.densityRev * _circle);
+        // return 1.0f / (_circle * edge.fGeometry * bsdf.density);
     }
 }
 
@@ -384,13 +386,13 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
         = (eye.C * Beta::beta(bsdf.density) + eye.c * (1.0f - eye.specular))
         * Beta::beta(lsdf.density);
 
-    // float Dp = eye.D / eye.c * Beta::beta(bsdf.density);
+    float Dp = eye.D / eye.c * Beta::beta(bsdf.density);
 
-    float Dp
+    /* float Dp
         = (eye.D * Beta::beta(bsdf.density) + (1.0f - bsdf.specular)
             // * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d)
             * min(1.0f, Beta::beta(_circle * eye.bGeometry * bsdf.density)) * eye.d)
-        * Beta::beta(lsdf.density);
+        * Beta::beta(lsdf.density); */
 
     float weightInv = Cp + Beta::beta(float(_num_scattered)) * Dp + 1.0f;
 
@@ -422,7 +424,7 @@ vec3 UPGBase<Beta>::_connect(
     vec3 radiance = vec3(0.0f);
 
     if (!_russian_roulette(*context.generator)) {
-        radiance += _connect<false>(_sample_light(*context.generator), eye);
+        radiance += _connect<true>(_sample_light(*context.generator), eye);
     }
 
     for (size_t i = _light_offsets[path] + 1, s = _light_offsets[path + 1]; i < s; ++i) {
@@ -611,8 +613,12 @@ vec3 UPGBase<Beta>::_merge(
     const EyeVertex& eye0,
     const EyeVertex& eye1) {
 
-    // return _merge_eye(generator, light1, eye0);
-    return _merge_light(generator, light0, eye1);
+    if (!eye0.surface.is_camera()) {
+        return _merge_eye(generator, light1, eye0);
+    }
+
+    // return _merge_light(generator, light0, eye1);
+    return vec3(0.0f);
 }
 
 template <class Beta>

@@ -34,6 +34,7 @@ private:
         float specular;
         float a, A, b, B;
         float bGeometry;
+        float pGlossiness;
         float length;
 
         const vec3& position() const {
@@ -52,6 +53,7 @@ private:
         float specular;
         float c, C, d, D;
         float bGeometry;
+        float pGlossiness;
         float length;
     };
 

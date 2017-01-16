@@ -11,6 +11,7 @@ struct BSDFQuery {
   float density = 0.0f;
   float densityRev = 0.0f;
   float specular = 0.0f;
+  float glossiness = 0.0f;
 
   BSDFQuery reverse() const;
 };
@@ -27,7 +28,6 @@ struct BSDFBoundedSample {
 class BSDF {
  public:
   BSDF();
-  BSDF(float glossines);
 
   virtual ~BSDF();
 
@@ -51,11 +51,6 @@ class BSDF {
 
   BSDF(const BSDF&) = delete;
   BSDF& operator=(const BSDF&) = delete;
-
-  float glossines() const { return _glossines; }
-
-private:
-  float _glossines = 0.0f;
 };
 
 class LightBSDF : public BSDF {
