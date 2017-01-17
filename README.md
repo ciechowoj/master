@@ -2,6 +2,12 @@
 # Path tracer.
 
 ![Cornelbox](https://github.com/ciechowoj/master/blob/master/splashscreen.png)
+## Reference
+![Cornelbox](https://github.com/ciechowoj/master/blob/master/images/Bearings.BPT.83900s.png)
+## BPT
+![Cornelbox](https://github.com/ciechowoj/master/blob/master/images/Bearings.BPT.1790s.png)
+## UPG
+![Cornelbox](https://github.com/ciechowoj/master/blob/master/images/Bearings.UPG.0_1.1797s.png)
 
 # Building
 
