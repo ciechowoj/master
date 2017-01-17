@@ -74,7 +74,14 @@ private:
         const BSDFQuery& eyeBSDF,
         const Edge& edge);
 
-    float _weightVM(
+    float _weight_vm_eye(
+        const LightVertex& light,
+        const BSDFQuery& lightBSDF,
+        const EyeVertex& eye,
+        const BSDFQuery& eyeBSDF,
+        const Edge& edge);
+
+    float _weight_vm_light(
         const LightVertex& light,
         const BSDFQuery& lightBSDF,
         const EyeVertex& eye,
