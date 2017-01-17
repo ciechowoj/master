@@ -78,6 +78,9 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
     float d = 0.0f;
 
+    BSDFSample bsdf = _scene->sampleBSDF(*context.generator, prv->surface, prv->omega);
+    BSDFSample new_bsdf;
+
     while (true) {
         if (_enable_vc) {
             if (prv->surface.is_camera()) {
@@ -88,8 +91,6 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             }
         }
 
-        auto bsdf = _scene->sampleBSDF(*context.generator, prv->surface, prv->omega);
-
         while (true) {
             surface = _scene->intersect(surface, bsdf.omega);
 
@@ -99,6 +100,8 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             itr->surface = surface;
             itr->omega = -bsdf.omega;
+
+            new_bsdf = _scene->sampleBSDF(*context.generator, itr->surface, itr->omega);
 
             auto edge = Edge(*prv, *itr);
 
@@ -146,6 +149,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
                 }
             }
             else {
+                bsdf = new_bsdf;
                 break;
             }
         }
@@ -219,9 +223,10 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
 
     *prv = _sample_light(generator);
 
-    while (!_russian_roulette(generator)) {
-        auto bsdf = _scene->sampleBSDF(generator, prv->surface, prv->omega);
+    BSDFSample bsdf = _scene->sampleBSDF(generator, prv->surface, prv->omega);
+    BSDFSample new_bsdf;
 
+    while (!_russian_roulette(generator)) {
         auto surface = _scene->intersectMesh(prv->surface, bsdf.omega);
 
         if (!surface.is_present()) {
@@ -230,6 +235,8 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
 
         itr->surface = surface;
         itr->omega = -bsdf.omega;
+
+        new_bsdf = _scene->sampleBSDF(generator, itr->surface, itr->omega);
 
         auto edge = Edge(*prv, *itr);
 
@@ -273,13 +280,13 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
         itr->pGlossiness = bsdf.glossiness;
         itr->length += 1.0f;
 
+        bsdf = new_bsdf;
+
         if (bsdf.specular != 1.0f) {
             prv = itr;
             ++itr;
         }
     }
-
-    auto bsdf = _scene->sampleBSDF(generator, prv->surface, prv->omega);
 
     if (bsdf.specular == 1.0f) {
         --itr;
