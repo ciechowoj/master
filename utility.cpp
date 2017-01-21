@@ -150,13 +150,13 @@ void loadEXR(const string& path, metadata_t& metadata, vector<vec3>& data) {
   }
 
   metadata.num_basic_rays =
-      num_basic_rays ? num_basic_rays->value() : std::size_t(0);
+      num_basic_rays ? num_basic_rays->value() : std::size_t(1);
   metadata.num_shadow_rays =
-      num_shadow_rays ? num_shadow_rays->value() : std::size_t(0);
+      num_shadow_rays ? num_shadow_rays->value() : std::size_t(1);
   metadata.num_tentative_rays =
-      num_tentative_rays ? num_tentative_rays->value() : std::size_t(0);
-  metadata.num_photons = num_photons ? num_photons->value() : std::size_t(0);
-  metadata.num_threads = num_threads ? num_threads->value() : std::size_t(0);
+      num_tentative_rays ? num_tentative_rays->value() : std::size_t(1);
+  metadata.num_photons = num_photons ? num_photons->value() : std::size_t(1);
+  metadata.num_threads = num_threads ? num_threads->value() : std::size_t(1);
 
   metadata.roulette = roulette ? roulette->value() : 0.0;
   metadata.radius = radius ? radius->value() : 0.0;
@@ -354,6 +354,7 @@ void subtract(const string& result, const string& path0, const string& path1) {
   metadata.technique = "difference";
   metadata.resolution.x = metadata0.resolution.x;
   metadata.resolution.y = metadata0.resolution.y;
+  metadata.num_samples = glm::min(metadata0.num_samples, metadata1.num_samples);
 
   saveEXR(result, metadata, data2);
 }
