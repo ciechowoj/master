@@ -92,9 +92,7 @@ private:
         random_generator_t& generator,
         const vec3& omega,
         const SurfacePoint& surface,
-        const BSDFQuery& bsdf,
-        const vec3& target,
-        const Edge& edge);
+        const vec3& target);
 
     vec3 _connect(
         const LightVertex& light, const BSDFQuery& light_bsdf,
@@ -134,6 +132,13 @@ private:
     vec3 _combine(vec3 throughput, float weight);
 
     bool _russian_roulette(random_generator_t& generator) const;
+
+    static const bool _merge_from_light = true;
+    static const bool _merge_from_eye = false;
+    static const bool _direct_vm_light = false;
+
+    static const int _trim_light = 0;
+    static const int _trim_eye = 1;
 
     const size_t _num_photons;
     const bool _unbiased;
