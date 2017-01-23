@@ -35,6 +35,7 @@ private:
         float a, A, b, B;
         float bGeometry;
         float pGlossiness;
+        float ppGlossiness;
         float length;
 
         const vec3& position() const {
@@ -54,6 +55,7 @@ private:
         float c, C, d, D;
         float bGeometry;
         float pGlossiness;
+        float ppGlossiness;
         float length;
     };
 
@@ -134,11 +136,10 @@ private:
     bool _russian_roulette(random_generator_t& generator) const;
 
     static const bool _merge_from_light = true;
-    static const bool _merge_from_eye = false;
-    static const bool _direct_vm_light = false;
+    static const bool _merge_from_eye = true;
 
-    static const int _trim_light = _merge_from_light ? 0 : 1;
-    static const int _trim_eye = _merge_from_light ? 1 : 0;
+    static const int _trim_light = 0; // _merge_from_light ? 0 : 1;
+    static const int _trim_eye = 0; // _merge_from_light ? 1 : 0;
 
     const size_t _num_photons;
     const bool _unbiased;
