@@ -110,7 +110,7 @@ private:
 
     void _scatter(random_generator_t& generator);
 
-    vec3 _gather(random_generator_t& generator, const EyeVertex& eye, const BSDFQuery& eye_bsdf, const EyeVertex& tentative);
+    vec3 _gather(render_context_t& context, const EyeVertex& eye, const BSDFQuery& eye_bsdf, const EyeVertex& tentative);
 
     vec3 _merge(
         random_generator_t& generator,
@@ -137,8 +137,8 @@ private:
     static const bool _merge_from_eye = false;
     static const bool _direct_vm_light = false;
 
-    static const int _trim_light = 0;
-    static const int _trim_eye = 1;
+    static const int _trim_light = _merge_from_light ? 0 : 1;
+    static const int _trim_eye = _merge_from_light ? 1 : 0;
 
     const size_t _num_photons;
     const bool _unbiased;
