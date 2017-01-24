@@ -114,13 +114,6 @@ private:
 
     vec3 _gather(render_context_t& context, const EyeVertex& eye, const BSDFQuery& eye_bsdf, const EyeVertex& tentative);
 
-    vec3 _merge(
-        random_generator_t& generator,
-        const LightVertex& light0,
-        const LightVertex& light1,
-        const EyeVertex& eye0,
-        const EyeVertex& eye1);
-
     vec3 _merge_light(
         random_generator_t& generator,
         const LightVertex& light,

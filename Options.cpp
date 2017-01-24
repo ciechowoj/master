@@ -598,9 +598,11 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--seed")) {
-            if (options.technique != Options::BPT) {
+            if (options.technique != Options::BPT &&
+                options.technique != Options::UPG &&
+                options.technique != Options::VCM) {
                 options.displayHelp = true;
-                options.displayMessage = "--seed is only valid with --BPT.";
+                options.displayMessage = "--seed is only valid with --BPT or --UPG.";
                 return options;
             }
             else if (options.numThreads != 1) {

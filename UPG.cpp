@@ -75,6 +75,8 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     prv->d = 0;
     prv->D = 0;
     prv->length = 0;
+    prv->pGlossiness = INFINITY;
+    prv->ppGlossiness = INFINITY;
 
     BSDFSample bsdf = _scene->sampleBSDF(*context.generator, prv->surface, prv->omega);
     BSDFSample new_bsdf;
@@ -135,13 +137,13 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             float vertex_merging = 0.0f;
 
             if (_merge_from_light && _merge_from_eye) {
-                if (itr->pGlossiness < prv->ppGlossiness) {
+                if (itr->pGlossiness <= prv->ppGlossiness) {
                     vertex_merging += min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
                         * (prv->length <= 1.0f ? 0.0f : 1.0f);
                 }
 
                 if (prv->pGlossiness < new_bsdf.glossiness) {
-                    vertex_merging += min(1.0f, Beta::beta(_circle) / prv->d);
+                    vertex_merging += min(1.0f, Beta::beta(_circle) / prv->d); // eye
                 }
             }
             else if (_merge_from_light) {
@@ -215,6 +217,8 @@ typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_light(random_generato
     vertex.b = 0.0f;
     vertex.B = 0.0f;
     vertex.length = 0.0f;
+    vertex.pGlossiness = 0.0f;
+    vertex.ppGlossiness = 0.0f;
 
     return vertex;
 }
@@ -284,13 +288,13 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
         float vertex_merging = 0.0f;
 
         if (_merge_from_light && _merge_from_eye) {
-            if (itr->pGlossiness <= prv->ppGlossiness) {
+            if (itr->pGlossiness < prv->ppGlossiness) {
                 vertex_merging += min(1.0f, Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
                     * (prv->length <= 1.0f ? 0.0f : 1.0f);
             }
 
-            if (prv->pGlossiness < new_bsdf.glossiness) {
-                vertex_merging += min(1.0f, Beta::beta(_circle) / prv->b);
+            if (prv->pGlossiness <= new_bsdf.glossiness) {
+                vertex_merging += min(1.0f, Beta::beta(_circle) / prv->b); // light
             }
         }
         else if (_merge_from_light) {
@@ -348,24 +352,24 @@ float UPGBase<Beta>::_weightVC(
     float connect_vertex_merging = 0.0f;
 
     if (_merge_from_light && _merge_from_eye) {
-        if (lightBSDF.glossiness <= light.ppGlossiness) {
+        if (lightBSDF.glossiness < light.ppGlossiness) {
             light_vertex_merging += min(1.0f, Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev)) // eye
                 * (light.length <= 1.0f ? 0.0f : 1.0f);
         }
 
-        if (eyeBSDF.glossiness < eye.ppGlossiness) {
+        if (eyeBSDF.glossiness <= eye.ppGlossiness) {
             eye_vertex_merging += min(1.0f, Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) // light
                 * (eye.length <= 1.0f ? 0.0f : 1.0f);
         }
 
-        if (light.pGlossiness < eyeBSDF.glossiness) {
+        if (light.pGlossiness <= eyeBSDF.glossiness) {
             light_vertex_merging += min(1.0f, Beta::beta(_circle) / light.b); // light
         }
         else {
             connect_vertex_merging += min(1.0f, Beta::beta(_circle * edge.bGeometry * eyeBSDF.densityRev)); // eye
         }
 
-        if (eye.pGlossiness <= lightBSDF.glossiness) {
+        if (eye.pGlossiness < lightBSDF.glossiness) {
             eye_vertex_merging += min(1.0f, Beta::beta(_circle) / eye.d); // eye
         }
         else {
@@ -636,7 +640,7 @@ vec3 UPGBase<Beta>::_gather(
             runtime_assert(!_light_paths[index].surface.is_light());
 
             if (true || !eye.surface.is_camera() || !_light_paths[index - 1].surface.is_light()) {
-                if (_light_paths[index].pGlossiness < tentative.pGlossiness) { // light
+                if (_light_paths[index].pGlossiness <= tentative.pGlossiness) { // light
                     radiance += _merge_light(*context.generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
                 }
                 else if (eye.surface.is_camera()) { // eye
@@ -662,24 +666,6 @@ vec3 UPGBase<Beta>::_gather(
         _radius);
 
     return radiance;
-}
-
-template <class Beta>
-vec3 UPGBase<Beta>::_merge(
-    random_generator_t& generator,
-    const LightVertex& light0,
-    const LightVertex& light1,
-    const EyeVertex& eye0,
-    const EyeVertex& eye1) {
-
-    /* if (!eye0.surface.is_camera()) {
-        return _merge_eye(generator, light1, eye0);
-    }
-    else {
-        return vec3(0.0f);
-    }*/
-
-    return _merge_light(generator, light0, eye1);
 }
 
 template <class Beta>
