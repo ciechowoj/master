@@ -83,12 +83,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
     while (true) {
         if (_enable_vc) {
-            if (prv->surface.is_camera()) {
-                radiance += _connect_eye(context, *prv);
-            }
-            else {
-                radiance += _connect(context, *prv);
-            }
+            radiance += _connect(context, *prv);
         }
 
         while (true) {
@@ -100,6 +95,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             itr->surface = surface;
             itr->omega = -bsdf.omega;
+
 
             new_bsdf = _scene->sampleBSDF(*context.generator, itr->surface, itr->omega);
 
@@ -337,15 +333,13 @@ float UPGBase<Beta>::_weightVC(
     const BSDFQuery& eyeBSDF,
     const Edge& edge) {
 
-    float skip_direct_vm = 1.0f; // (SkipDirectVM ? 0.0f : 1.0f) * ((eye.length + light.length) < 2 ? 0.0f : 1.0f);
+    float Ap
+        = (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
+        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
-    float Ap = 0.0f;
-        /* = (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev); */
-
-    float Cp = 0.0f;
-        /* = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
-        * Beta::beta(edge.fGeometry * lightBSDF.density); */
+    float Cp
+        = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
+        * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float light_vertex_merging = 0.0f;
     float eye_vertex_merging = 0.0f;
@@ -366,14 +360,16 @@ float UPGBase<Beta>::_weightVC(
             light_vertex_merging += min(1.0f, Beta::beta(_circle) / light.b); // light
         }
         else {
-            connect_vertex_merging += min(1.0f, Beta::beta(_circle * edge.bGeometry * eyeBSDF.densityRev)); // eye
+            connect_vertex_merging += min(1.0f, Beta::beta(_circle * edge.bGeometry * eyeBSDF.densityRev))
+                * (light.length == 0.0f ? 0.0f : 1.0f); // eye
         }
 
         if (eye.pGlossiness < lightBSDF.glossiness) {
             eye_vertex_merging += min(1.0f, Beta::beta(_circle) / eye.d); // eye
         }
         else {
-            connect_vertex_merging += min(1.0f, Beta::beta(_circle * edge.fGeometry * lightBSDF.density)); // light
+            connect_vertex_merging += min(1.0f, Beta::beta(_circle * edge.fGeometry * lightBSDF.density))
+                * (eye.length == 0.0f ? 0.0f : 1.0f); // light
         }
     }
     else if (_merge_from_light) {
@@ -399,11 +395,15 @@ float UPGBase<Beta>::_weightVC(
             * eye.d * (eye.length <= _trim_eye ? 0.0f : 1.0f))
         * Beta::beta(edge.fGeometry * lightBSDF.density);
 
+    float skip_direct_vm = 0.0f; // (eye.length + light.length) < 2.0f ? 0.0f : 1.0f;
+
     float weightInv
         = Ap + Beta::beta(_num_scattered) * Bp + Cp + Beta::beta(_num_scattered) * Dp
         + Beta::beta(float(_num_scattered))
         * connect_vertex_merging
-        * skip_direct_vm; // + 1.0f;
+        * skip_direct_vm + 1.0f;
+
+    weightInv = Ap + Cp + 1.0f;
 
     return 1.0f / weightInv;
 }
@@ -460,10 +460,6 @@ vec3 UPGBase<Beta>::_connect(
 
 template <class Beta>
 vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
-    if (!eye.surface.is_light()) {
-        return vec3(0.0f);
-    }
-
     auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
     auto bsdf = _scene->queryBSDF(eye.surface, vec3(0.0f), eye.omega);
 
@@ -471,15 +467,15 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
         = (eye.C * Beta::beta(bsdf.density) + eye.c * (1.0f - eye.specular))
         * Beta::beta(lsdf.density);
 
-    // float Dp = eye.D / eye.c * Beta::beta(bsdf.density); // eye
+    float Dp = eye.D / eye.c * Beta::beta(bsdf.density); // eye
 
-    float Dp
+    /*float Dp
         = (eye.D * Beta::beta(bsdf.density) + (1.0f - bsdf.specular)
             // * min(1.0f, Beta::beta(_circle) / eye.d) * eye.d) // eye
             * min(1.0f, Beta::beta(_circle * eye.bGeometry * bsdf.density)) * eye.d) // light
-        * Beta::beta(lsdf.density);
+        * Beta::beta(lsdf.density);*/
 
-    float weightInv = Cp + Beta::beta(float(_num_scattered)) * Dp + 1.0f;
+    float weightInv = Cp + Beta::beta(float(_num_scattered)) * Dp * 0.0f + 1.0f;
 
     return lsdf.radiance
         * eye.throughput
@@ -508,42 +504,35 @@ vec3 UPGBase<Beta>::_connect(
     size_t path = context.pixel_index;
     vec3 radiance = vec3(0.0f);
 
-    if (!_russian_roulette(*context.generator)) {
-        radiance += _connect<true>(_sample_light(*context.generator), eye);
+    if (eye.surface.is_camera()) {
+        for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {
+            vec3 omega = normalize(_light_paths[i].surface.position() - eye.surface.position());
+
+            radiance += _accumulate(
+                context,
+                omega,
+                [&] {
+                    float correct_normal = abs(
+                        (dot(omega, _light_paths[i].surface.gnormal)) *
+                        dot(_light_paths[i].omega, _light_paths[i].surface.normal()) /
+                        (dot(omega, _light_paths[i].surface.normal()) *
+                        dot(_light_paths[i].omega, _light_paths[i].surface.gnormal)));
+
+                    vec3 camera = eye.surface.toSurface(omega);
+                    float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
+
+                    return _connect<true>(_light_paths[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
+                });
+        }
     }
+    else {
+        if (!_russian_roulette(*context.generator)) {
+            radiance += _connect<true>(_sample_light(*context.generator), eye);
+        }
 
-    for (size_t i = _light_offsets[path] + 1, s = _light_offsets[path + 1]; i < s; ++i) {
-        radiance += _connect<false>(_light_paths[i], eye);
-    }
-
-    return radiance;
-}
-
-template <class Beta>
-vec3 UPGBase<Beta>::_connect_eye(
-    render_context_t& context,
-    const EyeVertex& eye) {
-    size_t path = context.pixel_index;
-    vec3 radiance = vec3(0.0f);
-
-    for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {
-        vec3 omega = normalize(_light_paths[i].surface.position() - eye.surface.position());
-
-        radiance += _accumulate(
-            context,
-            omega,
-            [&] {
-                float correct_normal = abs(
-                    (dot(omega, _light_paths[i].surface.gnormal)) *
-                    dot(_light_paths[i].omega, _light_paths[i].surface.normal()) /
-                    (dot(omega, _light_paths[i].surface.normal()) *
-                    dot(_light_paths[i].omega, _light_paths[i].surface.gnormal)));
-
-                vec3 camera = eye.surface.toSurface(omega);
-                float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
-
-                return _connect<true>(_light_paths[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
-            });
+        for (size_t i = _light_offsets[path] + 1, s = _light_offsets[path + 1]; i < s; ++i) {
+            radiance += _connect<false>(_light_paths[i], eye);
+        }
     }
 
     return radiance;
@@ -639,7 +628,7 @@ vec3 UPGBase<Beta>::_gather(
 
             runtime_assert(!_light_paths[index].surface.is_light());
 
-            if (true || !eye.surface.is_camera() || !_light_paths[index - 1].surface.is_light()) {
+            if (!eye.surface.is_camera() || !_light_paths[index - 1].surface.is_light()) {
                 if (_light_paths[index].pGlossiness <= tentative.pGlossiness) { // light
                     radiance += _merge_light(*context.generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
                 }

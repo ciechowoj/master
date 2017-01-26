@@ -106,7 +106,6 @@ private:
     vec3 _connect(const LightVertex& light, const EyeVertex& eye);
 
     vec3 _connect(render_context_t& context, const EyeVertex& eye);
-    vec3 _connect_eye(render_context_t& context, const EyeVertex& eye);
 
     vec3 _gather_eye(render_context_t& context, const EyeVertex& eye);
 
