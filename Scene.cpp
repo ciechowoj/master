@@ -175,8 +175,13 @@ float Scene::occluded(
 {
     vec3 direction = normalize(target.position() - origin.position());
 
-    vec3 adjusted_origin = origin.position() + (dot(origin.gnormal, direction) > 0.0f ? 1.0f : -1.0f) * origin.gnormal * 0.0001f;
-    vec3 adjusted_target = target.position() + (dot(target.gnormal, direction) < 0.0f ? 1.0f : -1.0f) * target.gnormal * 0.0001f;
+    vec3 adjusted_origin = origin.position()
+        + (dot(origin.gnormal, direction) > 0.0f ? 1.0f : -1.0f)
+        * origin.gnormal * 0.0001f;
+
+    vec3 adjusted_target = target.position()
+        + (dot(target.gnormal, direction) < 0.0f ? 1.0f : -1.0f)
+        * target.gnormal * 0.0001f;
 
     RTCRay rtcRay;
     (*(vec3*)rtcRay.org) = adjusted_origin;
@@ -200,7 +205,10 @@ SurfacePoint Scene::intersect(
     vec3 direction,
     float tfar) const {
     RayIsect rtcRay;
-    (*(vec3*)rtcRay.org) = surface.position() + (dot(surface.gnormal, direction) > 0.0f ? 1.0f : -1.0f) * surface.gnormal * 0.0001f;
+    (*(vec3*)rtcRay.org) = surface.position()
+        + (dot(surface.gnormal, direction) > 0.0f ? 1.0f : -1.0f)
+        * surface.gnormal * 0.0001f;
+
     (*(vec3*)rtcRay.dir) = direction;
     rtcRay.tnear = 0.0f;
     rtcRay.tfar = tfar;
@@ -221,7 +229,10 @@ SurfacePoint Scene::intersectMesh(
     vec3 direction,
     float tfar) const {
     RayIsect rtcRay;
-    (*(vec3*)rtcRay.org) = surface.position() + (dot(surface.gnormal, direction) > 0.0f ? 1.0f : -1.0f) * surface.gnormal * 0.0001f;
+    (*(vec3*)rtcRay.org) = surface.position()
+        + (dot(surface.gnormal, direction) > 0.0f ? 1.0f : -1.0f)
+        * surface.gnormal * 0.0001f;
+
     (*(vec3*)rtcRay.dir) = direction;
     rtcRay.tnear = 0.0f;
     rtcRay.tfar = tfar;
