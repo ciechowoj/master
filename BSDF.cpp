@@ -125,6 +125,51 @@ BSDFBoundedSample LightBSDF::sample_bounded(random_generator_t& generator,
 
 uint32_t LightBSDF::light_id() const { return _light_id; }
 
+sun_light_bsdf::sun_light_bsdf(bounding_sphere_t sphere, uint32_t light_id)
+    : _sphere(sphere), _light_id(light_id) {}
+
+BSDFSample sun_light_bsdf::sample(random_generator_t& generator,
+                             const SurfacePoint& surface, vec3 omega) const {
+  BSDFSample result;
+  result.throughput = vec3(1.0f);
+  result.omega = omega;
+  result.density = 1.0f;
+  result.densityRev = 0.0f;
+  result.specular = 0.0f;
+  result.glossiness = INFINITY;
+
+  return result;
+}
+
+BSDFQuery sun_light_bsdf::query(const SurfacePoint& surface, vec3 incident,
+                           vec3 outgoing) const {
+  BSDFQuery query;
+  query.throughput = vec3(0.0f);
+  query.density = 0.0f;
+  query.densityRev = 0.0f;
+  query.glossiness = INFINITY;
+
+  return query;
+}
+
+BSDFBoundedSample sun_light_bsdf::sample_bounded(random_generator_t& generator,
+                                            const SurfacePoint& surface,
+                                            bounding_sphere_t target,
+                                            vec3 omega) const {
+  bounding_sphere_t local_sphere = {
+      surface.toSurface(_sphere.center - surface.position()), _sphere.radius};
+
+  auto sample = sample_lambert(generator, omega, local_sphere, target);
+
+  BSDFBoundedSample result;
+  result.omega = sample.direction;
+  result.adjust = sample.adjust;
+
+  return result;
+}
+
+uint32_t sun_light_bsdf::light_id() const { return _light_id; }
+
 CameraBSDF::CameraBSDF() {}
 
 BSDFSample CameraBSDF::sample(random_generator_t& generator,

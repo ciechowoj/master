@@ -73,6 +73,26 @@ class LightBSDF : public BSDF {
   uint32_t _light_id;
 };
 
+class sun_light_bsdf : public BSDF {
+ public:
+  sun_light_bsdf(bounding_sphere_t sphere, uint32_t light_id);
+  BSDFSample sample(random_generator_t& generator, const SurfacePoint& surface,
+                    vec3 omega) const override;
+  BSDFQuery query(const SurfacePoint& surface, vec3 incident,
+                  vec3 outgoing) const override;
+
+  BSDFBoundedSample sample_bounded(random_generator_t& generator,
+                                   const SurfacePoint& surface,
+                                   bounding_sphere_t target,
+                                   vec3 omega) const override;
+
+  uint32_t light_id() const override;
+
+ private:
+  bounding_sphere_t _sphere;
+  uint32_t _light_id;
+};
+
 class CameraBSDF : public BSDF {
  public:
   CameraBSDF();

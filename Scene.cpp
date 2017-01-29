@@ -137,12 +137,6 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
     }
 }
 
-vec3 Scene::queryRadiance(
-    const SurfacePoint& surface,
-    const vec3& direction) const {
-    return lights.queryRadiance(queryBSDF(surface).light_id(), direction);
-}
-
 const LSDFQuery Scene::queryLSDF(
     const SurfacePoint& surface,
     const vec3& omega) const {

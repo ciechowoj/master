@@ -23,8 +23,16 @@ namespace haste {
 // v1 ************************************** v2
 //
 
-std::unique_ptr<BSDF> AreaLight::create_bsdf(const bounding_sphere_t& bounding_sphere, uint32_t light_id) const {
-    return std::unique_ptr<BSDF>(new LightBSDF(bounding_sphere, light_id));
+std::unique_ptr<BSDF> AreaLight::create_bsdf(
+    const bounding_sphere_t& bounding_sphere,
+    uint32_t light_id,
+    bool diffuse) const {
+    if (diffuse) {
+        return std::unique_ptr<BSDF>(new LightBSDF(bounding_sphere, light_id));
+    }
+    else {
+        return std::unique_ptr<BSDF>(new sun_light_bsdf(bounding_sphere, light_id));
+    }
 }
 
 Mesh AreaLight::create_mesh(uint32_t material_index, const string& name) const {
@@ -125,16 +133,6 @@ LightSample AreaLights::sample(
     result._areaDensity = _weights[light_id] / light.area();
 
     return result;
-}
-
-vec3 AreaLights::queryRadiance(
-    size_t light_id,
-    const vec3& omega) const
-{
-    auto& light = this->light(light_id);
-
-    float cosTheta = dot(omega, light.normal());
-    return light.radiance() * (cosTheta > 0.0f ? 1.0f : 0.0f);
 }
 
 LSDFQuery AreaLights::queryLSDF(

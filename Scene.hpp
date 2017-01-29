@@ -44,10 +44,6 @@ public:
 
     SurfacePoint querySurface(const RayIsect& isect) const;
 
-    vec3 queryRadiance(
-        const SurfacePoint& surface,
-        const vec3& direction) const;
-
     const LSDFQuery queryLSDF(
         const SurfacePoint& surface,
         const vec3& omega) const;

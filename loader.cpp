@@ -443,7 +443,7 @@ void load_lights(const aiScene* scene, Materials& materials, AreaLights& lights,
             meshes.push_back(lights.light(i).create_mesh(materials.names.size(), toString(light->mName)));
 
             materials.names.push_back(toString(light->mName));
-            materials.bsdfs.push_back(lights.light(i).create_bsdf(bounding_sphere, i));
+            materials.bsdfs.push_back(lights.light(i).create_bsdf(bounding_sphere, i, light->mDiffuse));
         }
     }
 }

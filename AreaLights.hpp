@@ -45,7 +45,7 @@ struct AreaLight {
     vec3 radiance() const { return exitance * one_over_pi<float>(); }
     vec3 normal() const { return tangent[1]; }
 
-    std::unique_ptr<BSDF> create_bsdf(const bounding_sphere_t&, uint32_t light_id) const;
+    std::unique_ptr<BSDF> create_bsdf(const bounding_sphere_t&, uint32_t light_id, bool diffuse) const;
     Mesh create_mesh(uint32_t material_index, const string& name) const;
 };
 
@@ -70,8 +70,6 @@ public:
     const float totalPower() const;
 
     LightSample sample(RandomEngine& engine) const;
-
-    vec3 queryRadiance(size_t lightId, const vec3& omega) const;
 
     LSDFQuery queryLSDF(size_t lightId, const vec3& omega) const;
 

@@ -24,7 +24,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
       _scene->intersect(_camera_surface(context), ray.direction);
 
   while (surface.is_light() && _max_path > 0) {
-    radiance += _lights * _scene->queryRadiance(surface, -ray.direction);
+    radiance += _lights * _scene->queryLSDF(surface, -ray.direction).radiance;
     surface = _scene->intersect(surface, ray.direction);
   }
 
