@@ -70,7 +70,8 @@ const size_t AreaLights::addLight(
     const vec3& direction,
     const vec3& up,
     const vec3& exitance,
-    const vec2& size)
+    const vec2& size,
+    bool diffuse)
 {
     size_t lightId = _names.size();
 
@@ -81,6 +82,7 @@ const size_t AreaLights::addLight(
     light.tangent[2] = up;
     light.size = size;
     light.exitance = exitance;
+    light.diffuse = diffuse ? 1.0f : 0.0f;
     light.material_id = encode_material(material_index, entity_type::light);
 
     _names.push_back(name);
@@ -144,7 +146,7 @@ LSDFQuery AreaLights::queryLSDF(
     float cosTheta = dot(omega, light.normal());
 
     LSDFQuery result;
-    result.radiance = light.radiance() * (cosTheta > 0.0f ? 1.0f : 0.0f);
+    result.radiance = light.radiance() * (cosTheta > 0.0f ? 1.0f : 0.0f) * light.diffuse;
     result.density = _weights[light_id] / light.area();
 
     return result;
@@ -220,8 +222,8 @@ const vec3 AreaLights::_samplePosition(size_t lightId, random_generator_t& gener
     auto sample = vec2(generator.sample(), generator.sample());
     auto uniform = (sample - vec2(0.5f)) * _lights[lightId].size;
 
-    const vec3 up = _lights[lightId].tangent[0];
-    const vec3 left = _lights[lightId].tangent[2];
+    const vec3 left = _lights[lightId].tangent[0];
+    const vec3 up = _lights[lightId].tangent[2];
 
     return _lights[lightId].position + uniform.x * left + uniform.y * up;
 }

@@ -37,6 +37,7 @@ struct AreaLight {
     mat3 tangent;
     vec2 size;
     vec3 exitance;
+    float diffuse;
     uint32_t material_id;
 
     float area() const { return size.x * size.y; }
@@ -60,7 +61,8 @@ public:
         const vec3& direction,
         const vec3& up,
         const vec3& exitance,
-        const vec2& size);
+        const vec2& size,
+        bool diffuse);
 
     const size_t num_lights() const;
     const string& name(size_t lightId) const;

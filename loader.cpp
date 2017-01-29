@@ -438,7 +438,8 @@ void load_lights(const aiScene* scene, Materials& materials, AreaLights& lights,
                 normalize(toVec3(light->mDirection)),
                 normalize(toVec3(light->mUp)),
                 toVec3(light->mColorDiffuse),
-                toVec2(light->mSize));
+                toVec2(light->mSize),
+                light->mDiffuse);
 
             meshes.push_back(lights.light(i).create_mesh(materials.names.size(), toString(light->mName)));
 

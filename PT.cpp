@@ -103,8 +103,9 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
   LightSample light = _scene->sampleLight(*context.generator);
   vec3 omega = normalize(eye.surface.position() - light.position());
+  auto bsdf = _scene->queryBSDF(light.surface, light.normal(), omega);
 
-  if (dot(omega, light.normal()) < 0.0f) {
+  if (l1Norm(bsdf.throughput) < FLT_EPSILON) {
     return vec3(0.0f);
   }
 

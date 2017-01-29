@@ -81,11 +81,6 @@ class sun_light_bsdf : public BSDF {
   BSDFQuery query(const SurfacePoint& surface, vec3 incident,
                   vec3 outgoing) const override;
 
-  BSDFBoundedSample sample_bounded(random_generator_t& generator,
-                                   const SurfacePoint& surface,
-                                   bounding_sphere_t target,
-                                   vec3 omega) const override;
-
   uint32_t light_id() const override;
 
  private:
