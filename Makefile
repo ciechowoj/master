@@ -124,7 +124,7 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --UPG --beta=1 --max-radius=0.01 --parallel \
+	./build/master/master.bin ../oldsport.blend --UPG --beta=2 --max-radius=0.03 --parallel \
 	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.212000.PT.snapshot.exr"
 
 profile:

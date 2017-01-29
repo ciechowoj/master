@@ -375,12 +375,12 @@ float UPGBase<Beta>::_weightVC(
         else if (_merge_from_light) {
             light_vertex_merging = min(1.0f, Beta::beta(_circle) / light.b);
             eye_vertex_merging = min(1.0f, Beta::beta(_circle * eye.bGeometry * eyeBSDF.density));
-            connect_vertex_merging = min(1.0f, _circle * edge.fGeometry * lightBSDF.density);
+            connect_vertex_merging = min(1.0f, Beta::beta(_circle * edge.fGeometry * lightBSDF.density));
         }
         else if (_merge_from_eye) {
             light_vertex_merging = min(1.0f, Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev));
             eye_vertex_merging = min(1.0f, Beta::beta(_circle) / eye.d);
-            connect_vertex_merging = min(1.0f, _circle * edge.bGeometry * eyeBSDF.densityRev);
+            connect_vertex_merging = min(1.0f, Beta::beta(_circle * edge.bGeometry * eyeBSDF.densityRev));
         }
     }
 
@@ -625,7 +625,7 @@ vec3 UPGBase<Beta>::_gather(
             runtime_assert(!_light_paths[index].surface.is_light());
 
             if (!eye.surface.is_camera() || !_light_paths[index - 1].surface.is_light()) {
-                if (_light_paths[index].pGlossiness <= tentative.pGlossiness) { // light
+                if (true || _light_paths[index].pGlossiness <= tentative.pGlossiness) { // light
                     radiance += _merge_light(*context.generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
                 }
                 else if (eye.surface.is_camera()) { // eye
