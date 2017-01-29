@@ -625,7 +625,7 @@ vec3 UPGBase<Beta>::_gather(
             runtime_assert(!_light_paths[index].surface.is_light());
 
             if (!eye.surface.is_camera() || !_light_paths[index - 1].surface.is_light()) {
-                if (true || _light_paths[index].pGlossiness <= tentative.pGlossiness) { // light
+                if (_light_paths[index].pGlossiness <= tentative.pGlossiness) { // light
                     radiance += _merge_light(*context.generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
                 }
                 else if (eye.surface.is_camera()) { // eye
