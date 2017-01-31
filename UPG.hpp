@@ -124,6 +124,7 @@ private:
         const EyeVertex& eye);
 
     vec3 _combine(vec3 throughput, float weight);
+    float _clamp(float x) const;
 
     bool _russian_roulette(random_generator_t& generator) const;
 
@@ -141,6 +142,7 @@ private:
     const float _roulette;
     const float _initial_radius;
     const float _alpha;
+    const float _clamp_const;
 
     size_t _num_scattered;
     float _num_scattered_inv;
