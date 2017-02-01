@@ -26,7 +26,7 @@ UPGBase<Beta>::UPGBase(
     , _roulette(roulette)
     , _initial_radius(radius)
     , _alpha(alpha)
-    , _clamp_const(unbiased ? 1.0f : INFINITY)
+    , _clamp_const(unbiased ? 1.0f : FLT_MAX)
     , _num_scattered(0)
     , _num_scattered_inv(0.0f)
     , _radius(radius)
