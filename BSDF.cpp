@@ -167,7 +167,7 @@ BSDFSample CameraBSDF::sample(random_generator_t& generator,
   sample.density = 1.0f;
   sample.densityRev = 0.0f;
   sample.specular = 0.0f;
-  sample.glossiness = INFINITY;
+  sample.glossiness = FLT_MAX;
 
   return sample;
 }
@@ -181,7 +181,7 @@ BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
                      pow(abs(local_incident.y), 1.0f);
   query.density = 0.0f;
   query.densityRev = 1.0f;
-  query.glossiness = INFINITY;
+  query.glossiness = FLT_MAX;
 
   return query;
 }
