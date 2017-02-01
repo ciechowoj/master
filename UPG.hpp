@@ -123,7 +123,6 @@ private:
         const LightVertex& light,
         const EyeVertex& eye);
 
-    vec3 _combine(vec3 throughput, float weight);
     float _clamp(float x) const;
 
     bool _russian_roulette(random_generator_t& generator) const;

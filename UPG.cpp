@@ -316,6 +316,9 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
             prv = itr;
             ++itr;
         }
+        else {
+            *prv = *itr;
+        }
     }
 
     if (bsdf.specular == 1.0f) {
@@ -484,14 +487,14 @@ template <class Beta> template <bool SkipDirectVM>
 vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
-    auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
-    auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
+    auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
+    auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
 
     auto edge = Edge(light, eye, omega);
 
-    auto weight = _weightVC<SkipDirectVM>(light, lightBSDF, eye, eyeBSDF, edge);
+    auto weight = _weightVC<SkipDirectVM>(light, light_bsdf, eye, eye_bsdf, edge);
 
-    return _combine(_connect(light, lightBSDF, eye, eyeBSDF, edge), weight);
+    return _connect(light, light_bsdf, eye, eye_bsdf, edge) * weight;
 }
 
 template <class Beta>
@@ -678,7 +681,7 @@ vec3 UPGBase<Beta>::_merge_light(
                 light.surface, eye.surface.position())
             : 1.0f / (_circle * edge.fGeometry * light_bsdf.density);
 
-        return _combine(throughput * density, weight);
+        return throughput * density * weight;
     }
 }
 
@@ -706,13 +709,8 @@ vec3 UPGBase<Beta>::_merge_eye(
                 eye.surface, light.surface.position())
             : 1.0f / (_circle * edge.bGeometry * eye_bsdf.densityRev);
 
-        return _combine(throughput * density, weight);
+        return throughput * density * weight;
     }
-}
-
-template <class Beta>
-vec3 UPGBase<Beta>::_combine(vec3 throughput, float weight) {
-    return l1Norm(throughput) < FLT_EPSILON ? vec3(0.0f) : throughput * weight;
 }
 
 template <class Beta>
