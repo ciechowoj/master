@@ -73,7 +73,8 @@ BSDFSample LightBSDF::sample(random_generator_t& generator,
   bounding_sphere_t local_sphere = {
       surface.toSurface(_sphere.center - surface.position()), _sphere.radius};
 
-  auto sample = sample_lambert(generator, local_sphere);
+  auto sample =
+      sample_lambert(generator, local_sphere, surface.toSurface(omega));
 
   BSDFSample result;
   result.throughput = vec3(1.0f);
@@ -129,7 +130,8 @@ sun_light_bsdf::sun_light_bsdf(bounding_sphere_t sphere, uint32_t light_id)
     : _sphere(sphere), _light_id(light_id) {}
 
 BSDFSample sun_light_bsdf::sample(random_generator_t& generator,
-                             const SurfacePoint& surface, vec3 omega) const {
+                                  const SurfacePoint& surface,
+                                  vec3 omega) const {
   BSDFSample result;
   result.throughput = vec3(1.0f);
   result.omega = omega;
@@ -142,7 +144,7 @@ BSDFSample sun_light_bsdf::sample(random_generator_t& generator,
 }
 
 BSDFQuery sun_light_bsdf::query(const SurfacePoint& surface, vec3 incident,
-                           vec3 outgoing) const {
+                                vec3 outgoing) const {
   BSDFQuery query;
   query.throughput = vec3(0.0f);
   query.density = 0.0f;
@@ -210,7 +212,7 @@ BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
   vec3 local_omega = surface.toSurface(omega);
 
   BSDFSample sample;
-  sample.omega = sample_lambert(generator).direction;
+  sample.omega = sample_lambert(generator, local_omega).direction;
 
   BSDFQuery query =
       _query(surface.toSurface(surface.gnormal), local_omega, sample.omega);
@@ -228,7 +230,7 @@ BSDFBoundedSample DiffuseBSDF::sample_bounded(random_generator_t& generator,
                                               const SurfacePoint& surface,
                                               bounding_sphere_t target,
                                               vec3 omega) const {
-  auto sample = sample_lambert(generator, target);
+  auto sample = sample_lambert(generator, target, omega);
 
   BSDFBoundedSample result;
   result.omega = sample.direction;
@@ -279,7 +281,7 @@ BSDFSample PhongBSDF::sample(random_generator_t& generator,
   vec3 local_omega = surface.toSurface(omega);
 
   vec3 direction = generator.sample() < _diffuse_probability
-                       ? sample_lambert(generator).direction
+                       ? sample_lambert(generator, local_omega).direction
                        : sample_phong(generator, local_omega, _power).direction;
 
   BSDFSample sample;
@@ -336,7 +338,6 @@ BSDFQuery PhongBSDF::_query(vec3 incident, vec3 outgoing,
   query.specular = 0.0f;
   query.glossiness = _power;
 
-
   return query;
 }
 
@@ -354,7 +355,7 @@ BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
                                specular_adjust * (1.0f - _diffuse_probability));
 
   if (generator.sample() < diffuse_probability) {
-    auto sample = sample_lambert(generator, target);
+    auto sample = sample_lambert(generator, target, omega);
 
     result.omega = sample.direction;
     result.adjust = sample.adjust * _diffuse_probability +
@@ -370,7 +371,7 @@ BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
   return result;
 }
 
-DeltaBSDF::DeltaBSDF() { }
+DeltaBSDF::DeltaBSDF() {}
 
 BSDFQuery DeltaBSDF::query(const SurfacePoint& surface, vec3 incident,
                            vec3 outgoing) const {
@@ -409,25 +410,29 @@ TransmissionBSDF::TransmissionBSDF(float internalIOR, float externalIOR) {
 BSDFSample TransmissionBSDF::sample(random_generator_t& generator,
                                     const SurfacePoint& surface,
                                     vec3 reflected) const {
+  vec3 local_omega = surface.toSurface(reflected);
+
   vec3 omega;
 
-  if (reflected.y > 0.f) {
+  if (local_omega.y > 0.f) {
     const float eta = externalOverInternalIOR;
 
     omega =
-        -eta * (reflected - vec3(0.0f, reflected.y, 0.0f)) -
-        vec3(0.0f, sqrt(1 - eta * eta * (1 - reflected.y * reflected.y)), 0.0f);
+        -eta * (local_omega - vec3(0.0f, local_omega.y, 0.0f)) -
+        vec3(0.0f, sqrt(1 - eta * eta * (1 - local_omega.y * local_omega.y)),
+             0.0f);
   } else {
     const float eta = 1.0f / externalOverInternalIOR;
 
     omega =
-        -eta * (reflected - vec3(0.0f, reflected.y, 0.0f)) +
-        vec3(0.0f, sqrt(1 - eta * eta * (1 - reflected.y * reflected.y)), 0.0f);
+        -eta * (local_omega - vec3(0.0f, local_omega.y, 0.0f)) +
+        vec3(0.0f, sqrt(1 - eta * eta * (1 - local_omega.y * local_omega.y)),
+             0.0f);
   }
 
   BSDFSample result;
   result.throughput = vec3(1.0f, 1.0f, 1.0f) / abs(omega.y);
-  result.omega = omega;
+  result.omega = surface.toWorld(omega);
   result.density = 1.0f;
   result.densityRev = 1.0f;
   result.specular = 1.0f;

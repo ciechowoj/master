@@ -68,10 +68,10 @@ struct direction_sample_t {
 
 mat3 reflection_to_surface(vec3 reflection);
 
-direction_sample_t sample_lambert(random_generator_t& generator);
+direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega);
 
 direction_sample_t sample_lambert(random_generator_t& generator,
-                                  bounding_sphere_t sphere);
+                                  bounding_sphere_t sphere, vec3 omega);
 
 direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
                                   bounding_sphere_t outer,

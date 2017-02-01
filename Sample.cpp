@@ -49,8 +49,8 @@ mat3 reflection_to_surface(vec3 reflection) {
   return matrix;
 }
 
-direction_sample_t sample_lambert(random_generator_t& generator) {
-  float y = sqrt(generator.sample());
+direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega) {
+  float y = sqrt(generator.sample()) * sign(omega.y);
   float r = sqrt(1.0f - y * y);
   float phi = generator.sample() * 2.0f * pi<float>();
   float x = r * cos(phi);
@@ -60,7 +60,8 @@ direction_sample_t sample_lambert(random_generator_t& generator) {
 }
 
 direction_sample_t sample_lambert(random_generator_t& generator,
-                                  bounding_sphere_t sphere) {
+                                  bounding_sphere_t sphere, vec3 omega) {
+  sphere.center.y *= sign(omega.y);
   auto bound = angular_bound(sphere);
 
   auto uniform_theta_inf = cos(bound.theta_sup) * cos(bound.theta_sup);
@@ -72,7 +73,8 @@ direction_sample_t sample_lambert(random_generator_t& generator,
   auto phi_range = uniform_phi_sup - uniform_phi_inf;
   float adjust = theta_range * phi_range;
 
-  float y = sqrt(generator.sample() * theta_range + uniform_theta_inf);
+  float y = sqrt(generator.sample() * theta_range + uniform_theta_inf) *
+            sign(omega.y);
   float phi =
       two_pi<float>() * (generator.sample() * phi_range + uniform_phi_inf);
   float r = sqrt(1 - y * y);
@@ -85,6 +87,8 @@ direction_sample_t sample_lambert(random_generator_t& generator,
 direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
                                   bounding_sphere_t outer,
                                   bounding_sphere_t inner) {
+  inner.center.y *= sign(omega.y);
+  outer.center.y *= sign(omega.y);
   auto bound = angular_bound(inner);
 
   // not so trivial
@@ -103,7 +107,8 @@ direction_sample_t sample_lambert(random_generator_t& generator, vec3 omega,
   auto phi_range = uniform_phi_sup - uniform_phi_inf;
   float adjust = theta_range * phi_range / lambert_adjust(outer);
 
-  float y = sqrt(generator.sample() * theta_range + uniform_theta_inf);
+  float y = sqrt(generator.sample() * theta_range + uniform_theta_inf) *
+            sign(omega.y);
   float phi =
       two_pi<float>() * (generator.sample() * phi_range + uniform_phi_inf);
   float r = sqrt(1 - y * y);

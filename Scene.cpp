@@ -123,9 +123,9 @@ SurfacePoint Scene::querySurface(const RayIsect& isect) const {
 
         point.gnormal = isect.gnormal();
 
-        point._tangent[1]
+        /*point._tangent[1]
             = normalize(point._tangent[1]
-            * (dot(isect.omega(), point._tangent[1]) < 0.0f ? -1.0f : 1.0f));
+            * (dot(isect.omega(), point._tangent[1]) < 0.0f ? -1.0f : 1.0f));*/
 
         point.gnormal
             = point.gnormal
