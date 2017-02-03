@@ -52,11 +52,11 @@ float BSDF::gathering_density(random_generator_t& generator,
   while (N < L) {
     auto sample = sample_bounded(generator, surface, target, omega);
 
-    SurfacePoint isect = intersector->intersectMesh(
+    auto isect = intersector->intersectFast(
         surface, surface.toWorld(sample.omega), target_limit);
 
-    if (isect.is_present()) {
-      float distance_sq = distance2(world_target, isect.position());
+    if (isect.w != 0.0f) {
+      float distance_sq = distance2(world_target, isect.xyz());
 
       if (distance_sq < target.radius * target.radius) {
         return N / sample.adjust;
@@ -139,11 +139,11 @@ float LightBSDF::gathering_density(random_generator_t& generator,
     auto sample = sample_lambert(generator, omega, local_sphere, target);
 
     if (intersect(sample.direction, target, target_length)) {
-      SurfacePoint isect = intersector->intersectMesh(
+      auto isect = intersector->intersectFast(
           surface, surface.toWorld(sample.direction), target_limit);
 
-      if (isect.is_present()) {
-        float distance_sq = distance2(world_target, isect.position());
+      if (isect.w != 0.0f) {
+        float distance_sq = distance2(world_target, isect.xyz());
 
         if (distance_sq < target.radius * target.radius) {
           return N / sample.adjust;
@@ -294,11 +294,11 @@ float DiffuseBSDF::gathering_density(random_generator_t& generator,
     auto sample = sample_lambert(generator, target, omega);
 
     if (intersect(sample.direction, target, target_length)) {
-      SurfacePoint isect = intersector->intersectMesh(
+      auto isect = intersector->intersectFast(
           surface, surface.toWorld(sample.direction), target_limit);
 
-      if (isect.is_present()) {
-        float distance_sq = distance2(world_target, isect.position());
+      if (isect.w != 0.0f) {
+        float distance_sq = distance2(world_target, isect.xyz());
 
         if (distance_sq < target.radius * target.radius) {
           return N / sample.adjust;
@@ -452,11 +452,11 @@ float PhongBSDF::gathering_density(random_generator_t& generator,
     }
 
     if (intersect(result.omega, target, target_length)) {
-      SurfacePoint isect = intersector->intersectMesh(
+      auto isect = intersector->intersectFast(
           surface, surface.toWorld(result.omega), target_limit);
 
-      if (isect.is_present()) {
-        float distance_sq = distance2(world_target, isect.position());
+      if (isect.w != 0.0f) {
+        float distance_sq = distance2(world_target, isect.xyz());
 
         if (distance_sq < target.radius * target.radius) {
           return N / result.adjust;

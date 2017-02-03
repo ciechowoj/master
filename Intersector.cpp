@@ -10,17 +10,6 @@ SurfacePoint Intersector::intersect(const SurfacePoint& surface,
 }
 
 SurfacePoint Intersector::intersectMesh(const SurfacePoint& origin,
-                                        vec3 direction, float tfar) const {
-	SurfacePoint surface = intersect(origin, direction, tfar);
-
-  while (surface.is_light()) {
-    surface = intersect(surface, direction, tfar);
-  }
-
-  return surface;
-}
-
-SurfacePoint Intersector::intersectMesh(const SurfacePoint& origin,
                                         vec3 direction) const {
 	return intersectMesh(origin, direction, INFINITY);
 }

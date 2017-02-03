@@ -65,6 +65,11 @@ public:
 
     using Intersector::intersectMesh;
 
+    virtual vec4 intersectFast(
+        const SurfacePoint& surface,
+        vec3 direction,
+        float tfar) const override;
+
     const size_t numNormalRays() const;
     const size_t numShadowRays() const;
     const size_t numRays() const;

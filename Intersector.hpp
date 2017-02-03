@@ -19,8 +19,11 @@ class Intersector {
   SurfacePoint intersect(const SurfacePoint& surface, vec3 direction) const;
 
   virtual SurfacePoint intersectMesh(const SurfacePoint& origin, vec3 direction,
-                             float tfar) const;
+                                     float tfar) const = 0;
 
   SurfacePoint intersectMesh(const SurfacePoint& origin, vec3 direction) const;
+
+  virtual vec4 intersectFast(const SurfacePoint& origin, vec3 direction,
+                     float tfar) const = 0;
 };
 }
