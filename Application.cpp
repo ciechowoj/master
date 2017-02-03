@@ -248,11 +248,13 @@ void Application::_save(const ImageView& view, size_t numSamples,
 
   saveEXR(path, _technique->metadata(), vv4d_to_vv3f(view.width() * view.height(), view.data()));
 
-  if (snapshot) {
-    std::cout << "Snapshot saved to `" << path << "`." << std::endl;
-  } else {
-    std::cout << "Result saved to `" << path << "`." << std::endl;
-    std::cout << _technique->metadata() << std::endl;
+  if (!_options.quiet) {
+    if (snapshot) {
+      std::cout << "Snapshot saved to `" << path << "`." << std::endl;
+    } else {
+      std::cout << "Result saved to `" << path << "`." << std::endl;
+      std::cout << _technique->metadata() << std::endl;
+    }
   }
 }
 

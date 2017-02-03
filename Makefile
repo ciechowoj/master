@@ -127,15 +127,11 @@ build/imgui/sentinel:
 	touch build/imgui/sentinel
 
 run: all
-	./build/master/master.bin models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.1 \
+	./build/master/master.bin models/Bearings.blend --UPG --parallel --beta=2 --camera=1 --max-radius=0.1 \
 	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.212000.PT.snapshot.exr"
 
-profile:
-	valgrind \
-	--tool=callgrind \
-	./build/master/master.bin \
-	models/CornellBoxDiffuse.blend \
-	--UPG --max-radius=0.01 --parallel --batch
+profile: all
+	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet
 
 clean:
 	rm -rf build/master

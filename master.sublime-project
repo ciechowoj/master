@@ -30,6 +30,11 @@
 				{
 					"cmd": ["make", "-s", "benchmark"],
 					"name": "Benchmark.",
+				},
+
+				{
+					"cmd": ["make", "-s", "profile"],
+					"name": "Profile.",
 				}
 			],
 
