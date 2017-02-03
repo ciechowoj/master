@@ -1,6 +1,8 @@
 #pragma once
 #include <RayIsect.hpp>
+#include <Sample.hpp>
 #include <SurfacePoint.hpp>
+
 #include <atomic>
 #include <glm>
 
@@ -23,8 +25,9 @@ class Intersector {
 
   SurfacePoint intersectMesh(const SurfacePoint& origin, vec3 direction) const;
 
-  vec4 intersectFast(const SurfacePoint& origin, vec3 direction,
-                     float tfar) const;
+  bool intersectFast(const SurfacePoint& surface, const vec3& direction,
+                     const bounding_sphere_t& surface_target,
+                     const bounding_sphere_t& world_target) const;
 
  protected:
   mutable std::atomic<size_t> _numIntersectRays;

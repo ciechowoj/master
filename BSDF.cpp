@@ -1,6 +1,7 @@
 #include <BSDF.hpp>
 #include <Scene.hpp>
 #include <runtime_assert>
+#include <Sample.inl>
 
 namespace haste {
 
@@ -42,25 +43,17 @@ float BSDF::gathering_density(random_generator_t& generator,
   const float L = 16777216.0f;
   float N = 1.0f;
 
+  bounding_sphere_t surface_target;
+  surface_target.center = surface.toSurface(target.center - surface.position());
+  surface_target.radius = target.radius;
   omega = surface.toSurface(omega);
-  vec3 world_target = target.center;
-  target.center = surface.toSurface(target.center - surface.position());
-
-  float target_length = length(target.center);
-  float target_limit = target_length + target.radius;
 
   while (N < L) {
-    auto sample = sample_bounded(generator, surface, target, omega);
+    auto sample = sample_bounded(generator, surface, surface_target, omega);
 
-    auto isect = intersector->intersectFast(
-        surface, surface.toWorld(sample.omega), target_limit);
-
-    if (isect.w != 0.0f) {
-      float distance_sq = distance2(world_target, isect.xyz());
-
-      if (distance_sq < target.radius * target.radius) {
-        return N / sample.adjust;
-      }
+    if (intersector->intersectFast(surface, surface.toWorld(sample.omega),
+                                   surface_target, target)) {
+      return N / sample.adjust;
     }
 
     N += 1.0f;
@@ -118,37 +111,27 @@ BSDFQuery LightBSDF::query(const SurfacePoint& surface, vec3 incident,
 }
 
 float LightBSDF::gathering_density(random_generator_t& generator,
-                                     const Intersector* intersector,
-                                     const SurfacePoint& surface,
-                                     bounding_sphere_t target,
-                                     vec3 omega) const {
+                                   const Intersector* intersector,
+                                   const SurfacePoint& surface,
+                                   bounding_sphere_t target, vec3 omega) const {
   const float L = 16777216.0f;
   float N = 1.0f;
 
+  bounding_sphere_t surface_target;
+  surface_target.center = surface.toSurface(target.center - surface.position());
+  surface_target.radius = target.radius;
   omega = surface.toSurface(omega);
-  vec3 world_target = target.center;
-  target.center = surface.toSurface(target.center - surface.position());
-
-  float target_length = length(target.center);
-  float target_limit = target_length + target.radius;
 
   bounding_sphere_t local_sphere = {
       surface.toSurface(_sphere.center - surface.position()), _sphere.radius};
 
   while (N < L) {
-    auto sample = sample_lambert(generator, omega, local_sphere, target);
+    auto sample =
+        sample_lambert(generator, omega, local_sphere, surface_target);
 
-    if (intersect(sample.direction, target, target_length)) {
-      auto isect = intersector->intersectFast(
-          surface, surface.toWorld(sample.direction), target_limit);
-
-      if (isect.w != 0.0f) {
-        float distance_sq = distance2(world_target, isect.xyz());
-
-        if (distance_sq < target.radius * target.radius) {
-          return N / sample.adjust;
-        }
-      }
+    if (intersector->intersectFast(surface, surface.toWorld(sample.direction),
+                                   surface_target, target)) {
+      return N / sample.adjust;
     }
 
     N += 1.0f;
@@ -283,27 +266,17 @@ float DiffuseBSDF::gathering_density(random_generator_t& generator,
   const float L = 16777216.0f;
   float N = 1.0f;
 
+  bounding_sphere_t surface_target;
+  surface_target.center = surface.toSurface(target.center - surface.position());
+  surface_target.radius = target.radius;
   omega = surface.toSurface(omega);
-  vec3 world_target = target.center;
-  target.center = surface.toSurface(target.center - surface.position());
-
-  float target_length = length(target.center);
-  float target_limit = target_length + target.radius;
 
   while (N < L) {
-    auto sample = sample_lambert(generator, target, omega);
+    auto sample = sample_lambert(generator, surface_target, omega);
 
-    if (intersect(sample.direction, target, target_length)) {
-      auto isect = intersector->intersectFast(
-          surface, surface.toWorld(sample.direction), target_limit);
-
-      if (isect.w != 0.0f) {
-        float distance_sq = distance2(world_target, isect.xyz());
-
-        if (distance_sq < target.radius * target.radius) {
-          return N / sample.adjust;
-        }
-      }
+    if (intersector->intersectFast(surface, surface.toWorld(sample.direction),
+                                   surface_target, target)) {
+      return N / sample.adjust;
     }
 
     N += 1.0f;
@@ -421,14 +394,15 @@ float PhongBSDF::gathering_density(random_generator_t& generator,
   const float L = 16777216.0f;
   float N = 1.0f;
 
+  bounding_sphere_t surface_target;
+  surface_target.center = surface.toSurface(target.center - surface.position());
+  surface_target.radius = target.radius;
   omega = surface.toSurface(omega);
-  vec3 world_target = target.center;
-  target.center = surface.toSurface(target.center - surface.position());
 
-  float target_length = length(target.center);
-  float target_limit = target_length + target.radius;
-  float diffuse_adjust = lambert_adjust(target);
-  float specular_adjust = phong_adjust(omega, _power, target);
+  float diffuse_adjust = lambert_adjust(surface_target);
+  float specular_adjust = phong_adjust(omega, _power, surface_target);
+  float combined_adjust = diffuse_adjust * _diffuse_probability +
+                          specular_adjust * (1.0f - _diffuse_probability);
 
   float diffuse_probability = diffuse_adjust * _diffuse_probability /
                               (diffuse_adjust * _diffuse_probability +
@@ -438,30 +412,16 @@ float PhongBSDF::gathering_density(random_generator_t& generator,
     BSDFBoundedSample result;
 
     if (generator.sample() < diffuse_probability) {
-      auto sample = sample_lambert(generator, target, omega);
-
+      auto sample = sample_lambert(generator, surface_target, omega);
       result.omega = sample.direction;
-      result.adjust = sample.adjust * _diffuse_probability +
-                      specular_adjust * (1.0f - _diffuse_probability);
     } else {
-      auto sample = sample_phong(generator, omega, _power, target);
-
+      auto sample = sample_phong(generator, omega, _power, surface_target);
       result.omega = sample.direction;
-      result.adjust = sample.adjust * (1.0f - _diffuse_probability) +
-                      diffuse_adjust * _diffuse_probability;
     }
 
-    if (intersect(result.omega, target, target_length)) {
-      auto isect = intersector->intersectFast(
-          surface, surface.toWorld(result.omega), target_limit);
-
-      if (isect.w != 0.0f) {
-        float distance_sq = distance2(world_target, isect.xyz());
-
-        if (distance_sq < target.radius * target.radius) {
-          return N / result.adjust;
-        }
-      }
+    if (intersector->intersectFast(surface, surface.toWorld(result.omega),
+                                   surface_target, target)) {
+      return N / combined_adjust;
     }
 
     N += 1.0f;
