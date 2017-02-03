@@ -226,17 +226,39 @@ BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
   return sample;
 }
 
-BSDFBoundedSample DiffuseBSDF::sample_bounded(random_generator_t& generator,
-                                              const SurfacePoint& surface,
-                                              bounding_sphere_t target,
-                                              vec3 omega) const {
-  auto sample = sample_lambert(generator, target, omega);
+float DiffuseBSDF::gathering_density(random_generator_t& generator,
+                                     const Intersector* intersector,
+                                     const SurfacePoint& surface,
+                                     bounding_sphere_t target,
+                                     vec3 omega) const {
+  const float L = 16777216.0f;
+  float N = 1.0f;
 
-  BSDFBoundedSample result;
-  result.omega = sample.direction;
-  result.adjust = sample.adjust;
+  omega = surface.toSurface(omega);
+  vec3 world_target = target.center;
+  target.center = surface.toSurface(target.center - surface.position());
 
-  return result;
+  float target_length = length(target.center);
+  float target_limit = target_length + target.radius;
+
+  while (N < L) {
+    auto sample = sample_lambert(generator, target, omega);
+
+    SurfacePoint isect = intersector->intersectMesh(
+        surface, surface.toWorld(sample.direction), target_limit);
+
+    if (isect.is_present()) {
+      float distance_sq = distance2(world_target, isect.position());
+
+      if (distance_sq < target.radius * target.radius) {
+        return N / sample.adjust;
+      }
+    }
+
+    N += 1.0f;
+  }
+
+  return INFINITY;
 }
 
 BSDFQuery DiffuseBSDF::_query(vec3 gnormal, vec3 incident,
