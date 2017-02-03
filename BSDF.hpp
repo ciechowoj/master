@@ -61,12 +61,12 @@ class LightBSDF : public BSDF {
   BSDFQuery query(const SurfacePoint& surface, vec3 incident,
                   vec3 outgoing) const override;
 
-  BSDFBoundedSample sample_bounded(random_generator_t& generator,
-                                   const SurfacePoint& surface,
-                                   bounding_sphere_t target,
-                                   vec3 omega) const override;
-
   uint32_t light_id() const override;
+
+  float gathering_density(random_generator_t& generator,
+                          const Intersector* Intersector,
+                          const SurfacePoint& surface, bounding_sphere_t target,
+                          vec3 omega) const override;
 
  private:
   bounding_sphere_t _sphere;
@@ -116,6 +116,7 @@ class DiffuseBSDF : public BSDF {
                           const Intersector* Intersector,
                           const SurfacePoint& surface, bounding_sphere_t target,
                           vec3 omega) const override;
+
  private:
   BSDFQuery _query(vec3 gnormal, vec3 incident, vec3 outgoing) const;
 

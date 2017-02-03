@@ -4,6 +4,15 @@
 
 namespace haste {
 
+inline bool intersect(const vec3& ray, const bounding_sphere_t& sphere,
+                      float length) {
+  float t = dot(normalize(ray), sphere.center);
+  float r = sphere.radius;
+  float d_sq = length * length - t * t;
+
+  return length <= r || (t >= 0.0f && r * r >= d_sq);
+}
+
 BSDFQuery BSDFQuery::reverse() const {
   BSDFQuery result;
   result.throughput = throughput;
@@ -108,7 +117,47 @@ BSDFQuery LightBSDF::query(const SurfacePoint& surface, vec3 incident,
   return query;
 }
 
-BSDFBoundedSample LightBSDF::sample_bounded(random_generator_t& generator,
+float LightBSDF::gathering_density(random_generator_t& generator,
+                                     const Intersector* intersector,
+                                     const SurfacePoint& surface,
+                                     bounding_sphere_t target,
+                                     vec3 omega) const {
+  const float L = 16777216.0f;
+  float N = 1.0f;
+
+  omega = surface.toSurface(omega);
+  vec3 world_target = target.center;
+  target.center = surface.toSurface(target.center - surface.position());
+
+  float target_length = length(target.center);
+  float target_limit = target_length + target.radius;
+
+  bounding_sphere_t local_sphere = {
+      surface.toSurface(_sphere.center - surface.position()), _sphere.radius};
+
+  while (N < L) {
+    auto sample = sample_lambert(generator, omega, local_sphere, target);
+
+    if (intersect(sample.direction, target, target_length)) {
+      SurfacePoint isect = intersector->intersectMesh(
+          surface, surface.toWorld(sample.direction), target_limit);
+
+      if (isect.is_present()) {
+        float distance_sq = distance2(world_target, isect.position());
+
+        if (distance_sq < target.radius * target.radius) {
+          return N / sample.adjust;
+        }
+      }
+    }
+
+    N += 1.0f;
+  }
+
+  return INFINITY;
+}
+
+/*BSDFBoundedSample LightBSDF::sample_bounded(random_generator_t& generator,
                                             const SurfacePoint& surface,
                                             bounding_sphere_t target,
                                             vec3 omega) const {
@@ -122,7 +171,7 @@ BSDFBoundedSample LightBSDF::sample_bounded(random_generator_t& generator,
   result.adjust = sample.adjust;
 
   return result;
-}
+}*/
 
 uint32_t LightBSDF::light_id() const { return _light_id; }
 
@@ -224,15 +273,6 @@ BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
   sample.glossiness = query.glossiness;
 
   return sample;
-}
-
-inline bool intersect(const vec3& ray, const bounding_sphere_t& sphere,
-                      float length) {
-  float t = dot(normalize(ray), sphere.center);
-  float r = sphere.radius;
-  float d_sq = length * length - t * t;
-
-  return length <= r || (t >= 0.0f && r * r >= d_sq);
 }
 
 float DiffuseBSDF::gathering_density(random_generator_t& generator,
