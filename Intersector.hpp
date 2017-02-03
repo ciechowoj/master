@@ -24,6 +24,12 @@ class Intersector {
   SurfacePoint intersectMesh(const SurfacePoint& origin, vec3 direction) const;
 
   virtual vec4 intersectFast(const SurfacePoint& origin, vec3 direction,
-                     float tfar) const = 0;
+                             float tfar) const = 0;
+
+ protected:
+  mutable std::atomic<size_t> _numIntersectRays;
+  mutable std::atomic<size_t> _numOccludedRays;
+
+  mutable RTCScene rtcScene;
 };
 }
