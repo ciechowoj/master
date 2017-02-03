@@ -276,4 +276,5 @@ std::uint_fast32_t random_generator_t::operator()() {
 }
 
 void random_generator_t::seed(std::size_t seed) { engine.seed(seed); }
+
 }

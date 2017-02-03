@@ -226,6 +226,15 @@ BSDFSample DiffuseBSDF::sample(random_generator_t& generator,
   return sample;
 }
 
+inline bool intersect(const vec3& ray, const bounding_sphere_t& sphere,
+                      float length) {
+  float t = dot(normalize(ray), sphere.center);
+  float r = sphere.radius;
+  float d_sq = length * length - t * t;
+
+  return length <= r || (t >= 0.0f && r * r >= d_sq);
+}
+
 float DiffuseBSDF::gathering_density(random_generator_t& generator,
                                      const Intersector* intersector,
                                      const SurfacePoint& surface,
@@ -244,14 +253,16 @@ float DiffuseBSDF::gathering_density(random_generator_t& generator,
   while (N < L) {
     auto sample = sample_lambert(generator, target, omega);
 
-    SurfacePoint isect = intersector->intersectMesh(
-        surface, surface.toWorld(sample.direction), target_limit);
+    if (intersect(sample.direction, target, target_length)) {
+      SurfacePoint isect = intersector->intersectMesh(
+          surface, surface.toWorld(sample.direction), target_limit);
 
-    if (isect.is_present()) {
-      float distance_sq = distance2(world_target, isect.position());
+      if (isect.is_present()) {
+        float distance_sq = distance2(world_target, isect.position());
 
-      if (distance_sq < target.radius * target.radius) {
-        return N / sample.adjust;
+        if (distance_sq < target.radius * target.radius) {
+          return N / sample.adjust;
+        }
       }
     }
 
@@ -400,14 +411,16 @@ float PhongBSDF::gathering_density(random_generator_t& generator,
                       diffuse_adjust * _diffuse_probability;
     }
 
-    SurfacePoint isect = intersector->intersectMesh(
-        surface, surface.toWorld(result.omega), target_limit);
+    if (intersect(result.omega, target, target_length)) {
+      SurfacePoint isect = intersector->intersectMesh(
+          surface, surface.toWorld(result.omega), target_limit);
 
-    if (isect.is_present()) {
-      float distance_sq = distance2(world_target, isect.position());
+      if (isect.is_present()) {
+        float distance_sq = distance2(world_target, isect.position());
 
-      if (distance_sq < target.radius * target.radius) {
-        return N / result.adjust;
+        if (distance_sq < target.radius * target.radius) {
+          return N / result.adjust;
+        }
       }
     }
 
