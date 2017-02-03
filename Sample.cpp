@@ -152,9 +152,19 @@ direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
 
 direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
                                 float power, bounding_sphere_t sphere) {
-  mat3 refl_to_surf = reflection_to_surface(vec3(-omega.x, omega.y, -omega.z));
+  return sample_phong(generator, omega, power, sphere,
+                      reflection_to_surface(vec3(-omega.x, omega.y, -omega.z)));
+}
 
-  sphere.center = sphere.center * refl_to_surf;
+float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere) {
+  return phong_adjust(omega, power, sphere,
+                      reflection_to_surface(vec3(-omega.x, omega.y, -omega.z)));
+}
+
+direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
+                                float power, bounding_sphere_t sphere,
+                                const mat3& reflection) {
+  sphere.center = sphere.center * reflection;
 
   auto bound = angular_bound(sphere);
 
@@ -175,13 +185,12 @@ direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
   float x = r * cos(phi);
   float z = r * sin(phi);
 
-  return {refl_to_surf * vec3(x, y, z), adjust};
+  return {reflection * vec3(x, y, z), adjust};
 }
 
-float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere) {
-  mat3 refl_to_surf = reflection_to_surface(vec3(-omega.x, omega.y, -omega.z));
-
-  sphere.center = sphere.center * refl_to_surf;
+float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere,
+                   const mat3& reflection) {
+  sphere.center = sphere.center * reflection;
 
   auto bound = angular_bound(sphere);
 

@@ -34,20 +34,20 @@ float BSDF::gathering_density(random_generator_t& generator,
   float N = 1.0f;
 
   omega = surface.toSurface(omega);
+  vec3 world_target = target.center;
   target.center = surface.toSurface(target.center - surface.position());
 
   float target_length = length(target.center);
+  float target_limit = target_length + target.radius;
 
   while (N < L) {
     auto sample = sample_bounded(generator, surface, target, omega);
 
     SurfacePoint isect = intersector->intersectMesh(
-        surface, surface.toWorld(sample.omega), target_length + target.radius);
+        surface, surface.toWorld(sample.omega), target_limit);
 
     if (isect.is_present()) {
-      vec3 tentative = surface.toSurface(isect.position() - surface.position());
-
-      float distance_sq = distance2(target.center, tentative);
+      float distance_sq = distance2(world_target, isect.position());
 
       if (distance_sq < target.radius * target.radius) {
         return N / sample.adjust;
@@ -341,12 +341,19 @@ BSDFQuery PhongBSDF::_query(vec3 incident, vec3 outgoing,
   return query;
 }
 
-BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
-                                            const SurfacePoint& surface,
-                                            bounding_sphere_t target,
-                                            vec3 omega) const {
-  BSDFBoundedSample result;
+float PhongBSDF::gathering_density(random_generator_t& generator,
+                                   const Intersector* intersector,
+                                   const SurfacePoint& surface,
+                                   bounding_sphere_t target, vec3 omega) const {
+  const float L = 16777216.0f;
+  float N = 1.0f;
 
+  omega = surface.toSurface(omega);
+  vec3 world_target = target.center;
+  target.center = surface.toSurface(target.center - surface.position());
+
+  float target_length = length(target.center);
+  float target_limit = target_length + target.radius;
   float diffuse_adjust = lambert_adjust(target);
   float specular_adjust = phong_adjust(omega, _power, target);
 
@@ -354,21 +361,38 @@ BSDFBoundedSample PhongBSDF::sample_bounded(random_generator_t& generator,
                               (diffuse_adjust * _diffuse_probability +
                                specular_adjust * (1.0f - _diffuse_probability));
 
-  if (generator.sample() < diffuse_probability) {
-    auto sample = sample_lambert(generator, target, omega);
+  while (N < L) {
+    BSDFBoundedSample result;
 
-    result.omega = sample.direction;
-    result.adjust = sample.adjust * _diffuse_probability +
-                    specular_adjust * (1.0f - _diffuse_probability);
-  } else {
-    auto sample = sample_phong(generator, omega, _power, target);
+    if (generator.sample() < diffuse_probability) {
+      auto sample = sample_lambert(generator, target, omega);
 
-    result.omega = sample.direction;
-    result.adjust = sample.adjust * (1.0f - _diffuse_probability) +
-                    diffuse_adjust * _diffuse_probability;
+      result.omega = sample.direction;
+      result.adjust = sample.adjust * _diffuse_probability +
+                      specular_adjust * (1.0f - _diffuse_probability);
+    } else {
+      auto sample = sample_phong(generator, omega, _power, target);
+
+      result.omega = sample.direction;
+      result.adjust = sample.adjust * (1.0f - _diffuse_probability) +
+                      diffuse_adjust * _diffuse_probability;
+    }
+
+    SurfacePoint isect = intersector->intersectMesh(
+        surface, surface.toWorld(result.omega), target_limit);
+
+    if (isect.is_present()) {
+      float distance_sq = distance2(world_target, isect.position());
+
+      if (distance_sq < target.radius * target.radius) {
+        return N / result.adjust;
+      }
+    }
+
+    N += 1.0f;
   }
 
-  return result;
+  return INFINITY;
 }
 
 DeltaBSDF::DeltaBSDF() {}

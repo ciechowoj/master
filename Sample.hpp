@@ -89,6 +89,13 @@ direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
 
 float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere);
 
+direction_sample_t sample_phong(random_generator_t& generator, vec3 omega,
+                                float power, bounding_sphere_t sphere,
+                                const mat3& reflection);
+
+float phong_adjust(vec3 omega, float power, bounding_sphere_t sphere,
+                   const mat3& reflection);
+
 direction_sample_t sample_hemisphere(random_generator_t& generator,
                                      bounding_sphere_t sphere);
 }
