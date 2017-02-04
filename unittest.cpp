@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <glm>
 #include <new>
-#include <unittest.hpp>
+#include <unittest>
 
 namespace haste {
 namespace detail {
@@ -163,7 +163,7 @@ unsigned ulp_dist(float a, float b) {
   ca.f = a;
   cb.f = b;
 
-  if (ca.i < 0 != cb.i < 0) {
+  if ((ca.i < 0) != (cb.i < 0)) {
     return unsigned(abs(ca.i & ~(1 << 31))) + unsigned(abs(cb.i & ~(1 << 31)));
   } else {
     return abs(ca.i - cb.i);
@@ -187,7 +187,7 @@ void print_vector(float* v, int s) {
   } else {
     std::printf("[%f", v[0]);
 
-    for (size_t i = 1; i < s; ++i) {
+    for (int i = 1; i < s; ++i) {
       std::printf(", %f", v[i]);
     }
 

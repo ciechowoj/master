@@ -3,8 +3,6 @@
 
 namespace haste {
 
-error
-
 using location_t = source_location_t;
 
 namespace detail {
