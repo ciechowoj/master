@@ -19,5 +19,12 @@ build/imgui/libimgui.a: $(imgui.submodule) $(IMGUI_OBJECTS)
 build/imgui/%.o: submodules/imgui/%.cpp build/imgui/GL/gl3w.h
 	$(CC) -c $(CCFLAGS) $< -o $@ -Ibuild/glad/loader/include
 
-build/imgui/GL/gl3w.h: build/imgui/sentinel
+build/imgui/GL/gl3w.h: | build/imgui
 	echo "#include <glad/glad.h>\n" >> build/imgui/GL/gl3w.h
+
+build/imgui:
+	mkdir -p build
+	mkdir -p build/imgui
+	mkdir -p build/imgui/GL
+	mkdir -p build/imgui/examples
+	mkdir -p build/imgui/examples/opengl3_example
