@@ -169,8 +169,8 @@ BSDFSample sun_light_bsdf::sample(random_generator_t& generator,
   result.omega = omega;
   result.density = 1.0f;
   result.densityRev = 0.0f;
-  result.specular = 1.0f;
-  result.glossiness = INFINITY;
+  result.specular = 1;
+  result.glossiness = USHRT_MAX;
 
   return result;
 }
@@ -182,7 +182,7 @@ BSDFQuery sun_light_bsdf::query(const SurfacePoint& surface, vec3 incident,
   query.density = 0.0f;
   query.densityRev = 0.0f;
   query.specular = 1.0f;
-  query.glossiness = INFINITY;
+  query.glossiness = USHRT_MAX;
 
   return query;
 }
@@ -199,7 +199,7 @@ BSDFSample CameraBSDF::sample(random_generator_t& generator,
   sample.density = 1.0f;
   sample.densityRev = 0.0f;
   sample.specular = 0.0f;
-  sample.glossiness = FLT_MAX;
+  sample.glossiness = USHRT_MAX - 1;
 
   return sample;
 }
@@ -213,7 +213,7 @@ BSDFQuery CameraBSDF::query(const SurfacePoint& surface, vec3 incident,
                      pow(abs(local_incident.y), 1.0f);
   query.density = 0.0f;
   query.densityRev = 1.0f;
-  query.glossiness = FLT_MAX;
+  query.glossiness = USHRT_MAX - 1;
 
   return query;
 }
@@ -439,7 +439,7 @@ BSDFQuery DeltaBSDF::query(const SurfacePoint& surface, vec3 incident,
   query.density = 0.0f;
   query.densityRev = 0.0f;
   query.specular = 1.0f;
-  query.glossiness = INFINITY;
+  query.glossiness = USHRT_MAX;
 
   return query;
 }
@@ -456,7 +456,7 @@ BSDFSample ReflectionBSDF::sample(random_generator_t& generator,
   sample.density = 1.0f;
   sample.densityRev = 1.0f;
   sample.specular = 1.0f;
-  sample.glossiness = INFINITY;
+  sample.glossiness = USHRT_MAX;
 
   return sample;
 }
@@ -495,7 +495,7 @@ BSDFSample TransmissionBSDF::sample(random_generator_t& generator,
   result.density = 1.0f;
   result.densityRev = 1.0f;
   result.specular = 1.0f;
-  result.glossiness = INFINITY;
+  result.glossiness = USHRT_MAX;
 
   return result;
 }

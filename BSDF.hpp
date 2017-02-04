@@ -10,8 +10,8 @@ struct BSDFQuery {
   vec3 throughput = vec3(0.0f);
   float density = 0.0f;
   float densityRev = 0.0f;
-  float specular = 0.0f;
-  float glossiness = 0.0f;
+  uint16_t specular = 0;
+  uint16_t glossiness = 0;
 
   BSDFQuery reverse() const;
 };

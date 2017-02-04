@@ -1,6 +1,7 @@
 #include <UPG.hpp>
 #include <Edge.hpp>
 #include <condition_variable>
+#include <streamops.hpp>
 
 namespace haste {
 
@@ -36,6 +37,11 @@ UPGBase<Beta>::UPGBase(
     _metadata.radius = _radius;
     _metadata.alpha = _alpha;
     _metadata.beta = beta;
+
+
+    // std::cout << "sizeof(LightVertex): " << sizeof(LightVertex) << std::endl;
+    // std::cout << "sizeof(EyeVertex):   " << sizeof(EyeVertex) << std::endl;
+
 }
 
 template <class Beta>
@@ -74,8 +80,8 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     prv->C = 0;
     prv->D = 0;
     prv->length = 0;
-    prv->pGlossiness = INFINITY;
-    prv->ppGlossiness = INFINITY;
+    prv->pGlossiness = USHRT_MAX;
+    prv->ppGlossiness = USHRT_MAX;
 
     BSDFSample bsdf = _scene->sampleBSDF(*context.generator, prv->surface, prv->omega);
     BSDFSample new_bsdf;

@@ -31,12 +31,12 @@ private:
         SurfacePoint surface;
         vec3 omega;
         vec3 throughput;
-        float specular;
         float a, A, B;
         float bGeometry;
-        float pGlossiness;
-        float ppGlossiness;
-        float length;
+        uint16_t pGlossiness;
+        uint16_t ppGlossiness;
+        uint16_t length : 15;
+        uint16_t specular : 1;
 
         const vec3& position() const {
             return surface.position();
@@ -51,12 +51,12 @@ private:
         SurfacePoint surface;
         vec3 omega;
         vec3 throughput;
-        float specular;
-        float c, C, D;
         float bGeometry;
-        float pGlossiness;
-        float ppGlossiness;
-        float length;
+        float c, C, D;
+        uint16_t pGlossiness;
+        uint16_t ppGlossiness;
+        uint16_t length : 15;
+        uint16_t specular : 1;
     };
 
     static const size_t _maxSubpath = 1024;

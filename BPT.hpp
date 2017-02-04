@@ -17,16 +17,16 @@ private:
         SurfacePoint surface;
         vec3 omega;
         vec3 throughput;
-        float specular;
         float a, A;
+        uint16_t specular;
     };
 
     struct EyeVertex {
         SurfacePoint surface;
         vec3 omega;
         vec3 throughput;
-        float specular;
         float c, C;
+        uint16_t specular;
     };
 
     static const size_t _maxSubpath = 1024;
