@@ -32,7 +32,7 @@ private:
         vec3 omega;
         vec3 throughput;
         float specular;
-        float a, A, b, B;
+        float a, A, B;
         float bGeometry;
         float pGlossiness;
         float ppGlossiness;
@@ -52,7 +52,7 @@ private:
         vec3 omega;
         vec3 throughput;
         float specular;
-        float c, C, d, D;
+        float c, C, D;
         float bGeometry;
         float pGlossiness;
         float ppGlossiness;
