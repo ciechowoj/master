@@ -50,7 +50,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             radiance += _connect_eye(context, eye[prv], light_path);
         }
         else {
-            radiance += _connect(eye[prv], light_path);
+            radiance += _connect(context, eye[prv], light_path);
         }
 
         auto bsdf = _scene->sampleBSDF(*context.generator, eye[prv].surface, eye[prv].omega);
@@ -107,6 +107,21 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     }
 
     return radiance;
+}
+
+template <class Beta>
+typename BPTBase<Beta>::LightVertex BPTBase<Beta>::_sample_light(random_generator_t& generator) {
+    LightSample light = _scene->sampleLight(generator);
+
+    LightVertex vertex;
+    vertex.surface = light.surface;
+    vertex.omega = vertex.surface.normal();
+    vertex.throughput = light.radiance() / light.areaDensity() / _roulette;
+    vertex.a = 1.0f / Beta::beta(light.areaDensity());
+    vertex.A = 0.0f;
+    vertex.specular = 0.0f;
+
+    return vertex;
 }
 
 template <class Beta>
@@ -189,8 +204,8 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
 }
 
 template <class Beta> vec3 BPTBase<Beta>::_connect(
-    const EyeVertex& eye,
-    const LightVertex& light) {
+    const LightVertex& light,
+    const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
@@ -239,11 +254,15 @@ template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
 }
 
 template <class Beta>
-vec3 BPTBase<Beta>::_connect(const EyeVertex& eye, const light_path_t& path) {
+vec3 BPTBase<Beta>::_connect(render_context_t& context, const EyeVertex& eye, const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    for (size_t i = 0; i < path.size(); ++i) {
-        radiance += _connect(eye, path[i]);
+    if (!_russian_roulette(*context.generator)) {
+        radiance += _connect(_sample_light(*context.generator), eye);
+    }
+
+    for (size_t i = 1; i < path.size(); ++i) {
+        radiance += _connect(path[i], eye);
     }
 
     return radiance;
@@ -272,7 +291,7 @@ vec3 BPTBase<Beta>::_connect_eye(
                 vec3 camera = eye.surface.toSurface(omega);
                 float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
 
-                return _connect(eye, path[i]) * context.focal_factor_y * correct_normal * correct_cos_inv;
+                return _connect(path[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
             });
     }
 
