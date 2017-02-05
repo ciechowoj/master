@@ -616,6 +616,7 @@ Options parseArgs(int argc, char const* const* argv) {
                 return options;
             }
             else {
+                options.enable_seed = true;
                 options.seed = atoi(dict["--seed"].c_str());
                 dict.erase("--seed");
             }

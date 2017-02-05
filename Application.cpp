@@ -35,7 +35,7 @@ Application::~Application() { rtcDeleteDevice(_device); }
 void Application::render(size_t width, size_t height, glm::dvec4* data) {
   auto view = ImageView(data, width, height);
 
-  if (_options.seed != 0) {
+  if (_options.enable_seed) {
     _generator.seed(_options.seed + _num_samples());
   }
 

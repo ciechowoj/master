@@ -35,6 +35,7 @@ struct Options {
     double numSeconds = 0.0;
     size_t numThreads = 1;
     bool reload = true;
+    bool enable_seed = false;
     size_t seed = 0;
     size_t snapshot = 0;
     size_t cameraId = 0;

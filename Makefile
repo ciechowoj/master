@@ -116,7 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin models/CornellBoxDiffuse.blend --BPT --beta=2 --parallel \
+	./build/master/master.bin models/CornellBoxDiffuse.blend --BPT --beta=2 --seed=0 \
 	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.212000.PT.snapshot.exr"
 
 profile: all
