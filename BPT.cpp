@@ -132,15 +132,8 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
         return;
     }
 
-    LightSample light = _scene->sampleLight(generator);
-
     path.emplace_back();
-    path[prv].surface = light.surface;
-    path[prv].omega = path[prv].surface.normal();
-    path[prv].throughput = light.radiance() / light.areaDensity() / _roulette;
-    path[prv].specular = 0.0f;
-    path[prv].a = 1.0f / Beta::beta(light.areaDensity());
-    path[prv].A = 0.0f;
+    path[prv] = _sample_light(generator);
 
     while (!_russian_roulette(generator)) {
         auto bsdf = _scene->sampleBSDF(generator, path[prv].surface, path[prv].omega);
