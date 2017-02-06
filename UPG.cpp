@@ -37,11 +37,6 @@ UPGBase<Beta>::UPGBase(
     _metadata.radius = _radius;
     _metadata.alpha = _alpha;
     _metadata.beta = beta;
-
-
-    // std::cout << "sizeof(LightVertex): " << sizeof(LightVertex) << std::endl;
-    // std::cout << "sizeof(EyeVertex):   " << sizeof(EyeVertex) << std::endl;
-
 }
 
 template <class Beta>
