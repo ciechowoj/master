@@ -117,7 +117,7 @@ build/master/%.d: ;
 
 run: all
 	./build/master/master.bin models/Bearings.blend --BPT --parallel --beta=2 \
-	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.212000.PT.snapshot.exr"
+	--reference="/home/wojciech/cornell boxes 05 feb/reference/ref.exr"
 
 profile: all
 	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet
