@@ -138,8 +138,6 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
     path.emplace_back();
     path[prv] = _sample_to_vertex(sample);
 
-    bool skip_geometry = sample.kind == light_kind::directional;
-
     while (!_russian_roulette(generator)) {
         auto bsdf = _scene->sampleBSDF(generator, path[prv].surface, path[prv].omega);
 
@@ -172,7 +170,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
         path[prv].specular = max(path[prv].specular, bsdf.specular);
         path[itr].specular = bsdf.specular;
 
-        path[itr].a = 1.0f / Beta::beta((skip_geometry ? 1.0f : edge.fGeometry) * bsdf.density);
+        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
         path[itr].A
             = (path[prv].A
@@ -180,8 +178,6 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
                 + path[prv].a * (1.0f - path[prv].specular))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
-
-        skip_geometry = false;
 
         if (bsdf.specular == 1.0f) {
             path[prv] = path[itr];
@@ -214,7 +210,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     auto edge = Edge(light, eye, omega);
 
     float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev) + 1 * (1.0f - light.specular))
+        = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
@@ -263,7 +259,6 @@ vec3 BPTBase<Beta>::_connect(render_context_t& context, const EyeVertex& eye, co
 
         if (sample.kind == light_kind::area) {
             radiance += _connect(_sample_to_vertex(sample), eye);
-            runtime_assert(false);
         }
         else if (!eye.surface.is_camera()) {
             auto isect = _scene->intersect(eye.surface, -sample.normal());
@@ -273,7 +268,8 @@ vec3 BPTBase<Beta>::_connect(render_context_t& context, const EyeVertex& eye, co
 
                 float Cp
                     = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
-                    / 1.0f;
+                    * Beta::beta(abs(dot(sample.normal(), eye.surface.normal()))
+                        / distance2(isect.position(), eye.surface.position()));
 
                 float weightInv = Cp + 1.0f;
 
