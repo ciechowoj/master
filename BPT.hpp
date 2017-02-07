@@ -35,6 +35,7 @@ private:
     const float _lights;
 
     vec3 _traceEye(render_context_t& context, Ray ray) override;
+    LightVertex _sample_to_vertex(const LightSample& sample);
     LightVertex _sample_light(random_generator_t& generator);
     void _traceLight(random_generator_t& generator, light_path_t& path);
     vec3 _connect(const LightVertex& light, const EyeVertex& eye);

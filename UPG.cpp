@@ -204,9 +204,9 @@ typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_light(random_generato
     LightVertex vertex;
     vertex.surface = light.surface;
     vertex.omega = vertex.surface.normal();
-    vertex.throughput = light.radiance() / light.areaDensity() / _roulette;
+    vertex.throughput = light.radiance() / light.combined_density() / _roulette;
     vertex.specular = 0.0f;
-    vertex.a = 1.0f / Beta::beta(light.areaDensity());
+    vertex.a = 1.0f / Beta::beta(light.combined_density());
     vertex.A = 0.0f;
     vertex.B = 0.0f;
     vertex.length = 0.0f;

@@ -116,7 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin ~/oldsport.blend --UPG --beta=2 --seed=319 --max-radius=0.03 \
+	./build/master/master.bin models/TestCase10.blend --BPT --beta=2 --parallel \
 	--reference="/home/wojciech/cornell boxes references/CornellBoxDiffuse.512.512.212000.PT.snapshot.exr"
 
 profile: all

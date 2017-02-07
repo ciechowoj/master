@@ -132,7 +132,9 @@ LightSample AreaLights::sample(
     result.surface.material_id = light.material_id;
 
     result._radiance = light.radiance();
-    result._areaDensity = _weights[light_id] / light.area();
+    result.area_density = 1.0f / light.area();
+    result.light_density = _weights[light_id];
+    result.kind = light.diffuse ? light_kind::area : light_kind::directional;
 
     return result;
 }
@@ -146,7 +148,7 @@ LSDFQuery AreaLights::queryLSDF(
     float cosTheta = dot(omega, light.normal());
 
     LSDFQuery result;
-    result.radiance = light.radiance() * (cosTheta > 0.0f ? 1.0f : 0.0f) * light.diffuse;
+    result.radiance = light.radiance() * (cosTheta > 0.0f ? 1.0f : 0.0f);
     result.density = _weights[light_id] / light.area();
 
     return result;

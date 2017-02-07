@@ -22,7 +22,6 @@ string BPTBase<Beta>::id() const {
     return string("BPT_b") + std::to_string(_metadata.beta);
 }
 
-
 template <class Beta>
 vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     light_path_t light_path;
@@ -110,18 +109,21 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 }
 
 template <class Beta>
-typename BPTBase<Beta>::LightVertex BPTBase<Beta>::_sample_light(random_generator_t& generator) {
-    LightSample light = _scene->sampleLight(generator);
-
+typename BPTBase<Beta>::LightVertex BPTBase<Beta>::_sample_to_vertex(const LightSample& sample) {
     LightVertex vertex;
-    vertex.surface = light.surface;
+    vertex.surface = sample.surface;
     vertex.omega = vertex.surface.normal();
-    vertex.throughput = light.radiance() / light.areaDensity() / _roulette;
-    vertex.a = 1.0f / Beta::beta(light.areaDensity());
+    vertex.throughput = sample.radiance() / sample.combined_density() / _roulette;
+    vertex.a = sample.kind == light_kind::directional ? 0.0f : 1.0f / Beta::beta(sample.combined_density());
     vertex.A = 0.0f;
     vertex.specular = 0.0f;
 
     return vertex;
+}
+
+template <class Beta>
+typename BPTBase<Beta>::LightVertex BPTBase<Beta>::_sample_light(random_generator_t& generator) {
+    return _sample_to_vertex(_scene->sampleLight(generator));
 }
 
 template <class Beta>
@@ -132,8 +134,11 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
         return;
     }
 
+    LightSample sample = _scene->sampleLight(generator);
     path.emplace_back();
-    path[prv] = _sample_light(generator);
+    path[prv] = _sample_to_vertex(sample);
+
+    bool skip_geometry = sample.kind == light_kind::directional;
 
     while (!_russian_roulette(generator)) {
         auto bsdf = _scene->sampleBSDF(generator, path[prv].surface, path[prv].omega);
@@ -167,7 +172,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
         path[prv].specular = max(path[prv].specular, bsdf.specular);
         path[itr].specular = bsdf.specular;
 
-        path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
+        path[itr].a = 1.0f / Beta::beta((skip_geometry ? 1.0f : edge.fGeometry) * bsdf.density);
 
         path[itr].A
             = (path[prv].A
@@ -175,6 +180,8 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
                 + path[prv].a * (1.0f - path[prv].specular))
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
+
+        skip_geometry = false;
 
         if (bsdf.specular == 1.0f) {
             path[prv] = path[itr];
@@ -207,7 +214,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     auto edge = Edge(light, eye, omega);
 
     float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
+        = (light.A * Beta::beta(lightBSDF.densityRev) + 1 * (1.0f - light.specular))
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
@@ -228,12 +235,13 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
 }
 
 template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
-    if (!eye.surface.is_light()) {
+    auto bsdf = _scene->queryBSDF(eye.surface, vec3(0.0f), eye.omega);
+
+    if (l1Norm(bsdf.throughput) < FLT_MIN) {
         return vec3(0.0f);
     }
 
     auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
-    auto bsdf = _scene->queryBSDF(eye.surface, vec3(0.0f), eye.omega);
 
     float Cp
         = (eye.C * Beta::beta(bsdf.density) + eye.c * (1.0f - eye.specular))
@@ -251,7 +259,32 @@ vec3 BPTBase<Beta>::_connect(render_context_t& context, const EyeVertex& eye, co
     vec3 radiance = vec3(0.0f);
 
     if (!_russian_roulette(*context.generator)) {
-        radiance += _connect(_sample_light(*context.generator), eye);
+        LightSample sample = _scene->sampleLight(*context.generator);
+
+        if (sample.kind == light_kind::area) {
+            radiance += _connect(_sample_to_vertex(sample), eye);
+            runtime_assert(false);
+        }
+        else if (!eye.surface.is_camera()) {
+            auto isect = _scene->intersect(eye.surface, -sample.normal());
+
+            if (isect.material_id == sample.surface.material_id) {
+                auto eyeBSDF = _scene->queryBSDF(eye.surface, -sample.normal(), eye.omega);
+
+                float Cp
+                    = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+                    / 1.0f;
+
+                float weightInv = Cp + 1.0f;
+
+                vec3 result = sample.radiance() / sample.light_density / _roulette
+                    * eye.throughput
+                    * eyeBSDF.throughput
+                    * abs(dot(sample.normal(), eye.surface.normal()));
+
+                return l1Norm(result) < FLT_EPSILON ? vec3(0.0f) : result / weightInv;
+            }
+        }
     }
 
     for (size_t i = 1; i < path.size(); ++i) {

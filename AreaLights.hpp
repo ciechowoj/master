@@ -16,16 +16,23 @@ struct Mesh {
   vector<mat3> tangents;
 };
 
+enum light_kind {
+  area = 0,
+  directional = 1,
+};
+
 struct LightSample {
   SurfacePoint surface;
   vec3 _radiance;
-  float _areaDensity;
+  float area_density;
+  float light_density;
+  light_kind kind;
 
   const vec3& position() const { return surface.position(); }
   const vec3& normal() const { return surface.normal(); }
   const vec3& gnormal() const { return surface.gnormal; }
   const vec3& radiance() const { return _radiance; }
-  const float areaDensity() const { return _areaDensity; };
+  float combined_density() const { return area_density * light_density; }
 };
 
 struct LSDFQuery {

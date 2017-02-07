@@ -169,7 +169,7 @@ BSDFSample sun_light_bsdf::sample(random_generator_t& generator,
   result.omega = omega;
   result.density = 1.0f;
   result.densityRev = 0.0f;
-  result.specular = 1;
+  result.specular = 0;
   result.glossiness = USHRT_MAX;
 
   return result;
@@ -181,7 +181,7 @@ BSDFQuery sun_light_bsdf::query(const SurfacePoint& surface, vec3 incident,
   query.throughput = vec3(0.0f);
   query.density = 0.0f;
   query.densityRev = 0.0f;
-  query.specular = 1.0f;
+  query.specular = 0.0f;
   query.glossiness = USHRT_MAX;
 
   return query;

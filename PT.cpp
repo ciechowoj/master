@@ -114,11 +114,11 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
   auto edge = Edge(light, eye, omega);
 
   float weightInv = pow(eyeBSDF.densityRev * edge.bGeometry, _beta) /
-                        pow(light.areaDensity(), _beta) +
+                        pow(light.combined_density(), _beta) +
                     1.0f;
 
   return _scene->occluded(eye.surface, light.surface) * light.radiance() /
-         light.areaDensity() * eye.throughput * eyeBSDF.throughput *
+         light.combined_density() * eye.throughput * eyeBSDF.throughput *
          edge.bCosTheta * edge.fGeometry / weightInv;
 }
 
