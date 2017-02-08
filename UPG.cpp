@@ -204,7 +204,7 @@ typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_to_vertex(const Light
     vertex.omega = vertex.surface.normal();
     vertex.throughput = sample.radiance() / sample.combined_density() / _roulette;
     vertex.specular = 0.0f;
-    vertex.a = 1.0f / Beta::beta(sample.combined_density());
+    vertex.a = sample.kind == light_kind::directional ? 0.0f : 1.0f / Beta::beta(sample.combined_density());
     vertex.A = 0.0f;
     vertex.B = 0.0f;
     vertex.length = 0.0f;

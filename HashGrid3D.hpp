@@ -17,11 +17,12 @@ namespace std
 
         result_type operator()(const argument_type& key) const
         {
-            size_t x = std::hash<float>()(key.x);
-            size_t y = std::hash<float>()(key.y);
-            size_t z = std::hash<float>()(key.z);
+            // size_t x = std::hash<float>()(key.x);
+            // size_t y = std::hash<float>()(key.y);
+            // size_t z = std::hash<float>()(key.z);
+            // return x ^ (y << 1) ^ (z << 2);
 
-            return x ^ (y << 1) ^ (z << 2);
+            return std::_Hash_impl::hash(key);
         }
     };
 }
