@@ -65,6 +65,7 @@ private:
     vec3 _traceEye(render_context_t& context, Ray ray) override;
     void _preprocess(random_generator_t& generator, double num_samples) override;
 
+    LightVertex _sample_to_vertex(const LightSample& sample);
     LightVertex _sample_light(random_generator_t& generator);
 
     void _traceLight(random_generator_t& generator, vector<LightVertex>& path, size_t& size);
@@ -101,6 +102,7 @@ private:
         const EyeVertex& eye, const BSDFQuery& eye_bsdf, const Edge& edge);
 
     vec3 _connect_light(const EyeVertex& eye);
+    vec3 _connect_directional(const EyeVertex& eye, const LightSample& sample);
 
     template <bool SkipDirectVM>
     vec3 _connect(const LightVertex& light, const EyeVertex& eye);

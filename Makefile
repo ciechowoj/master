@@ -116,7 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin models/Bearings.blend --BPT --parallel --beta=2 \
+	./build/master/master.bin models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.1 \
 	--reference="/home/wojciech/cornell boxes 05 feb/reference/ref.exr"
 
 profile: all

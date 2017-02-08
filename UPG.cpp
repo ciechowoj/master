@@ -198,15 +198,13 @@ void UPGBase<Beta>::_preprocess(random_generator_t& generator, double num_sample
 }
 
 template <class Beta>
-typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_light(random_generator_t& generator) {
-    LightSample light = _scene->sampleLight(generator);
-
+typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_to_vertex(const LightSample& sample) {
     LightVertex vertex;
-    vertex.surface = light.surface;
+    vertex.surface = sample.surface;
     vertex.omega = vertex.surface.normal();
-    vertex.throughput = light.radiance() / light.combined_density() / _roulette;
+    vertex.throughput = sample.radiance() / sample.combined_density() / _roulette;
     vertex.specular = 0.0f;
-    vertex.a = 1.0f / Beta::beta(light.combined_density());
+    vertex.a = 1.0f / Beta::beta(sample.combined_density());
     vertex.A = 0.0f;
     vertex.B = 0.0f;
     vertex.length = 0.0f;
@@ -214,6 +212,11 @@ typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_light(random_generato
     vertex.ppGlossiness = 0.0f;
 
     return vertex;
+}
+
+template <class Beta>
+typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_light(random_generator_t& generator) {
+    return _sample_to_vertex(_scene->sampleLight(generator));
 }
 
 template <class Beta>
@@ -455,8 +458,13 @@ vec3 UPGBase<Beta>::_connect(
 
 template <class Beta>
 vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
-    auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
     auto bsdf = _scene->queryBSDF(eye.surface, vec3(0.0f), eye.omega);
+
+    if (l1Norm(bsdf.throughput) < FLT_MIN) {
+        return vec3(0.0f);
+    }
+
+    auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
 
     float Cp
         = (eye.C * Beta::beta(bsdf.density) + eye.c * (1.0f - eye.specular))
@@ -477,6 +485,52 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
         / weightInv;
 }
 
+template <class Beta>
+vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample& sample) {
+    auto isect = _scene->intersect(eye.surface, -sample.normal());
+
+    if (isect.material_id == sample.surface.material_id) {
+        auto eyeBSDF = _scene->queryBSDF(eye.surface, -sample.normal(), eye.omega);
+
+        float eye_vertex_merging = 0.0f;
+
+        if (eye.length >= 2.0f && _merge_from_light && _merge_from_eye) {
+            if (eyeBSDF.glossiness <= eye.ppGlossiness) {
+                eye_vertex_merging += _clamp(Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) // light
+                    * (eye.length <= 1.0f ? 0.0f : 1.0f);
+            }
+
+            if (eye.pGlossiness < USHRT_MAX) {
+                eye_vertex_merging += _clamp(Beta::beta(_circle) / eye.c); // eye
+            }
+        }
+
+        float coeff = Beta::beta(abs(dot(sample.normal(), eye.surface.normal()))
+                / distance2(isect.position(), eye.surface.position()));
+
+        float Dp
+            = (eye.D * Beta::beta(eyeBSDF.density) + (1.0f - eyeBSDF.specular)
+            * eye_vertex_merging
+            * eye.c * (eye.length <= _trim_eye ? 0.0f : 1.0f))
+            * coeff;
+
+        float Cp
+            = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+            * coeff;
+
+        float weightInv = Cp + Beta::beta(_num_scattered) * Dp + 1.0f;
+
+        vec3 result = sample.radiance() / sample.light_density / _roulette
+            * eye.throughput
+            * eyeBSDF.throughput
+            * abs(dot(sample.normal(), eye.surface.normal()));
+
+        return l1Norm(result) < FLT_EPSILON ? vec3(0.0f) : result / weightInv;
+    }
+    else {
+        return vec3(0.0f);
+    }
+}
 
 template <class Beta> template <bool SkipDirectVM>
 vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye) {
@@ -522,7 +576,14 @@ vec3 UPGBase<Beta>::_connect(
     }
     else {
         if (!_russian_roulette(*context.generator)) {
-            radiance += _connect<true>(_sample_light(*context.generator), eye);
+            LightSample sample = _scene->sampleLight(*context.generator);
+
+            if (sample.kind == light_kind::area) {
+                radiance += _connect<true>(_sample_to_vertex(sample), eye);
+            }
+            else if (!eye.surface.is_camera()) {
+                radiance += _connect_directional(eye, sample);
+            }
         }
 
         for (size_t i = _light_offsets[path] + 1, s = _light_offsets[path + 1]; i < s; ++i) {

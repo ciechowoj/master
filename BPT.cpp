@@ -251,6 +251,32 @@ template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
 }
 
 template <class Beta>
+vec3 BPTBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample& sample) {
+    auto isect = _scene->intersect(eye.surface, -sample.normal());
+
+    if (isect.material_id == sample.surface.material_id) {
+        auto eyeBSDF = _scene->queryBSDF(eye.surface, -sample.normal(), eye.omega);
+
+        float Cp
+            = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+            * Beta::beta(abs(dot(sample.normal(), eye.surface.normal()))
+                / distance2(isect.position(), eye.surface.position()));
+
+        float weightInv = Cp + 1.0f;
+
+        vec3 result = sample.radiance() / sample.light_density / _roulette
+            * eye.throughput
+            * eyeBSDF.throughput
+            * abs(dot(sample.normal(), eye.surface.normal()));
+
+        return l1Norm(result) < FLT_EPSILON ? vec3(0.0f) : result / weightInv;
+    }
+    else {
+        return vec3(0.0f);
+    }
+}
+
+template <class Beta>
 vec3 BPTBase<Beta>::_connect(render_context_t& context, const EyeVertex& eye, const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
@@ -261,25 +287,7 @@ vec3 BPTBase<Beta>::_connect(render_context_t& context, const EyeVertex& eye, co
             radiance += _connect(_sample_to_vertex(sample), eye);
         }
         else if (!eye.surface.is_camera()) {
-            auto isect = _scene->intersect(eye.surface, -sample.normal());
-
-            if (isect.material_id == sample.surface.material_id) {
-                auto eyeBSDF = _scene->queryBSDF(eye.surface, -sample.normal(), eye.omega);
-
-                float Cp
-                    = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
-                    * Beta::beta(abs(dot(sample.normal(), eye.surface.normal()))
-                        / distance2(isect.position(), eye.surface.position()));
-
-                float weightInv = Cp + 1.0f;
-
-                vec3 result = sample.radiance() / sample.light_density / _roulette
-                    * eye.throughput
-                    * eyeBSDF.throughput
-                    * abs(dot(sample.normal(), eye.surface.normal()));
-
-                return l1Norm(result) < FLT_EPSILON ? vec3(0.0f) : result / weightInv;
-            }
+            radiance += _connect_directional(eye, sample);
         }
     }
 
