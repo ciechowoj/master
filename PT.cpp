@@ -1,4 +1,3 @@
-#include <Edge.hpp>
 #include <PT.hpp>
 
 namespace haste {
@@ -56,7 +55,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
       eye[itr].surface = surface;
       eye[itr].omega = -bsdf.omega;
 
-      auto edge = Edge(eye[prv], eye[itr]);
+      auto edge = Edge(eye[prv].surface, eye[itr].surface, eye[itr].omega);
 
       eye[itr].throughput =
           eye[prv].throughput * bsdf.throughput * edge.bCosTheta;
@@ -111,7 +110,7 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
 
   auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
 
-  auto edge = Edge(light, eye, omega);
+  auto edge = Edge(light.surface, eye.surface, omega);
 
   float weightInv = pow(eyeBSDF.densityRev * edge.bGeometry, _beta) /
                         pow(light.combined_density(), _beta) +

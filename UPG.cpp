@@ -1,5 +1,4 @@
 #include <UPG.hpp>
-#include <Edge.hpp>
 #include <condition_variable>
 #include <streamops.hpp>
 
@@ -99,7 +98,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             new_bsdf = _scene->sampleBSDF(*context.generator, itr->surface, itr->omega);
 
-            auto edge = Edge(*prv, *itr);
+            auto edge = Edge(prv->surface, itr->surface, itr->omega);
 
             itr->throughput
                 = prv->throughput
@@ -248,7 +247,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
 
         new_bsdf = _scene->sampleBSDF(generator, itr->surface, itr->omega);
 
-        auto edge = Edge(*prv, *itr);
+        auto edge = Edge(prv->surface, itr->surface, itr->omega);
 
         itr->throughput
             = prv->throughput
@@ -539,7 +538,7 @@ vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye) {
     auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
     auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
 
-    auto edge = Edge(light, eye, omega);
+    auto edge = Edge(light.surface, eye.surface, omega);
 
     auto weight = _weightVC<SkipDirectVM>(light, light_bsdf, eye, eye_bsdf, edge);
 
@@ -722,7 +721,7 @@ vec3 UPGBase<Beta>::_merge_light(
 
     auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
     auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
-    auto edge = Edge(light, eye, omega);
+    auto edge = Edge(light.surface, eye.surface, omega);
 
     vec3 throughput = _connect(light, light_bsdf, eye, eye_bsdf, edge);
 
@@ -750,7 +749,7 @@ vec3 UPGBase<Beta>::_merge_eye(
 
     auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
     auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
-    auto edge = Edge(light, eye, omega);
+    auto edge = Edge(light.surface, eye.surface, omega);
 
     vec3 throughput = _connect(light, light_bsdf, eye, eye_bsdf, edge);
 

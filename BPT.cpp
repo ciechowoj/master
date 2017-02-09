@@ -1,5 +1,4 @@
 #include <BPT.hpp>
-#include <Edge.hpp>
 
 namespace haste {
 
@@ -64,7 +63,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             eye[itr].surface = surface;
             eye[itr].omega = -bsdf.omega;
 
-            auto edge = Edge(eye[prv], eye[itr]);
+            auto edge = Edge(eye[prv].surface, eye[itr].surface, eye[itr].omega);
 
             eye[itr].throughput
                 = eye[prv].throughput
@@ -152,7 +151,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
         path[itr].surface = surface;
         path[itr].omega = -bsdf.omega;
 
-        auto edge = Edge(path[prv], path[itr]);
+        auto edge = Edge(path[prv].surface, path[itr].surface, path[itr].omega);
 
         path[itr].throughput
             = path[prv].throughput
@@ -207,7 +206,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     auto lightBSDF = _scene->queryBSDF(light.surface, light.omega, omega);
     auto eyeBSDF = _scene->queryBSDF(eye.surface, -omega, eye.omega);
 
-    auto edge = Edge(light, eye, omega);
+    auto edge = Edge(light.surface, eye.surface, omega);
 
     float Ap
         = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
