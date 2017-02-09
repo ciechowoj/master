@@ -20,6 +20,20 @@ inline uint32_t decode_material(uint32_t material_id) {
     return material_id >> 2;
 }
 
+inline uint32_t pack_normal(vec3 n) {
+    float x = clamp((n.x + 1.0f) * 0.5f, 0.f, 1.0f) * 65534.f;
+    float y = clamp((n.y + 1.0f) * 0.5f, 0.f, 1.0f) * 32766.f;
+    float z = n.z < 0.0f ? 0.0f : 1.0f;
+    return uint32_t(x) << 16 | uint32_t(y) << 1 | uint32_t(z);
+}
+
+inline vec3 unpack_normal(uint32_t n) {
+    float x = float(n >> 16) * 3.05185094e-05f - 1.0f;
+    float y = float(n << 16 >> 17) * 6.10388817e-05f - 1.0f;
+    float z = sqrt(1.0f - x * x - y * y) * (float(n & 1u) - 0.5f) * 2.0f;
+    return vec3(x, y, z);
+}
+
 struct SurfacePoint {
     vec3 _position;
     vec3 gnormal;
