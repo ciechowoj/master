@@ -42,15 +42,6 @@ struct SurfacePoint {
 
   SurfacePoint() = default;
 
-  SurfacePoint(const vec3& position, const vec3& normal, const vec3& tangent,
-               uint32_t material_id) {
-    _position = position;
-    _tangent[0] = normalize(cross(normal, tangent));
-    _tangent[1] = normal;
-    _tangent[2] = tangent;
-    material_id = material_id;
-  }
-
   const vec3& position() const { return _position; }
   const vec3& normal() const { return _tangent[1]; }
   const vec3& tangent() const { return _tangent[2]; }
