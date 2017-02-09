@@ -6,6 +6,7 @@ template <class Beta>
 BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, float lights, float roulette, float beta, size_t num_threads)
     : Technique(scene, num_threads)
     , _roulette(roulette)
+    , _roulette_inv(1.0f / roulette)
     , _lights(lights) {
     _metadata.roulette = roulette;
     _metadata.beta = beta;
@@ -38,7 +39,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     SurfacePoint surface = _camera_surface(context);
     eye[prv].surface = surface;
     eye[prv].omega = -ray.direction;
-    eye[prv].throughput = vec3(1.0f) / _roulette;
+    eye[prv].throughput = vec3(1.0f) * _roulette_inv;
     eye[prv].specular = 0.0f;
     eye[prv].c = 0;
     eye[prv].C = 0;
@@ -101,7 +102,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             return radiance;
         }
 
-        eye[prv].throughput /= _roulette;
+        eye[prv].throughput *= _roulette_inv;
     }
 
     return radiance;
@@ -112,7 +113,7 @@ typename BPTBase<Beta>::LightVertex BPTBase<Beta>::_sample_to_vertex(const Light
     LightVertex vertex;
     vertex.surface = sample.surface;
     vertex.omega = vertex.surface.normal();
-    vertex.throughput = sample.radiance() / sample.combined_density() / _roulette;
+    vertex.throughput = sample.radiance() / sample.combined_density() * _roulette_inv;
     vertex.a = sample.kind == light_kind::directional ? 0.0f : 1.0f / Beta::beta(sample.combined_density());
     vertex.A = 0.0f;
     vertex.specular = 0.0f;
@@ -157,7 +158,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
             = path[prv].throughput
             * bsdf.throughput
             * edge.bCosTheta
-            / _roulette;
+            * _roulette_inv;
 
         if (l1Norm(path[itr].throughput) < FLT_EPSILON) {
             path.pop_back();
@@ -263,7 +264,7 @@ vec3 BPTBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
 
         float weightInv = Cp + 1.0f;
 
-        vec3 result = sample.radiance() / sample.light_density / _roulette
+        vec3 result = sample.radiance() / sample.light_density * _roulette_inv
             * eye.throughput
             * eyeBSDF.throughput
             * abs(dot(sample.normal(), eye.surface.normal()));
@@ -317,8 +318,7 @@ vec3 BPTBase<Beta>::_connect_eye(
                     (dot(omega, path[i].surface.normal()) *
                     dot(path[i].omega, path[i].surface.gnormal)));
 
-                vec3 camera = eye.surface.toSurface(omega);
-                float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
+                float correct_cos_inv = 1.0f / pow(abs(dot(eye.surface.normal(), omega)), 3.0f);
 
                 return _connect(path[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
             });

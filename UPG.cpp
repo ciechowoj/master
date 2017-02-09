@@ -24,6 +24,7 @@ UPGBase<Beta>::UPGBase(
     , _enable_vm(enable_vm)
     , _lights(lights)
     , _roulette(roulette)
+    , _roulette_inv(1.0f / roulette)
     , _initial_radius(radius)
     , _alpha(alpha)
     , _clamp_const(unbiased ? 1.0f : FLT_MAX)
@@ -68,7 +69,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     SurfacePoint surface = _camera_surface(context);
     prv->surface = surface;
     prv->omega = -ray.direction;
-    prv->throughput = vec3(1.0f) / _roulette;
+    prv->throughput = vec3(1.0f) * _roulette_inv;
     prv->specular = 0.0f;
     prv->c = 0;
     prv->C = 0;
@@ -167,7 +168,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             }
         }
 
-        itr->throughput /= _roulette;
+        itr->throughput *= _roulette_inv;
 
         if (_enable_vm) {
             time_scope_t _2(_metadata.gather_time);
@@ -201,7 +202,7 @@ typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_to_vertex(const Light
     LightVertex vertex;
     vertex.surface = sample.surface;
     vertex.omega = vertex.surface.normal();
-    vertex.throughput = sample.radiance() / sample.combined_density() / _roulette;
+    vertex.throughput = sample.radiance() / sample.combined_density() * _roulette_inv;
     vertex.specular = 0.0f;
     vertex.a = sample.kind == light_kind::directional ? 0.0f : 1.0f / Beta::beta(sample.combined_density());
     vertex.A = 0.0f;
@@ -253,7 +254,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
             = prv->throughput
             * bsdf.throughput
             * edge.bCosTheta
-            / _roulette;
+            * _roulette_inv;
 
         if (l1Norm(itr->throughput) < FLT_EPSILON) {
             break;
@@ -519,7 +520,7 @@ vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
 
         float weightInv = Cp + Beta::beta(_num_scattered) * Dp + 1.0f;
 
-        vec3 result = sample.radiance() / sample.light_density / _roulette
+        vec3 result = sample.radiance() / sample.light_density * _roulette_inv
             * eye.throughput
             * eyeBSDF.throughput
             * abs(dot(sample.normal(), eye.surface.normal()));
@@ -566,8 +567,7 @@ vec3 UPGBase<Beta>::_connect(
                         (dot(omega, _light_paths[i].surface.normal()) *
                         dot(_light_paths[i].omega, _light_paths[i].surface.gnormal)));
 
-                    vec3 camera = eye.surface.toSurface(omega);
-                    float correct_cos_inv = 1.0f / pow(abs(camera.y), 3.0f);
+                    float correct_cos_inv = 1.0f / pow(abs(dot(eye.surface.normal(), omega)), 3.0f);
 
                     return _connect<true>(_light_paths[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
                 });

@@ -32,6 +32,7 @@ private:
     static const size_t _maxSubpath = 1024;
     using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
     const float _roulette;
+    const float _roulette_inv;
     const float _lights;
 
     vec3 _traceEye(render_context_t& context, Ray ray) override;

@@ -141,6 +141,7 @@ private:
     const bool _enable_vm;
     const float _lights;
     const float _roulette;
+    const float _roulette_inv;
     const float _initial_radius;
     const float _alpha;
     const float _clamp_const;
