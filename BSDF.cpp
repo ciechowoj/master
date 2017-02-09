@@ -427,7 +427,7 @@ float PhongBSDF::gathering_density(random_generator_t& generator,
     N += 1.0f;
   }
 
-  return INFINITY;
+  return 0.0f; // INFINITY
 }
 
 DeltaBSDF::DeltaBSDF() {}
