@@ -70,7 +70,7 @@ private:
 
     void _traceLight(random_generator_t& generator, vector<LightVertex>& path, size_t& size);
 
-    float _weightVC(
+    float _weight_vc(
         const LightVertex& light,
         const BSDFQuery& lightBSDF,
         const EyeVertex& eye,
@@ -127,9 +127,6 @@ private:
     float _clamp(float x) const;
 
     bool _russian_roulette(random_generator_t& generator) const;
-
-    static const bool _merge_from_light = true;
-    static const bool _merge_from_eye = true;
 
     static const int _trim_light = 0; // _merge_from_light ? 0 : 1;
     static const int _trim_eye = 0; // _merge_from_light ? 1 : 0;

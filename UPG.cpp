@@ -130,21 +130,13 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             float vertex_merging = 0.0f;
 
-            if (_merge_from_light && _merge_from_eye) {
-                if (itr->pGlossiness <= prv->ppGlossiness) {
-                    vertex_merging += _clamp(Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
-                        * (prv->length <= 1.0f ? 0.0f : 1.0f);
-                }
+            if (itr->pGlossiness <= prv->ppGlossiness) {
+                vertex_merging += _clamp(Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
+                    * (prv->length <= 1.0f ? 0.0f : 1.0f);
+            }
 
-                if (prv->pGlossiness < new_bsdf.glossiness) {
-                    vertex_merging += _clamp(Beta::beta(_circle) / prv->c); // eye
-                }
-            }
-            else if (_merge_from_light) {
-                vertex_merging = _clamp(Beta::beta(_circle * prv->bGeometry * bsdf.densityRev));
-            }
-            else if (_merge_from_eye) {
-                vertex_merging = _clamp(Beta::beta(_circle) / prv->c);
+            if (prv->pGlossiness < new_bsdf.glossiness) {
+                vertex_merging += _clamp(Beta::beta(_circle) / prv->c); // eye
             }
 
             itr->D
@@ -281,21 +273,13 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
 
         float vertex_merging = 0.0f;
 
-        if (_merge_from_light && _merge_from_eye) {
-            if (itr->pGlossiness < prv->ppGlossiness) {
-                vertex_merging += _clamp(Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
-                    * (prv->length <= 1.0f ? 0.0f : 1.0f);
-            }
+        if (itr->pGlossiness < prv->ppGlossiness) {
+            vertex_merging += _clamp(Beta::beta(_circle * prv->bGeometry * bsdf.densityRev))
+                * (prv->length <= 1.0f ? 0.0f : 1.0f);
+        }
 
-            if (prv->pGlossiness <= new_bsdf.glossiness) {
-                vertex_merging += _clamp(Beta::beta(_circle) / prv->a); // light
-            }
-        }
-        else if (_merge_from_light) {
-            vertex_merging = _clamp(Beta::beta(_circle) / prv->a);
-        }
-        else if (_merge_from_eye) {
-            vertex_merging = _clamp(Beta::beta(_circle * prv->bGeometry * bsdf.densityRev));
+        if (prv->pGlossiness <= new_bsdf.glossiness) {
+            vertex_merging += _clamp(Beta::beta(_circle) / prv->a); // light
         }
 
         itr->B
@@ -327,7 +311,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
 }
 
 template <class Beta>
-float UPGBase<Beta>::_weightVC(
+float UPGBase<Beta>::_weight_vc(
     const LightVertex& light,
     const BSDFQuery& lightBSDF,
     const EyeVertex& eye,
@@ -347,42 +331,30 @@ float UPGBase<Beta>::_weightVC(
     float connect_vertex_merging = 0.0f;
 
     if ((eye.length + light.length) >= 2.0f) {
-        if (_merge_from_light && _merge_from_eye) {
-            if (lightBSDF.glossiness < light.ppGlossiness) {
-                light_vertex_merging += _clamp(Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev)) // eye
-                    * (light.length <= 1.0f ? 0.0f : 1.0f);
-            }
-
-            if (eyeBSDF.glossiness <= eye.ppGlossiness) {
-                eye_vertex_merging += _clamp(Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) // light
-                    * (eye.length <= 1.0f ? 0.0f : 1.0f);
-            }
-
-            if (light.pGlossiness <= eyeBSDF.glossiness) {
-                light_vertex_merging += _clamp(Beta::beta(_circle) / light.a); // light
-            }
-            else {
-                connect_vertex_merging += _clamp(Beta::beta(_circle * edge.bGeometry * eyeBSDF.densityRev))
-                    * (light.length == 0.0f ? 0.0f : 1.0f); // eye
-            }
-
-            if (eye.pGlossiness < lightBSDF.glossiness) {
-                eye_vertex_merging += _clamp(Beta::beta(_circle) / eye.c); // eye
-            }
-            else {
-                connect_vertex_merging += _clamp(Beta::beta(_circle * edge.fGeometry * lightBSDF.density))
-                    * (eye.length == 0.0f ? 0.0f : 1.0f); // light
-            }
+        if (lightBSDF.glossiness < light.ppGlossiness) {
+            light_vertex_merging += _clamp(Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev)) // eye
+                * (light.length <= 1.0f ? 0.0f : 1.0f);
         }
-        else if (_merge_from_light) {
-            light_vertex_merging = _clamp(Beta::beta(_circle) / light.a);
-            eye_vertex_merging = _clamp(Beta::beta(_circle * eye.bGeometry * eyeBSDF.density));
-            connect_vertex_merging = _clamp(Beta::beta(_circle * edge.fGeometry * lightBSDF.density));
+
+        if (eyeBSDF.glossiness <= eye.ppGlossiness) {
+            eye_vertex_merging += _clamp(Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) // light
+                * (eye.length <= 1.0f ? 0.0f : 1.0f);
         }
-        else if (_merge_from_eye) {
-            light_vertex_merging = _clamp(Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev));
-            eye_vertex_merging = _clamp(Beta::beta(_circle) / eye.c);
-            connect_vertex_merging = _clamp(Beta::beta(_circle * edge.bGeometry * eyeBSDF.densityRev));
+
+        if (light.pGlossiness <= eyeBSDF.glossiness) {
+            light_vertex_merging += _clamp(Beta::beta(_circle) / light.a); // light
+        }
+        else {
+            connect_vertex_merging += _clamp(Beta::beta(_circle * edge.bGeometry * eyeBSDF.densityRev))
+                * (light.length == 0.0f ? 0.0f : 1.0f); // eye
+        }
+
+        if (eye.pGlossiness < lightBSDF.glossiness) {
+            eye_vertex_merging += _clamp(Beta::beta(_circle) / eye.c); // eye
+        }
+        else {
+            connect_vertex_merging += _clamp(Beta::beta(_circle * edge.fGeometry * lightBSDF.density))
+                * (eye.length == 0.0f ? 0.0f : 1.0f); // light
         }
     }
 
@@ -413,7 +385,7 @@ float UPGBase<Beta>::_weight_vm_eye(
     const EyeVertex& eye,
     const BSDFQuery& eyeBSDF,
     const Edge& edge) {
-    float weight = _weightVC(light, lightBSDF, eye, eyeBSDF, edge);
+    float weight = _weight_vc(light, lightBSDF, eye, eyeBSDF, edge);
 
     return Beta::beta(float(_num_scattered)
         * _clamp(_circle * edge.bGeometry * eyeBSDF.densityRev)) * weight; // eye
@@ -426,7 +398,7 @@ float UPGBase<Beta>::_weight_vm_light(
     const EyeVertex& eye,
     const BSDFQuery& eyeBSDF,
     const Edge& edge) {
-    float weight = _weightVC(light, lightBSDF, eye, eyeBSDF, edge);
+    float weight = _weight_vc(light, lightBSDF, eye, eyeBSDF, edge);
 
     return Beta::beta(float(_num_scattered)
         * _clamp(_circle * edge.fGeometry * lightBSDF.density)) * weight; // light
@@ -494,7 +466,7 @@ vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
 
         float eye_vertex_merging = 0.0f;
 
-        if (eye.length >= 2.0f && _merge_from_light && _merge_from_eye) {
+        if (eye.length >= 2.0f) {
             if (eyeBSDF.glossiness <= eye.ppGlossiness) {
                 eye_vertex_merging += _clamp(Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) // light
                     * (eye.length <= 1.0f ? 0.0f : 1.0f);
@@ -541,7 +513,7 @@ vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye) {
 
     auto edge = Edge(light.surface, eye.surface, omega);
 
-    auto weight = _weightVC(light, light_bsdf, eye, eye_bsdf, edge);
+    auto weight = _weight_vc(light, light_bsdf, eye, eye_bsdf, edge);
 
     return _connect(light, light_bsdf, eye, eye_bsdf, edge) * weight;
 }
