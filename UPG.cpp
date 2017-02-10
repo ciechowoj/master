@@ -294,13 +294,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
 
         bsdf = new_bsdf;
 
-        if (bsdf.specular != 1.0f) {
-            prv = itr;
-            ++itr;
-        }
-        else {
-            *prv = *itr;
-        }
+        prv = itr++;
     }
 
     if (bsdf.specular == 1.0f) {
