@@ -554,22 +554,21 @@ vec3 UPGBase<Beta>::_connect(
     vec3 radiance = vec3(0.0f);
 
     if (eye.surface.is_camera()) {
-        for (size_t i = _light_offsets[path], s = _light_offsets[path + 1]; i < s; ++i) {
-            vec3 omega = normalize(_light_paths[i].surface.position() - eye.surface.position());
+        for (size_t index = _light_offsets[path], s = _light_offsets[path + 1]; index < s; ++index) {
+            vec3 omega = normalize(_light_paths[index].surface.position() - eye.surface.position());
 
             radiance += _accumulate(
                 context,
                 omega,
                 [&] {
-                    float correct_normal = abs(
-                        (dot(omega, _light_paths[i].surface.gnormal)) *
-                        dot(_light_paths[i].omega, _light_paths[i].surface.normal()) /
-                        (dot(omega, _light_paths[i].surface.normal()) *
-                        dot(_light_paths[i].omega, _light_paths[i].surface.gnormal)));
+                    float camera_coefficient = _camera_coefficient(
+                        _light_paths[index].omega,
+                        _light_paths[index].surface.gnormal,
+                        _light_paths[index].surface.normal(),
+                        omega,
+                        eye.surface.normal());
 
-                    float correct_cos_inv = 1.0f / pow(abs(dot(eye.surface.normal(), omega)), 3.0f);
-
-                    return _connect(_light_paths[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
+                    return _connect(_light_paths[index], eye) * context.focal_factor_y * camera_coefficient;
                 });
         }
     }
@@ -690,15 +689,15 @@ vec3 UPGBase<Beta>::_gather(
                 else if (eye.surface.is_camera()) { // eye
                     vec3 omega = normalize(_light_paths[index].surface.position() - eye.surface.position());
 
-                    radiance += _accumulate(context, omega, [&] {
-                        float correct_normal = abs(
-                            (dot(omega, _light_paths[index].surface.gnormal)) *
-                            dot(_light_paths[index].omega, _light_paths[index].surface.normal()) /
-                            (dot(omega, _light_paths[index].surface.normal()) *
-                            dot(_light_paths[index].omega, _light_paths[index].surface.gnormal)));
+                radiance += _accumulate(context, omega, [&] {
+                        float normal_coefficient = _normal_coefficient(
+                            _light_paths[index].omega,
+                            _light_paths[index].surface.gnormal,
+                            _light_paths[index].surface.normal(),
+                            omega);
 
                         return _merge_eye(*context.generator, _light_paths[index], eye)
-                            * correct_normal * _num_scattered_inv;
+                            * normal_coefficient * _num_scattered_inv;
                     });
                 }
                 else {

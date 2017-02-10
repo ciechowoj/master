@@ -221,6 +221,36 @@ double Technique::_commit_images(ImageView& view) {
     return sqrt(epsilon / (view.width() * view.height()));
 }
 
+float Technique::_normal_coefficient(
+    const vec3& light_omega,
+    const vec3& light_gnormal,
+    const vec3& light_normal,
+    const vec3& eye_omega) const {
+    float coefficient = abs(
+        (dot(eye_omega, light_gnormal)) *
+        dot(light_omega, light_normal) /
+        (dot(eye_omega, light_normal) *
+        dot(light_omega, light_gnormal)));
+
+    return coefficient;
+}
+
+float Technique::_focal_coefficient(
+    const vec3& eye_omega,
+    const vec3& eye_normal) const {
+    return 1.0f / pow(abs(dot(eye_normal, eye_omega)), 3.0f);
+}
+
+float Technique::_camera_coefficient(
+    const vec3& light_omega,
+    const vec3& light_gnormal,
+    const vec3& light_normal,
+    const vec3& eye_omega,
+    const vec3& eye_normal) const {
+    return _normal_coefficient(light_omega, light_gnormal, light_normal, eye_omega)
+    * _focal_coefficient(eye_omega, eye_normal);
+}
+
 vec3 Technique::_accumulate(
         render_context_t& context,
         vec3 direction,

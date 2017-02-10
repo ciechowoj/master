@@ -305,22 +305,21 @@ vec3 BPTBase<Beta>::_connect_eye(
     const light_path_t& path) {
     vec3 radiance = vec3(0.0f);
 
-    for (size_t i = 0; i < path.size(); ++i) {
-        vec3 omega = normalize(path[i].surface.position() - eye.surface.position());
+    for (size_t index = 0; index < path.size(); ++index) {
+        vec3 omega = normalize(path[index].surface.position() - eye.surface.position());
 
         radiance += _accumulate(
             context,
             omega,
             [&] {
-                float correct_normal = abs(
-                    (dot(omega, path[i].surface.gnormal)) *
-                    dot(path[i].omega, path[i].surface.normal()) /
-                    (dot(omega, path[i].surface.normal()) *
-                    dot(path[i].omega, path[i].surface.gnormal)));
+                float camera_coefficient = _camera_coefficient(
+                    path[index].omega,
+                    path[index].surface.gnormal,
+                    path[index].surface.normal(),
+                    omega,
+                    eye.surface.normal());
 
-                float correct_cos_inv = 1.0f / pow(abs(dot(eye.surface.normal(), omega)), 3.0f);
-
-                return _connect(path[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
+                return _connect(path[index], eye) * context.focal_factor_y * camera_coefficient;
             });
     }
 

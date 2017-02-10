@@ -61,6 +61,23 @@ protected:
     void _trace_paths(ImageView& view, render_context_t& context, size_t cameraId);
     double _commit_images(ImageView& view);
 
+    float _normal_coefficient(
+        const vec3& light_omega,
+        const vec3& light_gnormal,
+        const vec3& light_normal,
+        const vec3& eye_omega) const;
+
+    float _focal_coefficient(
+        const vec3& eye_omega,
+        const vec3& eye_normal) const;
+
+    float _camera_coefficient(
+        const vec3& light_omega,
+        const vec3& light_gnormal,
+        const vec3& light_normal,
+        const vec3& eye_omega,
+        const vec3& eye_normal) const;
+
     template <class F>
     vec3 _accumulate(
         render_context_t& context,
