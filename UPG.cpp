@@ -326,7 +326,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
     size = itr - path.data();
 }
 
-template <class Beta> template <bool SkipDirectVM>
+template <class Beta>
 float UPGBase<Beta>::_weightVC(
     const LightVertex& light,
     const BSDFQuery& lightBSDF,
@@ -413,7 +413,7 @@ float UPGBase<Beta>::_weight_vm_eye(
     const EyeVertex& eye,
     const BSDFQuery& eyeBSDF,
     const Edge& edge) {
-    float weight = _weightVC<false>(light, lightBSDF, eye, eyeBSDF, edge);
+    float weight = _weightVC(light, lightBSDF, eye, eyeBSDF, edge);
 
     return Beta::beta(float(_num_scattered)
         * _clamp(_circle * edge.bGeometry * eyeBSDF.densityRev)) * weight; // eye
@@ -426,7 +426,7 @@ float UPGBase<Beta>::_weight_vm_light(
     const EyeVertex& eye,
     const BSDFQuery& eyeBSDF,
     const Edge& edge) {
-    float weight = _weightVC<false>(light, lightBSDF, eye, eyeBSDF, edge);
+    float weight = _weightVC(light, lightBSDF, eye, eyeBSDF, edge);
 
     return Beta::beta(float(_num_scattered)
         * _clamp(_circle * edge.fGeometry * lightBSDF.density)) * weight; // light
@@ -532,7 +532,7 @@ vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
     }
 }
 
-template <class Beta> template <bool SkipDirectVM>
+template <class Beta>
 vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
@@ -541,7 +541,7 @@ vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye) {
 
     auto edge = Edge(light.surface, eye.surface, omega);
 
-    auto weight = _weightVC<SkipDirectVM>(light, light_bsdf, eye, eye_bsdf, edge);
+    auto weight = _weightVC(light, light_bsdf, eye, eye_bsdf, edge);
 
     return _connect(light, light_bsdf, eye, eye_bsdf, edge) * weight;
 }
@@ -569,7 +569,7 @@ vec3 UPGBase<Beta>::_connect(
 
                     float correct_cos_inv = 1.0f / pow(abs(dot(eye.surface.normal(), omega)), 3.0f);
 
-                    return _connect<true>(_light_paths[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
+                    return _connect(_light_paths[i], eye) * context.focal_factor_y * correct_normal * correct_cos_inv;
                 });
         }
     }
@@ -578,7 +578,7 @@ vec3 UPGBase<Beta>::_connect(
             LightSample sample = _scene->sampleLight(*context.generator);
 
             if (sample.kind == light_kind::area) {
-                radiance += _connect<true>(_sample_to_vertex(sample), eye);
+                radiance += _connect(_sample_to_vertex(sample), eye);
             }
             else if (!eye.surface.is_camera()) {
                 radiance += _connect_directional(eye, sample);
@@ -586,7 +586,7 @@ vec3 UPGBase<Beta>::_connect(
         }
 
         for (size_t i = _light_offsets[path] + 1, s = _light_offsets[path + 1]; i < s; ++i) {
-            radiance += _connect<false>(_light_paths[i], eye);
+            radiance += _connect(_light_paths[i], eye);
         }
     }
 

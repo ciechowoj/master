@@ -70,7 +70,7 @@ private:
 
     void _traceLight(random_generator_t& generator, vector<LightVertex>& path, size_t& size);
 
-    template <bool SkipDirectVM> float _weightVC(
+    float _weightVC(
         const LightVertex& light,
         const BSDFQuery& lightBSDF,
         const EyeVertex& eye,
@@ -104,7 +104,6 @@ private:
     vec3 _connect_light(const EyeVertex& eye);
     vec3 _connect_directional(const EyeVertex& eye, const LightSample& sample);
 
-    template <bool SkipDirectVM>
     vec3 _connect(const LightVertex& light, const EyeVertex& eye);
 
     vec3 _connect(render_context_t& context, const EyeVertex& eye);
