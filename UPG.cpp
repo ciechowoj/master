@@ -305,7 +305,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
 }
 
 template <class Beta>
-float UPGBase<Beta>::_weight_vc(
+float UPGBase<Beta>::_vc_subweight_inv(
     const LightVertex& light,
     const BSDFQuery& lightBSDF,
     const EyeVertex& eye,
@@ -320,6 +320,16 @@ float UPGBase<Beta>::_weight_vc(
         = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
         * Beta::beta(edge.fGeometry * lightBSDF.density);
 
+    return Ap + Cp +  1.0f;
+}
+
+template <class Beta>
+float UPGBase<Beta>::_vm_subweight_inv(
+    const LightVertex& light,
+    const BSDFQuery& lightBSDF,
+    const EyeVertex& eye,
+    const BSDFQuery& eyeBSDF,
+    const Edge& edge) {
     float light_vertex_merging = 0.0f;
     float eye_vertex_merging = 0.0f;
     float connect_vertex_merging = 0.0f;
@@ -364,12 +374,18 @@ float UPGBase<Beta>::_weight_vc(
             * eye.c * (eye.length <= _trim_eye ? 0.0f : 1.0f))
         * Beta::beta(edge.fGeometry * lightBSDF.density);
 
-    float weightInv
-        = Ap + Beta::beta(_num_scattered) * Bp + Cp + Beta::beta(_num_scattered) * Dp
-        + Beta::beta(float(_num_scattered))
-        * connect_vertex_merging + 1.0f;
+    return Beta::beta(_num_scattered) * (Bp + Dp + connect_vertex_merging);
+}
 
-    return 1.0f / weightInv;
+template <class Beta>
+float UPGBase<Beta>::_vc_weight(
+    const LightVertex& light,
+    const BSDFQuery& lightBSDF,
+    const EyeVertex& eye,
+    const BSDFQuery& eyeBSDF,
+    const Edge& edge) {
+    return 1.0f / (_vc_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge)
+        + _vm_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge));
 }
 
 template <class Beta>
@@ -379,7 +395,7 @@ float UPGBase<Beta>::_weight_vm_eye(
     const EyeVertex& eye,
     const BSDFQuery& eyeBSDF,
     const Edge& edge) {
-    float weight = _weight_vc(light, lightBSDF, eye, eyeBSDF, edge);
+    float weight = _vc_weight(light, lightBSDF, eye, eyeBSDF, edge);
 
     return Beta::beta(float(_num_scattered)
         * _clamp(_circle * edge.bGeometry * eyeBSDF.densityRev)) * weight; // eye
@@ -392,7 +408,7 @@ float UPGBase<Beta>::_weight_vm_light(
     const EyeVertex& eye,
     const BSDFQuery& eyeBSDF,
     const Edge& edge) {
-    float weight = _weight_vc(light, lightBSDF, eye, eyeBSDF, edge);
+    float weight = _vc_weight(light, lightBSDF, eye, eyeBSDF, edge);
 
     return Beta::beta(float(_num_scattered)
         * _clamp(_circle * edge.fGeometry * lightBSDF.density)) * weight; // light
@@ -507,7 +523,7 @@ vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye) {
 
     auto edge = Edge(light.surface, eye.surface, omega);
 
-    auto weight = _weight_vc(light, light_bsdf, eye, eye_bsdf, edge);
+    auto weight = _vc_weight(light, light_bsdf, eye, eye_bsdf, edge);
 
     return _connect(light, light_bsdf, eye, eye_bsdf, edge) * weight;
 }

@@ -30,6 +30,7 @@ namespace std
 namespace haste {
 
 using std::map;
+using std::vector;
 using std::unordered_map;
 using std::unordered_set;
 using std::make_pair;
