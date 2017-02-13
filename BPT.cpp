@@ -40,7 +40,7 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     eye[prv].surface = surface;
     eye[prv].omega = -ray.direction;
     eye[prv].throughput = vec3(1.0f) * _roulette_inv;
-    eye[prv].specular = 0.0f;
+    eye[prv].finite = 1;
     eye[prv].c = 0;
     eye[prv].C = 0;
 
@@ -77,14 +77,14 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             eye[itr].throughput /= bsdf.density;
 
-            eye[prv].specular = max(eye[prv].specular, bsdf.specular);
-            eye[itr].specular = bsdf.specular;
+            eye[prv].finite = min(eye[prv].finite, bsdf.finite);
+            eye[itr].finite = bsdf.finite;
             eye[itr].c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
             eye[itr].C
                 = (eye[prv].C
                     * Beta::beta(bsdf.densityRev)
-                    + eye[prv].c * (1.0f - eye[prv].specular))
+                    + eye[prv].c * eye[prv].finite)
                 * Beta::beta(edge.bGeometry)
                 * eye[itr].c;
 
@@ -116,7 +116,7 @@ typename BPTBase<Beta>::LightVertex BPTBase<Beta>::_sample_to_vertex(const Light
     vertex.throughput = sample.radiance() / sample.combined_density() * _roulette_inv;
     vertex.a = sample.kind == light_kind::directional ? 0.0f : 1.0f / Beta::beta(sample.combined_density());
     vertex.A = 0.0f;
-    vertex.specular = 0.0f;
+    vertex.finite = 1;
 
     return vertex;
 }
@@ -167,19 +167,19 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
 
         path[itr].throughput /= bsdf.density;
 
-        path[prv].specular = max(path[prv].specular, bsdf.specular);
-        path[itr].specular = bsdf.specular;
+        path[prv].finite = min(path[prv].finite, bsdf.finite);
+        path[itr].finite = bsdf.finite;
 
         path[itr].a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
         path[itr].A
             = (path[prv].A
                 * Beta::beta(bsdf.densityRev)
-                + path[prv].a * (1.0f - path[prv].specular))
+                + path[prv].a * path[prv].finite)
             * Beta::beta(edge.bGeometry)
             * path[itr].a;
 
-        if (bsdf.specular == 1.0f) {
+        if (bsdf.finite == 0) {
             path[prv] = path[itr];
             path.pop_back();
         }
@@ -194,7 +194,7 @@ void BPTBase<Beta>::_traceLight(RandomEngine& generator, light_path_t& path) {
         path[prv].surface,
         path[prv].omega);
 
-    if (bsdf.specular == 1.0f) {
+    if (bsdf.finite == 0) {
         path.pop_back();
     }
 }
@@ -210,11 +210,11 @@ template <class Beta> vec3 BPTBase<Beta>::_connect(
     auto edge = Edge(light.surface, eye.surface, omega);
 
     float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * (1.0f - light.specular))
+        = (light.A * Beta::beta(lightBSDF.densityRev) + light.a * light.finite)
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+        = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * eye.finite)
         * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     float weightInv = Ap + Cp + 1.0f;
@@ -240,7 +240,7 @@ template <class Beta> vec3 BPTBase<Beta>::_connect_light(const EyeVertex& eye) {
     auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
 
     float Cp
-        = (eye.C * Beta::beta(bsdf.density) + eye.c * (1.0f - eye.specular))
+        = (eye.C * Beta::beta(bsdf.density) + eye.c * eye.finite)
         * Beta::beta(lsdf.density);
 
     float weightInv = Cp + 1.0f;
@@ -258,7 +258,7 @@ vec3 BPTBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
         auto eyeBSDF = _scene->queryBSDF(eye.surface, -sample.normal(), eye.omega);
 
         float Cp
-            = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+            = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * eye.finite)
             * Beta::beta(abs(dot(sample.normal(), eye.surface.normal()))
                 / distance2(isect.position(), eye.surface.position()));
 

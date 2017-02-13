@@ -18,8 +18,8 @@ class PathTracing : public Technique {
     SurfacePoint surface;
     vec3 omega;
     vec3 throughput;
-    float specular;
     float density;
+    uint16_t finite;
   };
 
   vec3 _connect(render_context_t& context, const EyeVertex& eye);

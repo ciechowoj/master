@@ -34,7 +34,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
   eye[prv].surface = surface;
   eye[prv].omega = -ray.direction;
   eye[prv].throughput = vec3(1.0f);
-  eye[prv].specular = 0.0f;
+  eye[prv].finite = 1;
   eye[prv].density = 1.0f;
 
   size_t path_size = 2;
@@ -66,7 +66,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
 
       eye[itr].throughput /= bsdf.density;
 
-      eye[prv].specular = bsdf.specular;
+      eye[prv].finite = bsdf.finite;
       eye[itr].density = eye[prv].density * edge.fGeometry * bsdf.density;
 
       if (surface.is_light()) {
@@ -75,7 +75,7 @@ vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
                               pow(edge.fGeometry * bsdf.density, _beta) +
                           1.0f;
 
-        if (bsdf.specular == 1.0f) weightInv = 1.0f;
+        if (bsdf.finite == 0) weightInv = 1.0f;
 
         radiance += lsdf.radiance * eye[itr].throughput / weightInv;
       } else {

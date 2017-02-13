@@ -18,7 +18,7 @@ private:
         vec3 omega;
         vec3 throughput;
         float a, A;
-        uint16_t specular;
+        uint16_t finite;
     };
 
     struct EyeVertex {
@@ -26,7 +26,7 @@ private:
         vec3 omega;
         vec3 throughput;
         float c, C;
-        uint16_t specular;
+        uint16_t finite;
     };
 
     static const size_t _maxSubpath = 1024;

@@ -70,7 +70,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     prv->surface = surface;
     prv->omega = -ray.direction;
     prv->throughput = vec3(1.0f) * _roulette_inv;
-    prv->specular = 0.0f;
+    prv->finite = 1;
     prv->c = 0;
     prv->C = 0;
     prv->D = 0;
@@ -117,14 +117,14 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             itr->ppGlossiness = prv->pGlossiness;
             itr->length = prv->length + 1.0f;
 
-            prv->specular = max(prv->specular, bsdf.specular);
-            itr->specular = bsdf.specular;
+            prv->finite = min(prv->finite, bsdf.finite);
+            itr->finite = bsdf.finite;
             itr->c = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
             itr->C
                 = (prv->C
                     * Beta::beta(bsdf.densityRev)
-                    + (1.0f - prv->specular) * prv->c)
+                    + prv->finite * prv->c)
                 * Beta::beta(edge.bGeometry)
                 * itr->c;
 
@@ -142,7 +142,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             itr->D
                 = (prv->D
                     * Beta::beta(bsdf.densityRev)
-                    + (1.0f - bsdf.specular)
+                    + bsdf.finite
                     * vertex_merging
                     * (prv->length <= _trim_eye ? 0.0f : 1.0f)
                     * prv->c)
@@ -195,7 +195,7 @@ typename UPGBase<Beta>::LightVertex UPGBase<Beta>::_sample_to_vertex(const Light
     vertex.surface = sample.surface;
     vertex.omega = vertex.surface.normal();
     vertex.throughput = sample.radiance() / sample.combined_density() * _roulette_inv;
-    vertex.specular = 0.0f;
+    vertex.finite = 1;
     vertex.a = sample.kind == light_kind::directional ? 0.0f : 1.0f / Beta::beta(sample.combined_density());
     vertex.A = 0.0f;
     vertex.B = 0.0f;
@@ -259,15 +259,15 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
         itr->pGlossiness = bsdf.glossiness;
         itr->length = prv->length + 1.0f;
 
-        prv->specular = max(prv->specular, bsdf.specular);
-        itr->specular = bsdf.specular;
+        prv->finite = min(prv->finite, bsdf.finite);
+        itr->finite = bsdf.finite;
 
         itr->a = 1.0f / Beta::beta(edge.fGeometry * bsdf.density);
 
         itr->A
             = (prv->A
                 * Beta::beta(bsdf.densityRev)
-                + (1.0f - prv->specular) * prv->a)
+                + prv->finite * prv->a)
             * Beta::beta(edge.bGeometry)
             * itr->a;
 
@@ -285,7 +285,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
         itr->B
             = (prv->B
                 * Beta::beta(bsdf.densityRev)
-                + (1.0f - bsdf.specular)
+                + bsdf.finite
                 * vertex_merging
                 * (prv->length <= _trim_light ? 0.0f : 1.0f)
                 * prv->a)
@@ -297,7 +297,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
         prv = itr++;
     }
 
-    if (bsdf.specular == 1.0f) {
+    if (bsdf.finite == 0) {
         --itr;
     }
 
@@ -313,11 +313,11 @@ float UPGBase<Beta>::_vc_subweight_inv(
     const Edge& edge) {
 
     float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev) + (1.0f - light.specular) * light.a)
+        = (light.A * Beta::beta(lightBSDF.densityRev) + light.finite * light.a)
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density) + (1.0f - eye.specular) * eye.c)
+        = (eye.C * Beta::beta(eyeBSDF.density) + eye.finite * eye.c)
         * Beta::beta(edge.fGeometry * lightBSDF.density);
 
     return Ap + Cp +  1.0f;
@@ -363,13 +363,13 @@ float UPGBase<Beta>::_vm_subweight_inv(
     }
 
     float Bp
-        = (light.B * Beta::beta(lightBSDF.densityRev) + (1.0f - lightBSDF.specular)
+        = (light.B * Beta::beta(lightBSDF.densityRev) + lightBSDF.finite
             * light_vertex_merging
             * light.a * (light.length <= _trim_light ? 0.0f : 1.0f))
         * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
 
     float Dp
-        = (eye.D * Beta::beta(eyeBSDF.density) + (1.0f - eyeBSDF.specular)
+        = (eye.D * Beta::beta(eyeBSDF.density) + eyeBSDF.finite
             * eye_vertex_merging
             * eye.c * (eye.length <= _trim_eye ? 0.0f : 1.0f))
         * Beta::beta(edge.fGeometry * lightBSDF.density);
@@ -449,13 +449,13 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
     auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
 
     float Cp
-        = (eye.C * Beta::beta(bsdf.density) + eye.c * (1.0f - eye.specular))
+        = (eye.C * Beta::beta(bsdf.density) + eye.c * eye.finite)
         * Beta::beta(lsdf.density);
 
     // float Dp = eye.D / eye.c * Beta::beta(bsdf.density); // eye
 
     float Dp
-        = (eye.D * Beta::beta(bsdf.density) + (1.0f - bsdf.specular)
+        = (eye.D * Beta::beta(bsdf.density) + bsdf.finite
             // * _clamp(Beta::beta(_circle) / eye.d) * eye.d) // eye
             * _clamp(Beta::beta(_circle * eye.bGeometry * bsdf.density)) * eye.c) // light
         * Beta::beta(lsdf.density);
@@ -491,13 +491,13 @@ vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
                 / distance2(isect.position(), eye.surface.position()));
 
         float Dp
-            = (eye.D * Beta::beta(eyeBSDF.density) + (1.0f - eyeBSDF.specular)
+            = (eye.D * Beta::beta(eyeBSDF.density) + eyeBSDF.finite
             * eye_vertex_merging
             * eye.c * (eye.length <= _trim_eye ? 0.0f : 1.0f))
             * coeff;
 
         float Cp
-            = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * (1.0f - eye.specular))
+            = (eye.C * Beta::beta(eyeBSDF.density) + eye.c * eye.finite)
             * coeff;
 
         float weightInv = Cp + Beta::beta(_num_scattered) * Dp + 1.0f;

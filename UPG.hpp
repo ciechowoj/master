@@ -28,7 +28,7 @@ class UPGBase : public Technique, protected Beta {
     uint16_t pGlossiness;
     uint16_t ppGlossiness;
     uint16_t length : 15;
-    uint16_t specular : 1;
+    uint16_t finite : 1;
 
     const vec3& position() const { return surface.position(); }
 
@@ -44,7 +44,7 @@ class UPGBase : public Technique, protected Beta {
     uint16_t pGlossiness;
     uint16_t ppGlossiness;
     uint16_t length : 15;
-    uint16_t specular : 1;
+    uint16_t finite : 1;
   };
 
   static const size_t _maxSubpath = 1024;
