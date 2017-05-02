@@ -22,7 +22,7 @@ private:
 };
 
 template <> inline float FixedBeta<0>::beta(float x) {
-    return 1.0f;
+    return x == 0.0f ? 0.0f : 1.0f;
 }
 
 template <> inline float FixedBeta<1>::beta(float x) {

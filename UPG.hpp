@@ -27,7 +27,8 @@ class UPGBase : public Technique, protected Beta {
     float bGeometry;
     uint16_t pGlossiness;
     uint16_t ppGlossiness;
-    uint16_t length : 15;
+    uint16_t length : 13;
+    uint16_t directional : 14;
     uint16_t finite : 1;
 
     const vec3& position() const { return surface.position(); }
@@ -67,9 +68,23 @@ class UPGBase : public Technique, protected Beta {
                           const EyeVertex& eye, const BSDFQuery& eyeBSDF,
                           const Edge& edge);
 
+  float _vm_biased_subweight_inv(const LightVertex& light,
+                                 const BSDFQuery& lightBSDF,
+                                 const EyeVertex& eye, const BSDFQuery& eyeBSDF,
+                                 const Edge& edge, float vm_current);
+
   float _vc_weight(const LightVertex& light, const BSDFQuery& lightBSDF,
                    const EyeVertex& eye, const BSDFQuery& eyeBSDF,
                    const Edge& edge);
+
+  float _vc_biased_weight(const LightVertex& light, const BSDFQuery& lightBSDF,
+                          const EyeVertex& eye, const BSDFQuery& eyeBSDF,
+                          const Edge& edge, float vm_current);
+
+  float _vm_biased_weight(const LightVertex& light,
+                          const BSDFQuery& lightBSDF, const EyeVertex& eye,
+                          const BSDFQuery& eyeBSDF, const Edge& edge,
+                          float vm_current);
 
   float _weight_vm_eye(const LightVertex& light, const BSDFQuery& lightBSDF,
                        const EyeVertex& eye, const BSDFQuery& eyeBSDF,
@@ -98,13 +113,19 @@ class UPGBase : public Technique, protected Beta {
   void _scatter(random_generator_t& generator);
 
   vec3 _gather(render_context_t& context, const EyeVertex& eye,
-               const BSDFQuery& eye_bsdf, const EyeVertex& tentative);
+               const EyeVertex& tentative);
+
+  vec3 _gather_biased(render_context_t& context, const EyeVertex& eye,
+                      const EyeVertex& tentative);
 
   vec3 _merge_light(random_generator_t& generator, const LightVertex& light,
                     const EyeVertex& eye);
 
   vec3 _merge_eye(random_generator_t& generator, const LightVertex& light,
                   const EyeVertex& eye);
+
+  vec3 _merge_biased(random_generator_t& generator, const LightVertex& light,
+                     const LightVertex& tentative, const EyeVertex& eye);
 
   float _clamp(float x) const;
 

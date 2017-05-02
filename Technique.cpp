@@ -200,12 +200,12 @@ double Technique::_commit_images(ImageView& view) {
                 dvec3 delta = new_dst.rgb() / new_dst.a - dst_itr->rgb() / dst_itr->a;
                 local_epsilon += l1Norm(delta * delta);
 
-                if (std::isfinite(l1Norm(*light_itr + *eye_itr))) {
+                //if (std::isfinite(l1Norm(*light_itr + *eye_itr))) {
                     *dst_itr = new_dst;
-                }
+                /*}
                 else {
                     std::cerr << "Numeric error." << std::endl;
-                }
+                }*/
 
                 *light_itr = dvec3(0.0f);
                 *eye_itr = dvec3(0.0f);

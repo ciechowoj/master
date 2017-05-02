@@ -179,8 +179,8 @@ BSDFQuery sun_light_bsdf::query(const SurfacePoint& surface, vec3 incident,
                                 vec3 outgoing) const {
   BSDFQuery query;
   query.throughput = vec3(0.0f);
-  query.density = 0.0f;
-  query.densityRev = 0.0f;
+  query.density = 1.0f;
+  query.densityRev = 1.0f;
   query.finite = 1;
   query.glossiness = USHRT_MAX;
 

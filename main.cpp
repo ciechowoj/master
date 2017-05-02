@@ -44,6 +44,10 @@ unittest() {
     assert_almost_eq(m * vec4(1.0f), vec4(1.0f, 2.0f, 1.0f, 1.0f));
 }
 
+int run_fast(Options options) {
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (!run_all_tests())
         return 1;
@@ -79,11 +83,13 @@ int main(int argc, char **argv) {
     else {
         Application application(options);
 
-        if (!options.batch) {
-            return application.run(options.width, options.height, options.caption());
-        }
-        else {
-            return application.runBatch(options.width, options.height);
+        switch (options.batch) {
+            case Options::Interactive:
+                return application.run(options.width, options.height, options.caption());
+            case Options::Batch:
+                return application.runBatch(options.width, options.height);
+            case Options::Fast:
+                return run_fast(options);
         }
     }
 
