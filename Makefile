@@ -116,7 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin models/TestCase50.blend --PT --beta=2 --parallel \
+	./build/master/master.bin models/CornellBoxDiffuse.blend --PT --beta=2 --parallel \
 	--reference="/home/wojciech/cornell boxes 05 feb/reference/ref.exr"
 
 profile: all

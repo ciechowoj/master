@@ -62,4 +62,6 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
 shared<Scene> loadScene(const Options& options);
 string techniqueString(const Options& options);
 
+using config_t = Options;
+
 }
