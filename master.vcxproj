@@ -90,15 +90,16 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\submodules\assimp\include;$(ProjectDir)\submodules\embree\include;$(ProjectDir)\submodules\glm;$(ProjectDir)\build\glad\loader\include;$(ProjectDir)\submodules\imgui;$(ProjectDir)\submodules\imgui\examples\opengl3_example;C:\Program Files\openexr\include\OpenEXR;C:\ilmbase-2.2.0\include\OpenEXR;C:\Users\woszszo\master\submodules\glfw\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;GLM_SWIZZLE;GLM_FORCE_RADIANS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>
+      </SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\submodules\assimp\include;$(ProjectDir)\submodules\embree\include;$(ProjectDir)\submodules\imgui;$(ProjectDir)\submodules\glm;$(ProjectDir)\submodules\imgui\examples\opengl3_example;$(ProjectDir)\submodules\glfw\include;$(ProjectDir)\build\glad\loader\include;$(ProjectDir)\build\openexr\deploy\include\OpenEXR</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;GLM_SWIZZLE;GLM_FORCE_RADIANS;EMBREE_STATIC_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Strict</FloatingPointModel>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\Release;$(ProjectDir)\build\glad;C:\Program Files\openexr\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>embree.lib;embree_sse42.lib;lexers.lib;simd.lib;sys.lib;glad.lib;IlmImf-2_2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\deploy\lib;$(ProjectDir)\build\glad;$(ProjectDir)\build\openexr\deploy\lib;C:\zlib-1.2.11\build\$(Configuration);$(ProjectDir)\build\glfw\deploy\lib;$(ProjectDir)\build\imgui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>simd.lib;sys.lib;lexers.lib;embree.lib;embree_sse42.lib;embree_avx.lib;embree_avx2.lib;glad.lib;IlmImf-2_2.lib;Half.lib;glfw3.lib;Iex-2_2.lib;IexMath-2_2.lib;IlmImfUtil-2_2.lib;IlmThread-2_2.lib;Imath-2_2.lib;zlibstatic.lib;opengl32.lib;gdi32.lib;Shell32.lib;imgui.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -124,20 +125,23 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\submodules\assimp\include;$(ProjectDir)\submodules\embree\include;$(ProjectDir)\submodules\glm;$(ProjectDir)\build\glad\loader\include;$(ProjectDir)\submodules\imgui;$(ProjectDir)\submodules\imgui\examples\opengl3_example;C:\Program Files\openexr\include\OpenEXR;C:\ilmbase-2.2.0\include\OpenEXR;C:\Users\woszszo\master\submodules\glfw\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;GLM_SWIZZLE;GLM_FORCE_RADIANS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <FloatingPointModel>Strict</FloatingPointModel>
+      <SDLCheck>
+      </SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\submodules\assimp\include;$(ProjectDir)\build\embree\deploy\include;$(ProjectDir)\submodules\imgui;$(ProjectDir)\submodules\glm;$(ProjectDir)\submodules\imgui\examples\opengl3_example;$(ProjectDir)\submodules\glfw\include;$(ProjectDir)\build\glad\loader\include;$(ProjectDir)\build\openexr\deploy\include\OpenEXR</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;GLM_SWIZZLE;GLM_FORCE_RADIANS;EMBREE_STATIC_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FloatingPointModel>Fast</FloatingPointModel>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\Release;$(ProjectDir)\build\glad;C:\Program Files\openexr\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>embree.lib;embree_sse42.lib;lexers.lib;simd.lib;sys.lib;glad.lib;IlmImf-2_2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\deploy\lib;$(ProjectDir)\build\glad;$(ProjectDir)\build\openexr\deploy\lib;C:\zlib-1.2.11\build\$(Configuration);$(ProjectDir)\build\glfw\deploy\lib;$(ProjectDir)\build\imgui;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>simd.lib;sys.lib;lexers.lib;embree.lib;embree_sse42.lib;embree_avx.lib;embree_avx2.lib;glad.lib;IlmImf-2_2.lib;Half.lib;glfw3.lib;Iex-2_2.lib;IexMath-2_2.lib;IlmImfUtil-2_2.lib;IlmThread-2_2.lib;Imath-2_2.lib;zlibstatic.lib;opengl32.lib;gdi32.lib;Shell32.lib;imgui.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
