@@ -2,7 +2,6 @@
 #include <vector>
 #include <functional>
 #include <glm/glm.hpp>
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 struct window_context_t {

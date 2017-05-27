@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <cstring>
+#include <cctype>
 #include <Options.hpp>
 #include <loader.hpp>
 

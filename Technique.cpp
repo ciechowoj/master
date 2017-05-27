@@ -38,7 +38,7 @@ double Technique::render(
     size_t num_shadow_rays = _scene->numShadowRays();
 
     _adjust_helper_image(view);
-    _preprocess(generator, _metadata.num_samples);
+    _preprocess(generator, double(_metadata.num_samples));
     _trace_paths(view, context, cameraId);
     double epsilon = _commit_images(view);
 

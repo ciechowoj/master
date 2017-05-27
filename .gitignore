@@ -32,9 +32,15 @@
 
 build/*
 images/*
+.vs/*
+x64/*
+Debug/*
+Release/*
 !images/Makefile
 *.ini
 dna.txt
 *.blend1
 *.blend2
 *.dat
+*.vcxproj.filters
+*.vcxproj.user

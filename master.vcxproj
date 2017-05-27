@@ -1,0 +1,270 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{6B1C6EA1-541D-42D2-81C2-78408AEB0059}</ProjectGuid>
+    <RootNamespace>master</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\submodules\assimp\include;$(ProjectDir)\submodules\embree\include;$(ProjectDir)\submodules\glm;$(ProjectDir)\build\glad\loader\include;$(ProjectDir)\submodules\imgui;$(ProjectDir)\submodules\imgui\examples\opengl3_example;C:\Program Files\openexr\include\OpenEXR;C:\ilmbase-2.2.0\include\OpenEXR;C:\Users\woszszo\master\submodules\glfw\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;GLM_SWIZZLE;GLM_FORCE_RADIANS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FloatingPointModel>Strict</FloatingPointModel>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>embree.lib;embree_sse42.lib;lexers.lib;simd.lib;sys.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\submodules\assimp\include;$(ProjectDir)\submodules\embree\include;$(ProjectDir)\submodules\glm;$(ProjectDir)\build\glad\loader\include;$(ProjectDir)\submodules\imgui;$(ProjectDir)\submodules\imgui\examples\opengl3_example;C:\Program Files\openexr\include\OpenEXR;C:\ilmbase-2.2.0\include\OpenEXR;C:\Users\woszszo\master\submodules\glfw\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;GLM_SWIZZLE;GLM_FORCE_RADIANS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FloatingPointModel>Strict</FloatingPointModel>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\Release;$(ProjectDir)\build\glad;C:\Program Files\openexr\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>embree.lib;embree_sse42.lib;lexers.lib;simd.lib;sys.lib;glad.lib;IlmImf-2_2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\submodules\assimp\include;$(ProjectDir)\submodules\embree\include;$(ProjectDir)\submodules\glm;$(ProjectDir)\build\glad\loader\include;$(ProjectDir)\submodules\imgui;$(ProjectDir)\submodules\imgui\examples\opengl3_example;C:\Program Files\openexr\include\OpenEXR;C:\ilmbase-2.2.0\include\OpenEXR;C:\Users\woszszo\master\submodules\glfw\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;GLM_SWIZZLE;GLM_FORCE_RADIANS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FloatingPointModel>Strict</FloatingPointModel>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\Release;$(ProjectDir)\build\glad;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>embree.lib;embree_sse42.lib;lexers.lib;simd.lib;sys.lib;glad.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\submodules\assimp\include;$(ProjectDir)\submodules\embree\include;$(ProjectDir)\submodules\glm;$(ProjectDir)\build\glad\loader\include;$(ProjectDir)\submodules\imgui;$(ProjectDir)\submodules\imgui\examples\opengl3_example;C:\Program Files\openexr\include\OpenEXR;C:\ilmbase-2.2.0\include\OpenEXR;C:\Users\woszszo\master\submodules\glfw\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;GLM_SWIZZLE;GLM_FORCE_RADIANS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FloatingPointModel>Strict</FloatingPointModel>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\Release;$(ProjectDir)\build\glad;C:\Program Files\openexr\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>embree.lib;embree_sse42.lib;lexers.lib;simd.lib;sys.lib;glad.lib;IlmImf-2_2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="AreaLights.cpp" />
+    <ClCompile Include="benchmark.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Beta.cpp" />
+    <ClCompile Include="BPT.cpp" />
+    <ClCompile Include="BSDF.cpp" />
+    <ClCompile Include="Cameras.cpp" />
+    <ClCompile Include="system_utils.cpp" />
+    <ClCompile Include="framework.cpp" />
+    <ClCompile Include="Geometry.cpp" />
+    <ClCompile Include="ImageView.cpp" />
+    <ClCompile Include="imgui_ex.cpp" />
+    <ClCompile Include="Intersector.cpp" />
+    <ClCompile Include="loader.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Materials.cpp" />
+    <ClCompile Include="Options.cpp" />
+    <ClCompile Include="PT.cpp" />
+    <ClCompile Include="RayIsect.cpp" />
+    <ClCompile Include="runtime_assert.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Technique.cpp" />
+    <ClCompile Include="threadpool.cpp" />
+    <ClCompile Include="unittest.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="unit_tests\Cameras.test.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="unit_tests\KDTree3D.test.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="unit_tests\Options.test.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="unit_tests\unittest.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="UPG.cpp" />
+    <ClCompile Include="UserInterface.cpp" />
+    <ClCompile Include="utility.cpp" />
+    <ClCompile Include="Viewer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Application.hpp" />
+    <ClInclude Include="AreaLights.hpp" />
+    <ClInclude Include="Beta.hpp" />
+    <ClInclude Include="BPT.hpp" />
+    <ClInclude Include="BSDF.hpp" />
+    <ClInclude Include="Cameras.hpp" />
+    <ClInclude Include="system_utils.hpp" />
+    <ClInclude Include="fixed_vector.hpp" />
+    <ClInclude Include="framework.hpp" />
+    <ClInclude Include="Geometry.hpp" />
+    <ClInclude Include="HashGrid3D.hpp" />
+    <ClInclude Include="ImageView.hpp" />
+    <ClInclude Include="imgui_ex.h" />
+    <ClInclude Include="Intersector.hpp" />
+    <ClInclude Include="loader.hpp" />
+    <ClInclude Include="Materials.hpp" />
+    <ClInclude Include="Options.hpp" />
+    <ClInclude Include="Prerequisites.hpp" />
+    <ClInclude Include="PT.hpp" />
+    <ClInclude Include="RayIsect.hpp" />
+    <ClInclude Include="Sample.hpp" />
+    <ClInclude Include="Scene.hpp" />
+    <ClInclude Include="streamops.hpp" />
+    <ClInclude Include="SurfacePoint.hpp" />
+    <ClInclude Include="Technique.hpp" />
+    <ClInclude Include="threadpool.hpp" />
+    <ClInclude Include="unittest.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="UPG.hpp" />
+    <ClInclude Include="UserInterface.hpp" />
+    <ClInclude Include="utility.hpp" />
+    <ClInclude Include="Viewer.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="extract.py" />
+    <None Include="glm" />
+    <None Include="gtest" />
+    <None Include="libtbb-ubuntu-hack.sh" />
+    <None Include="LICENSE" />
+    <None Include="Makefile" />
+    <None Include="master.sublime-project" />
+    <None Include="README.md" />
+    <None Include="runtime_assert" />
+    <None Include="Sample.inl" />
+    <None Include="unittest">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="bearings.png" />
+    <Image Include="splashscreen.png" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
