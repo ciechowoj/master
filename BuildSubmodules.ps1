@@ -39,9 +39,9 @@ function BuildOpenEXR([switch]$skipIlmBase = $false, [switch]$skipOpenEXR = $fal
             cmake $openexrLocation `
                 -DCMAKE_INSTALL_PREFIX="deploy" `
                 -DBUILD_SHARED_LIBS=OFF `
-                -DZLIB_LIBRARY="C:\zlib-1.2.11\build\Release\zlibstatic.lib" `
-                -DZLIB_INCLUDE_DIR="C:\zlib-1.2.11" `
-                -DILMBASE_PACKAGE_PREFIX="$(get-location)\deploy" `
+                -DZLIB_LIBRARY="C:`zlib-1.2.11`build`Release`zlibstatic.lib" `
+                -DZLIB_INCLUDE_DIR="C:`zlib-1.2.11" `
+                -DILMBASE_PACKAGE_PREFIX="$(get-location)`deploy" `
                 -G "Visual Studio 15 2017 Win64" 
             UpdateRuntimeLibrary            
             cmake --build .
@@ -120,7 +120,7 @@ function BuildEmbree() {
 
         cmake ../../submodules/embree/ -G 'Visual Studio 15 2017 Win64' `
             -DCMAKE_INSTALL_PREFIX="deploy" `
-            -DEMBREE_ISPC_EXECUTABLE="C:\ispc-v1.9.1-windows-vs2015\ispc.exe" `
+            -DEMBREE_ISPC_EXECUTABLE="C:`ispc-v1.9.1-windows-vs2015`ispc.exe" `
             -DEMBREE_STATIC_LIB=ON `
             -DEMBREE_TUTORIALS=OFF `
             -DEMBREE_RAY_MASK=ON `
@@ -159,8 +159,73 @@ function BuildGLFW() {
 
 }
 
+function BuildAssimp() {
+    $location = get-location
+
+    try {
+        mkdir -Force build/assimp | Out-Null
+        set-location build/assimp
+
+        $assimpBaseLocation = "../../submodules/assimp"
+
+       cmake $assimpBaseLocation `
+            -G 'Visual Studio 15 2017 Win64' `
+            -DCMAKE_INSTALL_PREFIX="deploy" `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DASSIMP_NO_EXPORT=ON `
+            -DASSIMP_BUILD_ASSIMP_TOOLS=OFF `
+            -DASSIMP_BUILD_TESTS=OFF `
+            -DASSIMP_BUILD_3DS_IMPORTER=FALSE `
+            -DASSIMP_BUILD_AC_IMPORTER=FALSE `
+            -DASSIMP_BUILD_ASE_IMPORTER=FALSE `
+            -DASSIMP_BUILD_ASSBIN_IMPORTER=FALSE `
+            -DASSIMP_BUILD_ASSXML_IMPORTER=FALSE `
+            -DASSIMP_BUILD_B3D_IMPORTER=FALSE `
+            -DASSIMP_BUILD_BVH_IMPORTER=FALSE `
+            -DASSIMP_BUILD_COLLADA_IMPORTER=FALSE `
+            -DASSIMP_BUILD_DXF_IMPORTER=FALSE `
+            -DASSIMP_BUILD_CSM_IMPORTER=FALSE `
+            -DASSIMP_BUILD_HMP_IMPORTER=FALSE `
+            -DASSIMP_BUILD_LWO_IMPORTER=FALSE `
+            -DASSIMP_BUILD_LWS_IMPORTER=FALSE `
+            -DASSIMP_BUILD_MD2_IMPORTER=FALSE `
+            -DASSIMP_BUILD_MD3_IMPORTER=FALSE `
+            -DASSIMP_BUILD_MD5_IMPORTER=FALSE `
+            -DASSIMP_BUILD_MDC_IMPORTER=FALSE `
+            -DASSIMP_BUILD_MDL_IMPORTER=FALSE `
+            -DASSIMP_BUILD_NFF_IMPORTER=FALSE `
+            -DASSIMP_BUILD_NDO_IMPORTER=FALSE `
+            -DASSIMP_BUILD_OFF_IMPORTER=FALSE `
+            -DASSIMP_BUILD_OGRE_IMPORTER=FALSE `
+            -DASSIMP_BUILD_OPENGEX_IMPORTER=FALSE `
+            -DASSIMP_BUILD_PLY_IMPORTER=FALSE `
+            -DASSIMP_BUILD_MS3D_IMPORTER=FALSE `
+            -DASSIMP_BUILD_COB_IMPORTER=FALSE `
+            -DASSIMP_BUILD_IFC_IMPORTER=FALSE `
+            -DASSIMP_BUILD_XGL_IMPORTER=FALSE `
+            -DASSIMP_BUILD_FBX_IMPORTER=FALSE `
+            -DASSIMP_BUILD_Q3D_IMPORTER=FALSE `
+            -DASSIMP_BUILD_Q3BSP_IMPORTER=FALSE `
+            -DASSIMP_BUILD_RAW_IMPORTER=FALSE `
+            -DASSIMP_BUILD_SIB_IMPORTER=FALSE `
+            -DASSIMP_BUILD_SMD_IMPORTER=FALSE `
+            -DASSIMP_BUILD_STL_IMPORTER=FALSE `
+            -DASSIMP_BUILD_TERRAGEN_IMPORTER=FALSE `
+            -DASSIMP_BUILD_3D_IMPORTER=FALSE `
+            -DASSIMP_BUILD_X_IMPORTER=FALSE `
+            -DASSIMP_BUILD_GLTF_IMPORTER=FALSE
+
+        UpdateRuntimeLibrary        
+        cmake --build . --target INSTALL --config Release
+    }
+    finally {
+        set-location $location
+    }
+}
+
 # BuildOpenEXR
 # BuildGLAD
 # BuildEmbree
 # BuildGLFW
-BuildImGUI
+# BuildImGUI
+BuildAssimp
