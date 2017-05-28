@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 
 namespace haste {
 
@@ -78,10 +79,9 @@ void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
     switch (_ui->displayMode) {
       case DisplayModeUnsignedRelative:
         for (size_t i = 0; i < _reference.size(); ++i) {
-          float current = length(src[i].rgb() / src[i].a);
-          float reference = length(_reference[i].rgb());
-          float error = current == reference ? 0.0f : abs(current - reference) /
-                                                          reference;
+          double current = length(src[i].rgb() / src[i].a);
+		  double reference = length(_reference[i].rgb());
+		  float error = current == reference ? 0.0f : float(abs(current - reference) / reference);
 
           _ui->maxError = std::max(_ui->maxError, error);
 
@@ -94,9 +94,9 @@ void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
         _ui->avgAbsError = 0.0f;
 
         for (size_t i = 0; i < _reference.size(); ++i) {
-          float current = length(src[i].rgb() / src[i].a);
-          float reference = length(_reference[i].rgb());
-          float error = abs(current - reference);
+          double current = length(src[i].rgb() / src[i].a);
+		  double reference = length(_reference[i].rgb());
+          float error = float(abs(current - reference));
 
           _ui->maxError = std::max(_ui->maxError, error);
 
@@ -107,10 +107,10 @@ void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
 
       case DisplayModeRelative:
         for (size_t i = 0; i < _reference.size(); ++i) {
-          float current = length(src[i].rgb() / src[i].a);
-          float reference = length(_reference[i].rgb());
-          float error = current == reference ? 0.0f : abs(current - reference) /
-                                                          reference;
+          double current = length(src[i].rgb() / src[i].a);
+          double reference = length(_reference[i].rgb());
+          float error = current == reference ? 0.0f : float(abs(current - reference) /
+                                                          reference);
 
           _ui->maxError = std::max(_ui->maxError, error);
 
@@ -122,9 +122,9 @@ void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
 
       case DisplayModeAbsolute:
         for (size_t i = 0; i < _reference.size(); ++i) {
-          float current = length(src[i].rgb() / src[i].a);
-          float reference = length(_reference[i].rgb());
-          float error = abs(current - reference);
+          double current = length(src[i].rgb() / src[i].a);
+          double reference = length(_reference[i].rgb());
+          float error = float(abs(current - reference));
 
           _ui->maxError = std::max(_ui->maxError, error);
 

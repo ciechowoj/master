@@ -116,15 +116,8 @@ std::vector<dvec4> vv3f_to_vv4d(const std::vector<vec3>& data);
 std::vector<vec3> vv4f_to_vv3f(std::size_t size, const vec4* data);
 std::vector<vec3> vv4d_to_vv3f(std::size_t size, const dvec4* data);
 
-string homePath();
-string baseName(string path);
-string fixedPath(string base, string scene, int samples);
-pair<string, string> splitext(string path);
-size_t getmtime(const string& path);
-
 dvec3 computeAVG(const string& path);
 void printAVG(const string& path);
-void printHistory(const string& path);
 void subtract(const string& result, const string& path0, const string& path1);
 void merge(const string& result, const string& path0, const string& path1);
 

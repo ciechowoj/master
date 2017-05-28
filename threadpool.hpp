@@ -35,7 +35,7 @@ class data_queue_t {
  private:
   void _push(size_t, void*, void (*)(void*, char*));
   void _pop(void*, void (*)(void*, size_t, char*));
-  char _impl[256];
+  char _impl[512];
 };
 
 class task_queue_t {

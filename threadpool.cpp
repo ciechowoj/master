@@ -1,13 +1,14 @@
 #include <condition_variable>
 #include <mutex>
 #include <stdexcept>
+#include <algorithm>
 #include <threadpool.hpp>
 
 namespace haste {
 
 struct data_queue_thunk_t {
-  unsigned size;
-  char data[sizeof(size)];
+  std::size_t size;
+  char data[sizeof(data_queue_thunk_t::size)];
 };
 
 struct data_queue_impl_t {

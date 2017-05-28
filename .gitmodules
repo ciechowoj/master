@@ -19,3 +19,6 @@
 [submodule "submodules/assimp"]
 	path = submodules/assimp
 	url = https://github.com/ciechowoj/assimp.git
+[submodule "submodules/openexr"]
+	path = submodules/openexr
+	url = https://github.com/openexr/openexr.git

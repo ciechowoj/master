@@ -27,7 +27,7 @@ struct random_generator_t {
   random_generator_t(const random_generator_t&) = delete;
   random_generator_t& operator=(const random_generator_t&) = delete;
 
-  friend class piecewise_sampler_t;
+  friend struct piecewise_sampler_t;
 };
 
 template <>
@@ -37,7 +37,7 @@ vec2 random_generator_t::sample<vec2>();
 
 using RandomEngine = random_generator_t;
 
-class piecewise_sampler_t {
+struct piecewise_sampler_t {
  public:
   piecewise_sampler_t();
   piecewise_sampler_t(const float* weightsBegin, const float* weightsEnd);

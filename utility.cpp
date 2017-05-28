@@ -146,17 +146,17 @@ void loadEXR(const string& path, metadata_t& metadata, vector<vec3>& data) {
     std::vector<std::string> history = split(comments->value(), ';');
     metadata.num_samples = history.size();
   } else {
-    metadata.num_samples = num_samples ? num_samples->value() : std::size_t(1);
+    metadata.num_samples = num_samples ? std::size_t(num_samples->value()) : std::size_t(1);
   }
 
   metadata.num_basic_rays =
-      num_basic_rays ? num_basic_rays->value() : std::size_t(1);
+      num_basic_rays ? std::size_t(num_basic_rays->value()) : std::size_t(1);
   metadata.num_shadow_rays =
-      num_shadow_rays ? num_shadow_rays->value() : std::size_t(1);
+      num_shadow_rays ? std::size_t(num_shadow_rays->value()) : std::size_t(1);
   metadata.num_tentative_rays =
-      num_tentative_rays ? num_tentative_rays->value() : std::size_t(1);
-  metadata.num_photons = num_photons ? num_photons->value() : std::size_t(1);
-  metadata.num_threads = num_threads ? num_threads->value() : std::size_t(1);
+      num_tentative_rays ? std::size_t(num_tentative_rays->value()) : std::size_t(1);
+  metadata.num_photons = num_photons ? std::size_t(num_photons->value()) : std::size_t(1);
+  metadata.num_threads = num_threads ? std::size_t(num_threads->value()) : std::size_t(1);
 
   metadata.roulette = roulette ? roulette->value() : 0.0;
   metadata.radius = radius ? radius->value() : 0.0;
@@ -238,76 +238,6 @@ std::vector<vec3> vv4d_to_vv3f(std::size_t size, const dvec4* data) {
   }
 
   return result;
-}
-}
-
-#include <pwd.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-namespace haste {
-
-string homePath() {
-  const char* home = getenv("HOME");
-
-  if (home == nullptr) {
-    home = getpwuid(getuid())->pw_dir;
-  }
-
-  return home;
-}
-
-string baseName(string path) {
-  size_t index = path.find_last_of("/");
-
-  if (index != string::npos) {
-    return path.substr(index + 1, path.size());
-  } else {
-    return path;
-  }
-}
-
-string fixedPath(string base, string scene, int samples) {
-  string ext;
-  tie(base, ext) = splitext(base);
-
-  if (ext.empty()) {
-    ext = ".exr";
-  }
-
-  string sceneBase, sceneExt;
-  tie(sceneBase, sceneExt) = splitext(scene);
-
-  stringstream result;
-
-  if (!base.empty() && base[base.size() - 1] != '/') {
-    result << base << "." << baseName(sceneBase) << "." << samples << ext;
-  } else {
-    result << base << baseName(sceneBase) << "." << samples << ext;
-  }
-
-  return result.str();
-}
-
-pair<string, string> splitext(string path) {
-  size_t index = path.find_last_of(".");
-
-  if (index == string::npos || index == 0) {
-    return make_pair(path, string());
-  } else {
-    return make_pair(path.substr(0, index), path.substr(index, path.size()));
-  }
-}
-}
-
-#include <sys/stat.h>
-
-namespace haste {
-
-size_t getmtime(const string& path) {
-  struct stat buf;
-  stat(path.c_str(), &buf);
-  return buf.st_mtime;
 }
 
 dvec3 computeAVG(const string& path) {

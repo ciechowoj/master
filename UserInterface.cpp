@@ -49,7 +49,7 @@ void UserInterface::update(
 
     ImGui::InputFloat("max error", &maxError);
 
-    float numSamples = num_samples;
+    float numSamples = float(num_samples);
     ImGui::InputFloat("samples ", &numSamples);
 
     _updateComputeAverage();
@@ -65,7 +65,7 @@ void UserInterface::update(
         ImGui::PlotLines(
             "max error",
             maxErrors.data() + maxErrors.size() - offset + 1,
-            offset - 1,
+            int(offset - 1),
             0,
             NULL,
             0.0f,
