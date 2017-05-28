@@ -3,6 +3,7 @@
 #include <system_utils.hpp>
 #include <Technique.hpp>
 #include <GLFW/glfw3.h>
+#include <haste.hpp>
 
 namespace haste {
 
@@ -71,5 +72,9 @@ private:
         size_t height,
         const vec4* image);
 };
+
+
+function<void()> make_interface_updater(const shared<float>& scale, const shared<counters_t>& counters);
+
 
 }

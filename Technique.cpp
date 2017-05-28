@@ -61,6 +61,83 @@ double Technique::render(
     return epsilon;
 }
 
+void Technique::render(
+  subcontext_t* subcontext,
+  random_generator_t* generator)
+{
+  auto& cameras = _scene->cameras();
+
+  render_context_t context;
+  context.view_to_world_mat3 = cameras.view_to_world_mat3(subcontext->camera_id);
+  context.world_to_view_mat3 = cameras.world_to_view_mat3(subcontext->camera_id);
+  context.camera_position = cameras.position(subcontext->camera_id);
+  context.resolution = vec2(subcontext->width, subcontext->height);
+  context.resolution_y_inv = 1.0f / context.resolution.y;
+  context.focal_length_y = cameras.focal_length_y(
+    subcontext->camera_id,
+    context.resolution.x / context.resolution.y);
+  context.focal_factor_y = context.focal_length_y * context.focal_length_y * 0.25f;
+  context.generator = generator;
+
+  if (!std::isfinite(_rendering_start_time)) {
+    _rendering_start_time = high_resolution_time();
+    _previous_frame_time = high_resolution_time();
+  }
+
+  size_t num_basic_rays = _scene->numNormalRays();
+  size_t num_shadow_rays = _scene->numShadowRays();
+
+  _preprocess(*generator, double(_metadata.num_samples));
+
+  auto shoot = [&](float x, float y) -> Ray {
+    vec2 position = vec2(x + context.generator->sample(), y + context.generator->sample());
+
+    vec3 direction = ray_direction(
+      position,
+      context.resolution,
+      context.resolution_y_inv,
+      context.focal_length_y);
+
+    return { context.camera_position, context.view_to_world_mat3 * direction };
+  };
+
+  for (int y = 0; y < subcontext->height; ++y) {
+    for (int x = 0; x < subcontext->width; ++x) {
+      const Ray ray = shoot(float(x), float(y));
+      context.pixel_position = vec2(x, y);
+      context.pixel_index = y * subcontext->width + x;
+      subcontext->camera_image[y * subcontext->width + x] += _traceEye(context, ray);
+    }
+
+    ++y;
+
+    if (y < subcontext->height) {
+      for (int x = subcontext->width; x != 0; --x) {
+        const Ray ray = shoot(float(x - 1), float(y));
+        context.pixel_position = vec2(x - 1, y);
+        context.pixel_index = y * subcontext->width + x - 1;
+        subcontext->camera_image[y * subcontext->width + x - 1] += _traceEye(context, ray);
+      }
+    }
+  }
+
+  double current = high_resolution_time();
+  _frame_time = current - _previous_frame_time;
+  _previous_frame_time = current;
+
+  _metadata.technique = id();
+  ++_metadata.num_samples;
+  _metadata.num_basic_rays += _scene->numNormalRays() - num_basic_rays;
+  _metadata.num_shadow_rays += _scene->numShadowRays() - num_shadow_rays;
+  _metadata.num_tentative_rays += 0;
+
+  _metadata.num_threads = _threadpool.num_threads();
+  _metadata.resolution = ivec2(subcontext->width, subcontext->height);
+  _metadata.epsilon = 0.0f;
+  _metadata.total_time = current - _rendering_start_time;
+  _metadata.average = glm::vec3(0.0f, 0.0f, 0.0f);
+}
+
 const metadata_t& Technique::metadata() const {
     return _metadata;
 }

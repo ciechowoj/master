@@ -7,6 +7,7 @@
 #include <Scene.hpp>
 #include <threadpool.hpp>
 #include <mutex>
+#include <haste.hpp>
 
 namespace haste {
 
@@ -34,6 +35,10 @@ public:
         ImageView& view,
         RandomEngine& engine,
         size_t cameraId);
+
+    virtual void render(
+      subcontext_t* subcontext,
+      random_generator_t* generator);
 
     virtual string name() const = 0;
     virtual string id() const = 0;

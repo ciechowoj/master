@@ -13,7 +13,6 @@ template <class T> using shared = std::shared_ptr<T>;
 struct Options {
     enum Technique { PT, BPT, VCM, UPG, Viewer };
     enum Action { Render, AVG, SUB, Errors, Merge, Filter, Time };
-    enum Mode { Interactive, Batch, Fast };
 
     string input0;
     string input1;
@@ -27,7 +26,8 @@ struct Options {
     double alpha = 0.75f;
     double beta = 1.0f;
     double roulette = 0.9;
-    Mode batch = Options::Interactive;
+    bool batch = false;
+    bool fast = false;
     bool quiet = false;
     bool enable_vc = true;
     bool enable_vm = true;

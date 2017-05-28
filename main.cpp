@@ -48,37 +48,72 @@ unittest() {
     assert_almost_eq(m * vec4(1.0f), vec4(1.0f, 2.0f, 1.0f, 1.0f));
 }
 
+function<void(subcontext_t*, const scene_t*)> make_renderer(Options options) {
+  auto device = std::shared_ptr<__RTCDevice>(rtcNewDevice(NULL), rtcDeleteDevice);
+  runtime_assert(device != nullptr);
+
+  options.numThreads = 1;
+
+  auto scene = loadScene(options);
+  scene->buildAccelStructs(device.get());
+
+  auto technique = makeTechnique(scene, options);
+
+  auto generator = make_shared<random_generator_t>();
+
+  return [=](subcontext_t* subcontext, const scene_t*) {
+    technique->render(subcontext, generator.get());
+  };
+}
+
 int run_fast(Options options) {
-	GLFWwindow* window = setup_glfw_window(
+	GLFWwindow* window = options.batch ? nullptr : setup_glfw_window(
 		options.width,
 		options.height,
 		options.caption().c_str());
 
-	{
+	{ // scope
 		context_t context(options);
 
-    context.render = [=](subcontext_t* subcontext, const scene_t* scene) {
-      auto& image = subcontext->camera_image;
-      fill(image.begin(), image.end(), dvec3(1.0, 0.0, 0.0));
-    };
+    context.render = make_renderer(options);
 
-    context.update = [=](context_t* context, const scene_t* scene) {
-      update_glfw_window(window, context->image.data());
-      return glfwWindowShouldClose(window);
+    auto scale = make_shared<float>(10.0f);
+    auto counters = make_shared<counters_t>();
+
+    context.update = [=](context_t* context, const scene_t* scene) -> bool {
+      *counters = context->counters;
+
+      if (window) {
+        update_glfw_window(window, context->image.data());
+        return glfwWindowShouldClose(window);
+      }
+      else {
+        auto elapsed_time = context->counters.elapsed_time;
+        auto num_samples = context->counters.num_samples;
+        std::cout << "Time per sample: " << elapsed_time / num_samples << std::endl;
+        return false;
+      }
     };
 
 		context.finish = [=](context_t*) {
-      glfwSetWindowShouldClose(window, GLFW_TRUE);
+      if (window) {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+      }
 		};
 
 		threadpool_t threadpool;
 		render(&context, &threadpool, nullptr, 1024);
-		run_glfw_window_loop(window);
+
+    if (window) {
+		  run_glfw_window_loop(window, scale, make_interface_updater(scale, counters));
+    }
 	}
 
-	cleanup_glfw_window(window);
+  if (window) {
+	  cleanup_glfw_window(window);
+  }
 
-    return 0;
+  return 0;
 }
 
 int main(int argc, char **argv) {
@@ -113,17 +148,17 @@ int main(int argc, char **argv) {
     else if (options.action == Options::Time) {
         print_time(options.input0);
     }
-	else if (options.batch == Options::Fast) {
+	else if (options.fast) {
 		return run_fast(options);
 	}
 	else {
         Application application(options);
 
-        switch (options.batch) {
-            case Options::Interactive:
-                return application.run(options.width, options.height, options.caption());
-            case Options::Batch:
-                return application.runBatch(options.width, options.height);
+        if (options.batch) {
+          return application.runBatch(options.width, options.height);
+        }
+        else {
+          return application.run(options.width, options.height, options.caption());
         }
     }
 

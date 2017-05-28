@@ -157,4 +157,28 @@ void UserInterface::_updateStatistics(
     }
 }
 
+
+function<void()> make_interface_updater(const shared<float>& scale, const shared<counters_t>& counters) {
+  return [=]() {
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(300, 256), ImGuiSetCond_Once);
+
+    ImGui::Begin("Statistics");
+
+    int num_errors = int(counters->num_errors);
+    int num_samples = int(counters->num_samples);
+    float elapsed_time = counters->elapsed_time;
+    float time_per_sample = elapsed_time / float(num_samples);
+
+    ImGui::InputInt("Errors number: ", &num_errors);
+    ImGui::InputInt("Samples number: ", &num_samples);
+    ImGui::InputFloat("Elased time: ", &elapsed_time);
+    ImGui::InputFloat("Time per sample: ", &time_per_sample);
+    ImGui::SliderFloat("brightness", scale.get(), 0.0f, 50.0f);
+
+    ImGui::End();
+  };
+}
+
+
 }

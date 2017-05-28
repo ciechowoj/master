@@ -1,3 +1,4 @@
+#pragma once
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
 #include <vector>
@@ -17,6 +18,8 @@ using namespace glm;
 struct counters_t {
 	size_t num_errors = 0;
 	size_t num_samples = 0;
+  double start_time = 0.0;
+  double elapsed_time = 0.0;
 
 	void add(const counters_t& counters) {
 		num_errors += counters.num_errors;

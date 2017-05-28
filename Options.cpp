@@ -463,24 +463,13 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
-        if (dict.count("--batch") + dict.count("--interactive") + dict.count("--fast") > 1) {
-            options.displayHelp = true;
-            options.displayMessage = "Only one of --batch, --interactive and --fast can be used.";
-            return options;
-        }
-
-        if (dict.count("--interactive")) {
-            options.batch = Options::Interactive;
-            dict.erase("--interactive");
-        }
-
         if (dict.count("--batch")) {
-            options.batch = Options::Batch;
+            options.batch = true;
             dict.erase("--batch");
         }
 
         if (dict.count("--fast")) {
-            options.batch = Options::Fast;
+            options.fast = true;
             dict.erase("--fast");
         }
 

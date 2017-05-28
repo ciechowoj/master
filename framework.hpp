@@ -7,7 +7,7 @@
 
 GLFWwindow* setup_glfw_window(int width, int height, const char* caption);
 void update_glfw_window(GLFWwindow* window, glm::dvec4* data);
-void run_glfw_window_loop(GLFWwindow* window);
+void run_glfw_window_loop(GLFWwindow* window, const std::shared_ptr<float>& scale, std::function<void()> update_interface);
 void cleanup_glfw_window(GLFWwindow* window);
 
 struct window_context_t {
@@ -26,7 +26,6 @@ struct window_context_t {
   std::vector<glm::vec4> buffer;
   bool trigger = true;
 	bool ready = false;
-  float scale = 1.0f;
 };
 
 int run(int width, int height, const std::function<void(GLFWwindow* window)>& func);

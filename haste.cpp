@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iostream>
 #include <haste.hpp>
+#include <utility.hpp>
 
 namespace haste {
 
@@ -66,6 +67,8 @@ void render(context_t* context, threadpool_t* threadpool, const scene_t* scene, 
   auto threads_finished = std::make_shared<size_t>();
   auto samples_mutex = std::make_shared<std::mutex>();
 
+  context->counters.start_time = high_resolution_time();
+
   for (size_t i = 0; i < num_threads; ++i) {
     size_t local_num_samples = std::min(left_num_samples, thread_num_samples);
     left_num_samples -= thread_num_samples;
@@ -79,12 +82,13 @@ void render(context_t* context, threadpool_t* threadpool, const scene_t* scene, 
 		      subcontext.sample_number = ++(*samples_started);
 		    }
 
-		    context->render(&subcontext, scene);
+		    subcontext.render(&subcontext, scene);
 		    ++subcontext.counters.num_samples;
 
 		    { // scope
 		      auto lock = std::unique_lock<std::mutex>(*samples_mutex);
 		      commit_image(context, &subcontext);
+          context->counters.elapsed_time = high_resolution_time() - context->counters.start_time;
           if (context->update(context, scene)) {
             break;
           }

@@ -293,7 +293,7 @@ void update_glfw_window(GLFWwindow* window, glm::dvec4* data) {
 	}
 }
 
-void run_glfw_window_loop(GLFWwindow* window) {
+void run_glfw_window_loop(GLFWwindow* window, const std::shared_ptr<float>& scale, std::function<void()> update_interface) {
 	auto context = (window_context_t*)glfwGetWindowUserPointer(window);
 
 	while (!glfwWindowShouldClose(window)) {
@@ -322,13 +322,13 @@ void run_glfw_window_loop(GLFWwindow* window) {
 
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-
-        draw_fullscreen_quad(window, std::vector<glm::vec4>(), context->scale);
         context->ready = false;
         context->trigger = true;
       }
     }
-		
+
+    draw_fullscreen_quad(window, std::vector<glm::vec4>(), *scale);
+    update_interface();
 		ImGui::Render();
 		glfwSwapBuffers(window);
 		glfwPollEvents();
