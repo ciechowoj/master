@@ -16,11 +16,11 @@
 #include <chrono>
 #include <atomic>
 
-GLFWwindow* create_window(int x, int y, const std::string& caption) {
+GLFWwindow* create_window(int x, int y, const char* caption) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    return glfwCreateWindow(x, y, caption.c_str(), NULL, NULL);
+    return glfwCreateWindow(x, y, caption, NULL, NULL);
 }
 
 GLuint create_shader(GLenum type, const std::string& source) {
@@ -194,34 +194,163 @@ void window_resize(GLFWwindow* window, int width, int height) {
     }
 
     if (context->texture_width != width || context->texture_height != height) {
-        glBindTexture(GL_TEXTURE_2D, context->texture_id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
-        glGenSamplers(1, &context->sampler_id);
-        glSamplerParameteri(context->sampler_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glSamplerParameteri(context->sampler_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glBindTexture(GL_TEXTURE_2D, context->texture_id);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+      glGenSamplers(1, &context->sampler_id);
+      glSamplerParameteri(context->sampler_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glSamplerParameteri(context->sampler_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, context->pixel_buffer_id);
+
+      glBufferData(
+        GL_PIXEL_UNPACK_BUFFER,
+        width * height * sizeof(glm::vec4),
+        nullptr,
+        GL_STREAM_DRAW);
+
+      void* pointer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
+
+      if (pointer) {
+        ::memset(pointer, 0, width * height * sizeof(glm::vec4));
+        glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+      }
+
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+      context->texture_width = width;
+      context->texture_height = height;
+    }
+
+    std::cerr << "Window resized to (" << width << ", " << height << ")." << std::endl;
+}
+
+GLFWwindow* setup_glfw_window(int width, int height, const char* caption) {
+
+	if (!glfwInit()) {
+		std::cerr << "Cannot initialize glfw." << std::endl;
+		return nullptr;
+	}
+
+	auto window = create_window(width, height, caption);
+
+	if (!window) {
+		std::cerr << "Cannot create window." << std::endl;
+		glfwTerminate();
+		return nullptr;
+	}
+
+	glfwMakeContextCurrent(window);
+	glfwSwapInterval(0);
+
+	if (!gladLoadGL()) {
+		std::cerr << "Cannot load glad extensions." << std::endl;
+		glfwTerminate();
+		return nullptr;
+	}
+
+	std::cerr << "Loaded OpenGL "
+		<< GLVersion.major << "."
+		<< GLVersion.minor << " profile."
+		<< std::endl;
+
+	window_context_t* context = new window_context_t();
+	glfwSetWindowUserPointer(window, context);
+	glfwSetWindowSizeCallback(window, window_resize);
+	window_resize(window, width, height);
+	context->program_id = create_program();
+	context->sampler_location = glGetUniformLocation(context->program_id, "sampler");
+	context->scale_location = glGetUniformLocation(context->program_id, "scale");
+
+	glGenVertexArrays(1, &context->varray_id);
+	glBindVertexArray(context->varray_id);
+
+	context->buffer_id = create_fullscreen_quad();
+
+	auto& io = ImGui::GetIO();
+	io.IniFilename = nullptr;
+	ImGui_ImplGlfwGL3_Init(window, true);
+
+	return window;
+}
+
+void update_glfw_window(GLFWwindow* window, glm::dvec4* data) {
+	auto context = (window_context_t*)glfwGetWindowUserPointer(window);
+	auto lock = std::unique_lock<std::mutex>(context->mutex);
+
+	if (context->trigger) {
+    size_t size = context->texture_width * context->texture_height;
+
+    if (context->buffer.size() != size) {
+      context->buffer.resize(size);
+    }
+
+    for (size_t i = 0; i < size; ++i) {
+      context->buffer[i] = data[i];
+    }
+
+    context->trigger = false;
+    context->ready = true;
+	}
+}
+
+void run_glfw_window_loop(GLFWwindow* window) {
+	auto context = (window_context_t*)glfwGetWindowUserPointer(window);
+
+	while (!glfwWindowShouldClose(window)) {
+		glViewport(0, 0, context->texture_width, context->texture_height);
+		ImGui_ImplGlfwGL3_NewFrame();
+
+		glClearColor(0, 0, 1, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		
+    { // scope
+      auto lock = std::unique_lock<std::mutex>(context->mutex);
+
+      if (context->ready) {
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, context->pixel_buffer_id);
-
-        glBufferData(
-            GL_PIXEL_UNPACK_BUFFER,
-            width * height * sizeof(glm::vec4),
-            nullptr,
-            GL_STREAM_DRAW);
-
         void* pointer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
 
         if (pointer) {
-            ::memset(pointer, 0, width * height * sizeof(glm::vec4));
-            glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+          auto dst = (glm::vec4*)pointer;
+
+          for (size_t i = 0; i < context->buffer.size(); ++i) {
+            dst[i] = context->buffer[i];
+          }
+
+          glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
         }
 
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-        context->texture_width = width;
-        context->texture_height = height;
-    }
 
-    std::cerr << "Window resized to (" << width << ", " << height << ")." << std::endl;
+        draw_fullscreen_quad(window, std::vector<glm::vec4>(), context->scale);
+        context->ready = false;
+        context->trigger = true;
+      }
+    }
+		
+		ImGui::Render();
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+}
+
+void cleanup_glfw_window(GLFWwindow* window) {
+	if (window)
+	{
+		auto context = (window_context_t*)glfwGetWindowUserPointer(window);
+
+		if (context->texture_created) {
+			glDeleteTextures(1, &context->texture_id);
+		}
+
+		glDeleteVertexArrays(1, &context->varray_id);
+
+		delete context;
+
+		glfwTerminate();
+	}
 }
 
 int run(
@@ -230,61 +359,11 @@ int run(
     const std::string& caption,
     const std::function<void(GLFWwindow* window)>& func)
 {
-    if (!glfwInit()) {
-        std::cerr << "Cannot initialize glfw." << std::endl;
-        return -1;
-    }
-
-    auto window = create_window(width, height, caption);
-
-    if (!window) {
-        std::cerr << "Cannot create window." << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(0);
-
-    if (!gladLoadGL()) {
-        std::cerr << "Cannot load glad extensions." << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-
-    std::cerr << "Loaded OpenGL "
-        << GLVersion.major << "."
-        << GLVersion.minor << " profile."
-        << std::endl;
-
-    window_context_t* context = new window_context_t();
-    glfwSetWindowUserPointer(window, context);
-    glfwSetWindowSizeCallback(window, window_resize);
-    window_resize(window, width, height);
-    context->program_id = create_program();
-    context->sampler_location = glGetUniformLocation(context->program_id, "sampler");
-    context->scale_location = glGetUniformLocation(context->program_id, "scale");
-
-    glGenVertexArrays(1, &context->varray_id);
-    glBindVertexArray(context->varray_id);
-
-    context->buffer_id = create_fullscreen_quad();
-
-    auto& io = ImGui::GetIO();
-    io.IniFilename = nullptr;
-    ImGui_ImplGlfwGL3_Init(window, true);
+	auto window = setup_glfw_window(width, height, caption.c_str());
 
     func(window);
 
-    if (context->texture_created) {
-        glDeleteTextures(1, &context->texture_id);
-    }
-
-    glDeleteVertexArrays(1, &context->varray_id);
-
-    delete context;
-
-    glfwTerminate();
+	cleanup_glfw_window(window);
 
     return 0;
 }
@@ -439,3 +518,7 @@ void Framework::quit() {
 bool Framework::batch() const {
     return _window != nullptr;
 }
+
+
+
+

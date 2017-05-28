@@ -13,6 +13,8 @@
 #include <set>
 #include <mutex>
 
+#include <haste.hpp>
+
 using namespace std;
 using namespace haste;
 
@@ -47,6 +49,35 @@ unittest() {
 }
 
 int run_fast(Options options) {
+	GLFWwindow* window = setup_glfw_window(
+		options.width,
+		options.height,
+		options.caption().c_str());
+
+	{
+		context_t context(options);
+
+    context.render = [=](subcontext_t* subcontext, const scene_t* scene) {
+      auto& image = subcontext->camera_image;
+      fill(image.begin(), image.end(), dvec3(1.0, 0.0, 0.0));
+    };
+
+    context.update = [=](context_t* context, const scene_t* scene) {
+      update_glfw_window(window, context->image.data());
+      return glfwWindowShouldClose(window);
+    };
+
+		context.finish = [=](context_t*) {
+      glfwSetWindowShouldClose(window, GLFW_TRUE);
+		};
+
+		threadpool_t threadpool;
+		render(&context, &threadpool, nullptr, 1024);
+		run_glfw_window_loop(window);
+	}
+
+	cleanup_glfw_window(window);
+
     return 0;
 }
 
@@ -82,7 +113,10 @@ int main(int argc, char **argv) {
     else if (options.action == Options::Time) {
         print_time(options.input0);
     }
-    else {
+	else if (options.batch == Options::Fast) {
+		return run_fast(options);
+	}
+	else {
         Application application(options);
 
         switch (options.batch) {
@@ -90,8 +124,6 @@ int main(int argc, char **argv) {
                 return application.run(options.width, options.height, options.caption());
             case Options::Batch:
                 return application.runBatch(options.width, options.height);
-            case Options::Fast:
-                return run_fast(options);
         }
     }
 

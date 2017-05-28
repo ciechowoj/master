@@ -159,6 +159,7 @@
     <ClCompile Include="BPT.cpp" />
     <ClCompile Include="BSDF.cpp" />
     <ClCompile Include="Cameras.cpp" />
+    <ClCompile Include="haste.cpp" />
     <ClCompile Include="system_utils.cpp" />
     <ClCompile Include="framework.cpp" />
     <ClCompile Include="Geometry.cpp" />
@@ -217,6 +218,7 @@
     <ClInclude Include="BPT.hpp" />
     <ClInclude Include="BSDF.hpp" />
     <ClInclude Include="Cameras.hpp" />
+    <ClInclude Include="haste.hpp" />
     <ClInclude Include="system_utils.hpp" />
     <ClInclude Include="fixed_vector.hpp" />
     <ClInclude Include="framework.hpp" />
