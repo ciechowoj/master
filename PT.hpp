@@ -30,4 +30,5 @@ class PathTracing : public Technique {
   const float _roulette;
   const float _beta;
 };
+
 }

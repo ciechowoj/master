@@ -116,6 +116,82 @@ int run_fast(Options options) {
   return 0;
 }
 
+
+
+int run_helper_action(Options options) {
+  if (options.action == Options::AVG) {
+    printAVG(options.input0);
+  }
+  else if (options.action == Options::Errors) {
+    print_errors(options.input0, options.input1);
+  }
+  else if (options.action == Options::SUB) {
+    subtract(options.output, options.input0, options.input1);
+  }
+  else if (options.action == Options::Merge) {
+    merge(options.output, options.input0, options.input1);
+  }
+  else if (options.action == Options::Filter) {
+    filter_out_nan(options.output, options.input0);
+  }
+  else if (options.action == Options::Time) {
+    print_time(options.input0);
+  }
+
+  return 0;
+}
+
+int run_render_action(Options options) {
+  GLFWwindow* window = options.batch ? nullptr : setup_glfw_window(
+    options.width,
+    options.height,
+    options.caption().c_str());
+
+  { // scope
+    context_t context(options);
+
+    context.render = make_renderer(options);
+
+    auto scale = make_shared<float>(10.0f);
+    auto counters = make_shared<counters_t>();
+
+    context.update = [=](context_t* context, const scene_t* scene) -> bool {
+      *counters = context->counters;
+
+      if (window) {
+        update_glfw_window(window, context->image.data());
+        return glfwWindowShouldClose(window);
+      }
+      else {
+        auto elapsed_time = context->counters.elapsed_time;
+        auto num_samples = context->counters.num_samples;
+        std::cout << "Time per sample: " << elapsed_time / num_samples << std::endl;
+        return false;
+      }
+    };
+
+    context.finish = [=](context_t*) {
+      if (window) {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+      }
+    };
+
+    threadpool_t threadpool;
+    render_blocks(&context, &threadpool, nullptr, 1024);
+
+    if (window) {
+      run_glfw_window_loop(window, scale, make_interface_updater(scale, counters));
+    }
+  }
+
+  if (window) {
+    cleanup_glfw_window(window);
+  }
+
+  return 0;
+
+}
+
 int main(int argc, char **argv) {
     if (!run_all_tests())
         return 1;
@@ -124,33 +200,20 @@ int main(int argc, char **argv) {
     _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 
     Options options = parseArgs(argc, argv);
+
     auto status = displayHelpIfNecessary(options, "0.0.1");
 
     if (status.first) {
         return status.second;
     }
 
-    if (options.action == Options::AVG) {
-        printAVG(options.input0);
+    if (options.action != Options::Action::Render) {
+      return run_helper_action(options);
     }
-    else if (options.action == Options::Errors) {
-        print_errors(options.input0, options.input1);
+    else {
+      return run_render_action(options);
     }
-    else if (options.action == Options::SUB) {
-        subtract(options.output, options.input0, options.input1);
-    }
-    else if (options.action == Options::Merge) {
-        merge(options.output, options.input0, options.input1);
-    }
-    else if (options.action == Options::Filter) {
-        filter_out_nan(options.output, options.input0);
-    }
-    else if (options.action == Options::Time) {
-        print_time(options.input0);
-    }
-	else if (options.fast) {
-		return run_fast(options);
-	}
+
 	else {
         Application application(options);
 
