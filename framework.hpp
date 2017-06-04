@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <functional>
+#include <mutex>
+#include <memory>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 

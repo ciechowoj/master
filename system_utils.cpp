@@ -24,8 +24,8 @@ string homePath() {
 	const char* home = getenv("HOME");
 
 	if (home == nullptr) {
-		char path[MAX_PATH];
 		#if defined _MSC_VER
+		char path[MAX_PATH];
 		SHGetFolderPathA(NULL, CSIDL_PROFILE, NULL, 0, path);
 		return path;
 		#else
