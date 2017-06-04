@@ -12,4 +12,6 @@ string homePath();
 string baseName(string path);
 size_t getmtime(const string& path);
 
+string fullpath(string relative_path);
+
 }

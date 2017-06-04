@@ -62,7 +62,7 @@ string make_output_path(
          << num_samples << "." << technique
          << (snapshot ? ".snapshot" : "") << ".exr";
 
-  return stream.str();
+  return fullpath(stream.str());
 }
 
 

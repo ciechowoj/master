@@ -66,7 +66,7 @@ void save_exr(
   framebuffer.insert("B", B);
 
   file.setFrameBuffer(framebuffer);
-  file.writePixels(height);
+  file.writePixels(iheight);
 }
 
 void save_exr(
@@ -80,6 +80,16 @@ void save_exr(
   save_exr(path, metadata, width, height, data.data());
 }
 
+void load_metadata(const InputFile& file, map<string, string>& metadata) {
+  for (auto itr = file.header().begin(); itr != file.header().end(); ++itr) {
+    auto typeName = itr.attribute().typeName();
+
+    if (std::strcmp(typeName, "string") == 0) {
+      metadata[itr.name()] = static_cast<const StringAttribute&>(itr.attribute()).value();
+    }
+  }
+}
+
 void load_exr(
   const string& path,
   map<string, string>& metadata,
@@ -88,6 +98,8 @@ void load_exr(
   vector<vec3>& data)
 {
   InputFile file(path.c_str());
+
+  load_metadata(file, metadata);
 
   auto window = file.header().dataWindow();
   int iwidth = window.max.x - window.min.x + 1;
@@ -214,7 +226,7 @@ void save_exr(
   framebuffer.insert("denom", D);
 
   file.setFrameBuffer(framebuffer);
-  file.writePixels(height);
+  file.writePixels(iheight);
 }
 
 void save_exr(
@@ -234,7 +246,10 @@ void load_exr(
   size_t& width,
   size_t& height,
   vector<vec4>& data)
-{  InputFile file(path.c_str());
+{  
+  InputFile file(path.c_str());
+
+  load_metadata(file, metadata);
 
   auto window = file.header().dataWindow();
   int iwidth = window.max.x - window.min.x + 1;
@@ -283,7 +298,8 @@ void load_exr(
   const string& path,
   map<string, string>& metadata)
 {
-
+  InputFile file(path.c_str());
+  load_metadata(file, metadata);
 }
 
 vec3 exr_average(string path) {

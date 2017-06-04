@@ -59,4 +59,15 @@ size_t getmtime(const string& path) {
 	return buf.st_mtime;
 }
 
+string fullpath(string relative_path) {
+  #ifdef _MSC_VER
+  auto buffer = _fullpath(nullptr, relative_path.c_str(), 0);
+  auto result = std::string(buffer);
+  std::free(buffer);
+  return result;
+  #else
+  return relative_path;
+  #endif
+}
+
 }

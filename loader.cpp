@@ -324,7 +324,7 @@ Mesh aiMeshToMesh(const aiMesh* mesh, uint32_t materials_base,
 
       for (size_t k = 0; k < 3; ++k) {
         unsigned index = mesh->mFaces[j].mIndices[k];
-        result.indices[j * 3 + k] = j * 3 + k;
+        result.indices[j * 3 + k] = int(j * 3 + k);
         result.tangents[j * 3 + k][1] = toVec3(mesh->mNormals[index]);
         result.vertices[j * 3 + k] = toVec3(mesh->mVertices[index]);
       }

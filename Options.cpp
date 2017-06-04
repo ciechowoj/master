@@ -11,13 +11,17 @@
 #include <Viewer.hpp>
 
 #include <exr.hpp>
+#include <system_utils.hpp>
 
 namespace haste {
 
 using std::map;
 using std::strstr;
 using std::make_pair;
+
+#if !defined _MSC_VER
 using namespace std::__cxx11;
+#endif
 
 static const char help[] =
 R"(
@@ -314,7 +318,7 @@ Options parseArgs(int argc, char const* const* argv) {
         return options;
     }
     else {
-        options.input0 = dict["--input"];
+        options.input0 = fullpath(dict["--input"]);
         dict.erase("--input");
 
         size_t numTechniqes =
@@ -585,7 +589,7 @@ Options parseArgs(int argc, char const* const* argv) {
                 return options;
             }
             else {
-                options.output = dict["--output"];
+                options.output = fullpath(dict["--output"]);
                 dict.erase("--output");
             }
         }
@@ -602,7 +606,7 @@ Options parseArgs(int argc, char const* const* argv) {
                 return options;
             }
             else {
-                options.reference = dict["--reference"];
+                options.reference = fullpath(dict["--reference"]);
                 dict.erase("--reference");
             }
         }
@@ -715,6 +719,12 @@ shared<Technique> makeViewer(Options& options) {
 
     load_exr(options.input0, metadata, width, height, data);
 
+    for (auto&& itr : metadata) {
+      std::cout << itr.first << ": " << itr.second << "\n";
+    }
+
+    std::cout.flush();
+
     return std::make_shared<Viewer>(vv3f_to_vv4d(data), width, height);
 }
 
@@ -804,7 +814,6 @@ string to_string(const Options::Technique& technique) {
     }
 }
 
-
 Options::Technique technique(string technique) {
     if (technique == "BPT")
         return Options::BPT;
@@ -857,33 +866,33 @@ map<string, string> Options::to_dict()
     using std::to_string;
 
     map<string, string> result;
-    result["input0"] = input0;
-    result["input1"] = input1;
-    result["output"] = output;
-    result["reference"] = reference;
-    result["technique"] = to_string(technique);
-    result["action"] = to_string(action);
-    result["num_photons"] = to_string(num_photons);
-    result["radius"] = to_string(radius);
-    result["max_path"] = to_string(max_path);
-    result["alpha"] = to_string(alpha);
-    result["beta"] = to_string(beta);
-    result["roulette"] = to_string(roulette);
-    result["batch"] = to_string(batch);
-    result["quiet"] = to_string(quiet);
-    result["enable_vc"] = to_string(enable_vc);
-    result["enable_vm"] = to_string(enable_vm);
-    result["lights"] = to_string(lights);
-    result["num_samples"] = to_string(num_samples);
-    result["num_seconds"] = to_string(num_seconds);
-    result["num_threads"] = to_string(num_threads);
-    result["reload"] = to_string(reload);
-    result["enable_seed"] = to_string(enable_seed);
-    result["seed"] = to_string(seed);
-    result["snapshot"] = to_string(snapshot);
-    result["camera_id"] = to_string(camera_id);
-    result["width"] = to_string(width);
-    result["height"] = to_string(height);
+    result["options.input0"] = input0;
+    result["options.input1"] = input1;
+    result["options.output"] = output;
+    result["options.reference"] = reference;
+    result["options.technique"] = to_string(technique);
+    result["options.action"] = to_string(action);
+    result["options.num_photons"] = to_string(num_photons);
+    result["options.radius"] = to_string(radius);
+    result["options.max_path"] = to_string(max_path);
+    result["options.alpha"] = to_string(alpha);
+    result["options.beta"] = to_string(beta);
+    result["options.roulette"] = to_string(roulette);
+    result["options.batch"] = to_string(batch);
+    result["options.quiet"] = to_string(quiet);
+    result["options.enable_vc"] = to_string(enable_vc);
+    result["options.enable_vm"] = to_string(enable_vm);
+    result["options.lights"] = to_string(lights);
+    result["options.num_samples"] = to_string(num_samples);
+    result["options.num_seconds"] = to_string(num_seconds);
+    result["options.num_threads"] = to_string(num_threads);
+    result["options.reload"] = to_string(reload);
+    result["options.enable_seed"] = to_string(enable_seed);
+    result["options.seed"] = to_string(seed);
+    result["options.snapshot"] = to_string(snapshot);
+    result["options.camera_id"] = to_string(camera_id);
+    result["options.width"] = to_string(width);
+    result["options.height"] = to_string(height);
     return result;
 }
 
@@ -899,38 +908,37 @@ string Options::get_output() const {
             to_string(technique));
 }
 
-
 Options dict_to_config(const map<string, string>& dict)
 {
     Options result;
 
-    result.input0 = dict.find("input0")->second;
-    result.input1 = dict.find("input1")->second;
-    result.output = dict.find("output")->second;
-    result.reference = dict.find("reference")->second;
-    result.technique = haste::technique(dict.find("technique")->second);
-    result.action = haste::action(dict.find("action")->second);
-    result.num_photons = stoll(dict.find("num_photons")->second);
-    result.radius = stod(dict.find("radius")->second);
-    result.max_path = stoll(dict.find("max_path")->second);
-    result.alpha = stod(dict.find("alpha")->second);
-    result.beta = stod(dict.find("beta")->second);
-    result.roulette = stod(dict.find("roulette")->second);
-    result.batch = stoi(dict.find("batch")->second);
-    result.quiet = stoi(dict.find("quiet")->second);
-    result.enable_vc = stoi(dict.find("enable_vc")->second);
-    result.enable_vm = stoi(dict.find("enable_vm")->second);
-    result.lights = stod(dict.find("lights")->second);
-    result.num_samples = stoll(dict.find("num_samples")->second);
-    result.num_seconds = stod(dict.find("num_seconds")->second);
-    result.num_threads = stoll(dict.find("num_threads")->second);
-    result.reload = stoi(dict.find("reload")->second);
-    result.enable_seed = stoi(dict.find("enable_seed")->second);
-    result.seed = stoll(dict.find("seed")->second);
-    result.snapshot = stoll(dict.find("snapshot")->second);
-    result.camera_id = stoll(dict.find("camera_id")->second);
-    result.width = stoll(dict.find("width")->second);
-    result.height = stoll(dict.find("height")->second);
+    result.input0 = dict.find("options.input0")->second;
+    result.input1 = dict.find("options.input1")->second;
+    result.output = dict.find("options.output")->second;
+    result.reference = dict.find("options.reference")->second;
+    result.technique = haste::technique(dict.find("options.technique")->second);
+    result.action = haste::action(dict.find("options.action")->second);
+    result.num_photons = stoll(dict.find("options.num_photons")->second);
+    result.radius = stod(dict.find("options.radius")->second);
+    result.max_path = stoll(dict.find("options.max_path")->second);
+    result.alpha = stod(dict.find("options.alpha")->second);
+    result.beta = stod(dict.find("options.beta")->second);
+    result.roulette = stod(dict.find("options.roulette")->second);
+    result.batch = stoi(dict.find("options.batch")->second);
+    result.quiet = stoi(dict.find("options.quiet")->second);
+    result.enable_vc = stoi(dict.find("options.enable_vc")->second);
+    result.enable_vm = stoi(dict.find("options.enable_vm")->second);
+    result.lights = stod(dict.find("options.lights")->second);
+    result.num_samples = stoll(dict.find("options.num_samples")->second);
+    result.num_seconds = stod(dict.find("options.num_seconds")->second);
+    result.num_threads = stoll(dict.find("options.num_threads")->second);
+    result.reload = stoi(dict.find("options.reload")->second);
+    result.enable_seed = stoi(dict.find("options.enable_seed")->second);
+    result.seed = stoll(dict.find("options.seed")->second);
+    result.snapshot = stoll(dict.find("options.snapshot")->second);
+    result.camera_id = stoll(dict.find("options.camera_id")->second);
+    result.width = stoll(dict.find("options.width")->second);
+    result.height = stoll(dict.find("options.height")->second);
 
     return result;
 }
