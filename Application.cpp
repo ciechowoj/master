@@ -44,6 +44,21 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
     _generator.seed(_options.seed + _num_samples());
   }
 
+  if (_options.action == Options::Continue) {
+    map<string, string> metadata;
+    size_t width = 0; height = 0;
+    vector<vec4> image;
+    load_exr(_options.output, metadata, width, height, image);
+
+    std::transform(
+      image.begin(),
+      image.end(),
+      data,
+      [](vec4 x) { return dvec4(x); });
+
+    _options.action = Options::Render;
+  }
+
   double epsilon = _technique->render(view, _generator, _options.camera_id);
 
   if (_options.technique != Options::Viewer) {

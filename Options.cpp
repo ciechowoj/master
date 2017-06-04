@@ -274,6 +274,21 @@ Options parseTimeArgs(int argc, char const* const* argv) {
     return options;
 }
 
+Options parseContinueArgs(int argc, char const* const* argv) {
+  Options options;
+
+  if (argc != 3) {
+    options.displayHelp = true;
+    options.displayMessage = "Input file is required.";
+  }
+  else {
+    options.action = Options::Continue;
+    options.input0 = fullpath(argv[2]);
+  }
+
+  return options;
+}
+
 Options parseArgs(int argc, char const* const* argv) {
     if (1 < argc) {
         if (1 < argc && argv[1] == string("avg")) {
@@ -293,6 +308,9 @@ Options parseArgs(int argc, char const* const* argv) {
         }
         else if (1 < argc && argv[1] == string("time")) {
             return parseTimeArgs(argc, argv);
+        }
+        else if (1 < argc && argv[1] == string("continue")) {
+          return parseContinueArgs(argc, argv);
         }
     }
 
@@ -838,6 +856,7 @@ string to_string(const Options::Action& action) {
         case Options::Merge: return "Merge";
         case Options::Filter: return "Filter";
         case Options::Time: return "Time";
+        case Options::Continue: return "Continue";
         default: return "UNKNOWN";
     }
 }
@@ -857,8 +876,40 @@ Options::Action action(string action) {
         return Options::Filter;
     else if (action == "Time")
         return Options::Time;
+    else if (action == "Continue")
+      return Options::Continue;
     else
         throw std::invalid_argument("action");
+}
+
+Options::Options(const map<string, string>& dict) {
+    input0 = dict.find("options.input0")->second;
+    input1 = dict.find("options.input1")->second;
+    output = dict.find("options.output")->second;
+    reference = dict.find("options.reference")->second;
+    technique = haste::technique(dict.find("options.technique")->second);
+    action = haste::action(dict.find("options.action")->second);
+    num_photons = stoll(dict.find("options.num_photons")->second);
+    radius = stod(dict.find("options.radius")->second);
+    max_path = stoll(dict.find("options.max_path")->second);
+    alpha = stod(dict.find("options.alpha")->second);
+    beta = stod(dict.find("options.beta")->second);
+    roulette = stod(dict.find("options.roulette")->second);
+    batch = stoi(dict.find("options.batch")->second);
+    quiet = stoi(dict.find("options.quiet")->second);
+    enable_vc = stoi(dict.find("options.enable_vc")->second);
+    enable_vm = stoi(dict.find("options.enable_vm")->second);
+    lights = stod(dict.find("options.lights")->second);
+    num_samples = stoll(dict.find("options.num_samples")->second);
+    num_seconds = stod(dict.find("options.num_seconds")->second);
+    num_threads = stoll(dict.find("options.num_threads")->second);
+    reload = stoi(dict.find("options.reload")->second);
+    enable_seed = stoi(dict.find("options.enable_seed")->second);
+    seed = stoll(dict.find("options.seed")->second);
+    snapshot = stoll(dict.find("options.snapshot")->second);
+    camera_id = stoll(dict.find("options.camera_id")->second);
+    width = stoll(dict.find("options.width")->second);
+    height = stoll(dict.find("options.height")->second);
 }
 
 map<string, string> Options::to_dict()
@@ -893,6 +944,7 @@ map<string, string> Options::to_dict()
     result["options.camera_id"] = to_string(camera_id);
     result["options.width"] = to_string(width);
     result["options.height"] = to_string(height);
+
     return result;
 }
 
@@ -906,41 +958,6 @@ string Options::get_output() const {
             num_samples,
             snapshot,
             to_string(technique));
-}
-
-Options dict_to_config(const map<string, string>& dict)
-{
-    Options result;
-
-    result.input0 = dict.find("options.input0")->second;
-    result.input1 = dict.find("options.input1")->second;
-    result.output = dict.find("options.output")->second;
-    result.reference = dict.find("options.reference")->second;
-    result.technique = haste::technique(dict.find("options.technique")->second);
-    result.action = haste::action(dict.find("options.action")->second);
-    result.num_photons = stoll(dict.find("options.num_photons")->second);
-    result.radius = stod(dict.find("options.radius")->second);
-    result.max_path = stoll(dict.find("options.max_path")->second);
-    result.alpha = stod(dict.find("options.alpha")->second);
-    result.beta = stod(dict.find("options.beta")->second);
-    result.roulette = stod(dict.find("options.roulette")->second);
-    result.batch = stoi(dict.find("options.batch")->second);
-    result.quiet = stoi(dict.find("options.quiet")->second);
-    result.enable_vc = stoi(dict.find("options.enable_vc")->second);
-    result.enable_vm = stoi(dict.find("options.enable_vm")->second);
-    result.lights = stod(dict.find("options.lights")->second);
-    result.num_samples = stoll(dict.find("options.num_samples")->second);
-    result.num_seconds = stod(dict.find("options.num_seconds")->second);
-    result.num_threads = stoll(dict.find("options.num_threads")->second);
-    result.reload = stoi(dict.find("options.reload")->second);
-    result.enable_seed = stoi(dict.find("options.enable_seed")->second);
-    result.seed = stoll(dict.find("options.seed")->second);
-    result.snapshot = stoll(dict.find("options.snapshot")->second);
-    result.camera_id = stoll(dict.find("options.camera_id")->second);
-    result.width = stoll(dict.find("options.width")->second);
-    result.height = stoll(dict.find("options.height")->second);
-
-    return result;
 }
 
 void save_exr(Options options, statistics_t statistics, const vec3* data) {

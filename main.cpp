@@ -90,6 +90,15 @@ int main(int argc, char **argv) {
         std::cout << query_time(options.input0);
     }
     else {
+        if (options.action == Options::Continue) {
+            map<string, string> metadata;
+            load_exr(options.input0, metadata);
+            auto output = options.input0;
+            options = Options(metadata);
+            options.output = output;
+            options.action = Options::Continue;
+        }
+
         Application application(options);
 
         if (options.batch) {
