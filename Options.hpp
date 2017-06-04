@@ -2,18 +2,23 @@
 #include <initializer_list>
 #include <memory>
 #include <string>
+#include <map>
+#include <glm>
+
+#include <statistics.hpp>
 
 namespace haste {
 
 using std::initializer_list;
 using std::pair;
 using std::string;
+using std::map;
+
 template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
     enum Technique { PT, BPT, VCM, UPG, Viewer };
-    enum Action { Render, AVG, SUB, Errors, Merge, Filter, Time };
-    enum Mode { Interactive, Batch, Fast };
+    enum Action { Render, AVG, SUB, Errors, Merge, Filter, Time };;
 
     string input0;
     string input1;
@@ -21,25 +26,25 @@ struct Options {
     string reference;
     Technique technique = PT;
     Action action = Render;
-    size_t numPhotons = 0;
-    double maxRadius = 0.01;
-    size_t maxPath = SIZE_MAX;
+    size_t num_photons = 0;
+    double radius = 0.01;
+    size_t max_path = SIZE_MAX;
     double alpha = 0.75f;
     double beta = 1.0f;
     double roulette = 0.9;
-    Mode batch = Options::Interactive;
+    bool batch = false;
     bool quiet = false;
     bool enable_vc = true;
     bool enable_vm = true;
     float lights = 1.0f;
-    size_t numSamples = 0;
-    double numSeconds = 0.0;
-    size_t numThreads = 1;
+    size_t num_samples = 0;
+    double num_seconds = 0.0;
+    size_t num_threads = 1;
     bool reload = true;
     bool enable_seed = false;
     size_t seed = 0;
     size_t snapshot = 0;
-    size_t cameraId = 0;
+    size_t camera_id = 0;
     size_t width = 512;
     size_t height = 512;
 
@@ -48,6 +53,12 @@ struct Options {
     string displayMessage;
 
     string caption() const;
+
+    Options() = default;
+    Options(const map<string, string>& dict);
+
+    map<string, string> to_dict();
+    string get_output() const;
 };
 
 Options parseArgs(int argc, char const* const* argv);
@@ -60,6 +71,12 @@ class Scene;
 
 shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& options);
 shared<Scene> loadScene(const Options& options);
-string techniqueString(const Options& options);
+
+string to_string(const Options::Technique& technique);
+
+void save_exr(Options options, statistics_t statistics, const vec3* data);
+void save_exr(Options options, statistics_t statistics, const vec4* data);
+void save_exr(Options options, statistics_t statistics, const dvec3* data);
+void save_exr(Options options, statistics_t statistics, const dvec4* data);
 
 }

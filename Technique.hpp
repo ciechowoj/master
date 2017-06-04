@@ -7,6 +7,7 @@
 #include <Scene.hpp>
 #include <threadpool.hpp>
 #include <mutex>
+#include <statistics.hpp>
 
 namespace haste {
 
@@ -38,13 +39,13 @@ public:
     virtual string name() const = 0;
     virtual string id() const = 0;
 
-    const metadata_t& metadata() const;
+    const statistics_t& statistics() const;
     double frame_time() const;
 protected:
     double _previous_frame_time = NAN;
     double _rendering_start_time = NAN;
     double _frame_time = NAN;
-    metadata_t _metadata;
+    statistics_t _statistics;
     shared<const Scene> _scene;
     std::vector<dvec3> _eye_image;
     std::vector<dvec3> _light_image;

@@ -4,6 +4,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include <exr.hpp>
+
 namespace haste {
 
 Application::Application(Options& options) {
@@ -11,7 +13,7 @@ Application::Application(Options& options) {
   runtime_assert(_device != nullptr);
 
   _options = options;
-  _ui = make_shared<UserInterface>(_options.input0, _scale);
+  _ui = make_shared<UserInterface>(options, _options.input0, _scale);
 
   _modificationTime = 0;
 
@@ -21,12 +23,14 @@ Application::Application(Options& options) {
   _options.reload = reload;
 
   if (!_options.reference.empty()) {
-    metadata_t metadata;
+    map<string, string> metadata;
+
+    size_t width = 0, height = 0;
 
     vector<vec3> reference;
-    loadEXR(_options.reference, metadata, reference);
-    _options.width = metadata.resolution.x;
-    _options.height = metadata.resolution.y;
+    load_exr(_options.reference, metadata, width, height, reference);
+    _options.width = width;
+    _options.height = height;
     _reference = vv3f_to_vv4d(reference);
   }
 }
@@ -40,14 +44,14 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
     _generator.seed(_options.seed + _num_samples());
   }
 
-  double epsilon = _technique->render(view, _generator, _options.cameraId);
+  double epsilon = _technique->render(view, _generator, _options.camera_id);
 
   if (_options.technique != Options::Viewer) {
-    _printStatistics(view, _technique->frame_time(), _technique->metadata().total_time, epsilon, false);
-    _saveIfRequired(view, _technique->metadata().total_time);
+    _printStatistics(view, _technique->frame_time(), _technique->statistics().total_time, epsilon, false);
+    _saveIfRequired(view, _technique->statistics().total_time);
   }
 
-  _updateQuitCond(view, _technique->metadata().total_time);
+  _updateQuitCond(view, _technique->statistics().total_time);
 }
 
 void Application::updateUI(size_t width, size_t height, const glm::vec4* data,
@@ -179,8 +183,8 @@ void Application::_printStatistics(const ImageView& view, double elapsed,
     if (preprocessed) {
       std::cout << "Preprocessing finished..." << std::endl;
     } else {
-      size_t numSamples = _num_samples();
-      std::cout << "#" << std::setw(6) << std::left << numSamples << " "
+      size_t num_samples = _num_samples();
+      std::cout << "#" << std::setw(6) << std::left << num_samples << " "
                 << std::right << std::fixed << std::setw(8)
                 << std::setprecision(3) << time << "s" << std::setw(8)
                 << elapsed << "s/sample   " << std::setprecision(8) << std::fixed << epsilon << std::endl;
@@ -192,9 +196,9 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
   size_t num_samples = _num_samples();
 
   if (num_samples != 0) {
-    if (_options.numSamples != 0 && _options.numSamples == num_samples) {
+    if (_options.num_samples != 0 && _options.num_samples == num_samples) {
       _save(view, num_samples, false);
-    } else if (_options.numSeconds != 0.0 && _options.numSeconds <= elapsed) {
+    } else if (_options.num_seconds != 0.0 && _options.num_seconds <= elapsed) {
       _save(view, num_samples, false);
     } else if (_options.snapshot != 0 && _num_seconds_saved + _options.snapshot < _num_seconds()) {
       _save(view, num_samples, true);
@@ -204,38 +208,27 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
 }
 
 void Application::_updateQuitCond(const ImageView& view, double elapsed) {
-  if ((_options.numSamples != 0 && _options.numSamples == _num_samples()) ||
-      (_options.numSeconds != 0.0 && _options.numSeconds <= elapsed)) {
+  if ((_options.num_samples != 0 && _options.num_samples == _num_samples()) ||
+      (_options.num_seconds != 0.0 && _options.num_seconds <= elapsed)) {
     quit();
   }
 }
 
-void Application::_save(const ImageView& view, size_t numSamples,
+void Application::_save(const ImageView& view, size_t num_samples,
                         bool snapshot) {
-
-  string path = !_options.output.empty()
-    ? _options.output
-    : make_output_path(
-      _options.input0,
-      view.width(),
-      view.height(),
-      numSamples,
-      snapshot,
-      techniqueString(_options));
-
-  saveEXR(path, _technique->metadata(), vv4d_to_vv3f(view.width() * view.height(), view.data()));
+  save_exr(_options, _technique->statistics(), view.data());
 
   if (!_options.quiet) {
     if (snapshot) {
-      std::cout << "Snapshot saved to `" << path << "`." << std::endl;
+      std::cout << "Snapshot saved to `" << _options.get_output() << "`." << std::endl;
     } else {
-      std::cout << "Result saved to `" << path << "`." << std::endl;
-      std::cout << _technique->metadata() << std::endl;
+      std::cout << "Result saved to `" << _options.get_output() << "`." << std::endl;
+      std::cout << _technique->statistics() << std::endl;
     }
   }
 }
 
-std::size_t Application::_num_samples() const { return _technique->metadata().num_samples; }
-double Application::_num_seconds() const { return _technique->metadata().total_time; }
+std::size_t Application::_num_samples() const { return _technique->statistics().num_samples; }
+double Application::_num_seconds() const { return _technique->statistics().total_time; }
 
 }

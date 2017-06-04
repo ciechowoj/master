@@ -8,8 +8,9 @@
 
 namespace haste {
 
-UserInterface::UserInterface(string scenePath, float& brightness)
-    : scenePath(scenePath)
+UserInterface::UserInterface(Options options, string scenePath, float& brightness)
+    : options(options)
+    , scenePath(scenePath)
     , brightness(brightness) {
     strcpy(path, defpath.c_str());
 }
@@ -118,8 +119,10 @@ void UserInterface::_updateSaveRegion(
         ImGui::InputText("", path, int(pathSize - 1));
         ImGui::SameLine();
 
+        options.output = path;
+
         if (ImGui::Button("Save EXR")) {
-            saveEXR(path, technique.metadata(), vv4f_to_vv3f(width * height, image));
+            save_exr(options, technique.statistics(), image);
         }
 
         string fixed = fixedPath(path, scenePath, num_samples);
@@ -129,7 +132,8 @@ void UserInterface::_updateSaveRegion(
         ImGui::PushID("save-exr");
 
         if (ImGui::Button("Save EXR")) {
-            saveEXR(fixed, technique.metadata(), vv4f_to_vv3f(width * height, image));
+            options.output = fixed;
+            save_exr(options, technique.statistics(), image);
         }
 
         ImGui::PopID();

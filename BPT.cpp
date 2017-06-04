@@ -8,8 +8,6 @@ BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, float lights, float rou
     , _roulette(roulette)
     , _roulette_inv(1.0f / roulette)
     , _lights(lights) {
-    _metadata.roulette = roulette;
-    _metadata.beta = beta;
 }
 
 template <class Beta>
@@ -19,7 +17,7 @@ string BPTBase<Beta>::name() const {
 
 template <class Beta>
 string BPTBase<Beta>::id() const {
-    return string("BPT_b") + std::to_string(_metadata.beta);
+    return string("BPT_b") + std::to_string(this->beta_exp());
 }
 
 template <class Beta>

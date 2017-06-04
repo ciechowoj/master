@@ -10,11 +10,14 @@
 #include <UPG.hpp>
 #include <Viewer.hpp>
 
+#include <exr.hpp>
+
 namespace haste {
 
 using std::map;
 using std::strstr;
 using std::make_pair;
+using namespace std::__cxx11;
 
 static const char help[] =
 R"(
@@ -34,7 +37,7 @@ R"(
       --VCM                  Use vertex connection and merging.
       --UPG                  Use unbiased photon gathering.
       --num-photons=<n>      Use n photons. [default: 1 000 000]
-      --max-radius=<n>       Use n as maximum gather radius. [default: 0.1]
+      --radius=<n>       Use n as maximum gather radius. [default: 0.1]
       --roulette=<n>         Russian roulette coefficient. [default: 0.5]
       --beta=<n>             MIS beta. [default: 1]
       --alpha=<n>            VCM alpha. [default: 0.75]
@@ -58,7 +61,7 @@ R"(
 )";
 
 string Options::caption() const {
-    return input0 + " [" + techniqueString(*this) + "]";
+    return input0 + " [" + to_string(this->technique) + "]";
 }
 
 bool startsWith(const string& a, const string& b);
@@ -359,26 +362,26 @@ Options parseArgs(int argc, char const* const* argv) {
                 return options;
             }
             else {
-                options.numPhotons = atoi(dict["--num-photons"].c_str());
+                options.num_photons = atoi(dict["--num-photons"].c_str());
                 dict.erase("--num-photons");
             }
         }
 
-        if (dict.count("--max-radius")) {
+        if (dict.count("--radius")) {
             if (options.technique != Options::VCM &&
                 options.technique != Options::UPG) {
                 options.displayHelp = true;
-                options.displayMessage = "--max-radius can be specified for PM, VCM and UPG.";
+                options.displayMessage = "--radius can be specified for PM, VCM and UPG.";
                 return options;
             }
-            else if (!isReal(dict["--max-radius"])) {
+            else if (!isReal(dict["--radius"])) {
                 options.displayHelp = true;
-                options.displayMessage = "Invalid value for --max-radius.";
+                options.displayMessage = "Invalid value for --radius.";
                 return options;
             }
             else {
-                options.maxRadius = atof(dict["--max-radius"].c_str());
-                dict.erase("--max-radius");
+                options.radius = atof(dict["--radius"].c_str());
+                dict.erase("--radius");
             }
         }
 
@@ -394,7 +397,7 @@ Options parseArgs(int argc, char const* const* argv) {
                 return options;
             }
             else {
-                options.maxPath = atoi(dict["--max-path"].c_str());
+                options.max_path = atoi(dict["--max-path"].c_str());
                 dict.erase("--max-path");
             }
         }
@@ -469,19 +472,9 @@ Options parseArgs(int argc, char const* const* argv) {
             return options;
         }
 
-        if (dict.count("--interactive")) {
-            options.batch = Options::Interactive;
-            dict.erase("--interactive");
-        }
-
         if (dict.count("--batch")) {
-            options.batch = Options::Batch;
+            options.batch = true;
             dict.erase("--batch");
-        }
-
-        if (dict.count("--fast")) {
-            options.batch = Options::Fast;
-            dict.erase("--fast");
         }
 
         if (dict.count("--quiet")) {
@@ -530,7 +523,7 @@ Options parseArgs(int argc, char const* const* argv) {
                 return options;
             }
             else {
-                options.numSamples = atoi(dict["--num-samples"].c_str());
+                options.num_samples = atoi(dict["--num-samples"].c_str());
                 dict.erase("--num-samples");
             }
         }
@@ -547,7 +540,7 @@ Options parseArgs(int argc, char const* const* argv) {
                 return options;
             }
             else {
-                options.numSeconds = atof(dict["--num-minutes"].c_str()) * 60.0;
+                options.num_seconds = atof(dict["--num-minutes"].c_str()) * 60.0;
                 dict.erase("--num-minutes");
             }
         }
@@ -558,13 +551,13 @@ Options parseArgs(int argc, char const* const* argv) {
                 return options;
             }
             else {
-                options.numSeconds = atof(dict["--num-seconds"].c_str());
+                options.num_seconds = atof(dict["--num-seconds"].c_str());
                 dict.erase("--num-seconds");
             }
         }
 
         if (dict.count("--parallel")) {
-            options.numThreads = 0;
+            options.num_threads = 0;
             dict.erase("--parallel");
         }
 
@@ -598,9 +591,9 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--reference")) {
-            if (!options.output.empty()) {
+            if (!options.reference.empty()) {
                 options.displayHelp = true;
-                options.displayMessage = "Output cannot be specified twice.";
+                options.displayMessage = "Reference cannot be specified twice.";
                 return options;
             }
             else if (dict["--reference"].empty()) {
@@ -622,7 +615,7 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "--seed is only valid with --BPT or --UPG.";
                 return options;
             }
-            else if (options.numThreads != 1) {
+            else if (options.num_threads != 1) {
                 options.displayHelp = true;
                 options.displayMessage = "--seed is invalid with --parallel.";
                 return options;
@@ -646,7 +639,7 @@ Options parseArgs(int argc, char const* const* argv) {
                 return options;
             }
             else {
-                options.cameraId = atoi(dict["--camera"].c_str());
+                options.camera_id = atoi(dict["--camera"].c_str());
                 dict.erase("--camera");
             }
         }
@@ -666,8 +659,8 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
-        if (options.numPhotons == 0) {
-            options.numPhotons = options.width * options.height;
+        if (options.num_photons == 0) {
+            options.num_photons = options.width * options.height;
         }
 
         if (dict.empty()) {
@@ -715,12 +708,14 @@ pair<bool, int> displayHelpIfNecessary(
 
 shared<Technique> makeViewer(Options& options) {
     auto data = vector<vec3>();
-    auto meta = metadata_t();
-    loadEXR(options.input0, meta, data);
+    auto metadata = map<string, string>();
 
-    std::cout << meta << std::endl;
+    size_t width = 0;
+    size_t height = 0;
 
-    return std::make_shared<Viewer>(vv3f_to_vv4d(data), meta.resolution.x, meta.resolution.y);
+    load_exr(options.input0, metadata, width, height, data);
+
+    return std::make_shared<Viewer>(vv3f_to_vv4d(data), width, height);
 }
 
 template <class T>
@@ -730,7 +725,7 @@ shared<Technique> make_bpt_technique(const shared<const Scene>& scene, const Opt
         options.lights,
         options.roulette,
         options.beta,
-        options.numThreads);
+        options.num_threads);
 }
 
 template <class T>
@@ -742,11 +737,11 @@ shared<Technique> make_upg_technique(const shared<const Scene>& scene, const Opt
         options.enable_vm,
         options.lights,
         options.roulette,
-        options.numPhotons,
-        options.maxRadius,
+        options.num_photons,
+        options.radius,
         options.alpha,
         options.beta,
-        options.numThreads);
+        options.num_threads);
 }
 
 shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& options) {
@@ -771,8 +766,8 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
                 options.lights,
                 options.roulette,
                 options.beta,
-                options.maxPath,
-                options.numThreads);
+                options.max_path,
+                options.num_threads);
 
         case Options::VCM:
         case Options::UPG:
@@ -798,8 +793,8 @@ shared<Scene> loadScene(const Options& options) {
     return loadScene(options.input0);
 }
 
-string techniqueString(const Options& options) {
-    switch (options.technique) {
+string to_string(const Options::Technique& technique) {
+    switch (technique) {
         case Options::BPT: return "BPT";
         case Options::PT: return "PT";
         case Options::VCM: return "VCM";
@@ -807,6 +802,179 @@ string techniqueString(const Options& options) {
         case Options::Viewer: return "Viewer";
         default: return "UNKNOWN";
     }
+}
+
+
+Options::Technique technique(string technique) {
+    if (technique == "BPT")
+        return Options::BPT;
+    else if (technique == "PT")
+        return Options::PT;
+    else if (technique == "VCM")
+        return Options::VCM;
+    else if (technique == "UPG")
+        return Options::UPG;
+    else if (technique == "Viewer")
+        return Options::Viewer;
+    else
+        throw std::invalid_argument("technique");
+}
+
+string to_string(const Options::Action& action) {
+    switch (action) {
+        case Options::Render: return "Render";
+        case Options::AVG: return "AVG";
+        case Options::SUB: return "SUB";
+        case Options::Errors: return "Errors";
+        case Options::Merge: return "Merge";
+        case Options::Filter: return "Filter";
+        case Options::Time: return "Time";
+        default: return "UNKNOWN";
+    }
+}
+
+Options::Action action(string action) {
+    if (action == "Render")
+        return Options::Render;
+    else if (action == "AVG")
+        return Options::AVG;
+    else if (action == "SUB")
+        return Options::SUB;
+    else if (action == "Errors")
+        return Options::Errors;
+    else if (action == "Merge")
+        return Options::Merge;
+    else if (action == "Filter")
+        return Options::Filter;
+    else if (action == "Time")
+        return Options::Time;
+    else
+        throw std::invalid_argument("action");
+}
+
+map<string, string> Options::to_dict()
+{
+    using std::to_string;
+
+    map<string, string> result;
+    result["input0"] = input0;
+    result["input1"] = input1;
+    result["output"] = output;
+    result["reference"] = reference;
+    result["technique"] = to_string(technique);
+    result["action"] = to_string(action);
+    result["num_photons"] = to_string(num_photons);
+    result["radius"] = to_string(radius);
+    result["max_path"] = to_string(max_path);
+    result["alpha"] = to_string(alpha);
+    result["beta"] = to_string(beta);
+    result["roulette"] = to_string(roulette);
+    result["batch"] = to_string(batch);
+    result["quiet"] = to_string(quiet);
+    result["enable_vc"] = to_string(enable_vc);
+    result["enable_vm"] = to_string(enable_vm);
+    result["lights"] = to_string(lights);
+    result["num_samples"] = to_string(num_samples);
+    result["num_seconds"] = to_string(num_seconds);
+    result["num_threads"] = to_string(num_threads);
+    result["reload"] = to_string(reload);
+    result["enable_seed"] = to_string(enable_seed);
+    result["seed"] = to_string(seed);
+    result["snapshot"] = to_string(snapshot);
+    result["camera_id"] = to_string(camera_id);
+    result["width"] = to_string(width);
+    result["height"] = to_string(height);
+    return result;
+}
+
+string Options::get_output() const {
+    return !output.empty()
+        ? output
+        : make_output_path(
+            input0,
+            width,
+            height,
+            num_samples,
+            snapshot,
+            to_string(technique));
+}
+
+
+Options dict_to_config(const map<string, string>& dict)
+{
+    Options result;
+
+    result.input0 = dict.find("input0")->second;
+    result.input1 = dict.find("input1")->second;
+    result.output = dict.find("output")->second;
+    result.reference = dict.find("reference")->second;
+    result.technique = haste::technique(dict.find("technique")->second);
+    result.action = haste::action(dict.find("action")->second);
+    result.num_photons = stoll(dict.find("num_photons")->second);
+    result.radius = stod(dict.find("radius")->second);
+    result.max_path = stoll(dict.find("max_path")->second);
+    result.alpha = stod(dict.find("alpha")->second);
+    result.beta = stod(dict.find("beta")->second);
+    result.roulette = stod(dict.find("roulette")->second);
+    result.batch = stoi(dict.find("batch")->second);
+    result.quiet = stoi(dict.find("quiet")->second);
+    result.enable_vc = stoi(dict.find("enable_vc")->second);
+    result.enable_vm = stoi(dict.find("enable_vm")->second);
+    result.lights = stod(dict.find("lights")->second);
+    result.num_samples = stoll(dict.find("num_samples")->second);
+    result.num_seconds = stod(dict.find("num_seconds")->second);
+    result.num_threads = stoll(dict.find("num_threads")->second);
+    result.reload = stoi(dict.find("reload")->second);
+    result.enable_seed = stoi(dict.find("enable_seed")->second);
+    result.seed = stoll(dict.find("seed")->second);
+    result.snapshot = stoll(dict.find("snapshot")->second);
+    result.camera_id = stoll(dict.find("camera_id")->second);
+    result.width = stoll(dict.find("width")->second);
+    result.height = stoll(dict.find("height")->second);
+
+    return result;
+}
+
+void save_exr(Options options, statistics_t statistics, const vec3* data) {
+  auto metadata = statistics.to_dict();
+  auto local_options = options.to_dict();
+  metadata.insert(local_options.begin(), local_options.end());
+
+  save_exr(options.get_output(), metadata, options.width, options.height, data);
+}
+
+void save_exr(Options options, statistics_t statistics, const vec4* data) {
+  auto metadata = statistics.to_dict();
+  auto local_options = options.to_dict();
+  metadata.insert(local_options.begin(), local_options.end());
+
+  save_exr(options.get_output(), metadata, options.width, options.height, data);
+}
+
+void save_exr(Options options, statistics_t statistics, const dvec3* data) {
+  size_t size = options.width * options.height;
+  vector<vec3> fdata(size);
+
+  std::transform(
+    data,
+    data + size,
+    fdata.begin(),
+    [](dvec3 x) { return vec3(x); });
+
+  save_exr(options, statistics, fdata.data());
+}
+
+void save_exr(Options options, statistics_t statistics, const dvec4* data) {
+  size_t size = options.width * options.height;
+  vector<vec4> fdata(size);
+
+  std::transform(
+    data,
+    data + size,
+    fdata.begin(),
+    [](dvec4 x) { return vec4(x); });
+
+  save_exr(options, statistics, fdata.data());
 }
 
 }

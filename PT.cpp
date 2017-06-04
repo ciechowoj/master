@@ -10,8 +10,6 @@ PathTracing::PathTracing(const shared<const Scene>& scene,
       _lights(lights),
       _roulette(roulette),
       _beta(beta) {
-    _metadata.roulette = roulette;
-    _metadata.beta = beta;
 }
 
 vec3 PathTracing::_traceEye(render_context_t& context, Ray ray) {
@@ -124,7 +122,7 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
 string PathTracing::name() const { return "Path Tracing"; }
 
 string PathTracing::id() const {
-    return string("PT_b") + std::to_string(_metadata.beta);
+    return string("PT_b") + std::to_string(this->_beta);
 }
 
 }

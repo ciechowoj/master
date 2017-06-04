@@ -3,6 +3,7 @@
 #include <system_utils.hpp>
 #include <Technique.hpp>
 #include <GLFW/glfw3.h>
+#include <Options.hpp>
 
 namespace haste {
 
@@ -27,6 +28,7 @@ struct UserInterface {
     char path[pathSize];
 
     double mainStart = high_resolution_time();
+    Options options;
     string scenePath;
     string defpath = homePath() + "/";
 
@@ -39,7 +41,9 @@ struct UserInterface {
     vec3 averageValue = vec3(0.0f);
     vec3 centerValue = vec3(0.0f);
 
+
     UserInterface(
+        Options options,
         string scenePath,
         float& brightness);
 

@@ -13,6 +13,8 @@
 #include <set>
 #include <mutex>
 
+#include <exr.hpp>
+
 using namespace std;
 using namespace haste;
 
@@ -69,33 +71,32 @@ int main(int argc, char **argv) {
     }
 
     if (options.action == Options::AVG) {
-        printAVG(options.input0);
+        vec3 average = exr_average(options.input0);
+        std::cout << average.x << " " << average.y << " " << average.z << std::endl;
     }
     else if (options.action == Options::Errors) {
-        print_errors(options.input0, options.input1);
+        std::cout << compute_errors(options.input0, options.input1);
     }
     else if (options.action == Options::SUB) {
-        subtract(options.output, options.input0, options.input1);
+        subtract_exr(options.output, options.input0, options.input1);
     }
     else if (options.action == Options::Merge) {
-        merge(options.output, options.input0, options.input1);
+        add_exr(options.output, options.input0, options.input1);
     }
     else if (options.action == Options::Filter) {
-        filter_out_nan(options.output, options.input0);
+        filter_exr(options.output, options.input0);
     }
     else if (options.action == Options::Time) {
-        print_time(options.input0);
+        std::cout << query_time(options.input0);
     }
     else {
         Application application(options);
 
-        switch (options.batch) {
-            case Options::Interactive:
-                return application.run(options.width, options.height, options.caption());
-            case Options::Batch:
-                return application.runBatch(options.width, options.height);
-            case Options::Fast:
-                return run_fast(options);
+        if (options.batch) {
+            return application.runBatch(options.width, options.height);
+        }
+        else {
+            return application.run(options.width, options.height, options.caption());
         }
     }
 

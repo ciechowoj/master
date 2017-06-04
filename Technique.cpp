@@ -38,7 +38,7 @@ double Technique::render(
     size_t num_shadow_rays = _scene->numShadowRays();
 
     _adjust_helper_image(view);
-    _preprocess(generator, double(_metadata.num_samples));
+    _preprocess(generator, double(_statistics.num_samples));
     _trace_paths(view, context, cameraId);
     double epsilon = _commit_images(view);
 
@@ -46,23 +46,17 @@ double Technique::render(
     _frame_time = current - _previous_frame_time;
     _previous_frame_time = current;
 
-    _metadata.technique = id();
-    ++_metadata.num_samples;
-    _metadata.num_basic_rays += _scene->numNormalRays() - num_basic_rays;
-    _metadata.num_shadow_rays += _scene->numShadowRays() - num_shadow_rays;
-    _metadata.num_tentative_rays += 0;
-
-    _metadata.num_threads = _threadpool.num_threads();
-    _metadata.resolution = ivec2(view.width(), view.height());
-    _metadata.epsilon = epsilon;
-    _metadata.total_time = current - _rendering_start_time;
-    _metadata.average = glm::vec3(0.0f, 0.0f, 0.0f);
+    ++_statistics.num_samples;
+    _statistics.num_basic_rays += _scene->numNormalRays() - num_basic_rays;
+    _statistics.num_shadow_rays += _scene->numShadowRays() - num_shadow_rays;
+    _statistics.num_tentative_rays += 0;
+    _statistics.total_time = current - _rendering_start_time;
 
     return epsilon;
 }
 
-const metadata_t& Technique::metadata() const {
-    return _metadata;
+const statistics_t& Technique::statistics() const {
+    return _statistics;
 }
 
 double Technique::frame_time() const {

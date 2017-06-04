@@ -32,11 +32,6 @@ UPGBase<Beta>::UPGBase(
     , _num_scattered_inv(0.0f)
     , _radius(radius)
     , _circle(pi<float>() * radius * radius) {
-    _metadata.num_photons = _num_photons;
-    _metadata.roulette = _roulette;
-    _metadata.radius = _radius;
-    _metadata.alpha = _alpha;
-    _metadata.beta = beta;
 }
 
 template <class Beta>
@@ -48,13 +43,13 @@ template <class Beta>
 string UPGBase<Beta>::id() const {
     return string(_unbiased ? "UPG" : "VCM")
         + "_r" + std::to_string(_initial_radius)
-        + "_a" + std::to_string(_metadata.alpha)
-        + "_b" + std::to_string(_metadata.beta);
+        + "_a" + std::to_string(_alpha)
+        + "_b" + std::to_string(this->beta_exp());
 }
 
 template <class Beta>
 vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
-    time_scope_t _0(_metadata.trace_eye_time);
+    time_scope_t _0(_statistics.trace_eye_time);
 
     vec3 radiance = vec3(0.0f);
 
@@ -161,7 +156,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
         itr->throughput *= _roulette_inv;
 
         if (_enable_vm) {
-            time_scope_t _2(_metadata.gather_time);
+            time_scope_t _2(_statistics.gather_time);
             if (_unbiased) {
                 radiance += _gather(context, *prv, *itr);
             }
@@ -182,7 +177,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
 template <class Beta>
 void UPGBase<Beta>::_preprocess(random_generator_t& generator, double num_samples) {
-    time_scope_t _0(_metadata.scatter_time);
+    time_scope_t _0(_statistics.scatter_time);
 
     /*if (!_unbiased) {
         _radius = _initial_radius * pow((num_samples + 1.0f), _alpha * 0.5f - 0.5f);
@@ -723,9 +718,9 @@ void UPGBase<Beta>::_scatter(random_generator_t& generator) {
 
     _num_scattered = _num_photons;
     _num_scattered_inv = 1.0f / float(_num_scattered);
-    _metadata.num_scattered += _num_scattered;
+    _statistics.num_scattered += _num_scattered;
 
-    time_scope_t _(_metadata.build_time);
+    time_scope_t _(_statistics.build_time);
     _vertices = v3::HashGrid3D<LightVertex>(&_light_paths, _radius);
 }
 
@@ -738,7 +733,7 @@ vec3 UPGBase<Beta>::_gather(
 
     _vertices.rQuery(
         [&](uint32_t index) {
-            time_scope_t _(_metadata.merge_time);
+            time_scope_t _(_statistics.merge_time);
 
             runtime_assert(!_light_paths[index].surface.is_light());
 
@@ -811,7 +806,7 @@ vec3 UPGBase<Beta>::_merge_light(
     }
     else {
         auto weight = _weight_vm_light(light, light_bsdf, eye, eye_bsdf, edge);
-        time_scope_t _(_metadata.density_time);
+        time_scope_t _(_statistics.density_time);
         auto density = _unbiased
             ? _density(generator, light.omega,
                 light.surface, eye.surface.position())
@@ -839,7 +834,7 @@ vec3 UPGBase<Beta>::_merge_eye(
     }
     else {
         auto weight = _weight_vm_eye(light, light_bsdf, eye, eye_bsdf, edge);
-        time_scope_t _(_metadata.density_time);
+        time_scope_t _(_statistics.density_time);
         auto density = _unbiased
             ? _density(generator, eye.omega,
                 eye.surface, light.surface.position())
@@ -874,7 +869,7 @@ vec3 UPGBase<Beta>::_merge_biased(
             // Beta::beta(_circle * edge.fGeometry * light_bsdf.density));
             Beta::beta(_circle / tentative.a));
 
-        time_scope_t _(_metadata.density_time);
+        time_scope_t _(_statistics.density_time);
         auto density = 1.0f / _circle;
 
         return throughput * density * weight;
