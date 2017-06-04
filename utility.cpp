@@ -15,10 +15,64 @@
 #include <ImfStringAttribute.h>
 #include <ImfVecAttribute.h>
 
+#include <system_utils.hpp>
+
 using namespace std;
 using namespace Imf;
 
 namespace haste {
+
+string fixedPath(string base, string scene, std::size_t samples) {
+  string ext;
+  std::tie(base, ext) = splitext(base);
+
+  if (ext.empty()) {
+    ext = ".exr";
+  }
+
+  string sceneBase, sceneExt;
+  tie(sceneBase, sceneExt) = splitext(scene);
+
+  std::stringstream result;
+
+  if (!base.empty() && base[base.size() - 1] != '/') {
+    result << base << "." << baseName(sceneBase) << "." << samples << ext;
+  }
+  else {
+    result << base << baseName(sceneBase) << "." << samples << ext;
+  }
+
+  return result.str();
+}
+
+pair<string, string> splitext(string path) {
+  size_t index = path.find_last_of(".");
+
+  if (index == string::npos || index == 0) {
+    return make_pair(path, string());
+  }
+  else {
+    return make_pair(path.substr(0, index), path.substr(index, path.size()));
+  }
+}
+
+string make_output_path(
+  string input,
+  size_t width,
+  size_t height,
+  size_t num_samples,
+  bool snapshot,
+  string technique) {
+  auto split = splitext(input);
+
+  stringstream stream;
+
+  stream << split.first << "." << width << "." << height << "."
+         << num_samples << "." << technique
+         << (snapshot ? ".snapshot" : "") << ".exr";
+
+  return stream.str();
+}
 
 std::ostream& operator<<(std::ostream& stream, const metadata_t& meta) {
   double connection_time =

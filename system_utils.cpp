@@ -47,39 +47,6 @@ string baseName(string path) {
 	}
 }
 
-string fixedPath(string base, string scene, std::size_t samples) {
-	string ext;
-	std::tie(base, ext) = splitext(base);
-
-	if (ext.empty()) {
-		ext = ".exr";
-	}
-
-	string sceneBase, sceneExt;
-	tie(sceneBase, sceneExt) = splitext(scene);
-
-	std::stringstream result;
-
-	if (!base.empty() && base[base.size() - 1] != '/') {
-		result << base << "." << baseName(sceneBase) << "." << samples << ext;
-	}
-	else {
-		result << base << baseName(sceneBase) << "." << samples << ext;
-	}
-
-	return result.str();
-}
-
-pair<string, string> splitext(string path) {
-	size_t index = path.find_last_of(".");
-
-	if (index == string::npos || index == 0) {
-		return make_pair(path, string());
-	}
-	else {
-		return make_pair(path.substr(0, index), path.substr(index, path.size()));
-	}
-}
 }
 
 #include <sys/stat.h>

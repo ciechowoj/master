@@ -41,7 +41,21 @@ struct metadata_t {
   glm::vec3 average = glm::vec3(0.0f, 0.0f, 0.0f);
 };
 
+string fixedPath(string base, string scene, std::size_t samples);
+pair<string, string> splitext(string path);
+
+string make_output_path(
+  string input,
+  size_t width,
+  size_t height,
+  size_t num_samples,
+  bool snapshot,
+  string technique);
+
 std::ostream& operator<<(std::ostream& stream, const metadata_t& meta);
+
+
+
 
 void saveEXR(const std::string& path, const metadata_t& metadata,
              const vec3* data);

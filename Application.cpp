@@ -212,39 +212,16 @@ void Application::_updateQuitCond(const ImageView& view, double elapsed) {
 
 void Application::_save(const ImageView& view, size_t numSamples,
                         bool snapshot) {
-  string path;
-  bool hasSamples = false;
 
-  if (_options.output.empty()) {
-    auto num_seconds = _num_seconds();
-    auto unum_seconds = uint64_t(num_seconds);
-    auto unum_miliseconds = uint64_t((num_seconds - unum_seconds) * 1000);
-
-    auto split = splitext(_options.input0);
-    std::stringstream stream;
-    stream << split.first << "." << view.width() << "." << view.height() << "."
-           << unsigned(unum_seconds) << "_" << unsigned(unum_miliseconds) << "."
-           << techniqueString(_options) << ".exr";
-    path = stream.str();
-    hasSamples = true;
-  } else {
-    path = _options.output;
-  }
-
-  if (snapshot) {
-    auto split = splitext(path);
-    std::stringstream stream;
-
-    stream << split.first;
-
-    if (!hasSamples) {
-      stream << "." << numSamples;
-    }
-
-    stream << ".snapshot" << split.second;
-
-    path = stream.str();
-  }
+  string path = !_options.output.empty()
+    ? _options.output
+    : make_output_path(
+      _options.input0,
+      view.width(),
+      view.height(),
+      numSamples,
+      snapshot,
+      techniqueString(_options));
 
   saveEXR(path, _technique->metadata(), vv4d_to_vv3f(view.width() * view.height(), view.data()));
 
