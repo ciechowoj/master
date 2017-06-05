@@ -1,4 +1,5 @@
 #include <runtime_assert>
+#include <cstring>
 #include <iomanip>
 #include <sstream>
 
@@ -246,7 +247,7 @@ void load_exr(
   size_t& width,
   size_t& height,
   vector<vec4>& data)
-{  
+{
   InputFile file(path.c_str());
 
   load_metadata(file, metadata);
