@@ -4,6 +4,33 @@
 
 namespace haste {
 
+bool startswith(const std::string& s, const std::string& p) {
+  const char* s_itr = s.c_str();
+  const char* p_itr = p.c_str();
+
+  while (*s_itr != '\0' && *p_itr != '\0' && *s_itr == *p_itr) {
+    ++s_itr;
+    ++p_itr;
+  }
+
+  return *p_itr == '\0';
+}
+
+bool endswith(const std::string& s, const std::string& p) {
+  const char* s_rbegin = s.c_str() - 1;
+  const char* p_rbegin = p.c_str() - 1;
+  const char* s_itr = s.c_str() + s.size() - 1;
+  const char* p_itr = p.c_str() + p.size() - 1;
+
+  while (s_itr != s_rbegin && p_itr != p_rbegin && *s_itr == *p_itr) {
+    --s_itr;
+    --p_itr;
+  }
+
+  return p_itr == p_rbegin;
+}
+
+
 statistics_t::statistics_t(const map<string, string>& dict) {
 	num_samples = stoll(dict.find("statistics.num_samples")->second);
 	num_basic_rays = stoll(dict.find("statistics.num_basic_rays")->second);
@@ -20,6 +47,51 @@ statistics_t::statistics_t(const map<string, string>& dict) {
 	intersect_time = stod(dict.find("statistics.intersect_time")->second);
 	trace_eye_time = stod(dict.find("statistics.trace_eye_time")->second);
 	trace_light_time = stod(dict.find("statistics.trace_light_time")->second);
+
+  const string prefix = "records[";
+  const string rms_error = "].rms_error";
+  const string abs_error = "].abs_error";
+  const string clock_time = "].clock_time";
+  const string frame_duration = "].frame_duration";
+  const string numeric_errors = "].numeric_errors";
+
+  auto ensure_size = [&](size_t i) {
+    if (i >= dict.size()) {
+      return false;
+    }
+
+    if (records.size() <= i) {
+      records.resize(i + 1);
+    }
+
+    return true;
+  };
+
+  records.resize(num_samples);
+
+  for (auto&& item : dict) {
+    unsigned long long i = 0;
+
+    if (startswith(item.first, prefix) &&
+      sscanf(item.first.c_str() + prefix.size(), "%llu", &i) == 1) {
+
+      if (endswith(item.first, rms_error) && ensure_size(i)) {
+        records[i].rms_error = (float)stod(item.second);
+      }
+      else if (endswith(item.first, abs_error) && ensure_size(i)) {
+        records[i].abs_error = (float)stod(item.second);
+      }
+      else if (endswith(item.first, clock_time) && ensure_size(i)) {
+        records[i].clock_time = (float)stod(item.second);
+      }
+      else if (endswith(item.first, frame_duration) && ensure_size(i)) {
+        records[i].frame_duration = (float)stod(item.second);
+      }
+      else if (endswith(item.first, numeric_errors) && ensure_size(i)) {
+        records[i].numeric_errors = (size_t)stoll(item.second);
+      }
+    }
+  }
 }
 
 map<string, string> statistics_t::to_dict() const {
@@ -40,6 +112,21 @@ map<string, string> statistics_t::to_dict() const {
   result["statistics.intersect_time"] = std::to_string(intersect_time);
   result["statistics.trace_eye_time"] = std::to_string(trace_eye_time);
   result["statistics.trace_light_time"] = std::to_string(trace_light_time);
+
+  char buffer[128];
+
+  for (size_t i = 0; i < records.size(); ++i) {
+    sprintf(buffer, "records[%llu].rms_error", (unsigned long long)i);
+    result[buffer] = std::to_string(records[i].rms_error);
+    sprintf(buffer, "records[%llu].abs_error", (unsigned long long)i);
+    result[buffer] = std::to_string(records[i].abs_error);
+    sprintf(buffer, "records[%llu].clock_time", (unsigned long long)i);
+    result[buffer] = std::to_string(records[i].clock_time);
+    sprintf(buffer, "records[%llu].frame_duration", (unsigned long long)i);
+    result[buffer] = std::to_string(records[i].frame_duration);
+    sprintf(buffer, "records[%llu].numeric_errors", (unsigned long long)i);
+    result[buffer] = std::to_string(records[i].numeric_errors);
+  }
 
   return result;
 }

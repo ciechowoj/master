@@ -12,12 +12,27 @@ Technique::Technique(const shared<const Scene>& scene, size_t num_threads)
 
 Technique::~Technique() { }
 
-double Technique::render(
+void Technique::render(
     ImageView& view,
     random_generator_t& generator,
     size_t cameraId)
 {
     auto& cameras = _scene->cameras();
+
+    if (!std::isfinite(_start_time)) {
+        double time_offset = _statistics.records.empty()
+            ? 0.0f
+            : _statistics.records.back().clock_time;
+
+        std::cout << "time_offset: " << time_offset << std::endl;
+
+        _start_time = high_resolution_time() - time_offset;
+    }
+
+    size_t num_basic_rays = _scene->numNormalRays();
+    size_t num_shadow_rays = _scene->numShadowRays();
+
+    double start_time = high_resolution_time();
 
     render_context_t context;
     context.view_to_world_mat3 = cameras.view_to_world_mat3(cameraId);
@@ -29,38 +44,37 @@ double Technique::render(
     context.focal_factor_y = context.focal_length_y * context.focal_length_y * 0.25f;
     context.generator = &generator;
 
-    if (!std::isfinite(_rendering_start_time)) {
-        _rendering_start_time = high_resolution_time();
-        _previous_frame_time = high_resolution_time();
-    }
-
-    size_t num_basic_rays = _scene->numNormalRays();
-    size_t num_shadow_rays = _scene->numShadowRays();
-
     _adjust_helper_image(view);
     _preprocess(generator, double(_statistics.num_samples));
     _trace_paths(view, context, cameraId);
-    double epsilon = _commit_images(view);
+    _commit_images(view);
 
-    double current = high_resolution_time();
-    _frame_time = current - _previous_frame_time;
-    _previous_frame_time = current;
+    double current_time = high_resolution_time();
+    double elapsed_time = current_time - start_time;
 
     ++_statistics.num_samples;
     _statistics.num_basic_rays += _scene->numNormalRays() - num_basic_rays;
     _statistics.num_shadow_rays += _scene->numShadowRays() - num_shadow_rays;
     _statistics.num_tentative_rays += 0;
-    _statistics.total_time = current - _rendering_start_time;
+    _statistics.total_time = current_time - _start_time;
 
-    return epsilon;
+    statistics_t::record_t record {
+        0.0f,
+        0.0f,
+        float(_statistics.total_time),
+        float(elapsed_time),
+        0
+    };
+
+    _statistics.records.push_back(record);
 }
 
 const statistics_t& Technique::statistics() const {
     return _statistics;
 }
 
-double Technique::frame_time() const {
-    return _frame_time;
+void Technique::set_statistics(const statistics_t& statistics) {
+    _statistics = statistics;
 }
 
 vec3 Technique::_traceEye(

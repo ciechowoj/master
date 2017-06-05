@@ -40,10 +40,6 @@ Application::~Application() { rtcDeleteDevice(_device); }
 void Application::render(size_t width, size_t height, glm::dvec4* data) {
   auto view = ImageView(data, width, height);
 
-  if (_options.enable_seed) {
-    _generator.seed(_options.seed + _num_samples());
-  }
-
   if (_options.action == Options::Continue) {
     map<string, string> metadata;
     size_t width = 0; height = 0;
@@ -56,13 +52,19 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
       data,
       [](vec4 x) { return dvec4(x); });
 
+    _technique->set_statistics(statistics_t(metadata));
     _options.action = Options::Render;
   }
 
-  double epsilon = _technique->render(view, _generator, _options.camera_id);
+  if (_options.enable_seed) {
+    _generator.seed(_options.seed + _technique->statistics().num_samples);
+  }
+
+  _technique->render(view, _generator, _options.camera_id);
+  ++_num_samples;
 
   if (_options.technique != Options::Viewer) {
-    _printStatistics(view, _technique->frame_time(), _technique->statistics().total_time, epsilon, false);
+    _printStatistics(view, _technique->statistics().records.back().frame_duration, _technique->statistics().total_time, false);
     _saveIfRequired(view, _technique->statistics().total_time);
   }
 
@@ -71,7 +73,7 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
 
 void Application::updateUI(size_t width, size_t height, const glm::vec4* data,
                            double elapsed) {
-  _ui->update(*_technique, _num_samples(), width, height, data, elapsed);
+  _ui->update(*_technique, _num_samples, width, height, data, elapsed);
 }
 
 void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
@@ -184,6 +186,7 @@ bool Application::updateScene() {
 
       _modificationTime = modificationTime;
       _num_seconds_saved = 0.0;
+      _num_samples = 0;
       return true;
     }
   }
@@ -192,23 +195,23 @@ bool Application::updateScene() {
 }
 
 void Application::_printStatistics(const ImageView& view, double elapsed,
-                                   double time, double epsilon,
+                                   double time,
                                    bool preprocessed) {
   if (!_options.quiet && _options.technique != Options::Viewer) {
     if (preprocessed) {
       std::cout << "Preprocessing finished..." << std::endl;
     } else {
-      size_t num_samples = _num_samples();
+      size_t num_samples = _technique->statistics().num_samples;
       std::cout << "#" << std::setw(6) << std::left << num_samples << " "
                 << std::right << std::fixed << std::setw(8)
                 << std::setprecision(3) << time << "s" << std::setw(8)
-                << elapsed << "s/sample   " << std::setprecision(8) << std::fixed << epsilon << std::endl;
+                << elapsed << "s/sample   " << std::endl;
     }
   }
 }
 
 void Application::_saveIfRequired(const ImageView& view, double elapsed) {
-  size_t num_samples = _num_samples();
+  size_t num_samples = _num_samples;
 
   if (num_samples != 0) {
     if (_options.num_samples != 0 && _options.num_samples == num_samples) {
@@ -223,7 +226,7 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
 }
 
 void Application::_updateQuitCond(const ImageView& view, double elapsed) {
-  if ((_options.num_samples != 0 && _options.num_samples == _num_samples()) ||
+  if ((_options.num_samples != 0 && _options.num_samples == _num_samples) ||
       (_options.num_seconds != 0.0 && _options.num_seconds <= elapsed)) {
     quit();
   }
@@ -243,7 +246,6 @@ void Application::_save(const ImageView& view, size_t num_samples,
   }
 }
 
-std::size_t Application::_num_samples() const { return _technique->statistics().num_samples; }
 double Application::_num_seconds() const { return _technique->statistics().total_time; }
 
 }

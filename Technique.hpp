@@ -31,7 +31,7 @@ public:
     Technique(const shared<const Scene>& scene, size_t num_threads);
     virtual ~Technique();
 
-    virtual double render(
+    virtual void render(
         ImageView& view,
         RandomEngine& engine,
         size_t cameraId);
@@ -40,11 +40,9 @@ public:
     virtual string id() const = 0;
 
     const statistics_t& statistics() const;
-    double frame_time() const;
+    void set_statistics(const statistics_t& statistics);
 protected:
-    double _previous_frame_time = NAN;
-    double _rendering_start_time = NAN;
-    double _frame_time = NAN;
+    double _start_time = NAN;
     statistics_t _statistics;
     shared<const Scene> _scene;
     std::vector<dvec3> _eye_image;

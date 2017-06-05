@@ -2,11 +2,13 @@
 #include <iosfwd>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace haste {
 
 using std::map;
 using std::string;
+using std::vector;
 
 struct statistics_t {
   size_t num_samples = 0;
@@ -24,6 +26,16 @@ struct statistics_t {
   double intersect_time = 0.0;
   double trace_eye_time = 0.0;
   double trace_light_time = 0.0;
+
+  struct record_t {
+    float rms_error;
+    float abs_error;
+    float clock_time;
+    float frame_duration;
+    size_t numeric_errors;
+  };
+
+  vector<record_t> records;
 
   statistics_t() = default;
   statistics_t(const map<string, string>& dict);

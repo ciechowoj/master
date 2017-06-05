@@ -21,13 +21,11 @@ class Application : public Framework {
   bool updateScene() override;
 
  private:
-  void _printStatistics(const ImageView& view, double elapsed, double time,
-                        double epsilon, bool preprocessed);
+  void _printStatistics(const ImageView& view, double elapsed, double time, bool preprocessed);
   void _saveIfRequired(const ImageView& view, double elapsed);
   void _updateQuitCond(const ImageView& view, double elapsed);
   void _save(const ImageView& view, size_t numSamples, bool snapshot);
 
-  std::size_t _num_samples() const;
   double _num_seconds() const;
 
   Options _options;
@@ -39,5 +37,6 @@ class Application : public Framework {
   size_t _modificationTime;
   double _num_seconds_saved;
   vector<dvec4> _reference;
+  size_t _num_samples = 0;
 };
 }
