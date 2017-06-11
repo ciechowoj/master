@@ -24,8 +24,6 @@ void Technique::render(
             ? 0.0f
             : _statistics.records.back().clock_time;
 
-        std::cout << "time_offset: " << time_offset << std::endl;
-
         _start_time = high_resolution_time() - time_offset;
     }
 

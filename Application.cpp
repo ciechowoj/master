@@ -228,6 +228,10 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
 }
 
 void Application::_updateQuitCond(const ImageView& view, double elapsed) {
+  if (_options.technique == Options::Viewer) {
+    return;
+  }
+
   if ((_options.num_samples != 0 && _options.num_samples == _num_samples) ||
       (_options.num_seconds != 0.0 && _options.num_seconds <= elapsed)) {
     quit();

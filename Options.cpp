@@ -972,6 +972,7 @@ void save_exr(Options options, statistics_t statistics, const vec3* data) {
 
   if (isfile(options.output)) {
     string temp = temppath(".exr");
+    std::cout << temp << std::endl;
     save_exr(temp, metadata, options.width, options.height, data);
     move_file(temp, options.get_output());
   }
@@ -987,6 +988,7 @@ void save_exr(Options options, statistics_t statistics, const vec4* data) {
 
   if (isfile(options.output)) {
     string temp = temppath(".exr");
+    std::cout << temp << std::endl;
     save_exr(temp, metadata, options.width, options.height, data);
     move_file(temp, options.get_output());
   }

@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <tuple>
 #include <sstream>
+#include <algorithm>
 #include <system_utils.hpp>
 
 #if defined _MSC_VER
@@ -70,7 +71,18 @@ string fullpath(string relative_path) {
   #endif
 }
 
+string tempdir() {
+  #if defined _MSC_VER
+  char buffer[MAX_PATH + 2];
+  GetTempPathA(MAX_PATH, buffer);
+  return buffer;
+  #else
+  return P_tmpdir;
+  #endif
+}
+
 string temppath(string extension) {
+  #if defined _MSC_VER
   char buffer[MAX_PATH + 2];
   GetTempPathA(MAX_PATH, buffer);
 
@@ -82,9 +94,30 @@ string temppath(string extension) {
   RpcStringFreeA(&uuid_str);
 
   return result;
+  #else
+  string tempdir = haste::tempdir();
+  string result = string(tempdir.size() + 7 + extension.size() + 1, '/');
+
+  std::copy_n(tempdir.begin(), tempdir.size(), result.begin());
+  std::fill_n(result.begin() + tempdir.size() + 1, 6, 'X');
+  std::copy_n(extension.begin(), extension.size(), result.begin() + tempdir.size() + 7);
+  result[result.size() - 1] = '\0';
+
+  int fd = mkstemps(&result[0], extension.size());
+
+  if (fd == -1) {
+    throw std::runtime_error("failed to create temporary file");
+  }
+
+  close(fd);
+
+  result.resize(result.size() - 1);
+  return result;
+  #endif
 }
 
 bool isfile(string path) {
+  #ifdef _MSC_VER
   DWORD attributes = GetFileAttributesA(path.c_str());
 
   if (attributes == 0xffffffff) {
@@ -106,6 +139,11 @@ bool isfile(string path) {
   else {
     return true;
   }
+  #else
+  struct stat path_stat;
+  stat(path.c_str(), &path_stat);
+  return S_ISREG(path_stat.st_mode);
+  #endif
 }
 
 void move_file(string old_path, string new_path) {
@@ -114,7 +152,9 @@ void move_file(string old_path, string new_path) {
     throw std::runtime_error("failed to move file");
   }
   #else
-  #error "Implement this."
+  if (rename(old_path.c_str(), new_path.c_str()) != 0) {
+    throw std::runtime_error("failed to move file");
+  }
   #endif
 }
 
