@@ -58,7 +58,7 @@ protected:
 
     void _adjust_helper_image(ImageView& view);
     void _trace_paths(ImageView& view, render_context_t& context, size_t cameraId);
-    double _commit_images(ImageView& view);
+    size_t _commit_images(ImageView& view);
 
     float _normal_coefficient(
         const vec3& light_omega,

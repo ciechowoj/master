@@ -45,7 +45,7 @@ void Technique::render(
     _adjust_helper_image(view);
     _preprocess(generator, double(_statistics.num_samples));
     _trace_paths(view, context, cameraId);
-    _commit_images(view);
+    size_t numeric_errors = _commit_images(view);
 
     double current_time = high_resolution_time();
     double elapsed_time = current_time - start_time;
@@ -61,7 +61,7 @@ void Technique::render(
         0.0f,
         float(_statistics.total_time),
         float(elapsed_time),
-        0
+        numeric_errors
     };
 
     _statistics.records.push_back(record);
@@ -173,8 +173,8 @@ void Technique::_trace_paths(
     });
 }
 
-double Technique::_commit_images(ImageView& view) {
-    double epsilon = 0.0f;
+size_t Technique::_commit_images(ImageView& view) {
+    size_t numeric_errors = 0;
 
     exec_in_bands(_threadpool, view.xWindow(), view.yWindow(), 128,
         [&](size_t x0, size_t x1, size_t y0, size_t y1) {
@@ -192,7 +192,7 @@ double Technique::_commit_images(ImageView& view) {
         subview._yOffset = yBegin;
         subview._yWindow = yEnd - yBegin;
 
-        double local_epsilon = 0.0f;
+        size_t local_errors = 0;
 
         for (size_t y = subview.yBegin(); y < subview.yEnd(); ++y) {
             dvec4* dst_begin = subview.data() + y * subview.width() + subview.xBegin();
@@ -203,15 +203,13 @@ double Technique::_commit_images(ImageView& view) {
             for (dvec4* dst_itr = dst_begin; dst_itr < dst_end; ++dst_itr) {
                 dvec4 new_dst = *dst_itr + dvec4(*light_itr + *eye_itr, 1.0f);
 
-                dvec3 delta = new_dst.rgb() / new_dst.a - dst_itr->rgb() / dst_itr->a;
-                local_epsilon += l1Norm(delta * delta);
-
-                //if (std::isfinite(l1Norm(*light_itr + *eye_itr))) {
+                if (std::isfinite(l1Norm(*light_itr + *eye_itr))) {
                     *dst_itr = new_dst;
-                /*}
+                }
                 else {
+                    ++local_errors;
                     std::cerr << "Numeric error." << std::endl;
-                }*/
+                }
 
                 *light_itr = dvec3(0.0f);
                 *eye_itr = dvec3(0.0f);
@@ -221,10 +219,10 @@ double Technique::_commit_images(ImageView& view) {
         }
 
         std::unique_lock<std::mutex> lock(_light_mutex);
-        epsilon += local_epsilon;
+        numeric_errors += local_errors;
     });
 
-    return sqrt(epsilon / (view.width() * view.height()));
+    return numeric_errors;
 }
 
 float Technique::_normal_coefficient(
