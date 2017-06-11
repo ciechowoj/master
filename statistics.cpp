@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <statistics.hpp>
 #include <utility.hpp>
@@ -156,6 +157,26 @@ std::ostream& operator<<(std::ostream& stream, const statistics_t& meta) {
 
   return stream;
 }
+
+void print_frame_summary(std::ostream& stream, const statistics_t& statistics)
+{
+  if (!statistics.records.empty()) {
+    stream << "#" << std::setw(6) << std::left << statistics.num_samples;
+    stream << std::right << std::fixed << std::setw(8) << std::setprecision(3) << statistics.total_time << "s";
+    stream << std::setw(8) << statistics.records.back().frame_duration << "s/sample   ";
+    stream << "rms:abs " << statistics.records.back().rms_error << ":" << statistics.records.back().abs_error;
+    stream << std::endl;
+  }
+}
+
+void print_records_tabular(std::ostream& stream, const statistics_t& statistics) {
+  if (!statistics.records.empty()) {
+
+
+
+  }
+}
+
 
 }
 

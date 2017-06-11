@@ -65,6 +65,12 @@ void Technique::render(
         numeric_errors
     };
 
+    if (!reference.empty()) {
+      auto a = image_view_t<dvec4>(view);
+      auto b = image_view_t<vec3>(reference, view.width(), view.height());
+      rms_abs_errors(record.rms_error, record.abs_error, a, b);
+    }
+
     _statistics.records.push_back(record);
 }
 

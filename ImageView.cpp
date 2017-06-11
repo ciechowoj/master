@@ -56,15 +56,31 @@ void ImageView::copyFrom(const std::vector<dvec4>& data, size_t width, size_t he
     }
 }
 
-
-
-
 void rms_abs_errors(
     float& rms,
     float& abs,
     image_view_t<dvec4> a,
-    image_view_t<vec3> b) {
+    image_view_t<vec3> b) 
+{
+  if (a.width != b.width || a.height != b.height) {
+    throw std::invalid_argument("Image view dimensions must match.");
+  }
 
+  rms = 0;
+  abs = 0;
+
+  for (size_t y = 0; y < a.height; ++y) {
+    for (size_t x = 0; x < a.width; ++x) {
+      vec3 d = glm::abs(vec3(a.at(x, y).xyz() / a.at(x, y).w) - b.at(x, y));
+      abs += d.x + d.y + d.z;
+      rms += glm::dot(d, d);
+    }
+  }
+
+  float num = a.width * a.height * 3;
+
+  rms = sqrt(rms / num);
+  abs = abs / num;
 }
 
 }

@@ -46,7 +46,6 @@ struct ImageView {
     void copyFrom(const std::vector<dvec4>& data, size_t width, size_t height);
 };
 
-
 template <class T> struct image_view_t {
     image_view_t(
         T* data,
@@ -59,8 +58,15 @@ template <class T> struct image_view_t {
         , height(height)
      { }
 
+    image_view_t(const ImageView& view)
+      : data(view._data + view._yOffset * view._width + view._xOffset)
+      , pitch(view._width)
+      , width(view._xWindow)
+      , height(view._yWindow)
+    { }
+
     image_view_t(
-        vector<T>& data,
+        const vector<T>& data,
         size_t width,
         size_t height)
         : data(data.data())
@@ -69,10 +75,14 @@ template <class T> struct image_view_t {
         , height(height)
      { }
 
-    T *const data;
+    const T *const data;
     const size_t pitch;
     const size_t width;
     const size_t height;
+
+    T at(size_t x, size_t y) const {
+      return data[y * pitch + x];
+    }
 };
 
 void rms_abs_errors(

@@ -45,4 +45,7 @@ struct statistics_t {
 
 std::ostream& operator<<(std::ostream& stream, const statistics_t& meta);
 
+void print_frame_summary(std::ostream& stream, const statistics_t& statistics);
+void print_records_tabular(std::ostream& stream, const statistics_t& statistics);
+
 }

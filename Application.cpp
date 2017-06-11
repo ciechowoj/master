@@ -206,11 +206,7 @@ void Application::_printStatistics(const ImageView& view, double elapsed,
     if (preprocessed) {
       std::cout << "Preprocessing finished..." << std::endl;
     } else {
-      size_t num_samples = _technique->statistics().num_samples;
-      std::cout << "#" << std::setw(6) << std::left << num_samples << " "
-                << std::right << std::fixed << std::setw(8)
-                << std::setprecision(3) << time << "s" << std::setw(8)
-                << elapsed << "s/sample   " << std::endl;
+      print_frame_summary(std::cout, _technique->statistics());
     }
   }
 }
