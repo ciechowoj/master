@@ -164,19 +164,34 @@ void print_frame_summary(std::ostream& stream, const statistics_t& statistics)
     stream << "#" << std::setw(6) << std::left << statistics.num_samples;
     stream << std::right << std::fixed << std::setw(8) << std::setprecision(3) << statistics.total_time << "s";
     stream << std::setw(8) << statistics.records.back().frame_duration << "s/sample   ";
-    stream << "rms:abs " << statistics.records.back().rms_error << ":" << statistics.records.back().abs_error;
+    stream << "rms:abs " << std::setprecision(8) << statistics.records.back().rms_error << ":" << statistics.records.back().abs_error;
     stream << std::endl;
   }
 }
 
 void print_records_tabular(std::ostream& stream, const statistics_t& statistics) {
-  if (!statistics.records.empty()) {
+  auto& records = statistics.records;
 
+  if (!records.empty()) {
+    auto last_index = std::to_string(records.size() - 1);
+    auto last_time = std::to_string(size_t(statistics.total_time));
 
+    double rendering_duration = 0;
 
+    for (size_t i = 0; i < records.size(); ++i) {
+      rendering_duration += records[i].frame_duration;
+
+      stream << std::setw(last_index.size()) << std::left << i;
+      stream << std::right << std::setw(last_time.size() + 9) << std::fixed << std::setprecision(7) << rendering_duration;
+      stream << std::setw(10) << records[i].rms_error;
+      stream << std::setw(10) << records[i].abs_error;
+      stream << std::setw(5) << records[i].numeric_errors;
+      stream << "\n";
+    }
+
+    stream.flush();
   }
 }
-
 
 }
 
