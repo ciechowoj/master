@@ -70,4 +70,52 @@ string fullpath(string relative_path) {
   #endif
 }
 
+string temppath(string extension) {
+  char buffer[MAX_PATH + 2];
+  GetTempPathA(MAX_PATH, buffer);
+
+  RPC_CSTR uuid_str;
+  UUID uuid;
+  UuidCreate(&uuid);
+  UuidToStringA(&uuid, &uuid_str);
+  string result = buffer + ((LPCSTR)uuid_str + extension);
+  RpcStringFreeA(&uuid_str);
+
+  return result;
+}
+
+bool isfile(string path) {
+  DWORD attributes = GetFileAttributesA(path.c_str());
+
+  if (attributes == 0xffffffff) {
+    DWORD error = GetLastError();
+
+    if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND) {
+      return false;
+    }
+    else if (error == ERROR_ACCESS_DENIED) {
+      throw std::runtime_error("access denied");
+    }
+    else {
+      throw std::runtime_error("unknown error");
+    }
+  }
+  else if (attributes & FILE_ATTRIBUTE_DIRECTORY) {
+    return false;
+  }
+  else {
+    return true;
+  }
+}
+
+void move_file(string old_path, string new_path) {
+  #if defined _MSC_VER
+  if (MoveFileExA(old_path.c_str(), new_path.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) == 0) {
+    throw std::runtime_error("failed to move file");
+  }
+  #else
+  #error "Implement this."
+  #endif
+}
+
 }

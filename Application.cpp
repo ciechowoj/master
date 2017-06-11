@@ -33,6 +33,8 @@ Application::Application(Options& options) {
     _options.height = height;
     _reference = vv3f_to_vv4d(reference);
   }
+
+  options = _options;
 }
 
 Application::~Application() { rtcDeleteDevice(_device); }
@@ -185,7 +187,7 @@ bool Application::updateScene() {
       }
 
       _modificationTime = modificationTime;
-      _num_seconds_saved = 0.0;
+      _num_seconds_saved = _num_seconds();
       _num_samples = 0;
       return true;
     }
@@ -220,7 +222,7 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
       _save(view, num_samples, false);
     } else if (_options.snapshot != 0 && _num_seconds_saved + _options.snapshot < _num_seconds()) {
       _save(view, num_samples, true);
-      _num_seconds_saved += _options.snapshot;
+      _num_seconds_saved = _num_seconds();
     }
   }
 }

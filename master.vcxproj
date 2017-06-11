@@ -100,7 +100,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\deploy\lib;$(ProjectDir)\build\glad;$(ProjectDir)\build\openexr\deploy\lib;C:\zlib-1.2.11\build\$(Configuration);$(ProjectDir)\build\glfw\deploy\lib;$(ProjectDir)\build\imgui;$(ProjectDir)\build\assimp\deploy\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>simd.lib;sys.lib;lexers.lib;embree.lib;embree_sse42.lib;embree_avx.lib;embree_avx2.lib;glad.lib;IlmImf-2_2.lib;Half.lib;glfw3.lib;Iex-2_2.lib;IexMath-2_2.lib;IlmImfUtil-2_2.lib;IlmThread-2_2.lib;Imath-2_2.lib;zlibstatic.lib;opengl32.lib;gdi32.lib;Shell32.lib;imgui.lib;assimp-vc140-mt.lib</AdditionalDependencies>
+      <AdditionalDependencies>simd.lib;sys.lib;lexers.lib;embree.lib;embree_sse42.lib;embree_avx.lib;embree_avx2.lib;glad.lib;IlmImf-2_2.lib;Half.lib;glfw3.lib;Iex-2_2.lib;IexMath-2_2.lib;IlmImfUtil-2_2.lib;IlmThread-2_2.lib;Imath-2_2.lib;zlibstatic.lib;opengl32.lib;gdi32.lib;Shell32.lib;imgui.lib;assimp-vc140-mt.lib;Rpcrt4.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -143,7 +143,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)\build\embree\deploy\lib;$(ProjectDir)\build\glad;$(ProjectDir)\build\openexr\deploy\lib;C:\zlib-1.2.11\build\$(Configuration);$(ProjectDir)\build\glfw\deploy\lib;$(ProjectDir)\build\imgui;$(ProjectDir)\build\assimp\deploy\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>simd.lib;sys.lib;lexers.lib;embree.lib;embree_sse42.lib;embree_avx.lib;embree_avx2.lib;glad.lib;IlmImf-2_2.lib;Half.lib;glfw3.lib;Iex-2_2.lib;IexMath-2_2.lib;IlmImfUtil-2_2.lib;IlmThread-2_2.lib;Imath-2_2.lib;zlibstatic.lib;opengl32.lib;gdi32.lib;Shell32.lib;imgui.lib;assimp-vc140-mt.lib</AdditionalDependencies>
+      <AdditionalDependencies>simd.lib;sys.lib;lexers.lib;embree.lib;embree_sse42.lib;embree_avx.lib;embree_avx2.lib;glad.lib;IlmImf-2_2.lib;Half.lib;glfw3.lib;Iex-2_2.lib;IexMath-2_2.lib;IlmImfUtil-2_2.lib;IlmThread-2_2.lib;Imath-2_2.lib;zlibstatic.lib;opengl32.lib;gdi32.lib;Shell32.lib;imgui.lib;assimp-vc140-mt.lib;Rpcrt4.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

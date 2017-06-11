@@ -65,6 +65,31 @@ string make_output_path(
   return fullpath(stream.str());
 }
 
+bool startswith(const std::string& s, const std::string& p) {
+  const char* s_itr = s.c_str();
+  const char* p_itr = p.c_str();
+
+  while (*s_itr != '\0' && *p_itr != '\0' && *s_itr == *p_itr) {
+    ++s_itr;
+    ++p_itr;
+  }
+
+  return *p_itr == '\0';
+}
+
+bool endswith(const std::string& s, const std::string& p) {
+  const char* s_rbegin = s.c_str() - 1;
+  const char* p_rbegin = p.c_str() - 1;
+  const char* s_itr = s.c_str() + s.size() - 1;
+  const char* p_itr = p.c_str() + p.size() - 1;
+
+  while (s_itr != s_rbegin && p_itr != p_rbegin && *s_itr == *p_itr) {
+    --s_itr;
+    --p_itr;
+  }
+
+  return p_itr == p_rbegin;
+}
 
 void split(const std::string& s, char delim, std::vector<std::string>& elems) {
   std::stringstream ss;

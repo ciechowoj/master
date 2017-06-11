@@ -68,8 +68,6 @@ string Options::caption() const {
     return input0 + " [" + to_string(this->technique) + "]";
 }
 
-bool startsWith(const string& a, const string& b);
-
 map<string, string> extractOptions(int argc, char const* const* argv) {
     map<string, string> result;
 
@@ -737,11 +735,18 @@ shared<Technique> makeViewer(Options& options) {
 
     load_exr(options.input0, metadata, width, height, data);
 
+    const string records = "records";
+
     for (auto&& itr : metadata) {
-      std::cout << itr.first << ": " << itr.second << "\n";
+      if (!startswith(itr.first, records)) {
+        std::cout << itr.first << ": " << itr.second << "\n";
+      }
     }
 
     std::cout.flush();
+
+    options = Options(metadata);
+    options.technique = Options::Viewer;
 
     return std::make_shared<Viewer>(vv3f_to_vv4d(data), width, height);
 }
@@ -965,7 +970,14 @@ void save_exr(Options options, statistics_t statistics, const vec3* data) {
   auto local_options = options.to_dict();
   metadata.insert(local_options.begin(), local_options.end());
 
-  save_exr(options.get_output(), metadata, options.width, options.height, data);
+  if (isfile(options.output)) {
+    string temp = temppath(".exr");
+    save_exr(temp, metadata, options.width, options.height, data);
+    move_file(temp, options.get_output());
+  }
+  else {
+    save_exr(options.get_output(), metadata, options.width, options.height, data);
+  }
 }
 
 void save_exr(Options options, statistics_t statistics, const vec4* data) {
@@ -973,7 +985,14 @@ void save_exr(Options options, statistics_t statistics, const vec4* data) {
   auto local_options = options.to_dict();
   metadata.insert(local_options.begin(), local_options.end());
 
-  save_exr(options.get_output(), metadata, options.width, options.height, data);
+  if (isfile(options.output)) {
+    string temp = temppath(".exr");
+    save_exr(temp, metadata, options.width, options.height, data);
+    move_file(temp, options.get_output());
+  }
+  else {
+    save_exr(options.get_output(), metadata, options.width, options.height, data);
+  }
 }
 
 void save_exr(Options options, statistics_t statistics, const dvec3* data) {

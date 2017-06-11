@@ -27,7 +27,8 @@ string make_output_path(
   bool snapshot,
   string technique);
 
-std::ostream& pretty_print(std::ostream& stream, const map<string, string>& dict);
+bool startswith(const std::string& s, const std::string& p);
+bool endswith(const std::string& s, const std::string& p);
 
 std::vector<dvec4> vv3f_to_vv4d(const std::vector<vec3>& data);
 std::vector<vec3> vv4f_to_vv3f(std::size_t size, const vec4* data);
