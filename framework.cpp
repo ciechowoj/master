@@ -19,6 +19,7 @@
 GLFWwindow* create_window(int x, int y, const std::string& caption) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     return glfwCreateWindow(x, y, caption.c_str(), NULL, NULL);
 }
@@ -329,6 +330,14 @@ void Framework::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width, si
     for (std::size_t y = 0; y < height; ++y) {
         for (std::size_t x = 0; x < width; ++x) {
             dst[y * width + x] = glm::vec4(src[y * width + x]);
+        }
+    }
+}
+
+void Framework::postproc(glm::vec4* dst, const glm::vec3* src, size_t width, size_t height) {
+    for (std::size_t y = 0; y < height; ++y) {
+        for (std::size_t x = 0; x < width; ++x) {
+            dst[y * width + x] = glm::vec4(src[y * width + x], 1.0f);
         }
     }
 }

@@ -275,7 +275,7 @@ Options parseTimeArgs(int argc, char const* const* argv) {
 Options parseContinueArgs(int argc, char const* const* argv) {
   Options options;
 
-  if (argc != 3) {
+  if (argc < 3) {
     options.displayHelp = true;
     options.displayMessage = "Input file is required.";
   }
@@ -289,25 +289,25 @@ Options parseContinueArgs(int argc, char const* const* argv) {
 
 Options parseArgs(int argc, char const* const* argv) {
     if (1 < argc) {
-        if (1 < argc && argv[1] == string("avg")) {
+        if (argv[1] == string("avg")) {
             return parseAvgArgs(argc, argv);
         }
-        else if (1 < argc && argv[1] == string("sub")) {
+        else if (argv[1] == string("sub")) {
             return parseSubArgs(argc, argv);
         }
-        else if (1 < argc && argv[1] == string("errors")) {
+        else if (argv[1] == string("errors")) {
             return parseErrorsArgs(argc, argv);
         }
-        else if (1 < argc && argv[1] == string("merge")) {
+        else if (argv[1] == string("merge")) {
             return parseMergeArgs(argc, argv);
         }
-        else if (1 < argc && argv[1] == string("filter")) {
+        else if (argv[1] == string("filter")) {
             return parseFilterArgs(argc, argv);
         }
-        else if (1 < argc && argv[1] == string("time")) {
+        else if (argv[1] == string("time")) {
             return parseTimeArgs(argc, argv);
         }
-        else if (1 < argc && argv[1] == string("continue")) {
+        else if (argv[1] == string("continue")) {
           return parseContinueArgs(argc, argv);
         }
     }
@@ -367,6 +367,7 @@ Options parseArgs(int argc, char const* const* argv) {
         }
         else {
             options.technique = Options::Viewer;
+            options.input1 = options.input0;
         }
 
         if (dict.count("--num-photons")) {
@@ -694,6 +695,34 @@ Options parseArgs(int argc, char const* const* argv) {
     }
 }
 
+void overrideArgs(Options& options, int argc, const char* const* argv)
+{
+    auto dict = extractOptions(argc, argv);
+
+    dict.erase("--input");
+
+    if (dict.count("--snapshot")) {
+        if (!isUnsigned(dict["--snapshot"])) {
+            options.displayHelp = true;
+            options.displayMessage = "Invalid value for --snapshot.";
+            return;
+        }
+        else {
+            options.snapshot = atoi(dict["--snapshot"].c_str());
+            dict.erase("--snapshot");
+        }
+    }
+
+    if (dict.empty()) {
+        return;
+    }
+    else {
+        options.displayHelp = true;
+        options.displayMessage = "Unsupported override: " + dict.begin()->first + ".";
+        return;
+    }
+}
+
 pair<bool, int> displayHelpIfNecessary(
     const Options& options,
     const char* version)
@@ -733,7 +762,8 @@ shared<Technique> makeViewer(Options& options) {
     size_t width = 0;
     size_t height = 0;
 
-    load_exr(options.input0, metadata, width, height, data);
+    string input1 = options.input1;
+    load_exr(input1, metadata, width, height, data);
 
     const string records = "records";
 
@@ -746,7 +776,10 @@ shared<Technique> makeViewer(Options& options) {
     std::cout.flush();
 
     options = Options(metadata);
+    options.input1 = input1;
     options.technique = Options::Viewer;
+    options.batch = false;
+    options.reload = true;
 
     return std::make_shared<Viewer>(vv3f_to_vv4d(data), width, height);
 }
@@ -972,7 +1005,6 @@ void save_exr(Options options, statistics_t statistics, const vec3* data) {
 
   if (isfile(options.output)) {
     string temp = temppath(".exr");
-    std::cout << temp << std::endl;
     save_exr(temp, metadata, options.width, options.height, data);
     move_file(temp, options.get_output());
   }
@@ -988,7 +1020,6 @@ void save_exr(Options options, statistics_t statistics, const vec4* data) {
 
   if (isfile(options.output)) {
     string temp = temppath(".exr");
-    std::cout << temp << std::endl;
     save_exr(temp, metadata, options.width, options.height, data);
     move_file(temp, options.get_output());
   }

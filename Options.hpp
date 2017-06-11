@@ -62,6 +62,7 @@ struct Options {
 };
 
 Options parseArgs(int argc, char const* const* argv);
+void overrideArgs(Options& options, int argc, const char* const* argv);
 pair<bool, int> displayHelpIfNecessary(
     const Options& options,
     const char* version = nullptr);

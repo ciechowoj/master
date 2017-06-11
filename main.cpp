@@ -97,6 +97,14 @@ int main(int argc, char **argv) {
             options = Options(metadata);
             options.output = output;
             options.action = Options::Continue;
+
+            overrideArgs(options, argc, argv);
+
+            auto status = displayHelpIfNecessary(options, "0.0.1");
+
+            if (status.first) {
+                return status.second;
+            }
         }
 
         Application application(options);

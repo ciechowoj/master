@@ -56,4 +56,15 @@ void ImageView::copyFrom(const std::vector<dvec4>& data, size_t width, size_t he
     }
 }
 
+
+
+
+void rms_abs_errors(
+    float& rms,
+    float& abs,
+    image_view_t<dvec4> a,
+    image_view_t<vec3> b) {
+
+}
+
 }

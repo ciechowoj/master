@@ -15,7 +15,8 @@ Technique::~Technique() { }
 void Technique::render(
     ImageView& view,
     random_generator_t& generator,
-    size_t cameraId)
+    size_t cameraId,
+    const vector<vec3>& reference)
 {
     auto& cameras = _scene->cameras();
 

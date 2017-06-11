@@ -13,7 +13,8 @@ public:
     void render(
         ImageView& view,
         RandomEngine& engine,
-        size_t cameraId) override;
+        size_t cameraId,
+        const vector<vec3>& reference) override;
 
     string name() const override;
     string id() const override;

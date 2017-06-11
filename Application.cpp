@@ -27,11 +27,9 @@ Application::Application(Options& options) {
 
     size_t width = 0, height = 0;
 
-    vector<vec3> reference;
-    load_exr(_options.reference, metadata, width, height, reference);
+    load_exr(_options.reference, metadata, width, height, _reference);
     _options.width = width;
     _options.height = height;
-    _reference = vv3f_to_vv4d(reference);
   }
 
   options = _options;
@@ -56,13 +54,15 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
 
     _technique->set_statistics(statistics_t(metadata));
     _options.action = Options::Render;
+
+    _num_seconds_saved = _num_seconds();
   }
 
   if (_options.enable_seed) {
     _generator.seed(_options.seed + _technique->statistics().num_samples);
   }
 
-  _technique->render(view, _generator, _options.camera_id);
+  _technique->render(view, _generator, _options.camera_id, _reference);
   ++_num_samples;
 
   if (_options.technique != Options::Viewer) {
@@ -172,7 +172,10 @@ void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
 
 bool Application::updateScene() {
   if (_options.reload) {
-    auto modificationTime = getmtime(_options.input0);
+    auto modificationTime = getmtime(
+        _options.technique != Options::Viewer
+          ? _options.input0
+          : _options.input1);
 
     if (_modificationTime < modificationTime) {
       if (_options.technique != Options::Viewer) {

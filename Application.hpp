@@ -36,7 +36,7 @@ class Application : public Framework {
   shared<UserInterface> _ui;
   size_t _modificationTime;
   double _num_seconds_saved;
-  vector<dvec4> _reference;
+  vector<vec3> _reference;
   size_t _num_samples = 0;
 };
 }

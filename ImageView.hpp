@@ -4,6 +4,8 @@
 
 namespace haste {
 
+using std::vector;
+
 struct ImageView {
     ImageView() = default;
     ImageView(dvec4* data, size_t width, size_t height);
@@ -43,5 +45,40 @@ struct ImageView {
 
     void copyFrom(const std::vector<dvec4>& data, size_t width, size_t height);
 };
+
+
+template <class T> struct image_view_t {
+    image_view_t(
+        T* data,
+        size_t pitch,
+        size_t width,
+        size_t height)
+        : data(data)
+        , pitch(pitch)
+        , width(width)
+        , height(height)
+     { }
+
+    image_view_t(
+        vector<T>& data,
+        size_t width,
+        size_t height)
+        : data(data.data())
+        , pitch(width)
+        , width(width)
+        , height(height)
+     { }
+
+    T *const data;
+    const size_t pitch;
+    const size_t width;
+    const size_t height;
+};
+
+void rms_abs_errors(
+    float& rms,
+    float& abs,
+    image_view_t<dvec4> a,
+    image_view_t<vec3> b);
 
 }

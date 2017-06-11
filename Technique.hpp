@@ -34,7 +34,8 @@ public:
     virtual void render(
         ImageView& view,
         RandomEngine& engine,
-        size_t cameraId);
+        size_t cameraId,
+        const vector<vec3>& reference);
 
     virtual string name() const = 0;
     virtual string id() const = 0;

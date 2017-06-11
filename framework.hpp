@@ -42,6 +42,7 @@ public:
         double elapsed) = 0;
 
     virtual void postproc(glm::vec4* dst, const glm::dvec4* src, size_t width, size_t height);
+    virtual void postproc(glm::vec4* dst, const glm::vec3* src, size_t width, size_t height);
     virtual bool updateScene();
 
     int run(size_t width, size_t height, const std::string& caption);
