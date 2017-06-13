@@ -14,6 +14,7 @@
 #include <mutex>
 
 #include <exr.hpp>
+#include <gnuplot.hpp>
 
 using namespace std;
 using namespace haste;
@@ -88,6 +89,18 @@ int main(int argc, char **argv) {
     }
     else if (options.action == Options::Time) {
         std::cout << query_time(options.input0);
+    }
+    else if (options.action == Options::Gnuplot) {
+        auto error_message = gnuplot(argc, argv);
+
+        options.displayHelp = !error_message.empty();
+        options.displayMessage = error_message;
+
+        auto status = displayHelpIfNecessary(options, "0.0.1");
+
+        if (status.first) {
+          return status.second;
+        }
     }
     else {
         if (options.action == Options::Continue) {

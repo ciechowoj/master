@@ -310,6 +310,11 @@ Options parseArgs(int argc, char const* const* argv) {
         else if (argv[1] == string("continue")) {
           return parseContinueArgs(argc, argv);
         }
+        else if (argv[1] == string("gnuplot")) {
+          Options options;
+          options.action = Options::Gnuplot;
+          return options;
+        }
     }
 
     auto dict = extractOptions(argc, argv);

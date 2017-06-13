@@ -160,6 +160,7 @@
     <ClCompile Include="BSDF.cpp" />
     <ClCompile Include="Cameras.cpp" />
     <ClCompile Include="exr.cpp" />
+    <ClCompile Include="gnuplot.cpp" />
     <ClCompile Include="statistics.cpp" />
     <ClCompile Include="system_utils.cpp" />
     <ClCompile Include="framework.cpp" />
@@ -220,6 +221,7 @@
     <ClInclude Include="BSDF.hpp" />
     <ClInclude Include="Cameras.hpp" />
     <ClInclude Include="exr.hpp" />
+    <ClInclude Include="gnuplot.hpp" />
     <ClInclude Include="statistics.hpp" />
     <ClInclude Include="system_utils.hpp" />
     <ClInclude Include="fixed_vector.hpp" />

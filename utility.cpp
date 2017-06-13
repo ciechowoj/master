@@ -91,6 +91,31 @@ bool endswith(const std::string& s, const std::string& p) {
   return p_itr == p_rbegin;
 }
 
+multimap<string, string> extract_options(int argc, char const* const* argv) {
+  multimap<string, string> result;
+
+  for (int i = 0; i < argc; ++i) {
+    if (strcmp(argv[i], "-h") == 0) {
+      result.insert(make_pair<string, string>("--help", ""));
+    }
+    else if (strstr(argv[i], "-") == argv[i]) {
+      const char* eq = strstr(argv[i], "=");
+
+      if (eq == nullptr) {
+        result.insert(make_pair<string, string>(argv[i], ""));
+      }
+      else {
+        result.insert(make_pair(string((const char*)argv[i], eq), string(eq + 1)));
+      }
+    }
+    else {
+      result.insert(make_pair<string, string>("--input", argv[i]));
+    }
+  }
+
+  return result;
+}
+
 void split(const std::string& s, char delim, std::vector<std::string>& elems) {
   std::stringstream ss;
   ss.str(s);

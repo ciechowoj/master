@@ -30,6 +30,8 @@ string make_output_path(
 bool startswith(const std::string& s, const std::string& p);
 bool endswith(const std::string& s, const std::string& p);
 
+std::multimap<string, string> extract_options(int argc, char const* const* argv);
+
 std::vector<dvec4> vv3f_to_vv4d(const std::vector<vec3>& data);
 std::vector<vec3> vv4f_to_vv3f(std::size_t size, const vec4* data);
 std::vector<vec3> vv4d_to_vv3f(std::size_t size, const dvec4* data);
