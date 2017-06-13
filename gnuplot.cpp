@@ -91,6 +91,13 @@ string gnuplot(string output, const vector<string>& inputs, string error) {
   auto result = exec("gnuplot " + temp_script);
   std::cout << result;
 
+  for (auto&& temp : temps) {
+    std::remove(temp.c_str());
+  }
+
+  std::remove(temp_script.c_str());
+
+
   return string();
 }
 
