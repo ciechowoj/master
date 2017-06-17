@@ -257,19 +257,19 @@ Options parseFilterArgs(int argc, char const* const* argv) {
     return options;
 }
 
-Options parseTimeArgs(int argc, char const* const* argv) {
-    Options options;
+Options parseSingleInputFile(int argc, char const* const* argv, Options::Action action) {
+  Options options;
 
-    if (argc != 3) {
-        options.displayHelp = true;
-        options.displayMessage = "Input file is required.";
-    }
-    else {
-        options.action = Options::Time;
-        options.input0 = argv[2];
-    }
+  if (argc < 3) {
+    options.displayHelp = true;
+    options.displayMessage = "Input file is required.";
+  }
+  else {
+    options.action = action;
+    options.input0 = fullpath(argv[2]);
+  }
 
-    return options;
+  return options;
 }
 
 Options parseContinueArgs(int argc, char const* const* argv) {
@@ -305,10 +305,13 @@ Options parseArgs(int argc, char const* const* argv) {
             return parseFilterArgs(argc, argv);
         }
         else if (argv[1] == string("time")) {
-            return parseTimeArgs(argc, argv);
+            return parseSingleInputFile(argc, argv, Options::Time);
         }
         else if (argv[1] == string("continue")) {
           return parseContinueArgs(argc, argv);
+        }
+        else if (argv[1] == string("statistics")) {
+          return parseSingleInputFile(argc, argv, Options::Statistics);
         }
         else if (argv[1] == string("gnuplot")) {
           Options options;
@@ -900,6 +903,7 @@ string to_string(const Options::Action& action) {
         case Options::Filter: return "Filter";
         case Options::Time: return "Time";
         case Options::Continue: return "Continue";
+        case Options::Statistics: return "Statistics";
         default: return "UNKNOWN";
     }
 }
@@ -921,6 +925,8 @@ Options::Action action(string action) {
         return Options::Time;
     else if (action == "Continue")
       return Options::Continue;
+    else if (action == "Statistics")
+      return Options::Statistics;
     else
         throw std::invalid_argument("action");
 }

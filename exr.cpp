@@ -295,12 +295,12 @@ void load_exr(
   }
 }
 
-void load_exr(
-  const string& path,
-  map<string, string>& metadata)
+map<string, string> load_metadata(const string& path)
 {
+  map<string, string> metadata;
   InputFile file(path.c_str());
   load_metadata(file, metadata);
+  return metadata;
 }
 
 vec3 exr_average(string path) {
@@ -447,10 +447,7 @@ string compute_errors(string fst, string snd) {
 }
 
 string query_time(string path) {
-  map<string, string> metadata;
-
-  load_exr(path, metadata);
-
+  map<string, string> metadata = load_metadata(path);
   return metadata.find("total_time")->second;
 }
 

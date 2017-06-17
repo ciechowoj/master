@@ -12,8 +12,7 @@
 namespace haste {
 
 statistics_t load_statistics(string path) {
-  map<string, string> metadata;
-  load_exr(path, metadata);
+  map<string, string> metadata = load_metadata(path);
   return statistics_t(metadata);
 }
 
@@ -96,7 +95,6 @@ string gnuplot(string output, const vector<string>& inputs, string error) {
   }
 
   std::remove(temp_script.c_str());
-
 
   return string();
 }
