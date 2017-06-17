@@ -23,7 +23,7 @@ std::string exec(string cmd) {
   #if defined _MSC_VER
   std::shared_ptr<FILE> pipe(_popen(cmd.c_str(), "r"), _pclose);
   #else
-  std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
+  std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
   #endif
   if (!pipe) throw std::runtime_error("popen() failed!");
   while (!feof(pipe.get())) {
@@ -36,14 +36,14 @@ std::string exec(string cmd) {
 void make_gnuplot_script(
   std::ostream& stream,
   string output,
-  const vector<string>& inputs, 
+  const vector<string>& inputs,
   const vector<string>& temps) {
-  
+
   stream << "set terminal png enhanced truecolor" << "\n";
   stream << "set output '" << output << "'\n\n";
 
   for (size_t i = 0; i < inputs.size(); ++i) {
-    stream << (i == 0 ? "plot " : "     "); 
+    stream << (i == 0 ? "plot " : "     ");
     stream << "'" << temps[i] << "' using 1:2 with lines " << "title '" << inputs[i] << "'";
     stream << (i == inputs.size() - 1 ? "\n" : ", \\\n");
   }
@@ -157,7 +157,7 @@ string gnuplot(int argc, char const* const* argv) {
   if (!error_message.empty()) {
     return error_message;
   }
-  
+
   vector<string> inputs;
 
   auto itr = options.begin();

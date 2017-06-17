@@ -1,3 +1,4 @@
+#include <cstring>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -95,7 +96,7 @@ multimap<string, string> extract_options(int argc, char const* const* argv) {
   multimap<string, string> result;
 
   for (int i = 0; i < argc; ++i) {
-    if (strcmp(argv[i], "-h") == 0) {
+    if (std::strcmp(argv[i], "-h") == 0) {
       result.insert(make_pair<string, string>("--help", ""));
     }
     else if (strstr(argv[i], "-") == argv[i]) {
