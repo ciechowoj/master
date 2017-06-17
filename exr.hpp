@@ -57,9 +57,7 @@ void load_exr(
   size_t& height,
   vector<vec4>& data);
 
-void load_exr(
-  const string& path,
-  map<string, string>& metadata);
+map<string, string> load_metadata(const string& path);
 
 vec3 exr_average(string path);
 void subtract_exr(string dst, string fst, string snd);

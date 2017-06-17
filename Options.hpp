@@ -18,7 +18,7 @@ template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
     enum Technique { PT, BPT, VCM, UPG, Viewer };
-    enum Action { Render, AVG, SUB, Errors, Merge, Filter, Time, Continue, Gnuplot };
+    enum Action { Render, AVG, SUB, Errors, Merge, Filter, Time, Continue, Statistics, Gnuplot };
 
     string input0;
     string input1;

@@ -90,6 +90,10 @@ int main(int argc, char **argv) {
     else if (options.action == Options::Time) {
         std::cout << query_time(options.input0);
     }
+    else if (options.action == Options::Statistics) {
+      auto metadata = load_metadata(options.input0);
+      print_records_tabular(std::cout, statistics_t(metadata));
+    }
     else if (options.action == Options::Gnuplot) {
         auto error_message = gnuplot(argc, argv);
 
@@ -104,8 +108,7 @@ int main(int argc, char **argv) {
     }
     else {
         if (options.action == Options::Continue) {
-            map<string, string> metadata;
-            load_exr(options.input0, metadata);
+            map<string, string> metadata = load_metadata(options.input0);
             auto output = options.input0;
             options = Options(metadata);
             options.output = output;
