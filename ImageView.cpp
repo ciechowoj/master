@@ -1,4 +1,5 @@
 #include <cstring>
+#include <stdexcept>
 #include <ImageView.hpp>
 
 namespace haste {
@@ -60,7 +61,7 @@ void rms_abs_errors(
     float& rms,
     float& abs,
     image_view_t<dvec4> a,
-    image_view_t<vec3> b) 
+    image_view_t<vec3> b)
 {
   if (a.width != b.width || a.height != b.height) {
     throw std::invalid_argument("Image view dimensions must match.");
