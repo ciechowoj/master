@@ -106,7 +106,7 @@ function BuildImGUI($configuration = "Release") {
         Copy-Item "$imGuiBaseLocation/examples/opengl3_example/imgui_impl_glfw_gl3.cpp" ./
         (Get-Content imgui_impl_glfw_gl3.cpp).replace('GL/gl3w.h', 'glad/glad.h') | Set-Content imgui_impl_glfw_gl3.cpp
 
-        $flags = $cxxFlags, '/I.', '/I../glad/loader/include', '/I../glfw/deploy/include'
+        $flags = $cxxFlags, '/I.', '/I../glad/loader/include', "/I../glfw/$configuration/include"
 
         cl @flags /c "imgui.cpp" /Fo"imgui.obj"
         cl @flags /c "imgui_draw.cpp" /Fo"imgui_draw.obj"
@@ -234,11 +234,11 @@ function BuildAssimp($configuration = "Release") {
 function BuildSubmodules($configuration = "Release") {
 	# BuildOpenEXR -Configuration $configuration
 	# BuildAssimp -Configuration $configuration
-	# BuildGLFW -Configuration $configuration
+	BuildGLFW -Configuration $configuration
 	# BuildEmbree -Configuration $configuration
 
-	BuildGLAD -Configuration $configuration
+	# BuildGLAD -Configuration $configuration
 	BuildImGUI -Configuration $configuration
 }
 
-BuildSubmodules -configuration "Debug"
+BuildSubmodules -configuration "Release"
