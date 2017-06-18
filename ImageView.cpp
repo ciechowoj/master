@@ -77,7 +77,7 @@ void rms_abs_errors(
     }
   }
 
-  float num = a.width * a.height * 3;
+  float num = float(a.width * a.height * 3);
 
   rms = sqrt(rms / num);
   abs = abs / num;

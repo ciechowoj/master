@@ -250,7 +250,7 @@ void load_exr(
 {
   InputFile file(path.c_str());
 
-  load_metadata(file, metadata);
+  // load_metadata(file, metadata);
 
   auto window = file.header().dataWindow();
   int iwidth = window.max.x - window.min.x + 1;

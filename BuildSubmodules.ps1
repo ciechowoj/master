@@ -26,8 +26,9 @@ function BuildOpenEXR([switch]$skipIlmBase = $false, [switch]$skipOpenEXR = $fal
 
         if (-Not $skipIlmBase) {
             cmake $ilmBaseLocation `
-                -DCMAKE_INSTALL_PREFIX="../openexr/deploy" `
-                -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 15 2017 Win64" 
+                -DCMAKE_INSTALL_PREFIX="../openexr/$configuration" `
+                -DBUILD_SHARED_LIBS=OFF `
+				-G "Visual Studio 15 2017 Win64" 
             UpdateRuntimeLibrary
             cmake --build .
             cmake --build . --target INSTALL --config $configuration
@@ -35,13 +36,19 @@ function BuildOpenEXR([switch]$skipIlmBase = $false, [switch]$skipOpenEXR = $fal
 
         set-location ../openexr
 
+		$zlibname = "zlibstatic.lib"
+
+		if ($configuration -eq "Debug") {
+			$zlibname = "zlibstaticd.lib"
+		}
+
         if (-Not $skipOpenEXR) {
             cmake $openexrLocation `
-                -DCMAKE_INSTALL_PREFIX="deploy" `
+                -DCMAKE_INSTALL_PREFIX="$configuration" `
                 -DBUILD_SHARED_LIBS=OFF `
-                -DZLIB_LIBRARY="C:`zlib-1.2.11`build`Release`zlibstatic.lib" `
-                -DZLIB_INCLUDE_DIR="C:`zlib-1.2.11" `
-                -DILMBASE_PACKAGE_PREFIX="$(get-location)`deploy" `
+                -DZLIB_LIBRARY="C:\zlib-1.2.11\build\$configuration\$zlibname" `
+                -DZLIB_INCLUDE_DIR="C:\zlib-1.2.11" `
+                -DILMBASE_PACKAGE_PREFIX="$(get-location)\$configuration" `
                 -G "Visual Studio 15 2017 Win64" 
             UpdateRuntimeLibrary            
             cmake --build .
@@ -78,7 +85,7 @@ function BuildGLAD([switch]$skipGenerating = $false) {
     }
 }
 
-function BuildImGUI() {
+function BuildImGUI($configuration = "Release") {
     $location = get-location
 
     try {
@@ -111,7 +118,7 @@ function BuildImGUI() {
     }
 }
 
-function BuildEmbree() {
+function BuildEmbree($configuration = "Release") {
     $location = get-location
 
     try {
@@ -119,8 +126,8 @@ function BuildEmbree() {
         set-location build/embree
 
         cmake ../../submodules/embree/ -G 'Visual Studio 15 2017 Win64' `
-            -DCMAKE_INSTALL_PREFIX="deploy" `
-            -DEMBREE_ISPC_EXECUTABLE="C:`ispc-v1.9.1-windows-vs2015`ispc.exe" `
+            -DCMAKE_INSTALL_PREFIX="$configuration" `
+            -DEMBREE_ISPC_EXECUTABLE="C:\ispc-v1.9.1-windows-vs2015\ispc.exe" `
             -DEMBREE_STATIC_LIB=ON `
             -DEMBREE_TUTORIALS=OFF `
             -DEMBREE_RAY_MASK=ON `
@@ -130,14 +137,14 @@ function BuildEmbree() {
             -DEMBREE_GEOMETRY_SUBDIV=OFF `
             -DEMBREE_GEOMETRY_USER=OFF
 
-        devenv "embree2.sln" /build Release
+        cmake --build . --target INSTALL --config $configuration
     }
     finally {
         set-location $location
     }
 }
 
-function BuildGLFW() {
+function BuildGLFW($configuration = "Release") {
     $location = get-location
 
     try {
@@ -145,13 +152,13 @@ function BuildGLFW() {
         set-location build/glfw
 
         cmake ../../submodules/glfw/ -G 'Visual Studio 15 2017 Win64' `
-            -DCMAKE_INSTALL_PREFIX="deploy" `
+            -DCMAKE_INSTALL_PREFIX="$configuration" `
             -DGLFW_BUILD_EXAMPLES=OFF `
             -DGLFW_BUILD_TESTS=OFF `
             -DGLFW_BUILD_DOCS=OFF `
             -DUSE_MSVC_RUNTIME_LIBRARY_DLL=OFF 
 
-        cmake --build . --target INSTALL --config Release
+        cmake --build . --target INSTALL --config $configuration
     }
     finally {
         set-location $location
@@ -159,7 +166,7 @@ function BuildGLFW() {
 
 }
 
-function BuildAssimp() {
+function BuildAssimp($configuration = "Release") {
     $location = get-location
 
     try {
@@ -170,8 +177,9 @@ function BuildAssimp() {
 
        cmake $assimpBaseLocation `
             -G 'Visual Studio 15 2017 Win64' `
-            -DCMAKE_INSTALL_PREFIX="deploy" `
+            -DCMAKE_INSTALL_PREFIX="$configuration" `
             -DBUILD_SHARED_LIBS=OFF `
+			-DASSIMP_INSTALL_PDB=OFF `
             -DASSIMP_NO_EXPORT=ON `
             -DASSIMP_BUILD_ASSIMP_TOOLS=OFF `
             -DASSIMP_BUILD_TESTS=OFF `
@@ -216,16 +224,21 @@ function BuildAssimp() {
             -DASSIMP_BUILD_GLTF_IMPORTER=FALSE
 
         UpdateRuntimeLibrary        
-        cmake --build . --target INSTALL --config Release
+        cmake --build . --target INSTALL --config $configuration
     }
     finally {
         set-location $location
     }
 }
 
-# BuildOpenEXR
-# BuildGLAD
-# BuildEmbree
-# BuildGLFW
-# BuildImGUI
-BuildAssimp
+function BuildSubmodules($configuration = "Release") {
+	# BuildOpenEXR -Configuration $configuration
+	# BuildAssimp -Configuration $configuration
+	# BuildGLFW -Configuration $configuration
+	# BuildEmbree -Configuration $configuration
+
+	BuildGLAD -Configuration $configuration
+	BuildImGUI -Configuration $configuration
+}
+
+BuildSubmodules -configuration "Debug"
