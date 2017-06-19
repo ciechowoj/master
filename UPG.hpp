@@ -22,8 +22,6 @@ class UPGBase : public Technique, protected Beta {
     vec3 throughput;
     float a, A, B;
     float bGeometry;
-    uint16_t pGlossiness;
-    uint16_t ppGlossiness;
     uint16_t length : 13;
     uint16_t directional : 14;
     uint16_t finite : 1;
@@ -39,8 +37,6 @@ class UPGBase : public Technique, protected Beta {
     vec3 throughput;
     float bGeometry;
     float c, C, D;
-    uint16_t pGlossiness;
-    uint16_t ppGlossiness;
     uint16_t length : 15;
     uint16_t finite : 1;
   };
