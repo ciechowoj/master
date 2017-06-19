@@ -10,6 +10,7 @@ UPGBase<Beta>::UPGBase(
     bool unbiased,
     bool enable_vc,
     bool enable_vm,
+    bool from_light,
     float lights,
     float roulette,
     size_t numPhotons,
@@ -22,6 +23,7 @@ UPGBase<Beta>::UPGBase(
     , _unbiased(unbiased)
     , _enable_vc(enable_vc)
     , _enable_vm(enable_vm)
+    , _from_light(from_light)
     , _lights(lights)
     , _roulette(roulette)
     , _roulette_inv(1.0f / roulette)
@@ -878,6 +880,7 @@ UPGb::UPGb(
     bool unbiased,
     bool enable_vc,
     bool enable_vm,
+    bool from_light,
     float lights,
     float roulette,
     size_t numPhotons,
@@ -890,6 +893,7 @@ UPGb::UPGb(
         unbiased,
         enable_vc,
         enable_vm,
+        from_light,
         lights,
         roulette,
         numPhotons,

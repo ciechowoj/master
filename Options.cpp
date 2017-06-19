@@ -49,6 +49,7 @@ R"(
       --quiet                Do not output anything to console.
       --no-vc                Disable vertex connection.
       --no-vm                Disable vertex merging.
+      --from-light           Merge from light perspective.
       --no-lights            Do not draw the lights.
       --no-reload            Disable auto-reload (input file is reloaded on modification in interactive mode).
       --num-samples=<n>      Terminate after n samples.
@@ -535,6 +536,40 @@ Options parseArgs(int argc, char const* const* argv) {
             dict.erase("--no-vm");
         }
 
+        size_t num_from_light =
+          dict.count("--from-light") +
+          dict.count("--from-camera");
+
+        if (num_from_light > 1) {
+          options.displayHelp = true;
+          options.displayMessage = "--from-light and --from-camera cannot be specified at the same time.";
+          return options;
+        }
+
+        if (dict.count("--from-light")) {
+          if (options.technique != Options::VCM &&
+            options.technique != Options::UPG) {
+            options.displayHelp = true;
+            options.displayMessage = "--from-light is only valid with --VCM and --UPG.";
+            return options;
+          }
+
+          options.from_light = true;
+          dict.erase("--from-light");
+        }
+
+        if (dict.count("--from-camera")) {
+          if (options.technique != Options::VCM &&
+            options.technique != Options::UPG) {
+            options.displayHelp = true;
+            options.displayMessage = "--from-camera is only valid with --VCM and --UPG.";
+            return options;
+          }
+
+          options.from_light = false;
+          dict.erase("--from-camera");
+        }
+
         if (dict.count("--no-lights")) {
             options.lights = 0.0f;
             dict.erase("--no-lights");
@@ -809,6 +844,7 @@ shared<Technique> make_upg_technique(const shared<const Scene>& scene, const Opt
         options.technique == Options::UPG,
         options.enable_vc,
         options.enable_vm,
+        options.from_light,
         options.lights,
         options.roulette,
         options.num_photons,
@@ -931,6 +967,11 @@ Options::Action action(string action) {
         throw std::invalid_argument("action");
 }
 
+bool safe_bool(const map<string, string>& dict, string key) {
+    auto itr = dict.find(key);
+    return itr == dict.end() ? false : (bool)stoi(itr->second);
+}
+
 Options::Options(const map<string, string>& dict) {
     input0 = dict.find("options.input0")->second;
     input1 = dict.find("options.input1")->second;
@@ -948,6 +989,7 @@ Options::Options(const map<string, string>& dict) {
     quiet = stoi(dict.find("options.quiet")->second);
     enable_vc = stoi(dict.find("options.enable_vc")->second);
     enable_vm = stoi(dict.find("options.enable_vm")->second);
+    from_light = safe_bool(dict, "options.from_light");
     lights = stod(dict.find("options.lights")->second);
     num_samples = stoll(dict.find("options.num_samples")->second);
     num_seconds = stod(dict.find("options.num_seconds")->second);
@@ -982,6 +1024,7 @@ map<string, string> Options::to_dict()
     result["options.quiet"] = to_string(quiet);
     result["options.enable_vc"] = to_string(enable_vc);
     result["options.enable_vm"] = to_string(enable_vm);
+    result["options.from_light"] = to_string(from_light);
     result["options.lights"] = to_string(lights);
     result["options.num_samples"] = to_string(num_samples);
     result["options.num_seconds"] = to_string(num_seconds);

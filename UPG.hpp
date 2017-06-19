@@ -12,7 +12,7 @@ template <class Beta>
 class UPGBase : public Technique, protected Beta {
  public:
   UPGBase(const shared<const Scene>& scene, bool unbiased, bool enable_vc,
-          bool enable_vm, float lights, float roulette, size_t numPhotons,
+          bool enable_vm, bool from_light, float lights, float roulette, size_t numPhotons,
           float radius, float alpha, float beta, size_t numThreads);
 
  private:
@@ -105,8 +105,6 @@ class UPGBase : public Technique, protected Beta {
 
   vec3 _connect(render_context_t& context, const EyeVertex& eye);
 
-  vec3 _gather_eye(render_context_t& context, const EyeVertex& eye);
-
   void _scatter(random_generator_t& generator);
 
   vec3 _gather(render_context_t& context, const EyeVertex& eye,
@@ -135,6 +133,7 @@ class UPGBase : public Technique, protected Beta {
   const bool _unbiased;
   const bool _enable_vc;
   const bool _enable_vm;
+  const bool _from_light;
   const float _lights;
   const float _roulette;
   const float _roulette_inv;
@@ -159,7 +158,9 @@ using UPG2 = UPGBase<FixedBeta<2>>;
 class UPGb : public UPGBase<VariableBeta> {
  public:
   UPGb(const shared<const Scene>& scene, bool unbiased, bool enable_vc,
-       bool enable_vm, float lights, float roulette, size_t numPhotons,
-       float radius, float alpha, float beta, size_t numThreads);
+       bool enable_vm, bool from_light, float lights, float roulette, 
+       size_t numPhotons, float radius, float alpha, float beta, 
+       size_t numThreads);
 };
+
 }

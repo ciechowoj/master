@@ -36,6 +36,7 @@ struct Options {
     bool quiet = false;
     bool enable_vc = true;
     bool enable_vm = true;
+    bool from_light = true;
     float lights = 1.0f;
     size_t num_samples = 0;
     double num_seconds = 0.0;
