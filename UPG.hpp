@@ -122,8 +122,9 @@ class UPGBase : public Technique, protected Beta {
 
   bool _russian_roulette(random_generator_t& generator) const;
 
-  static const int _trim_light = 0;  // _merge_from_light ? 0 : 1;
-  static const int _trim_eye = 0;    // _merge_from_light ? 1 : 0;
+  static const bool _merge_from_light = true;
+  static const int _trim_light = _merge_from_light ? 1 : 0;
+  static const int _trim_eye = _merge_from_light ? 1 : 0;
 
   const size_t _num_photons;
   const bool _unbiased;

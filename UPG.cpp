@@ -332,7 +332,13 @@ float UPGBase<Beta>::_vm_subweight_inv(
             * Beta::beta(eye.c) * (eye.length <= _trim_eye ? 0.0f : 1.0f))
         * Beta::beta(edge.fGeometry * lightBSDF.density);
 
-    return Beta::beta(_num_scattered) * (Bp + Dp + connect_vertex_merging);
+    float weight = Beta::beta(_num_scattered) * (Bp + Dp + connect_vertex_merging);
+
+    // std::cout << "Bp: " << Bp << " Dp: " << Dp << " " << light.length << " " << eye.length << "\n";
+
+    // std::cout << "Weight: " << weight << " length: " <<  +  << "\n";
+
+    return weight;
 }
 
 template <class Beta>
