@@ -186,7 +186,7 @@ bool Application::updateScene() {
       _technique = makeTechnique(_scene, _options);
 
       if (!_options.quiet) {
-        std::cout << "Using: " << _technique->name() << std::endl;
+        std::cout << "Using: " << to_string(_options.technique) << std::endl;
       }
 
       _modificationTime = modificationTime;

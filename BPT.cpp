@@ -11,16 +11,6 @@ BPTBase<Beta>::BPTBase(const shared<const Scene>& scene, float lights, float rou
 }
 
 template <class Beta>
-string BPTBase<Beta>::name() const {
-    return Beta::name();
-}
-
-template <class Beta>
-string BPTBase<Beta>::id() const {
-    return string("BPT_b") + std::to_string(this->beta_exp());
-}
-
-template <class Beta>
 vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     light_path_t light_path;
     vec3 radiance = vec3(0.0f);

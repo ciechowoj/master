@@ -16,9 +16,6 @@ public:
         size_t cameraId,
         const vector<vec3>& reference) override;
 
-    string name() const override;
-    string id() const override;
-
 private:
     vector<dvec4> _data;
     size_t _width;

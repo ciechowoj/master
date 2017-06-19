@@ -15,9 +15,6 @@ class UPGBase : public Technique, protected Beta {
           bool enable_vm, float lights, float roulette, size_t numPhotons,
           float radius, float alpha, float beta, size_t numThreads);
 
-  string name() const override;
-  string id() const override;
-
  private:
   struct LightVertex {
     SurfacePoint surface;

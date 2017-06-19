@@ -37,9 +37,6 @@ public:
         size_t cameraId,
         const vector<vec3>& reference);
 
-    virtual string name() const = 0;
-    virtual string id() const = 0;
-
     const statistics_t& statistics() const;
     void set_statistics(const statistics_t& statistics);
 protected:

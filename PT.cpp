@@ -119,10 +119,4 @@ vec3 PathTracing::_connect(render_context_t& context, const EyeVertex& eye) {
          edge.bCosTheta * edge.fGeometry / weightInv;
 }
 
-string PathTracing::name() const { return "Path Tracing"; }
-
-string PathTracing::id() const {
-    return string("PT_b") + std::to_string(this->_beta);
-}
-
 }

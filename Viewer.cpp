@@ -21,12 +21,4 @@ void Viewer::render(
     std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(33));;
 }
 
-string Viewer::name() const {
-    return "Viewer";
-}
-
-string Viewer::id() const {
-    return "Viewer";
-}
-
 }

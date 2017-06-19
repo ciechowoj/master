@@ -35,19 +35,6 @@ UPGBase<Beta>::UPGBase(
 }
 
 template <class Beta>
-string UPGBase<Beta>::name() const {
-    return _unbiased ? "Unbiased Photon Gathering" : "Vertex Connection and Merging";
-}
-
-template <class Beta>
-string UPGBase<Beta>::id() const {
-    return string(_unbiased ? "UPG" : "VCM")
-        + "_r" + std::to_string(_initial_radius)
-        + "_a" + std::to_string(_alpha)
-        + "_b" + std::to_string(this->beta_exp());
-}
-
-template <class Beta>
 vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
     time_scope_t _0(_statistics.trace_eye_time);
 
