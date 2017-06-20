@@ -806,6 +806,7 @@ shared<Technique> makeViewer(Options& options) {
     size_t height = 0;
 
     string input1 = options.input1;
+    string reference = options.reference;
     load_exr(input1, metadata, width, height, data);
 
     const string records = "records";
@@ -820,6 +821,7 @@ shared<Technique> makeViewer(Options& options) {
 
     options = Options(metadata);
     options.input1 = input1;
+    options.reference = reference;
     options.technique = Options::Viewer;
     options.batch = false;
     options.reload = true;
