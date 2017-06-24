@@ -379,8 +379,9 @@ float UPGBase<Beta>::_vc_weight(
         return 1.0f / _vc_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge);
     }
     else {
-        return 1.0f / (_vc_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge) +
-            _vm_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge));
+        float vc = _vc_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge);
+        float vm = _vm_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge);
+        return 1.0f / (vc + vm);
     }
 }
 
