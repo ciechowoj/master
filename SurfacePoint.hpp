@@ -65,6 +65,8 @@ struct SurfacePoint {
 
 struct Edge {
  public:
+  Edge() = default;
+
   Edge(const SurfacePoint& fst, const SurfacePoint& snd, const vec3& omega) {
     distSqInv = 1.0f / distance2(fst.position(), snd.position());
     fCosTheta = abs(dot(omega, snd.normal()));

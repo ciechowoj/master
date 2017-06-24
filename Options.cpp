@@ -992,7 +992,7 @@ Options::Options(const map<string, string>& dict) {
     enable_vc = stoi(dict.find("options.enable_vc")->second);
     enable_vm = stoi(dict.find("options.enable_vm")->second);
     from_light = safe_bool(dict, "options.from_light");
-    lights = stod(dict.find("options.lights")->second);
+    lights = (float)stod(dict.find("options.lights")->second);
     num_samples = stoll(dict.find("options.num_samples")->second);
     num_seconds = stod(dict.find("options.num_seconds")->second);
     num_threads = stoll(dict.find("options.num_threads")->second);

@@ -95,7 +95,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             itr->throughput /= bsdf.density;
 
             itr->bGeometry = edge.bGeometry;
-            itr->length = prv->length + 1.0f;
+            itr->length = prv->length + 1;
 
             prv->finite = min(prv->finite, bsdf.finite);
             itr->finite = bsdf.finite;
@@ -231,7 +231,7 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
         itr->throughput /= bsdf.density;
 
         itr->bGeometry = edge.bGeometry;
-        itr->length = prv->length + 1.0f;
+        itr->length = prv->length + 1;
 
         itr->directional = false;
         prv->finite = min(prv->finite, bsdf.finite);
@@ -272,174 +272,127 @@ void UPGBase<Beta>::_traceLight(random_generator_t& generator, vector<LightVerte
 }
 
 template <class Beta>
-float UPGBase<Beta>::_vc_subweight_inv(
-    const LightVertex& light,
-    const BSDFQuery& lightBSDF,
-    const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF,
-    const Edge& edge) {
+float UPGBase<Beta>::_vc_subweight_inv(const Connection& connection) {
 
     float Ap
-        = (light.A * Beta::beta(lightBSDF.densityRev) + light.finite * Beta::beta(light.a))
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
+        = (connection.light.A * Beta::beta(connection.light_bsdf.densityRev) + connection.light.finite * Beta::beta(connection.light.a))
+        * Beta::beta(connection.edge.bGeometry * connection.eye_bsdf.densityRev);
 
     float Cp
-        = (eye.C * Beta::beta(eyeBSDF.density) + eye.finite * Beta::beta(eye.c))
-        * Beta::beta(edge.fGeometry * lightBSDF.density);
+        = (connection.eye.C * Beta::beta(connection.eye_bsdf.density) + connection.eye.finite * Beta::beta(connection.eye.c))
+        * Beta::beta(connection.edge.fGeometry * connection.light_bsdf.density);
 
     return Ap + Cp + 1.0f;
 }
 
 template <class Beta>
-float UPGBase<Beta>::_vm_subweight_inv(
-    const LightVertex& light,
-    const BSDFQuery& lightBSDF,
-    const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF,
-    const Edge& edge) {
+float UPGBase<Beta>::_vm_subweight_inv(const Connection& connection) {
     float light_vertex_merging = 0.0f;
     float eye_vertex_merging = 0.0f;
     float connect_vertex_merging = 0.0f;
 
     if (_from_light) {
-        light_vertex_merging += _clamp(Beta::beta(_circle / light.a)); // light
+        light_vertex_merging += _clamp(Beta::beta(_circle / connection.light.a)); // light
 
-        eye_vertex_merging += _clamp(Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) // light
-            * (eye.length <= 1.0f ? 0.0f : 1.0f);
+        eye_vertex_merging += _clamp(Beta::beta(_circle * connection.eye.bGeometry * connection.eye_bsdf.density)) // light
+            * (connection.eye.length <= 1.0f ? 0.0f : 1.0f);
 
-        connect_vertex_merging += _clamp(Beta::beta(_circle * edge.fGeometry * lightBSDF.density))
-          * (eye.length == 0.0f ? 0.0f : 1.0f); // light
+        connect_vertex_merging += _clamp(Beta::beta(_circle * connection.edge.fGeometry * connection.light_bsdf.density))
+          * (connection.eye.length == 0.0f ? 0.0f : 1.0f); // light
     }
     else {
-        light_vertex_merging += _clamp(Beta::beta(_circle * light.bGeometry * lightBSDF.densityRev)) // eye
-            * (light.length <= 1.0f ? 0.0f : 1.0f);
+        light_vertex_merging += _clamp(Beta::beta(_circle * connection.light.bGeometry * connection.light_bsdf.densityRev)) // eye
+            * (connection.light.length <= 1.0f ? 0.0f : 1.0f);
 
-        eye_vertex_merging += _clamp(Beta::beta(_circle / eye.c)); // eye
+        eye_vertex_merging += _clamp(Beta::beta(_circle / connection.eye.c)); // eye
 
-        connect_vertex_merging += _clamp(Beta::beta(_circle * edge.bGeometry * eyeBSDF.densityRev))
-            * (light.length == 0.0f ? 0.0f : 1.0f); // eye
+        connect_vertex_merging += _clamp(Beta::beta(_circle * connection.edge.bGeometry * connection.eye_bsdf.densityRev))
+            * (connection.light.length == 0.0f ? 0.0f : 1.0f); // eye
     }
 
     float Bp
-        = (light.B * Beta::beta(lightBSDF.densityRev) + lightBSDF.finite
+        = (connection.light.B * Beta::beta(connection.light_bsdf.densityRev) + connection.light_bsdf.finite
             * light_vertex_merging
-            * Beta::beta(light.a) * (light.length <= _trim_light ? 0.0f : 1.0f))
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
+            * Beta::beta(connection.light.a) * (connection.light.length <= _trim_light ? 0.0f : 1.0f))
+        * Beta::beta(connection.edge.bGeometry * connection.eye_bsdf.densityRev);
 
     float Dp
-        = (eye.D * Beta::beta(eyeBSDF.density) + eyeBSDF.finite
+        = (connection.eye.D * Beta::beta(connection.eye_bsdf.density) + connection.eye_bsdf.finite
             * eye_vertex_merging
-            * Beta::beta(eye.c) * (eye.length <= _trim_eye ? 0.0f : 1.0f))
-        * Beta::beta(edge.fGeometry * lightBSDF.density);
+            * Beta::beta(connection.eye.c) * (connection.eye.length <= _trim_eye ? 0.0f : 1.0f))
+        * Beta::beta(connection.edge.fGeometry * connection.light_bsdf.density);
 
-    float weight = Beta::beta(_num_scattered) * (Bp + Dp + connect_vertex_merging);
-
-    // std::cout << "Bp: " << Bp << " Dp: " << Dp << " " << light.length << " " << eye.length << "\n";
-
-    // std::cout << "Weight: " << weight << " length: " <<  +  << "\n";
-
-    return weight;
+    return Beta::beta(_num_scattered) * (Bp + Dp + connect_vertex_merging);
 }
 
 template <class Beta>
-float UPGBase<Beta>::_vm_biased_subweight_inv(const LightVertex& light,
-                                 const BSDFQuery& lightBSDF,
-                                 const EyeVertex& eye, const BSDFQuery& eyeBSDF,
-                                 const Edge& edge,
-                                 float vm_current) {
+float UPGBase<Beta>::_vm_biased_subweight_inv(const Connection& connection, float vm_current) {
 
-    float eye_vertex_merging = Beta::beta(_circle * eye.bGeometry * eyeBSDF.density) // light
-            * (eye.length <= 1.0f ? 0.0f : 1.0f);
+    float eye_vertex_merging = Beta::beta(_circle * connection.eye.bGeometry * connection.eye_bsdf.density) // light
+            * (connection.eye.length <= 1.0f ? 0.0f : 1.0f);
 
-    float light_vertex_merging = light.a == 0.0f ? 0.0f : Beta::beta(_circle / light.a); // light
+    float light_vertex_merging = connection.light.a == 0.0f ? 0.0f : Beta::beta(_circle / connection.light.a); // light
 
     float Bp
-        = (light.B * Beta::beta(lightBSDF.densityRev) + lightBSDF.finite
+        = (connection.light.B * Beta::beta(connection.light_bsdf.densityRev) + connection.light_bsdf.finite
             * light_vertex_merging
-            * Beta::beta(light.a) * (light.length <= _trim_light ? 0.0f : 1.0f))
-        * Beta::beta(edge.bGeometry * eyeBSDF.densityRev);
+            * Beta::beta(connection.light.a) * (connection.light.length <= _trim_light ? 0.0f : 1.0f))
+        * Beta::beta(connection.edge.bGeometry * connection.eye_bsdf.densityRev);
 
     float Dp
-        = (eye.D * Beta::beta(eyeBSDF.density) + eyeBSDF.finite
+        = (connection.eye.D * Beta::beta(connection.eye_bsdf.density) + connection.eye_bsdf.finite
             * eye_vertex_merging
-            * Beta::beta(eye.c) * (eye.length <= _trim_eye ? 0.0f : 1.0f))
-        * Beta::beta(edge.fGeometry * lightBSDF.density);
+            * Beta::beta(connection.eye.c) * (connection.eye.length <= _trim_eye ? 0.0f : 1.0f))
+        * Beta::beta(connection.edge.fGeometry * connection.light_bsdf.density);
 
     return Beta::beta(_num_scattered) * (Bp + Dp + vm_current);
 }
 
 template <class Beta>
-float UPGBase<Beta>::_vc_weight(
-    const LightVertex& light,
-    const BSDFQuery& lightBSDF,
-    const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF,
-    const Edge& edge) {
-    if ((eye.length + light.length) < 2) {
-        return 1.0f / _vc_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge);
+float UPGBase<Beta>::_vc_weight(const Connection& connection) {
+    if ((connection.eye.length + connection.light.length) < 2) {
+        return 1.0f / _vc_subweight_inv(connection);
     }
     else {
-        float vc = _vc_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge);
-        float vm = _vm_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge);
+        float vc = _vc_subweight_inv(connection);
+        float vm = _vm_subweight_inv(connection);
         return 1.0f / (vc + vm);
     }
 }
 
 template <class Beta>
-float UPGBase<Beta>::_vc_biased_weight(
-    const LightVertex& light,
-    const BSDFQuery& lightBSDF,
-    const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF,
-    const Edge& edge,
-    float vm_current) {
-    if ((eye.length + light.length) < 2) {
-        return 1.0f / _vc_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge);
+float UPGBase<Beta>::_vc_biased_weight(const Connection& connection, float vm_current) {
+    if ((connection.eye.length + connection.light.length) < 2) {
+        return 1.0f / _vc_subweight_inv(connection);
     }
     else {
-        float vc = _vc_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge);
-        float vm = _vm_biased_subweight_inv(light, lightBSDF, eye, eyeBSDF, edge, vm_current);
+        float vc = _vc_subweight_inv(connection);
+        float vm = _vm_biased_subweight_inv(connection, vm_current);
         return 1.0f / (vc + vm);
     }
 }
 
 template <class Beta>
-float UPGBase<Beta>::_vm_biased_weight(
-                        const LightVertex& light,
-                        const BSDFQuery& lightBSDF,
-                        const EyeVertex& eye, const BSDFQuery& eyeBSDF,
-                        const Edge& edge,
-                        float vm_current) {
-    float weight = _vc_biased_weight(light, lightBSDF, eye, eyeBSDF, edge,
-        vm_current * (eye.length == 0 ? 0.0f : 1.0f));
+float UPGBase<Beta>::_vm_biased_weight(const Connection& connection, float vm_current) {
+    float weight = _vc_biased_weight(connection, vm_current * (connection.eye.length == 0 ? 0.0f : 1.0f));
 
     return Beta::beta(_num_scattered) * vm_current * weight; // light
 }
 
 template <class Beta>
-float UPGBase<Beta>::_weight_vm_eye(
-    const LightVertex& light,
-    const BSDFQuery& lightBSDF,
-    const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF,
-    const Edge& edge) {
-    float weight = _vc_weight(light, lightBSDF, eye, eyeBSDF, edge);
+float UPGBase<Beta>::_weight_vm_eye(const Connection& connection) {
+    float weight = _vc_weight(connection);
 
     return Beta::beta(float(_num_scattered)
-        * _clamp(_circle * edge.bGeometry * eyeBSDF.densityRev)) * weight; // eye
+        * _clamp(_circle * connection.edge.bGeometry * connection.eye_bsdf.densityRev)) * weight; // eye
 }
 
 template <class Beta>
-float UPGBase<Beta>::_weight_vm_light(
-    const LightVertex& light,
-    const BSDFQuery& lightBSDF,
-    const EyeVertex& eye,
-    const BSDFQuery& eyeBSDF,
-    const Edge& edge) {
-    float weight = _vc_weight(light, lightBSDF, eye, eyeBSDF, edge);
+float UPGBase<Beta>::_weight_vm_light(const Connection& connection) {
+    float weight = _vc_weight(connection);
 
     return Beta::beta(float(_num_scattered)
-        * _clamp(_circle * edge.fGeometry * lightBSDF.density)) * weight; // light
+        * _clamp(_circle * connection.edge.fGeometry * connection.light_bsdf.density)) * weight; // light
 }
 
 template <class Beta>
@@ -454,16 +407,14 @@ float UPGBase<Beta>::_density(
 }
 
 template <class Beta>
-vec3 UPGBase<Beta>::_connect(
-    const LightVertex& light, const BSDFQuery& light_bsdf,
-    const EyeVertex& eye, const BSDFQuery& eye_bsdf, const Edge& edge) {
-    return _scene->occluded(eye.surface, light.surface)
-        * light.throughput
-        * light_bsdf.throughput
-        * eye.throughput
-        * eye_bsdf.throughput
-        * edge.bCosTheta
-        * edge.fGeometry;
+vec3 UPGBase<Beta>::_connect(const Connection& connection) {
+    return _scene->occluded(connection.eye.surface, connection.light.surface)
+        * connection.light.throughput
+        * connection.light_bsdf.throughput
+        * connection.eye.throughput
+        * connection.eye_bsdf.throughput
+        * connection.edge.bCosTheta
+        * connection.edge.fGeometry;
 }
 
 template <class Beta>
@@ -549,22 +500,24 @@ template <class Beta>
 vec3 UPGBase<Beta>::_connect(const LightVertex& light, const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
-    auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
-    auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
+    Connection connection;
+    connection.light = light;
+    connection.light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
+    connection.eye = eye;
+    connection.eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
+    connection.edge = Edge(light.surface, eye.surface, omega);
 
-    auto edge = Edge(light.surface, eye.surface, omega);
-
-    auto throughput = _connect(light, light_bsdf, eye, eye_bsdf, edge);
+    auto throughput = _connect(connection);
 
     if (l1Norm(throughput) > FLT_EPSILON) {
-        float vm_current = _clamp(Beta::beta(_circle * edge.fGeometry * light_bsdf.density))
-                * (eye.length == 0.0f ? 0.0f : 1.0f);
+        float vm_current = _clamp(Beta::beta(_circle * connection.edge.fGeometry * connection.light_bsdf.density))
+                * (connection.eye.length == 0.0f ? 0.0f : 1.0f);
 
         float weight = _unbiased
-            ? _vc_weight(light, light_bsdf, eye, eye_bsdf, edge)
-            : _vc_biased_weight(light, light_bsdf, eye, eye_bsdf, edge, vm_current);
+            ? _vc_weight(connection)
+            : _vc_biased_weight(connection, vm_current);
 
-        return _connect(light, light_bsdf, eye, eye_bsdf, edge) * weight;
+        return _connect(connection) * weight;
     }
     else {
         return vec3(0.0f);
@@ -764,22 +717,25 @@ vec3 UPGBase<Beta>::_merge_light(
     const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
-    auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
-    auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
-    auto edge = Edge(light.surface, eye.surface, omega);
+    Connection connection;
+    connection.light = light;
+    connection.light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
+    connection.eye = eye;
+    connection.eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
+    connection.edge = Edge(light.surface, eye.surface, omega);
 
-    vec3 throughput = _connect(light, light_bsdf, eye, eye_bsdf, edge);
+    vec3 throughput = _connect(connection);
 
     if (l1Norm(throughput) < FLT_EPSILON) {
         return vec3(0.0f);
     }
     else {
-        auto weight = _weight_vm_light(light, light_bsdf, eye, eye_bsdf, edge);
+        auto weight = _weight_vm_light(connection);
         time_scope_t _(_statistics.density_time);
         auto density = _unbiased
-            ? _density(generator, light.omega,
-                light.surface, eye.surface.position())
-            : 1.0f / (_circle * edge.fGeometry * light_bsdf.density);
+            ? _density(generator, connection.light.omega,
+              connection.light.surface, connection.eye.surface.position())
+            : 1.0f / (_circle * connection.edge.fGeometry * connection.light_bsdf.density);
 
         return throughput * density * weight;
     }
@@ -792,22 +748,25 @@ vec3 UPGBase<Beta>::_merge_eye(
     const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
-    auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
-    auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
-    auto edge = Edge(light.surface, eye.surface, omega);
+    Connection connection;
+    connection.light = light;
+    connection.light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
+    connection.eye = eye;
+    connection.eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
+    connection.edge = Edge(light.surface, eye.surface, omega);
 
-    vec3 throughput = _connect(light, light_bsdf, eye, eye_bsdf, edge);
+    vec3 throughput = _connect(connection);
 
     if (l1Norm(throughput) < FLT_EPSILON) {
         return vec3(0.0f);
     }
     else {
-        auto weight = _weight_vm_eye(light, light_bsdf, eye, eye_bsdf, edge);
+        auto weight = _weight_vm_eye(connection);
         time_scope_t _(_statistics.density_time);
         auto density = _unbiased
-            ? _density(generator, eye.omega,
-                eye.surface, light.surface.position())
-            : 1.0f / (_circle * edge.bGeometry * eye_bsdf.densityRev);
+            ? _density(generator, connection.eye.omega,
+              connection.eye.surface, connection.light.surface.position())
+            : 1.0f / (_circle * connection.edge.bGeometry * connection.eye_bsdf.densityRev);
 
         return throughput * density * weight;
     }
@@ -821,20 +780,23 @@ vec3 UPGBase<Beta>::_merge_biased(
     const EyeVertex& eye) {
     vec3 omega = normalize(eye.surface.position() - light.surface.position());
 
-    auto light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
-    auto eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
-    auto edge = Edge(light.surface, eye.surface, omega);
+    Connection connection;
+    connection.light = light;
+    connection.light_bsdf = _scene->queryBSDF(light.surface, light.omega, omega);
+    connection.eye = eye;
+    connection.eye_bsdf = _scene->queryBSDF(eye.surface, -omega, eye.omega);
+    connection.edge = Edge(light.surface, eye.surface, omega);
 
     vec3 throughput = tentative.throughput
-        * eye.throughput
-        * eye_bsdf.throughput
+        * connection.eye.throughput
+        * connection.eye_bsdf.throughput
         * _roulette;
 
     if (l1Norm(throughput) < FLT_EPSILON) {
         return vec3(0.0f);
     }
     else {
-        auto weight = _vm_biased_weight(light, light_bsdf, eye, eye_bsdf, edge,
+        auto weight = _vm_biased_weight(connection,
             // Beta::beta(_circle * edge.fGeometry * light_bsdf.density));
             Beta::beta(_circle / tentative.a));
 

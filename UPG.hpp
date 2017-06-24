@@ -41,6 +41,14 @@ class UPGBase : public Technique, protected Beta {
     uint16_t finite : 1;
   };
 
+  struct Connection {
+    LightVertex light;
+    BSDFQuery light_bsdf;
+    EyeVertex eye;
+    BSDFQuery eye_bsdf;
+    Edge edge;
+  };
+
   static const size_t _maxSubpath = 1024;
   using light_path_t = fixed_vector<LightVertex, _maxSubpath>;
 
@@ -53,46 +61,26 @@ class UPGBase : public Technique, protected Beta {
   void _traceLight(random_generator_t& generator, vector<LightVertex>& path,
                    size_t& size);
 
-  float _vc_subweight_inv(const LightVertex& light, const BSDFQuery& lightBSDF,
-                          const EyeVertex& eye, const BSDFQuery& eyeBSDF,
-                          const Edge& edge);
+  float _vc_subweight_inv(const Connection& connection);
 
-  float _vm_subweight_inv(const LightVertex& light, const BSDFQuery& lightBSDF,
-                          const EyeVertex& eye, const BSDFQuery& eyeBSDF,
-                          const Edge& edge);
+  float _vm_subweight_inv(const Connection& connection);
 
-  float _vm_biased_subweight_inv(const LightVertex& light,
-                                 const BSDFQuery& lightBSDF,
-                                 const EyeVertex& eye, const BSDFQuery& eyeBSDF,
-                                 const Edge& edge, float vm_current);
+  float _vm_biased_subweight_inv(const Connection& connection, float vm_current);
 
-  float _vc_weight(const LightVertex& light, const BSDFQuery& lightBSDF,
-                   const EyeVertex& eye, const BSDFQuery& eyeBSDF,
-                   const Edge& edge);
+  float _vc_weight(const Connection& connection);
 
-  float _vc_biased_weight(const LightVertex& light, const BSDFQuery& lightBSDF,
-                          const EyeVertex& eye, const BSDFQuery& eyeBSDF,
-                          const Edge& edge, float vm_current);
+  float _vc_biased_weight(const Connection& connection, float vm_current);
 
-  float _vm_biased_weight(const LightVertex& light,
-                          const BSDFQuery& lightBSDF, const EyeVertex& eye,
-                          const BSDFQuery& eyeBSDF, const Edge& edge,
-                          float vm_current);
+  float _vm_biased_weight(const Connection& connection, float vm_current);
 
-  float _weight_vm_eye(const LightVertex& light, const BSDFQuery& lightBSDF,
-                       const EyeVertex& eye, const BSDFQuery& eyeBSDF,
-                       const Edge& edge);
+  float _weight_vm_eye(const Connection& connection);
 
-  float _weight_vm_light(const LightVertex& light, const BSDFQuery& lightBSDF,
-                         const EyeVertex& eye, const BSDFQuery& eyeBSDF,
-                         const Edge& edge);
+  float _weight_vm_light(const Connection& connection);
 
   float _density(random_generator_t& generator, const vec3& omega,
                  const SurfacePoint& surface, const vec3& target);
 
-  vec3 _connect(const LightVertex& light, const BSDFQuery& light_bsdf,
-                const EyeVertex& eye, const BSDFQuery& eye_bsdf,
-                const Edge& edge);
+  vec3 _connect(const Connection& connection);
 
   vec3 _connect_light(const EyeVertex& eye);
   vec3 _connect_directional(const EyeVertex& eye, const LightSample& sample);
