@@ -298,7 +298,7 @@ float UPGBase<Beta>::_vm_subweight_inv(const Connection& connection) {
             * (connection.eye.length <= 1.0f ? 0.0f : 1.0f);
 
         connect_vertex_merging += _clamp(Beta::beta(_circle * connection.edge.fGeometry * connection.light_bsdf.density))
-          * (connection.eye.length == 0.0f ? 0.0f : 1.0f); // light
+          * (connection.eye.length * connection.light.length == 0.0f ? 0.0f : 1.0f); // light
     }
     else {
         light_vertex_merging += _clamp(Beta::beta(_circle * connection.light.bGeometry * connection.light_bsdf.densityRev)) // eye
@@ -439,7 +439,11 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
             * _clamp(Beta::beta(_circle * eye.bGeometry * bsdf.density)) * Beta::beta(eye.c)) // light
         * Beta::beta(lsdf.density);
 
-    float weightInv = Cp + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f) + 1.0f;
+    float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f) - 1.0f; // +1.0f;
+
+    if (weightInv != eye.length * 2 - 1) {
+      std::cout << weightInv << "(" << eye.length * 2 - 1 << ")\n";
+    }
 
     return lsdf.radiance
         * eye.throughput
@@ -659,7 +663,7 @@ vec3 UPGBase<Beta>::_gather(
 
             runtime_assert(!_light_paths[index].surface.is_light());
 
-            if (!eye.surface.is_camera() || !_light_paths[index - 1].surface.is_light()) {
+            if (/*!eye.surface.is_camera() || */!_light_paths[index - 1].surface.is_light()) {
                 if (_from_light) { // light
                     radiance += _merge_light(*context.generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
                 }

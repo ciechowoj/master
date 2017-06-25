@@ -47,6 +47,8 @@ class UPGBase : public Technique, protected Beta {
     EyeVertex eye;
     BSDFQuery eye_bsdf;
     Edge edge;
+
+    float length() const { return light.length + eye.length + 1.0f; }
   };
 
   static const size_t _maxSubpath = 1024;
@@ -126,7 +128,7 @@ class UPGBase : public Technique, protected Beta {
   const float _alpha;
   const float _clamp_const;
 
-  size_t _num_scattered;
+  float _num_scattered;
   float _num_scattered_inv;
   float _radius;
   float _circle;
