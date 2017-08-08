@@ -19,6 +19,14 @@ Required dependencies:
 * zlib1g-dev
 * OpenEXR (`apt-get install libopenexr-dev`)
 * ispc (`ispc.github.io/downloads.html`)
+* libx11-dev
+* libxrandr-dev
+* libxinerama-dev
+* libxcursor-dev
+* mesa-common-dev
+* libxxf86vm-dev
+* libxi-dev
+
 
 Depenedencies are provided as git submodules:
 * assimp
