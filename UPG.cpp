@@ -441,10 +441,6 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
 
     float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f) - 1.0f; // +1.0f;
 
-    if (weightInv != eye.length * 2 - 1) {
-      std::cout << weightInv << "(" << eye.length * 2 - 1 << ")\n";
-    }
-
     return lsdf.radiance
         * eye.throughput
         / weightInv;

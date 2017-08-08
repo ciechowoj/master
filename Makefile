@@ -116,8 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin models/Bearings.blend --BPT --beta=2 --parallel --num-samples=10 \
-	--reference="/home/wojciech/cornell boxes 05 feb/reference/ref.exr" --output="../test.exr"
+	./build/master/master.bin models/TestCase14.blend --UPG --beta=2 --parallel
 
 profile: all
 	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet
