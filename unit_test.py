@@ -25,12 +25,14 @@ if not os.path.exists("test_results"):
 num_samples = 10000
 
 def run_test(test_case, technique, beta):
-	output = os.path.join("test_results", os.path.basename(test_case[:-6]) + "." + technique + str(beta) + ".exr")
-	command = ["master", test_case, "--" + technique, "--parallel", "--beta=" + str(beta), "--output=" + output, "--num-samples=" + str(num_samples), "--batch"]
-	print(" ".join(command))
-	subprocess.run(command)
+    output = os.path.join("test_results", os.path.basename(test_case[:-6]) + "." + technique + str(beta) + ".exr")
+
+    if not os.path.exists(output):
+       command = ["master", test_case, "--" + technique, "--parallel", "--beta=" + str(beta), "--output=" + output, "--num-samples=" + str(num_samples), "--batch"]
+       print(" ".join(command))
+       subprocess.run(command)
 
 for test_case in test_cases:
-	for technique in ["PT", "BPT", "UPG"]:
-		for beta in [0, 1, 2]:
-			run_test(test_case, technique, beta)
+    for technique in ["PT", "BPT", "UPG"]:
+        for beta in [0, 1, 2]:
+            run_test(test_case, technique, beta)
