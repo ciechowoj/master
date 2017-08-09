@@ -436,15 +436,14 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
     float Dp
         = (eye.D * Beta::beta(bsdf.density) + bsdf.finite
             // * _clamp(Beta::beta(_circle) / eye.d) * eye.d) // eye
-            * _clamp(Beta::beta(_circle * eye.bGeometry * bsdf.density)) * Beta::beta(eye.c)) // light
+            * _clamp(Beta::beta(_circle * eye.bGeometry * bsdf.density)) * Beta::beta(eye.c) * (eye.length <= 1.0f ? 0.0f : 1.0f)) // light
         * Beta::beta(lsdf.density);
 
-    float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f) - 1.0f; // +1.0f;
+    float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f); // +1.0f;
 
     return lsdf.radiance
         * eye.throughput
         / weightInv;
-
 }
 
 template <class Beta>
