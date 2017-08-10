@@ -49,6 +49,7 @@ R"(
       --quiet                Do not output anything to console.
       --no-vc                Disable vertex connection.
       --no-vm                Disable vertex merging.
+      --from-camera          Merge from camera perspective.
       --from-light           Merge from light perspective.
       --no-lights            Do not draw the lights.
       --no-reload            Disable auto-reload (input file is reloaded on modification in interactive mode).

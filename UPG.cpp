@@ -453,21 +453,11 @@ vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
     if (isect.material_id == sample.surface.material_id) {
         auto eyeBSDF = _scene->queryBSDF(eye.surface, -sample.normal(), eye.omega);
 
-        float eye_vertex_merging = 0.0f;
-
-        //if (eye.length >= 2.0f) {
-            //if (eyeBSDF.glossiness <= eye.ppGlossiness) {
-                eye_vertex_merging += _clamp(Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) // light
-                    * (eye.length <= 1.0f ? 0.0f : 1.0f);
-            //}
-
-            /*if (eye.pGlossiness < USHRT_MAX) {
-                eye_vertex_merging += _clamp(Beta::beta(_circle / eye.c)); // eye
-            }*/
-        //}
+        float eye_vertex_merging = _clamp(Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) // light
+            * (eye.length <= 1.0f ? 0.0f : 1.0f);
 
         float coeff = Beta::beta(abs(dot(sample.normal(), eye.surface.normal()))
-                / distance2(isect.position(), eye.surface.position()));
+            / distance2(isect.position(), eye.surface.position()));
 
         float Dp
             = (eye.D * Beta::beta(eyeBSDF.density) + eyeBSDF.finite
@@ -658,27 +648,11 @@ vec3 UPGBase<Beta>::_gather(
 
             runtime_assert(!_light_paths[index].surface.is_light());
 
-            if (/*!eye.surface.is_camera() || */!_light_paths[index - 1].surface.is_light()) {
-                if (_from_light) { // light
-                    radiance += _merge_light(*context.generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
-                }
-                else if (eye.surface.is_camera()) { // eye
-                    vec3 omega = normalize(_light_paths[index].surface.position() - eye.surface.position());
-
-                    radiance += _accumulate(context, omega, [&] {
-                        float normal_coefficient = _normal_coefficient(
-                            _light_paths[index].omega,
-                            _light_paths[index].surface.gnormal,
-                            _light_paths[index].surface.normal(),
-                            omega);
-
-                        return _merge_eye(*context.generator, _light_paths[index], eye)
-                            * normal_coefficient * _num_scattered_inv;
-                    });
-                }
-                else {
-                    radiance += _merge_eye(*context.generator, _light_paths[index], eye) * _num_scattered_inv;
-                }
+            if (_from_light && !_light_paths[index - 1].surface.is_light()) { // light
+                radiance += _merge_light(*context.generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
+            }
+            else if (!_from_light && !eye.surface.is_camera()) {
+                radiance += _merge_eye(*context.generator, _light_paths[index], eye) * _num_scattered_inv;
             }
         },
         tentative.surface.position(),
@@ -696,7 +670,7 @@ vec3 UPGBase<Beta>::_gather_biased(
 
     _vertices.rQuery(
         [&](uint32_t index) {
-            if (!eye.surface.is_camera() || !_light_paths[index - 1].surface.is_light()) {
+            if (/*!eye.surface.is_camera() || */!_light_paths[index - 1].surface.is_light()) {
                 radiance += _merge_biased(*context.generator,
                                           _light_paths[index - 1],
                                           _light_paths[index],
