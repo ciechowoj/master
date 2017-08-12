@@ -354,7 +354,7 @@ float UPGBase<Beta>::_vc_weight(const Connection& connection) {
         return 1.0f / _vc_subweight_inv(connection);
     }
     else {
-        float vc = _vc_subweight_inv(connection);
+        float vc = 0.0f; // _vc_subweight_inv(connection);
         float vm = _vm_subweight_inv(connection);
         return 1.0f / (vc + vm);
     }
