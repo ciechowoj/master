@@ -344,34 +344,6 @@ void subtract_exr(string dst, string fst, string snd) {
   save_exr(dst, dst_metadata, fst_width, fst_height, dst_data);
 }
 
-void add_exr(string dst, string fst, string snd) {
-  vector<vec4> dst_data, fst_data, snd_data;
-  map<string, string> fst_metadata, snd_metadata;
-
-  size_t fst_width = 0, snd_width = 0, fst_height = 0, snd_height = 0;
-
-  load_exr(fst, fst_metadata, fst_width, fst_height, fst_data);
-  load_exr(snd, snd_metadata, snd_width, snd_height, snd_data);
-
-  if (fst_width != snd_width || fst_height != snd_height) {
-    throw std::runtime_error("Sizes of '" + fst + "' and '" + snd +
-                             "' doesn't match.");
-  }
-
-  dst_data.resize(fst_data.size());
-
-  for (size_t i = 0; i < fst_data.size(); ++i) {
-    dst_data[i] = fst_data[i] + snd_data[i];
-  }
-
-  map<string, string> dst_metadata;
-  dst_metadata["technique"] = "sum (add_exr)";
-  dst_metadata["first path"] = fst;
-  dst_metadata["second path"] = snd;
-
-  save_exr(dst, dst_metadata, fst_width, fst_height, dst_data);
-}
-
 void filter_exr(string dst, string src) {
   vector<vec4> dst_data, src_data;
   map<string, string> metadata;

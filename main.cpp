@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
         strip_exr(options.output, options.input0);
     }
     else if (options.action == Options::Merge) {
-        add_exr(options.output, options.input0, options.input1);
+        merge_exr(options.output, options.input0, options.input1);
     }
     else if (options.action == Options::Filter) {
         filter_exr(options.output, options.input0);

@@ -72,8 +72,17 @@ string Options::caption() const {
     return input0 + " [" + to_string(this->technique) + "]";
 }
 
-map<string, string> extractOptions(int argc, char const* const* argv) {
-    map<string, string> result;
+ivec2 parse_xnotation2(const string& s) {
+  ivec2 result;
+  const char* x = s.c_str();
+  result.x = atoi(x);
+  const char* y = strstr(x, "x") + 1;
+  result.y = atoi(y);
+  return result;
+}
+
+std::multimap<string, string> extractOptions(int argc, char const* const* argv) {
+    std::multimap<string, string> result;
 
     for (int i = 1; i < argc; ++i) {
         if(strcmp(argv[i], "-h") == 0) {
@@ -365,7 +374,7 @@ Options parseArgs(int argc, char const* const* argv) {
         return options;
     }
     else {
-        options.input0 = fullpath(dict["--input"]);
+        options.input0 = fullpath(dict.find("--input")->second);
         dict.erase("--input");
 
         size_t numTechniqes =
@@ -408,13 +417,13 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "Number of photons can be specified for PM, VCM and UPG.";
                 return options;
             }
-            else if (!isUnsigned(dict["--num-photons"])) {
+            else if (!isUnsigned(dict.find("--num-photons")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --num-photons.";
                 return options;
             }
             else {
-                options.num_photons = atoi(dict["--num-photons"].c_str());
+                options.num_photons = atoi(dict.find("--num-photons")->second.c_str());
                 dict.erase("--num-photons");
             }
         }
@@ -426,13 +435,13 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "--radius can be specified for PM, VCM and UPG.";
                 return options;
             }
-            else if (!isReal(dict["--radius"])) {
+            else if (!isReal(dict.find("--radius")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --radius.";
                 return options;
             }
             else {
-                options.radius = atof(dict["--radius"].c_str());
+                options.radius = atof(dict.find("--radius")->second.c_str());
                 dict.erase("--radius");
             }
         }
@@ -443,13 +452,13 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "--max-path in not available for specified technique.";
                 return options;
             }
-            else if (!isUnsigned(dict["--max-path"])) {
+            else if (!isUnsigned(dict.find("--max-path")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --max-path.";
                 return options;
             }
             else {
-                options.max_path = atoi(dict["--max-path"].c_str());
+                options.max_path = atoi(dict.find("--max-path")->second.c_str());
                 dict.erase("--max-path");
             }
         }
@@ -463,13 +472,13 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "--beta in not available for specified technique.";
                 return options;
             }
-            else if (!isReal(dict["--beta"])) {
+            else if (!isReal(dict.find("--beta")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --beta.";
                 return options;
             }
             else {
-                options.beta = atof(dict["--beta"].c_str());
+                options.beta = atof(dict.find("--beta")->second.c_str());
                 dict.erase("--beta");
             }
         }
@@ -480,13 +489,13 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "--alpha is valid only for VCM.";
                 return options;
             }
-            else if (!isReal(dict["--alpha"])) {
+            else if (!isReal(dict.find("--alpha")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --alpha.";
                 return options;
             }
             else {
-                options.alpha = atof(dict["--alpha"].c_str());
+                options.alpha = atof(dict.find("--alpha")->second.c_str());
                 dict.erase("--alpha");
             }
         }
@@ -500,13 +509,13 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "--roulette in not available for specified technique.";
                 return options;
             }
-            else if (!isReal(dict["--roulette"])) {
+            else if (!isReal(dict.find("--roulette")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --roulette.";
                 return options;
             }
             else {
-                options.roulette = atof(dict["--roulette"].c_str());
+                options.roulette = atof(dict.find("--roulette")->second.c_str());
 
                 if (options.roulette <= 0.0 || 1.0 < options.roulette)
                 {
@@ -603,13 +612,13 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--num-samples")) {
-            if (!isUnsigned(dict["--num-samples"])) {
+            if (!isUnsigned(dict.find("--num-samples")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --num-samples.";
                 return options;
             }
             else {
-                options.num_samples = atoi(dict["--num-samples"].c_str());
+                options.num_samples = atoi(dict.find("--num-samples")->second.c_str());
                 dict.erase("--num-samples");
             }
         }
@@ -620,24 +629,24 @@ Options parseArgs(int argc, char const* const* argv) {
             return options;
         }
         else if (dict.count("--num-minutes")) {
-            if (!isReal(dict["--num-minutes"])) {
+            if (!isReal(dict.find("--num-minutes")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --num-minutes.";
                 return options;
             }
             else {
-                options.num_seconds = atof(dict["--num-minutes"].c_str()) * 60.0;
+                options.num_seconds = atof(dict.find("--num-minutes")->second.c_str()) * 60.0;
                 dict.erase("--num-minutes");
             }
         }
         else if (dict.count("--num-seconds")) {
-            if (!isReal(dict["--num-seconds"])) {
+            if (!isReal(dict.find("--num-seconds")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --num-seconds.";
                 return options;
             }
             else {
-                options.num_seconds = atof(dict["--num-seconds"].c_str());
+                options.num_seconds = atof(dict.find("--num-seconds")->second.c_str());
                 dict.erase("--num-seconds");
             }
         }
@@ -648,13 +657,13 @@ Options parseArgs(int argc, char const* const* argv) {
         }
 
         if (dict.count("--snapshot")) {
-            if (!isUnsigned(dict["--snapshot"])) {
+            if (!isUnsigned(dict.find("--snapshot")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --snapshot.";
                 return options;
             }
             else {
-                options.snapshot = atoi(dict["--snapshot"].c_str());
+                options.snapshot = atoi(dict.find("--snapshot")->second.c_str());
                 dict.erase("--snapshot");
             }
         }
@@ -665,15 +674,29 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "Output cannot be specified twice.";
                 return options;
             }
-            else if (dict["--output"].empty()) {
+            else if (dict.find("--output")->second.empty()) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --output.";
                 return options;
             }
             else {
-                options.output = fullpath(dict["--output"]);
+                options.output = fullpath(dict.find("--output")->second);
                 dict.erase("--output");
             }
+        }
+
+        while (dict.count("--trace") != 0) {
+          ivec2 trace;
+
+          if (dict.count("--reference") == 0) {
+            options.displayHelp = true;
+            options.displayMessage = "The --trace switch can only be used together with --reference.";
+            return options;
+          }
+
+          auto itr = dict.find("--trace");
+          options.trace.push_back(parse_xnotation2(itr->second));
+          dict.erase(itr);
         }
 
         if (dict.count("--reference")) {
@@ -682,13 +705,13 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "Reference cannot be specified twice.";
                 return options;
             }
-            else if (dict["--reference"].empty()) {
+            else if (dict.find("--reference")->second.empty()) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --reference.";
                 return options;
             }
             else {
-                options.reference = fullpath(dict["--reference"]);
+                options.reference = fullpath(dict.find("--reference")->second);
                 dict.erase("--reference");
             }
         }
@@ -706,38 +729,38 @@ Options parseArgs(int argc, char const* const* argv) {
                 options.displayMessage = "--seed is invalid with --parallel.";
                 return options;
             }
-            else if (!isUnsigned(dict["--seed"])) {
+            else if (!isUnsigned(dict.find("--seed")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --seed.";
                 return options;
             }
             else {
                 options.enable_seed = true;
-                options.seed = atoi(dict["--seed"].c_str());
+                options.seed = atoi(dict.find("--seed")->second.c_str());
                 dict.erase("--seed");
             }
         }
 
         if (dict.count("--camera")) {
-            if (!isUnsigned(dict["--camera"])) {
+            if (!isUnsigned(dict.find("--camera")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --camera.";
                 return options;
             }
             else {
-                options.camera_id = atoi(dict["--camera"].c_str());
+                options.camera_id = atoi(dict.find("--camera")->second.c_str());
                 dict.erase("--camera");
             }
         }
 
         if (dict.count("--resolution")) {
-            if (!isResolution(dict["--resolution"])) {
+            if (!isResolution(dict.find("--resolution")->second)) {
                 options.displayHelp = true;
                 options.displayMessage = "Invalid value for --resolution.";
                 return options;
             }
             else {
-                const char* w = dict["--resolution"].c_str();
+                const char* w = dict.find("--resolution")->second.c_str();
                 options.width = atoi(w);
                 const char* h = strstr(w, "x") + 1;
                 options.height = atoi(h);
@@ -767,13 +790,13 @@ void overrideArgs(Options& options, int argc, const char* const* argv)
     dict.erase("--input");
 
     if (dict.count("--snapshot")) {
-        if (!isUnsigned(dict["--snapshot"])) {
+        if (!isUnsigned(dict.find("--snapshot")->second)) {
             options.displayHelp = true;
             options.displayMessage = "Invalid value for --snapshot.";
             return;
         }
         else {
-            options.snapshot = atoi(dict["--snapshot"].c_str());
+            options.snapshot = atoi(dict.find("--snapshot")->second.c_str());
             dict.erase("--snapshot");
         }
     }
@@ -1025,6 +1048,22 @@ Options::Options(const map<string, string>& dict) {
     camera_id = stoll(dict.find("options.camera_id")->second);
     width = stoll(dict.find("options.width")->second);
     height = stoll(dict.find("options.height")->second);
+
+    const string prefix = "options.trace[";
+
+    for (auto&& item : dict) {
+      unsigned long long i = 0;
+
+      if (startswith(item.first, prefix) &&
+        sscanf(item.first.c_str() + prefix.size(), "%llu", &i) == 1) {
+
+        if (trace.size() <= i) {
+          trace.resize(i + 1);
+        }
+
+        sscanf(item.second.c_str(), "[%d, %d]", &trace[i].x, &trace[i].y);
+      }
+    }
 }
 
 map<string, string> Options::to_dict() const
@@ -1060,6 +1099,12 @@ map<string, string> Options::to_dict() const
     result["options.camera_id"] = to_string(camera_id);
     result["options.width"] = to_string(width);
     result["options.height"] = to_string(height);
+
+    for (size_t i = 0; i < trace.size(); ++i) {
+      auto x = std::to_string(trace[i].x);
+      auto y = std::to_string(trace[i].y);
+      result["options.trace[" + std::to_string(i) + "]"] = "[" + x + ", " + y + "]";
+    }
 
     return result;
 }
@@ -1168,6 +1213,77 @@ void strip_exr(string dst, string src) {
   statistics.measurements.clear();
 
   save_exr(options, statistics, data.data());
+}
+
+void merge_exr(string dst, string fst, string snd) {
+  vector<vec4> dst_data, fst_data, snd_data;
+  map<string, string> fst_metadata, snd_metadata;
+
+  size_t fst_width = 0, snd_width = 0, fst_height = 0, snd_height = 0;
+
+  load_exr(fst, fst_metadata, fst_width, fst_height, fst_data);
+  load_exr(snd, snd_metadata, snd_width, snd_height, snd_data);
+
+  if (fst_width != snd_width || fst_height != snd_height) {
+    throw std::runtime_error("Sizes of '" + fst + "' and '" + snd +
+      "' doesn't match.");
+  }
+
+  dst_data.resize(fst_data.size());
+
+  for (size_t i = 0; i < fst_data.size(); ++i) {
+    dst_data[i] = fst_data[i] + snd_data[i];
+  }
+
+  auto fst_options = Options(fst_metadata);
+  auto snd_options = Options(snd_metadata);
+  auto fst_statistics = statistics_t(fst_metadata);
+  auto snd_statistics = statistics_t(snd_metadata);
+
+  if (fst_options.technique != snd_options.technique) {
+    std::cerr << "Cannot merge images rendered using different techniques." << std::endl;
+    return;
+  }
+
+  fst_options.output = dst;
+
+  auto& fst_records = fst_statistics.records;
+  auto& snd_records = snd_statistics.records;
+
+  double rendering_duration = 0;
+
+  for (size_t i = 0; i < fst_records.size(); ++i) {
+    rendering_duration += fst_records[i].frame_duration;
+  }
+
+  for (size_t i = 0; i < snd_records.size(); ++i) {
+    rendering_duration += snd_records[i].frame_duration;
+  }
+
+  if (fst_records.size() != 0) {
+    fst_records.erase(fst_records.begin(), fst_records.end() - 1);
+  }
+
+  fst_statistics.num_samples += snd_statistics.num_samples;
+  fst_statistics.num_basic_rays += snd_statistics.num_basic_rays;
+  fst_statistics.num_shadow_rays += snd_statistics.num_shadow_rays;
+  fst_statistics.num_tentative_rays += snd_statistics.num_tentative_rays;
+  fst_statistics.num_photons += snd_statistics.num_photons;
+  fst_statistics.num_scattered += snd_statistics.num_scattered;
+  fst_statistics.total_time += snd_statistics.total_time;
+  fst_statistics.scatter_time += snd_statistics.scatter_time;
+  fst_statistics.build_time += snd_statistics.build_time;
+  fst_statistics.gather_time += snd_statistics.gather_time;
+  fst_statistics.merge_time += snd_statistics.merge_time;
+  fst_statistics.density_time += snd_statistics.density_time;
+  fst_statistics.intersect_time += snd_statistics.intersect_time;
+  fst_statistics.trace_eye_time += snd_statistics.trace_eye_time;
+  fst_statistics.trace_light_time += snd_statistics.trace_light_time;
+
+  fst_statistics.records.back().frame_duration = rendering_duration;
+  fst_statistics.measurements.clear();
+
+  save_exr(fst_options, fst_statistics, dst_data.data());
 }
 
 }

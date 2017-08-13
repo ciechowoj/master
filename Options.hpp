@@ -48,7 +48,7 @@ struct Options {
     size_t camera_id = 0;
     size_t width = 512;
     size_t height = 512;
-	vector<ivec2> trace;
+	  vector<ivec2> trace;
 
     bool displayHelp = false;
     bool displayVersion = false;
@@ -82,5 +82,6 @@ void save_exr(Options options, statistics_t statistics, const vec4* data);
 void save_exr(Options options, statistics_t statistics, const dvec3* data);
 void save_exr(Options options, statistics_t statistics, const dvec4* data);
 void strip_exr(string dst, string src);
+void merge_exr(string dst, string fst, string snd);
 
 }

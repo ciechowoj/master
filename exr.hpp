@@ -61,7 +61,6 @@ map<string, string> load_metadata(const string& path);
 
 vec3 exr_average(string path);
 void subtract_exr(string dst, string fst, string snd);
-void add_exr(string dst, string fst, string snd);
 void filter_exr(string dst, string src);
 
 string compute_errors(string fst, string snd);

@@ -62,7 +62,7 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
     _generator.seed(_options.seed + _technique->statistics().num_samples);
   }
 
-  _technique->render(view, _generator, _options.camera_id, _reference);
+  _technique->render(view, _generator, _options.camera_id, _reference, _options.trace);
   ++_num_samples;
 
   if (_options.technique != Options::Viewer) {

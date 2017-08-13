@@ -91,4 +91,12 @@ void rms_abs_errors(
     image_view_t<dvec4> a,
     image_view_t<vec3> b);
 
+void rms_abs_errors_windowed(
+  float& rms,
+  float& abs,
+  image_view_t<dvec4> a,
+  image_view_t<vec3> b,
+  const ivec2& center,
+  int radius);
+
 }

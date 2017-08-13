@@ -16,7 +16,8 @@ void Technique::render(
     ImageView& view,
     random_generator_t& generator,
     size_t cameraId,
-    const vector<vec3>& reference)
+    const vector<vec3>& reference,
+    const vector<ivec2>& trace_points)
 {
     auto& cameras = _scene->cameras();
 
@@ -70,7 +71,9 @@ void Technique::render(
       auto a = image_view_t<dvec4>(view);
       auto b = image_view_t<vec3>(reference, view.width(), view.height());
       rms_abs_errors(record.rms_error, record.abs_error, a, b);
+      _make_measurements(trace_points, a, b);
     }
+
 
     _statistics.records.push_back(record);
 }
@@ -339,6 +342,31 @@ void Technique::_for_each_ray(
             }
         }
     }
+}
+
+void Technique::_make_measurements(
+    const vector<ivec2>& trace_points,
+    image_view_t<dvec4> current,
+    image_view_t<vec3> reference) {
+  
+  for (auto&& point : trace_points) {
+    statistics_t::measurement_t measurement;
+
+    measurement.pixel_x = point.x;
+    measurement.pixel_y = point.y;
+    measurement.sample_index = _statistics.num_samples - 1;
+    measurement.value = reference.at(point.x, point.y);
+
+    rms_abs_errors_windowed(
+      measurement.rms_error,
+      measurement.abs_error,
+      current,
+      reference,
+      point,
+      2);
+    
+    _statistics.measurements.push_back(measurement);
+  }
 }
 
 }

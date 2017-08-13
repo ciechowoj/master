@@ -84,4 +84,34 @@ void rms_abs_errors(
   abs = abs / num;
 }
 
+void rms_abs_errors_windowed(
+  float& rms,
+  float& abs,
+  image_view_t<dvec4> a,
+  image_view_t<vec3> b,
+  const ivec2& center,
+  int radius)
+{
+  if (a.width != b.width || a.height != b.height) {
+    throw std::invalid_argument("Image view dimensions must match.");
+  }
+
+  rms = 0;
+  abs = 0;
+
+  float num = 0.0f;
+
+  for (size_t y = glm::max(0, center.y - radius + 1); y < glm::min(center.y + radius, int(a.height)); ++y) {
+    for (size_t x = glm::max(0, center.x - radius + 1); x < glm::min(center.x + radius, int(a.width)); ++x) {
+      vec3 d = glm::abs(vec3(a.at(x, y).xyz() / a.at(x, y).w) - b.at(x, y));
+      abs += d.x + d.y + d.z;
+      rms += glm::dot(d, d);
+      num += 1.0f;
+    }
+  }
+
+  rms = sqrt(rms / num);
+  abs = abs / num;
+}
+
 }

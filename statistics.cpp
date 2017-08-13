@@ -75,6 +75,12 @@ statistics_t::statistics_t(const map<string, string>& dict) {
       else if (endswith(item.first, pixel_y)) {
         measurements_map[index].pixel_y = stoi(item.second);
       }
+      else if (endswith(item.first, rms_error)) {
+        measurements_map[index].rms_error = (float)stod(item.second);
+      }
+      else if (endswith(item.first, abs_error)) {
+        measurements_map[index].abs_error = (float)stod(item.second);
+      }
       else if (endswith(item.first, value) && sscanf(item.second.c_str(), "[%f, %f, %f]", &x, &y, &z)) {
         measurements_map[index].value.x = float(x);
         measurements_map[index].value.y = float(y);
@@ -141,6 +147,10 @@ map<string, string> statistics_t::to_dict() const {
     result[buffer] = std::to_string(measurements[i].pixel_x);
     sprintf(buffer, "measurements[%llu].pixel_y", (unsigned long long)sample_index);
     result[buffer] = std::to_string(measurements[i].pixel_y);
+    sprintf(buffer, "measurements[%llu].rms_error", (unsigned long long)sample_index);
+    result[buffer] = std::to_string(measurements[i].rms_error);
+    sprintf(buffer, "measurements[%llu].abs_error", (unsigned long long)sample_index);
+    result[buffer] = std::to_string(measurements[i].abs_error);
     sprintf(buffer, "measurements[%llu].value", (unsigned long long)sample_index);
     sprintf(value_buffer, "[%f, %f, %f]", measurements[i].value.x, measurements[i].value.y, measurements[i].value.z);
     result[buffer] = value_buffer;

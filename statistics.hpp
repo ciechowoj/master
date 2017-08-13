@@ -42,6 +42,8 @@ struct statistics_t {
     size_t sample_index = 0;
     int pixel_x = -1;
     int pixel_y = -1;
+    float rms_error;
+    float abs_error;
     vec3 value;
   };
 
