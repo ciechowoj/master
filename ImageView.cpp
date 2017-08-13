@@ -101,8 +101,8 @@ void rms_abs_errors_windowed(
 
   float num = 0.0f;
 
-  for (size_t y = glm::max(0, center.y - radius + 1); y < glm::min(center.y + radius, int(a.height)); ++y) {
-    for (size_t x = glm::max(0, center.x - radius + 1); x < glm::min(center.x + radius, int(a.width)); ++x) {
+  for (int y = glm::max(0, center.y - radius + 1); y < glm::min(center.y + radius, int(a.height)); ++y) {
+    for (int x = glm::max(0, center.x - radius + 1); x < glm::min(center.x + radius, int(a.width)); ++x) {
       vec3 d = glm::abs(vec3(a.at(x, y).xyz() / a.at(x, y).w) - b.at(x, y));
       abs += d.x + d.y + d.z;
       rms += glm::dot(d, d);
