@@ -58,6 +58,7 @@ void Technique::render(
     _statistics.total_time = current_time - _start_time;
 
     statistics_t::record_t record {
+        _statistics.num_samples - 1,
         0.0f,
         0.0f,
         float(_statistics.total_time),

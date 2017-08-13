@@ -66,7 +66,11 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
   ++_num_samples;
 
   if (_options.technique != Options::Viewer) {
-    _printStatistics(view, _technique->statistics().records.back().frame_duration, _technique->statistics().total_time, false);
+    _printStatistics(
+		  view, 
+		  _technique->statistics().records.back().frame_duration, 
+		  _technique->statistics().total_time, 
+		  false);
     _saveIfRequired(view, _technique->statistics().total_time);
   }
 

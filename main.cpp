@@ -81,6 +81,9 @@ int main(int argc, char **argv) {
     else if (options.action == Options::SUB) {
         subtract_exr(options.output, options.input0, options.input1);
     }
+    else if (options.action == Options::Strip) {
+        strip_exr(options.output, options.input0);
+    }
     else if (options.action == Options::Merge) {
         add_exr(options.output, options.input0, options.input1);
     }

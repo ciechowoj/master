@@ -18,7 +18,7 @@ template <class T> using shared = std::shared_ptr<T>;
 
 struct Options {
     enum Technique { PT, BPT, VCM, UPG, Viewer };
-    enum Action { Render, AVG, SUB, Errors, Merge, Filter, Time, Continue, Statistics, Gnuplot };
+    enum Action { Render, AVG, SUB, Errors, Strip, Merge, Filter, Time, Continue, Statistics, Gnuplot };
 
     string input0;
     string input1;
@@ -48,6 +48,7 @@ struct Options {
     size_t camera_id = 0;
     size_t width = 512;
     size_t height = 512;
+	vector<ivec2> trace;
 
     bool displayHelp = false;
     bool displayVersion = false;
@@ -58,7 +59,7 @@ struct Options {
     Options() = default;
     Options(const map<string, string>& dict);
 
-    map<string, string> to_dict();
+    map<string, string> to_dict() const;
     string get_output() const;
 };
 
@@ -80,5 +81,6 @@ void save_exr(Options options, statistics_t statistics, const vec3* data);
 void save_exr(Options options, statistics_t statistics, const vec4* data);
 void save_exr(Options options, statistics_t statistics, const dvec3* data);
 void save_exr(Options options, statistics_t statistics, const dvec4* data);
+void strip_exr(string dst, string src);
 
 }

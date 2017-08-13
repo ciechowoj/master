@@ -3,12 +3,14 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <glm>
 
 namespace haste {
 
 using std::map;
 using std::string;
 using std::vector;
+using glm::vec3;
 
 struct statistics_t {
   size_t num_samples = 0;
@@ -28,6 +30,7 @@ struct statistics_t {
   double trace_light_time = 0.0;
 
   struct record_t {
+	  size_t sample_index = 0;
     float rms_error;
     float abs_error;
     float clock_time;
@@ -35,7 +38,15 @@ struct statistics_t {
     size_t numeric_errors;
   };
 
+  struct measurement_t {
+    size_t sample_index = 0;
+    int pixel_x = -1;
+    int pixel_y = -1;
+    vec3 value;
+  };
+
   vector<record_t> records;
+  vector<measurement_t> measurements;
 
   statistics_t() = default;
   statistics_t(const map<string, string>& dict);

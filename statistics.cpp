@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <unordered_map>
 #include <iomanip>
 #include <iostream>
 #include <statistics.hpp>
@@ -7,72 +8,101 @@
 namespace haste {
 
 statistics_t::statistics_t(const map<string, string>& dict) {
-	num_samples = stoll(dict.find("statistics.num_samples")->second);
-	num_basic_rays = stoll(dict.find("statistics.num_basic_rays")->second);
-	num_shadow_rays = stoll(dict.find("statistics.num_shadow_rays")->second);
-	num_tentative_rays = stoll(dict.find("statistics.num_tentative_rays")->second);
-	num_photons = stoll(dict.find("statistics.num_photons")->second);
-	num_scattered = stoll(dict.find("statistics.num_scattered")->second);
-	total_time = stod(dict.find("statistics.total_time")->second);
-	scatter_time = stod(dict.find("statistics.scatter_time")->second);
-	build_time = stod(dict.find("statistics.build_time")->second);
-	gather_time = stod(dict.find("statistics.gather_time")->second);
-	merge_time = stod(dict.find("statistics.merge_time")->second);
-	density_time = stod(dict.find("statistics.density_time")->second);
-	intersect_time = stod(dict.find("statistics.intersect_time")->second);
-	trace_eye_time = stod(dict.find("statistics.trace_eye_time")->second);
-	trace_light_time = stod(dict.find("statistics.trace_light_time")->second);
+  num_samples = stoll(dict.find("statistics.num_samples")->second);
+  num_basic_rays = stoll(dict.find("statistics.num_basic_rays")->second);
+  num_shadow_rays = stoll(dict.find("statistics.num_shadow_rays")->second);
+  num_tentative_rays = stoll(dict.find("statistics.num_tentative_rays")->second);
+  num_photons = stoll(dict.find("statistics.num_photons")->second);
+  num_scattered = stoll(dict.find("statistics.num_scattered")->second);
+  total_time = stod(dict.find("statistics.total_time")->second);
+  scatter_time = stod(dict.find("statistics.scatter_time")->second);
+  build_time = stod(dict.find("statistics.build_time")->second);
+  gather_time = stod(dict.find("statistics.gather_time")->second);
+  merge_time = stod(dict.find("statistics.merge_time")->second);
+  density_time = stod(dict.find("statistics.density_time")->second);
+  intersect_time = stod(dict.find("statistics.intersect_time")->second);
+  trace_eye_time = stod(dict.find("statistics.trace_eye_time")->second);
+  trace_light_time = stod(dict.find("statistics.trace_light_time")->second);
 
-  const string prefix = "records[";
+  const string records_prefix = "records[";
   const string rms_error = "].rms_error";
   const string abs_error = "].abs_error";
   const string clock_time = "].clock_time";
   const string frame_duration = "].frame_duration";
   const string numeric_errors = "].numeric_errors";
 
-  auto ensure_size = [&](size_t i) {
-    if (i >= dict.size()) {
-      return false;
-    }
+  const string measurements_prefix = "measurements[";
+  const string pixel_x = "].pixel_x";
+  const string pixel_y = "].pixel_y";
+  const string value = "].pixel_y";
 
-    if (records.size() <= i) {
-      records.resize(i + 1);
-    }
-
-    return true;
-  };
-
-  records.resize(num_samples);
+  std::unordered_map<size_t, record_t> records_map;
+  std::unordered_map<size_t, measurement_t> measurements_map;
 
   for (auto&& item : dict) {
     unsigned long long i = 0;
 
-    if (startswith(item.first, prefix) &&
-      sscanf(item.first.c_str() + prefix.size(), "%llu", &i) == 1) {
+    if (startswith(item.first, records_prefix) &&
+      sscanf(item.first.c_str() + records_prefix.size(), "%llu", &i) == 1) {
 
-      if (endswith(item.first, rms_error) && ensure_size(i)) {
-        records[i].rms_error = (float)stod(item.second);
+      size_t index = size_t(i);
+
+      if (endswith(item.first, rms_error)) {
+        records_map[index].rms_error = (float)stod(item.second);
       }
-      else if (endswith(item.first, abs_error) && ensure_size(i)) {
-        records[i].abs_error = (float)stod(item.second);
+      else if (endswith(item.first, abs_error)) {
+        records_map[index].abs_error = (float)stod(item.second);
       }
-      else if (endswith(item.first, clock_time) && ensure_size(i)) {
-        records[i].clock_time = (float)stod(item.second);
+      else if (endswith(item.first, clock_time)) {
+        records_map[index].clock_time = (float)stod(item.second);
       }
-      else if (endswith(item.first, frame_duration) && ensure_size(i)) {
-        records[i].frame_duration = (float)stod(item.second);
+      else if (endswith(item.first, frame_duration)) {
+        records_map[index].frame_duration = (float)stod(item.second);
       }
-      else if (endswith(item.first, numeric_errors) && ensure_size(i)) {
-        records[i].numeric_errors = (size_t)stoll(item.second);
+      else if (endswith(item.first, numeric_errors)) {
+        records_map[index].numeric_errors = (size_t)stoll(item.second);
+      }
+    }
+    else if (startswith(item.first, measurements_prefix) &&
+      sscanf(item.first.c_str() + measurements_prefix.size(), "%llu", &i) == 1) {
+
+      size_t index = size_t(i);
+      float x, y, z;
+
+      if (endswith(item.first, pixel_x)) {
+        measurements_map[index].pixel_x = stoi(item.second);
+      }
+      else if (endswith(item.first, pixel_y)) {
+        measurements_map[index].pixel_y = stoi(item.second);
+      }
+      else if (endswith(item.first, value) && sscanf(item.second.c_str(), "[%f, %f, %f]", &x, &y, &z)) {
+        measurements_map[index].value.x = float(x);
+        measurements_map[index].value.y = float(y);
+        measurements_map[index].value.z = float(z);
       }
     }
   }
+
+  for (auto&& itr : records_map) {
+    records.push_back(itr.second);
+    records.back().sample_index = itr.first;
+  }
+
+  for (auto&& itr : measurements_map) {
+    measurements.push_back(itr.second);
+    measurements.back().sample_index = itr.first;
+  }
+
+  std::sort(records.begin(), records.end(), [](const record_t& a, const record_t& b) { 
+    return a.sample_index < b.sample_index; });
+  std::sort(measurements.begin(), measurements.end(), [](const measurement_t& a, const measurement_t& b) { 
+    return a.sample_index < b.sample_index; });
 }
 
 map<string, string> statistics_t::to_dict() const {
-	map<string, string> result;
-
-	result["statistics.num_samples"] = std::to_string(num_samples);
+  map<string, string> result;
+ 
+  result["statistics.num_samples"] = std::to_string(num_samples);
   result["statistics.num_basic_rays"] = std::to_string(num_basic_rays);
   result["statistics.num_shadow_rays"] = std::to_string(num_shadow_rays);
   result["statistics.num_tentative_rays"] = std::to_string(num_tentative_rays);
@@ -89,18 +119,31 @@ map<string, string> statistics_t::to_dict() const {
   result["statistics.trace_light_time"] = std::to_string(trace_light_time);
 
   char buffer[128];
+  char value_buffer[1024];
 
   for (size_t i = 0; i < records.size(); ++i) {
-    sprintf(buffer, "records[%llu].rms_error", (unsigned long long)i);
+    size_t sample_index = records[i].sample_index;
+    sprintf(buffer, "records[%llu].rms_error", (unsigned long long)sample_index);
     result[buffer] = std::to_string(records[i].rms_error);
-    sprintf(buffer, "records[%llu].abs_error", (unsigned long long)i);
+    sprintf(buffer, "records[%llu].abs_error", (unsigned long long)sample_index);
     result[buffer] = std::to_string(records[i].abs_error);
-    sprintf(buffer, "records[%llu].clock_time", (unsigned long long)i);
+    sprintf(buffer, "records[%llu].clock_time", (unsigned long long)sample_index);
     result[buffer] = std::to_string(records[i].clock_time);
-    sprintf(buffer, "records[%llu].frame_duration", (unsigned long long)i);
+    sprintf(buffer, "records[%llu].frame_duration", (unsigned long long)sample_index);
     result[buffer] = std::to_string(records[i].frame_duration);
-    sprintf(buffer, "records[%llu].numeric_errors", (unsigned long long)i);
+    sprintf(buffer, "records[%llu].numeric_errors", (unsigned long long)sample_index);
     result[buffer] = std::to_string(records[i].numeric_errors);
+  }
+
+  for (size_t i = 0; i < measurements.size(); ++i) {
+    size_t sample_index = measurements[i].sample_index;
+    sprintf(buffer, "measurements[%llu].pixel_x", (unsigned long long)sample_index);
+    result[buffer] = std::to_string(measurements[i].pixel_x);
+    sprintf(buffer, "measurements[%llu].pixel_y", (unsigned long long)sample_index);
+    result[buffer] = std::to_string(measurements[i].pixel_y);
+    sprintf(buffer, "measurements[%llu].value", (unsigned long long)sample_index);
+    sprintf(value_buffer, "[%f, %f, %f]", measurements[i].value.x, measurements[i].value.y, measurements[i].value.z);
+    result[buffer] = value_buffer;
   }
 
   return result;
@@ -181,7 +224,7 @@ void print_records_tabular(std::ostream& stream, const statistics_t& statistics)
     for (size_t i = 0; i < records.size(); ++i) {
       rendering_duration += records[i].frame_duration;
 
-      stream << std::setw(last_index.size()) << std::left << i;
+      stream << std::setw(last_index.size()) << std::left << records[i].sample_index;
       stream << std::right << std::setw(last_time.size() + 9) << std::fixed << std::setprecision(7) << rendering_duration;
       stream << std::setw(10) << records[i].rms_error;
       stream << std::setw(10) << records[i].abs_error;

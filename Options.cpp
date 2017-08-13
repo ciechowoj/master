@@ -29,40 +29,42 @@ R"(
       master <input> [options]
       master (-h | --help)
       master --version
-      master avg <x>         Compute average value of pixels in <x>.
-      master errors <x> <y>  Compute abs and rms (in this order) error between <x> and <y>.
-      master sub <x> <y>     Compute difference between <x> and <y>.
+      master avg <x>              Compute average value of pixels in <x>.
+      master errors <x> <y>       Compute abs and rms (in this order) error between <x> and <y>.
+      master sub <x> <y>          Compute difference between <x> and <y>.
+      master strip <o> <i>        Remove metadata from <o> and save the result to <i>.
+      master merge <o> <a> <b>    Merge <a> and <b> into <o>.
 
     Options:
-      -h --help              Show this screen.
-      --version              Show version.
-      --PT                   Use path tracing for rendering (this is default one).
-      --BPT                  Use bidirectional path tracing (balance heuristics).
-      --VCM                  Use vertex connection and merging.
-      --UPG                  Use unbiased photon gathering.
-      --num-photons=<n>      Use n photons. [default: 1 000 000]
-      --radius=<n>       Use n as maximum gather radius. [default: 0.1]
-      --roulette=<n>         Russian roulette coefficient. [default: 0.5]
-      --beta=<n>             MIS beta. [default: 1]
-      --alpha=<n>            VCM alpha. [default: 0.75]
-      --batch                Run in batch mode (interactive otherwise).
-      --quiet                Do not output anything to console.
-      --no-vc                Disable vertex connection.
-      --no-vm                Disable vertex merging.
-      --from-camera          Merge from camera perspective.
-      --from-light           Merge from light perspective.
-      --no-lights            Do not draw the lights.
-      --no-reload            Disable auto-reload (input file is reloaded on modification in interactive mode).
-      --num-samples=<n>      Terminate after n samples.
-      --num-seconds=<n>      Terminate after n seconds.
-      --num-minutes=<n>      Terminate after n minutes.
-      --parallel             Use multi-threading.
-      --output=<path>        Output file. <input>.<width>.<height>.<time>.<technique>.exr if not specified.
-      --reference=<path>     Reference file for comparison.
-      --seed=<n>             Seed random number generator (for single threaded BPT only).
-      --snapshot=<n>         Save output every n seconds (tags output file with time).
-      --camera=<id>          Use camera with given id. [default: 0]
-      --resolution=<WxH>     Resolution of output image. [default: 512x512]
+      -h --help                   Show this screen.
+      --version                   Show version.
+      --PT                        Use path tracing for rendering (this is default one).
+      --BPT                       Use bidirectional path tracing (balance heuristics).
+      --VCM                       Use vertex connection and merging.
+      --UPG                       Use unbiased photon gathering.
+      --num-photons=<n>           Use n photons. [default: 1 000 000]
+      --radius=<n>                Use n as maximum gather radius. [default: 0.1]
+      --roulette=<n>              Russian roulette coefficient. [default: 0.5]
+      --beta=<n>                  MIS beta. [default: 1]
+      --alpha=<n>                 VCM alpha. [default: 0.75]
+      --batch                     Run in batch mode (interactive otherwise).
+      --quiet                     Do not output anything to console.
+      --no-vc                     Disable vertex connection.
+      --no-vm                     Disable vertex merging.
+      --from-camera               Merge from camera perspective.
+      --from-light                Merge from light perspective.
+      --no-lights                 Do not draw the lights.
+      --no-reload                 Disable auto-reload (input file is reloaded on modification in interactive mode).
+      --num-samples=<n>           Terminate after n samples.
+      --num-seconds=<n>           Terminate after n seconds.
+      --num-minutes=<n>           Terminate after n minutes.
+      --parallel                  Use multi-threading.
+      --output=<path>             Output file. <input>.<width>.<height>.<time>.<technique>.exr if not specified.
+      --reference=<path>          Reference file for comparison.
+      --seed=<n>                  Seed random number generator (for single threaded BPT only).
+      --snapshot=<n>              Save output every n seconds (tags output file with time).
+      --camera=<id>               Use camera with given id. [default: 0]
+      --resolution=<WxH>          Resolution of output image. [default: 512x512]
 
 )";
 
@@ -289,6 +291,22 @@ Options parseContinueArgs(int argc, char const* const* argv) {
   return options;
 }
 
+Options parseInputOutput(int argc, char const* const* argv, Options::Action action) {
+	Options options;
+
+    if (argc != 4) {
+        options.displayHelp = true;
+        options.displayMessage = "Input and output files are required.";
+    }
+    else {
+        options.action = action;
+        options.output = argv[2];
+        options.input0 = argv[3];
+    }
+
+    return options;
+}
+
 Options parseArgs(int argc, char const* const* argv) {
     if (1 < argc) {
         if (argv[1] == string("avg")) {
@@ -300,6 +318,9 @@ Options parseArgs(int argc, char const* const* argv) {
         else if (argv[1] == string("errors")) {
             return parseErrorsArgs(argc, argv);
         }
+		    else if (argv[1] == string("strip")) {
+			      return parseInputOutput(argc, argv, Options::Strip);
+		    }
         else if (argv[1] == string("merge")) {
             return parseMergeArgs(argc, argv);
         }
@@ -1006,7 +1027,7 @@ Options::Options(const map<string, string>& dict) {
     height = stoll(dict.find("options.height")->second);
 }
 
-map<string, string> Options::to_dict()
+map<string, string> Options::to_dict() const
 {
     using std::to_string;
 
@@ -1070,10 +1091,15 @@ void save_exr(Options options, statistics_t statistics, const vec3* data) {
   }
 }
 
-void save_exr(Options options, statistics_t statistics, const vec4* data) {
+map<string, string> fuse_metadata(const Options& options, const statistics_t& statistics) {
   auto metadata = statistics.to_dict();
   auto local_options = options.to_dict();
   metadata.insert(local_options.begin(), local_options.end());
+  return metadata;
+}
+
+void save_exr(Options options, statistics_t statistics, const vec4* data) {
+  auto metadata = fuse_metadata(options, statistics);
 
   if (isfile(options.output)) {
     string temp = temppath(".exr");
@@ -1109,6 +1135,39 @@ void save_exr(Options options, statistics_t statistics, const dvec4* data) {
     [](dvec4 x) { return vec4(x); });
 
   save_exr(options, statistics, fdata.data());
+}
+
+void strip_exr(string dst, string src) {
+  vector<vec4> data;
+  map<string, string> metadata;
+
+  size_t width = 0, height = 0;
+
+  load_exr(src, metadata, width, height, data);
+
+  auto options = Options(metadata);
+  auto statistics = statistics_t(metadata);
+
+  options.output = fullpath(dst);
+  options.input1 = fullpath(src);
+
+  auto& records = statistics.records;
+
+  double rendering_duration = 0;
+
+  for (size_t i = 0; i < records.size(); ++i) {
+    rendering_duration += records[i].frame_duration;
+  }
+
+  if (records.size() != 0) {
+    records.erase(records.begin(), records.end() - 1);
+  }
+
+  statistics.records.back().frame_duration = rendering_duration;
+
+  statistics.measurements.clear();
+
+  save_exr(options, statistics, data.data());
 }
 
 }
