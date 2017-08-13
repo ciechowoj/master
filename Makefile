@@ -116,11 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-<<<<<<< Updated upstream
 	./build/master/master.bin models/TestCase14.blend --UPG --beta=2 --parallel --from-light
-=======
-	./build/master/master.bin models/TestCase6.blend --UPG --beta=2 --parallel --no-vc
->>>>>>> Stashed changes
 
 profile: all
 	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet
