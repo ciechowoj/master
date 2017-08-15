@@ -58,14 +58,13 @@ void Technique::render(
     _statistics.num_tentative_rays += 0;
     _statistics.total_time = current_time - _start_time;
 
-    statistics_t::record_t record {
-        _statistics.num_samples - 1,
-        0.0f,
-        0.0f,
-        float(_statistics.total_time),
-        float(elapsed_time),
-        numeric_errors
-    };
+    statistics_t::record_t record;
+    record.sample_index = 0;
+    record.rms_error = 0.0f;
+    record.abs_error = 0.0f;
+    record.clock_time = float(_statistics.total_time);
+    record.frame_duration = float(elapsed_time);
+    record.numeric_errors = numeric_errors;
 
     if (!reference.empty()) {
       auto a = image_view_t<dvec4>(view);
@@ -348,7 +347,7 @@ void Technique::_make_measurements(
     const vector<ivec2>& trace_points,
     image_view_t<dvec4> current,
     image_view_t<vec3> reference) {
-  
+
   for (auto&& point : trace_points) {
     statistics_t::measurement_t measurement;
 
@@ -364,7 +363,7 @@ void Technique::_make_measurements(
       reference,
       point,
       2);
-    
+
     _statistics.measurements.push_back(measurement);
   }
 }
