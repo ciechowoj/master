@@ -116,7 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin models/TestCase14.blend --UPG --beta=2 --parallel --from-light
+	./build/master/master.bin --beta=2 --parallel models/TestCase17.blend --UPG --radius=0.075 --no-vc --output=TestCase17.UPG2.exr --snapshot=360 --batch
 
 profile: all
 	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet
