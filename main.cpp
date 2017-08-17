@@ -97,6 +97,10 @@ int main(int argc, char **argv) {
       auto metadata = load_metadata(options.input0);
       print_records_tabular(std::cout, statistics_t(metadata));
     }
+    else if (options.action == Options::Measurements) {
+      auto metadata = load_metadata(options.input0);
+      print_measurements_tabular(std::cout, statistics_t(metadata));
+    }
     else if (options.action == Options::Gnuplot) {
         auto error_message = gnuplot(argc, argv);
 

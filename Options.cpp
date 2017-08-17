@@ -285,23 +285,8 @@ Options parseSingleInputFile(int argc, char const* const* argv, Options::Action 
   return options;
 }
 
-Options parseContinueArgs(int argc, char const* const* argv) {
-  Options options;
-
-  if (argc < 3) {
-    options.displayHelp = true;
-    options.displayMessage = "Input file is required.";
-  }
-  else {
-    options.action = Options::Continue;
-    options.input0 = fullpath(argv[2]);
-  }
-
-  return options;
-}
-
 Options parseInputOutput(int argc, char const* const* argv, Options::Action action) {
-	Options options;
+    Options options;
 
     if (argc != 4) {
         options.displayHelp = true;
@@ -327,9 +312,9 @@ Options parseArgs(int argc, char const* const* argv) {
         else if (argv[1] == string("errors")) {
             return parseErrorsArgs(argc, argv);
         }
-		    else if (argv[1] == string("strip")) {
-			      return parseInputOutput(argc, argv, Options::Strip);
-		    }
+            else if (argv[1] == string("strip")) {
+                  return parseInputOutput(argc, argv, Options::Strip);
+            }
         else if (argv[1] == string("merge")) {
             return parseMergeArgs(argc, argv);
         }
@@ -340,10 +325,13 @@ Options parseArgs(int argc, char const* const* argv) {
             return parseSingleInputFile(argc, argv, Options::Time);
         }
         else if (argv[1] == string("continue")) {
-          return parseContinueArgs(argc, argv);
+          return parseSingleInputFile (argc, argv, Options::Continue);
         }
         else if (argv[1] == string("statistics")) {
           return parseSingleInputFile(argc, argv, Options::Statistics);
+        }
+        else if (argv[1] == string("measurements")) {
+          return parseSingleInputFile(argc, argv, Options::Measurements);
         }
         else if (argv[1] == string("gnuplot")) {
           Options options;
@@ -987,6 +975,8 @@ string to_string(const Options::Action& action) {
         case Options::Time: return "Time";
         case Options::Continue: return "Continue";
         case Options::Statistics: return "Statistics";
+        case Options::Measurements: return "Measurements";
+        case Options::Gnuplot: return "Gnuplot";
         default: return "UNKNOWN";
     }
 }
@@ -1010,6 +1000,10 @@ Options::Action action(string action) {
       return Options::Continue;
     else if (action == "Statistics")
       return Options::Statistics;
+    else if (action == "Measurements")
+      return Options::Measurements;
+    else if (action == "Gnuplot")
+      return Options::Gnuplot;
     else
         throw std::invalid_argument("action");
 }

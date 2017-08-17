@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <statistics.hpp>
 #include <utility.hpp>
 
@@ -99,15 +100,15 @@ statistics_t::statistics_t(const map<string, string>& dict) {
     measurements.back().sample_index = itr.first;
   }
 
-  std::sort(records.begin(), records.end(), [](const record_t& a, const record_t& b) { 
+  std::sort(records.begin(), records.end(), [](const record_t& a, const record_t& b) {
     return a.sample_index < b.sample_index; });
-  std::sort(measurements.begin(), measurements.end(), [](const measurement_t& a, const measurement_t& b) { 
+  std::sort(measurements.begin(), measurements.end(), [](const measurement_t& a, const measurement_t& b) {
     return a.sample_index < b.sample_index; });
 }
 
 map<string, string> statistics_t::to_dict() const {
   map<string, string> result;
- 
+
   result["statistics.num_samples"] = std::to_string(num_samples);
   result["statistics.num_basic_rays"] = std::to_string(num_basic_rays);
   result["statistics.num_shadow_rays"] = std::to_string(num_shadow_rays);
@@ -246,5 +247,63 @@ void print_records_tabular(std::ostream& stream, const statistics_t& statistics)
   }
 }
 
-}
+struct ivec2_less {
+    bool operator()(const ivec2& a, const ivec2& b) {
+        return a.x == b.x ? a.y < b.y : a.x < b.x;
+    };
+};
 
+void print_measurements_tabular(std::ostream& stream, const statistics_t& statistics) {
+  using measurement_t = statistics_t::measurement_t;
+
+  map<ivec2, vector<measurement_t>, ivec2_less> measurements;
+
+  for (auto&& itr : statistics.measurements) {
+    ivec2 position = ivec2(itr.pixel_x, itr.pixel_y);
+    measurements[position].push_back(itr);
+  }
+
+  if (measurements.empty()) {
+    return;
+  }
+
+  size_t size = statistics.records.size();
+
+  for (auto&& itr : measurements) {
+    size = std::min(size, itr.second.size());
+  }
+
+  std::stringstream sstream;
+
+  sstream << std::fixed << std::setprecision(7) << std::setw(12);
+
+  for (auto&& itr : measurements) {
+    auto& measurement = itr.second;
+    sstream << "# ";
+    sstream << measurement[0].pixel_x << "x" << measurement[0].pixel_y << "xRMS ";
+    sstream << measurement[0].pixel_x << "x" << measurement[0].pixel_y << "xABS ";
+  }
+
+  sstream << "\n";
+
+  double total_time = 0.0f;
+
+  for (size_t i = 0; i < size; ++i) {
+
+    sstream << std::setw(12) << total_time << " ";
+
+    for (auto&& itr : measurements) {
+      auto& measurement = itr.second;
+      sstream << std::setw(12) << measurement[i].rms_error << " "
+              << std::setw(12) << measurement[i].abs_error << " ";
+    }
+
+    sstream << "\n";
+
+    total_time += statistics.records[i].frame_duration;
+  }
+
+  stream << sstream.str();
+
+}
+}
