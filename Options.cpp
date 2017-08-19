@@ -843,11 +843,12 @@ shared<Technique> makeViewer(Options& options) {
     load_exr(input1, metadata, width, height, data);
 
     const string records = "records";
+    const string measurements = "measurements";
 
     for (auto&& itr : metadata) {
-      if (!startswith(itr.first, records)) {
+      // if (!startswith(itr.first, records) && !startswith(itr.first, measurements)) {
         std::cout << itr.first << ": " << itr.second << "\n";
-      }
+      //}
     }
 
     std::cout.flush();

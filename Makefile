@@ -116,7 +116,8 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin --beta=2 --parallel --resolution=1024x1024 models/Bearings.blend --UPG --reference=reference/Bearings.BPT.exr --output=Bearings.UPG2.exr --num-samples=10 --batch --trace=100x100
+	./build/master/master.bin Bearings.BPT2.exr
+	# ./build/master/master.bin --beta=2 --parallel --resolution=1024x1024 models/Bearings.blend --UPG --reference=reference/Bearings.BPT.exr --output=Bearings.UPG2.exr --num-samples=10 --batch --trace=100x100
 
 profile: all
 	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet

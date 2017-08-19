@@ -59,7 +59,7 @@ void Technique::render(
     _statistics.total_time = current_time - _start_time;
 
     statistics_t::record_t record;
-    record.sample_index = 0;
+    record.sample_index = _statistics.num_samples - 1;
     record.rms_error = 0.0f;
     record.abs_error = 0.0f;
     record.clock_time = float(_statistics.total_time);
@@ -72,7 +72,6 @@ void Technique::render(
       rms_abs_errors(record.rms_error, record.abs_error, a, b);
       _make_measurements(trace_points, a, b);
     }
-
 
     _statistics.records.push_back(record);
 }

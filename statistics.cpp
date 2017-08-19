@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <unordered_map>
+#include <tuple>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -37,11 +38,22 @@ statistics_t::statistics_t(const map<string, string>& dict) {
   const string pixel_y = "].pixel_y";
   const string value = "].pixel_y";
 
+  using key_t = std::tuple<size_t, int, int>;
+
+  struct key_hash : public std::unary_function<key_t, std::size_t>
+  {
+    std::size_t operator()(const key_t& k) const
+    {
+      return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k);
+    }
+  };
+
   std::unordered_map<size_t, record_t> records_map;
-  std::unordered_map<size_t, measurement_t> measurements_map;
+  std::unordered_map<key_t, measurement_t, key_hash> measurements_map;
 
   for (auto&& item : dict) {
     unsigned long long i = 0;
+    unsigned long long pixel_x, pixel_y;
 
     if (startswith(item.first, records_prefix) &&
       sscanf(item.first.c_str() + records_prefix.size(), "%llu", &i) == 1) {
@@ -65,18 +77,15 @@ statistics_t::statistics_t(const map<string, string>& dict) {
       }
     }
     else if (startswith(item.first, measurements_prefix) &&
-      sscanf(item.first.c_str() + measurements_prefix.size(), "%llu", &i) == 1) {
-
-      size_t index = size_t(i);
+      sscanf(item.first.c_str() + measurements_prefix.size(), "%llux%llux%llu", &i, &pixel_x, &pixel_y) == 3) {
       float x, y, z;
 
-      if (endswith(item.first, pixel_x)) {
-        measurements_map[index].pixel_x = stoi(item.second);
-      }
-      else if (endswith(item.first, pixel_y)) {
-        measurements_map[index].pixel_y = stoi(item.second);
-      }
-      else if (endswith(item.first, rms_error)) {
+      auto index = std::make_tuple(size_t(i), (int)pixel_x, (int)pixel_y);
+
+      measurements_map[index].pixel_x = (int)pixel_x;
+      measurements_map[index].pixel_y = (int)pixel_y;
+
+      if (endswith(item.first, rms_error)) {
         measurements_map[index].rms_error = (float)stod(item.second);
       }
       else if (endswith(item.first, abs_error)) {
@@ -97,7 +106,7 @@ statistics_t::statistics_t(const map<string, string>& dict) {
 
   for (auto&& itr : measurements_map) {
     measurements.push_back(itr.second);
-    measurements.back().sample_index = itr.first;
+    measurements.back().sample_index = std::get<0>(itr.first);
   }
 
   std::sort(records.begin(), records.end(), [](const record_t& a, const record_t& b) {
@@ -125,6 +134,7 @@ map<string, string> statistics_t::to_dict() const {
   result["statistics.trace_eye_time"] = std::to_string(trace_eye_time);
   result["statistics.trace_light_time"] = std::to_string(trace_light_time);
 
+  char prefix[128];
   char buffer[128];
   char value_buffer[1024];
 
@@ -144,15 +154,19 @@ map<string, string> statistics_t::to_dict() const {
 
   for (size_t i = 0; i < measurements.size(); ++i) {
     size_t sample_index = measurements[i].sample_index;
-    sprintf(buffer, "measurements[%llu].pixel_x", (unsigned long long)sample_index);
-    result[buffer] = std::to_string(measurements[i].pixel_x);
-    sprintf(buffer, "measurements[%llu].pixel_y", (unsigned long long)sample_index);
-    result[buffer] = std::to_string(measurements[i].pixel_y);
-    sprintf(buffer, "measurements[%llu].rms_error", (unsigned long long)sample_index);
+
+    sprintf(
+      prefix,
+      "measurements[%llux%llux%llu]",
+      (unsigned long long)sample_index,
+      (unsigned long long)measurements[i].pixel_x,
+      (unsigned long long)measurements[i].pixel_y);
+
+    sprintf(buffer, "%s.rms_error", prefix);
     result[buffer] = std::to_string(measurements[i].rms_error);
-    sprintf(buffer, "measurements[%llu].abs_error", (unsigned long long)sample_index);
+    sprintf(buffer, "%s.abs_error", prefix);
     result[buffer] = std::to_string(measurements[i].abs_error);
-    sprintf(buffer, "measurements[%llu].value", (unsigned long long)sample_index);
+    sprintf(buffer, "%s.value", prefix);
     sprintf(value_buffer, "[%f, %f, %f]", measurements[i].value.x, measurements[i].value.y, measurements[i].value.z);
     result[buffer] = value_buffer;
   }
