@@ -22,17 +22,17 @@ test_cases = sorted(glob.glob("models/TestCase*.blend"), key=natural_keys)
 if not os.path.exists("test_results"):
     os.makedirs("test_results")
 
-num_samples = 10000
+num_minutes = 60
 
 def run_test(test_case, technique, beta):
     output = os.path.join("test_results", os.path.basename(test_case[:-6]) + "." + technique + str(beta) + ".exr")
 
     if not os.path.exists(output):
-       command = ["master", test_case, "--" + technique, "--parallel", "--beta=" + str(beta), "--output=" + output, "--num-samples=" + str(num_samples), "--batch"]
+       command = ["master", test_case, "--" + technique, "--parallel", "--beta=" + str(beta), "--output=" + output, "--num-minutes=" + str(num_minutes), "--batch"]
        print(" ".join(command))
        subprocess.run(command)
 
 for test_case in test_cases:
-    for technique in ["PT", "BPT", "UPG"]:
-        for beta in [0, 1, 2]:
+    for technique in ["BPT", "UPG"]:
+        for beta in [2]:
             run_test(test_case, technique, beta)
