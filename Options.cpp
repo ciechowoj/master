@@ -846,9 +846,9 @@ shared<Technique> makeViewer(Options& options) {
     const string measurements = "measurements";
 
     for (auto&& itr : metadata) {
-      // if (!startswith(itr.first, records) && !startswith(itr.first, measurements)) {
+      if (!startswith(itr.first, records) && !startswith(itr.first, measurements)) {
         std::cout << itr.first << ": " << itr.second << "\n";
-      //}
+       }
     }
 
     std::cout.flush();

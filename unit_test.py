@@ -22,7 +22,7 @@ test_cases = sorted(glob.glob("models/TestCase*.blend"), key=natural_keys)
 if not os.path.exists("test_results"):
     os.makedirs("test_results")
 
-num_minutes = 60
+num_minutes = 30
 
 def run_test(test_case, technique, beta):
     output = os.path.join("test_results", os.path.basename(test_case[:-6]) + "." + technique + str(beta) + ".exr")
