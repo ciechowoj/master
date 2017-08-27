@@ -451,22 +451,29 @@ vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
     auto isect = _scene->intersect(eye.surface, -sample.normal());
 
     if (isect.material_id == sample.surface.material_id) {
-        auto eyeBSDF = _scene->queryBSDF(eye.surface, -sample.normal(), eye.omega);
+        auto camera_bsdf = _scene->queryBSDF(eye.surface, -sample.normal(), eye.omega);
 
-        float eye_vertex_merging = _clamp(Beta::beta(_circle * eye.bGeometry * eyeBSDF.density)) // light
-            * (eye.length <= 1.0f ? 0.0f : 1.0f);
+        float eye_vertex_merging = 0.f;
+
+        if (_from_light) {
+            eye_vertex_merging += _clamp(Beta::beta(_circle * eye.bGeometry * camera_bsdf.density)) // light
+                * (eye.length <= 1.0f ? 0.0f : 1.0f);
+        }
+        else {
+            eye_vertex_merging += _clamp(Beta::beta(_circle / eye.c));
+        }
 
         float coeff = Beta::beta(abs(dot(sample.normal(), eye.surface.normal()))
             / distance2(isect.position(), eye.surface.position()));
 
         float Dp
-            = (eye.D * Beta::beta(eyeBSDF.density) + eyeBSDF.finite
+            = (eye.D * Beta::beta(camera_bsdf.density) + camera_bsdf.finite
             * eye_vertex_merging
             * Beta::beta(eye.c) * (eye.length <= _trim_eye ? 0.0f : 1.0f))
             * coeff;
 
         float Cp
-            = (eye.C * Beta::beta(eyeBSDF.density) + Beta::beta(eye.c) * eye.finite)
+            = (eye.C * Beta::beta(camera_bsdf.density) + Beta::beta(eye.c) * eye.finite)
             * coeff;
 
         float vm_current = _unbiased || eye.length <= 1.0f ? 0.0f : Beta::beta(_circle) * coeff;
@@ -475,7 +482,7 @@ vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
 
         vec3 result = sample.radiance() / sample.light_density * _roulette_inv
             * eye.throughput
-            * eyeBSDF.throughput
+            * camera_bsdf.throughput
             * abs(dot(sample.normal(), eye.surface.normal()));
 
         return l1Norm(result) < FLT_EPSILON ? vec3(0.0f) : result / weightInv;

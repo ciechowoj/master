@@ -13,7 +13,7 @@
 namespace haste {
 
 struct ivec2_less {
-    bool operator()(const ivec2& a, const ivec2& b) {
+    bool operator()(const ivec2& a, const ivec2& b) const {
         return a.x == b.x ? a.y < b.y : a.x < b.x;
     };
 };

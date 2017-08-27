@@ -5,6 +5,8 @@
 
 namespace haste {
 
+static const float DENSITY_ESTIMATION_TEST_LIMIT = 16777216.f;
+
 inline bool intersect(const vec3& ray, const bounding_sphere_t& sphere,
                       float length) {
   float t = dot(normalize(ray), sphere.center);
@@ -40,7 +42,7 @@ float BSDF::gathering_density(random_generator_t& generator,
                               const Intersector* intersector,
                               const SurfacePoint& surface,
                               bounding_sphere_t target, vec3 omega) const {
-  const float L = 16777216.0f;
+  const float L = DENSITY_ESTIMATION_TEST_LIMIT;
   float N = 1.0f;
 
   bounding_sphere_t surface_target;
@@ -114,7 +116,7 @@ float LightBSDF::gathering_density(random_generator_t& generator,
                                    const Intersector* intersector,
                                    const SurfacePoint& surface,
                                    bounding_sphere_t target, vec3 omega) const {
-  const float L = 16777216.0f;
+  const float L = DENSITY_ESTIMATION_TEST_LIMIT;
   float N = 1.0f;
 
   bounding_sphere_t surface_target;
@@ -263,7 +265,7 @@ float DiffuseBSDF::gathering_density(random_generator_t& generator,
                                      const SurfacePoint& surface,
                                      bounding_sphere_t target,
                                      vec3 omega) const {
-  const float L = 16777216.0f;
+  const float L = DENSITY_ESTIMATION_TEST_LIMIT;
   float N = 1.0f;
 
   bounding_sphere_t surface_target;
@@ -391,7 +393,7 @@ float PhongBSDF::gathering_density(random_generator_t& generator,
                                    const Intersector* intersector,
                                    const SurfacePoint& surface,
                                    bounding_sphere_t target, vec3 omega) const {
-  const float L = 16777216.0f;
+  const float L = DENSITY_ESTIMATION_TEST_LIMIT;
   float N = 1.0f;
 
   bounding_sphere_t surface_target;
@@ -427,7 +429,7 @@ float PhongBSDF::gathering_density(random_generator_t& generator,
     N += 1.0f;
   }
 
-  return 0.0f; // INFINITY
+  return INFINITY;
 }
 
 DeltaBSDF::DeltaBSDF() {}

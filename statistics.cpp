@@ -262,7 +262,7 @@ void print_records_tabular(std::ostream& stream, const statistics_t& statistics)
 }
 
 struct ivec2_less {
-    bool operator()(const ivec2& a, const ivec2& b) {
+    bool operator()(const ivec2& a, const ivec2& b) const {
         return a.x == b.x ? a.y < b.y : a.x < b.x;
     };
 };
