@@ -22,17 +22,31 @@ test_cases = sorted(glob.glob("models/TestCase*.blend"), key=natural_keys)
 if not os.path.exists("test_results"):
     os.makedirs("test_results")
 
-num_minutes = 30
+num_minutes = 20
 
-def run_test(test_case, technique, beta):
-    output = os.path.join("test_results", os.path.basename(test_case[:-6]) + "." + technique + str(beta) + ".exr")
+def run_test(test_case, technique, beta, from_light):
+    output = os.path.join(
+        "test_results",
+        os.path.basename(test_case[:-6]) + "." +
+        technique + str(beta) + "." +
+        ("from_light" if from_light else "from_camera") +
+        ".exr")
 
     if not os.path.exists(output):
-       command = ["master", test_case, "--" + technique, "--parallel", "--beta=" + str(beta), "--output=" + output, "--num-minutes=" + str(num_minutes), "--batch"]
-       print(" ".join(command))
-       subprocess.run(command)
+        command = ["master", test_case,
+            "--" + technique,
+            "--parallel",
+            "--beta=" + str(beta),
+            "--output=" + output,
+            "--num-minutes=" + str(num_minutes),
+            "--batch",
+            "--from-light" if from_light else "--from-camera"]
+
+        print(" ".join(command))
+        subprocess.run(command)
 
 for test_case in test_cases:
-    for technique in ["BPT", "UPG"]:
+    for technique in ["UPG"]:
         for beta in [2]:
-            run_test(test_case, technique, beta)
+            run_test(test_case, technique, beta, True)
+            run_test(test_case, technique, beta, False)

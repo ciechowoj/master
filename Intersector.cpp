@@ -20,7 +20,6 @@ bool Intersector::intersectFast(const SurfacePoint& surface,
                                 const bounding_sphere_t& world_target) const {
   float target_length = length(surface_target.center);
   float r_sq = world_target.radius * world_target.radius;
-  float t = dot(direction, world_target.center - surface.position());
 
   RayIsect rtcRay;
   (*(vec3*)rtcRay.org) =
