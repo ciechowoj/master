@@ -419,24 +419,32 @@ vec3 UPGBase<Beta>::_connect(const Connection& connection) {
 
 template <class Beta>
 vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
-    auto bsdf = _scene->queryBSDF(eye.surface, vec3(0.0f), eye.omega);
+    auto camera_bsdf = _scene->queryBSDF(eye.surface, vec3(0.0f), eye.omega);
 
-    if (l1Norm(bsdf.throughput) < FLT_MIN) {
+    if (l1Norm(camera_bsdf.throughput) < FLT_MIN) {
         return vec3(0.0f);
+    }
+
+    float eye_vertex_merging = 0.f;
+
+    if (_from_light) {
+        eye_vertex_merging += _clamp(Beta::beta(_circle * eye.bGeometry * camera_bsdf.density)) // light
+            * (eye.length <= 1.0f ? 0.0f : 1.0f);
+    }
+    else {
+        eye_vertex_merging += _clamp(Beta::beta(_circle / eye.c));
     }
 
     auto lsdf = _scene->queryLSDF(eye.surface, eye.omega);
 
     float Cp
-        = (eye.C * Beta::beta(bsdf.density) + Beta::beta(eye.c) * eye.finite)
+        = (eye.C * Beta::beta(camera_bsdf.density) + Beta::beta(eye.c) * eye.finite)
         * Beta::beta(lsdf.density);
 
-    // float Dp = eye.D / eye.c * Beta::beta(bsdf.density); // eye
-
     float Dp
-        = (eye.D * Beta::beta(bsdf.density) + bsdf.finite
-            // * _clamp(Beta::beta(_circle) / eye.d) * eye.d) // eye
-            * _clamp(Beta::beta(_circle * eye.bGeometry * bsdf.density)) * Beta::beta(eye.c) * (eye.length <= 1.0f ? 0.0f : 1.0f)) // light
+        = (eye.D * Beta::beta(camera_bsdf.density) + camera_bsdf.finite
+        * eye_vertex_merging 
+        * Beta::beta(eye.c) * (eye.length <= 1.0f ? 0.0f : 1.0f)) // light
         * Beta::beta(lsdf.density);
 
     float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f); // +1.0f;
@@ -476,7 +484,7 @@ vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
             = (eye.C * Beta::beta(camera_bsdf.density) + Beta::beta(eye.c) * eye.finite)
             * coeff;
 
-        float vm_current = _unbiased || eye.length <= 1.0f ? 0.0f : Beta::beta(_circle) * coeff;
+        float vm_current = 0.0f; // _unbiased || eye.length <= 1.0f ? 0.0f : Beta::beta(_circle) * coeff;
 
         float weightInv = Cp + Beta::beta(_num_scattered) * (Dp + vm_current) + 1.0f;
 
