@@ -120,6 +120,8 @@ int main(int argc, char **argv) {
             options = Options(metadata);
             options.output = output;
             options.action = Options::Continue;
+            options.num_seconds = 0;
+            options.num_samples = 0;
 
             overrideArgs(options, argc, argv);
 
