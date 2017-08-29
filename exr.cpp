@@ -2,6 +2,7 @@
 #include <cstring>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 #include <exr.hpp>
 
@@ -295,6 +296,14 @@ void load_exr(
   }
 }
 
+void load_exr(
+  const string& path,
+  vector<vec4>& data) {
+  map<string, string> metadata;
+  size_t width, height;
+  load_exr(path, metadata, width, height, data);
+}
+
 map<string, string> load_metadata(const string& path)
 {
   map<string, string> metadata;
@@ -304,16 +313,30 @@ map<string, string> load_metadata(const string& path)
 }
 
 vec3 exr_average(string path) {
-  vector<vec3> data;
+  vector<vec4> data;
   load_exr(path, data);
 
-  dvec3 result = dvec3(0.0f);
+  double x = 0.0, y = 0.0, z = 0.0;
+
+  std::sort(data.begin(), data.end(), [](vec3 a, vec3 b) { return a.x < b.x; });
 
   for (size_t i = 0; i < data.size(); ++i) {
-    result += data[i];
+    x += data[i].x / data[i].w;
   }
 
-  return result / double(data.size());
+  std::sort(data.begin(), data.end(), [](vec3 a, vec3 b) { return a.y < b.y; });
+
+  for (size_t i = 0; i < data.size(); ++i) {
+    y += data[i].y / data[i].w;
+  }
+
+  std::sort(data.begin(), data.end(), [](vec3 a, vec3 b) { return a.z < b.z; });
+
+  for (size_t i = 0; i < data.size(); ++i) {
+    z += data[i].z / data[i].w;
+  }
+
+  return vec3(dvec3(x, y, z) / double(data.size()));
 }
 
 void subtract_exr(string dst, string fst, string snd) {

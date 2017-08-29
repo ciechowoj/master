@@ -67,9 +67,9 @@ void Application::render(size_t width, size_t height, glm::dvec4* data) {
 
   if (_options.technique != Options::Viewer) {
     _printStatistics(
-		  view, 
-		  _technique->statistics().records.back().frame_duration, 
-		  _technique->statistics().total_time, 
+		  view,
+		  _technique->statistics().records.back().frame_duration,
+		  _technique->statistics().total_time,
 		  false);
     _saveIfRequired(view, _technique->statistics().total_time);
   }
@@ -87,13 +87,14 @@ void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
   size_t size = width * height;
 
   if (_ui->computeAverage) {
-    _ui->averageValue = vec3(0.f, 0.f, 0.f);
+    _ui->averageValue = dvec3(0.0);
 
-    for (size_t i = 0; i < size; ++i) {
-      _ui->averageValue += src[i].rgb() / src[i].a;
+    for (size_t i = size; i != 0; --i) {
+      _ui->averageValue += src[i - 1].rgb() / src[i - 1].a;
     }
 
-    _ui->averageValue /= float(size);
+    _ui->averageValue /= double(size);
+
     size_t center = height / 2 * width + width / 2;
     _ui->centerValue = src[center].rgb() / src[center].a;
   }
