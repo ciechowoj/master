@@ -789,6 +789,52 @@ void overrideArgs(Options& options, int argc, const char* const* argv)
         }
     }
 
+    if (dict.count("--num-samples")) {
+        if (!isUnsigned(dict.find("--num-samples")->second)) {
+            options.displayHelp = true;
+            options.displayMessage = "Invalid value for --num-samples.";
+            return;
+        }
+        else {
+            options.num_samples += atoi(dict.find("--num-samples")->second.c_str());
+            dict.erase("--num-samples");
+        }
+    }
+    else {
+        options.num_samples = 0;
+    }
+
+    if (dict.count("--num-minutes") && dict.count("--num-seconds")) {
+        options.displayHelp = true;
+        options.displayMessage = "--num-seconds and --num-minutes cannot be specified at the same time.";
+        return;
+    }
+    else if (dict.count("--num-minutes")) {
+        if (!isReal(dict.find("--num-minutes")->second)) {
+            options.displayHelp = true;
+            options.displayMessage = "Invalid value for --num-minutes.";
+            return;
+        }
+        else {
+            options.num_seconds += atof(dict.find("--num-minutes")->second.c_str()) * 60.0;
+            dict.erase("--num-minutes");
+        }
+    }
+    else if (dict.count("--num-seconds")) {
+        if (!isReal(dict.find("--num-seconds")->second)) {
+            options.displayHelp = true;
+            options.displayMessage = "Invalid value for --num-seconds.";
+            return;
+        }
+        else {
+            options.num_seconds += atof(dict.find("--num-seconds")->second.c_str());
+            dict.erase("--num-seconds");
+        }
+    }
+    else {
+        options.num_seconds = 0;
+    }
+
     if (dict.empty()) {
         return;
     }
