@@ -307,7 +307,7 @@ float UPGBase<Beta>::_vm_subweight_inv(const Connection& connection) {
         eye_vertex_merging += _clamp(Beta::beta(_circle / connection.eye.c)); // eye
 
         connect_vertex_merging += _clamp(Beta::beta(_circle * connection.edge.bGeometry * connection.eye_bsdf.densityRev))
-            * (connection.light.length == 0.0f ? 0.0f : 1.0f); // eye
+            * (connection.eye.length * connection.light.length == 0.0f ? 0.0f : 1.0f); // eye
     }
 
     float Bp
@@ -443,11 +443,11 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
 
     float Dp
         = (eye.D * Beta::beta(camera_bsdf.density) + camera_bsdf.finite
-        * eye_vertex_merging 
+        * eye_vertex_merging
         * Beta::beta(eye.c) * (eye.length <= 1.0f ? 0.0f : 1.0f)) // light
         * Beta::beta(lsdf.density);
 
-    float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f); // +1.0f;
+    float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f);
 
     return lsdf.radiance
         * eye.throughput
