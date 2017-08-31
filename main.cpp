@@ -120,9 +120,8 @@ int main(int argc, char **argv) {
             options = Options(metadata);
             options.output = output;
             options.action = Options::Continue;
-            options.num_seconds = 0;
-            options.num_samples = 0;
-
+            options.num_samples = atoi(metadata["statistics.num_samples"].c_str());
+            options.num_seconds = atoi(metadata["statistics.total_time"].c_str());
             overrideArgs(options, argc, argv);
 
             auto status = displayHelpIfNecessary(options, "0.0.1");
