@@ -123,7 +123,17 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             if (surface.is_light()) {
                 if (_enable_vc) {
-                    radiance += _connect_light(*itr);
+
+                    float Dp
+                      = (prv->D
+                        * Beta::beta(bsdf.densityRev)
+                        + bsdf.finite
+                        * vertex_merging
+                        * (prv->length <= _trim_eye ? 0.0f : 1.0f)
+                        * Beta::beta(prv->c))
+                      * Beta::beta(edge.bGeometry * new_bsdf.density);
+
+                    radiance += _connect_light(*itr, Dp);
                 }
             }
             else {
@@ -348,14 +358,14 @@ float UPGBase<Beta>::_vm_biased_subweight_inv(const Connection& connection, floa
     return Beta::beta(_num_scattered) * (Bp + Dp + vm_current);
 }
 
-template <class Beta>
+template <class Beta> 
 float UPGBase<Beta>::_vc_weight(const Connection& connection) {
     if ((connection.eye.length + connection.light.length) < 2) {
         return 1.0f / _vc_subweight_inv(connection);
     }
     else {
-        float vc = _vc_subweight_inv(connection);
-        float vm = _vm_subweight_inv(connection);
+        float vc = float(_enable_vc) * _vc_subweight_inv(connection);
+        float vm = float(_enable_vm) * _vm_subweight_inv(connection);
         return 1.0f / (vc + vm);
     }
 }
@@ -418,7 +428,7 @@ vec3 UPGBase<Beta>::_connect(const Connection& connection) {
 }
 
 template <class Beta>
-vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
+vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye, float Dp) {
     auto camera_bsdf = _scene->queryBSDF(eye.surface, vec3(0.0f), eye.omega);
 
     if (l1Norm(camera_bsdf.throughput) < FLT_MIN) {
@@ -439,12 +449,6 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye) {
 
     float Cp
         = (eye.C * Beta::beta(camera_bsdf.density) + Beta::beta(eye.c) * eye.finite)
-        * Beta::beta(lsdf.density);
-
-    float Dp
-        = (eye.D * Beta::beta(camera_bsdf.density) + camera_bsdf.finite
-        * eye_vertex_merging
-        * Beta::beta(eye.c) * (eye.length <= 1.0f ? 0.0f : 1.0f)) // light
         * Beta::beta(lsdf.density);
 
     float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f);

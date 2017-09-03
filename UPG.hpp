@@ -84,7 +84,7 @@ class UPGBase : public Technique, protected Beta {
 
   vec3 _connect(const Connection& connection);
 
-  vec3 _connect_light(const EyeVertex& eye);
+  vec3 _connect_light(const EyeVertex& eye, float Dp);
   vec3 _connect_directional(const EyeVertex& eye, const LightSample& sample);
 
   vec3 _connect(const LightVertex& light, const EyeVertex& eye);
