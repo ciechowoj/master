@@ -57,7 +57,7 @@ void UserInterface::update(
 
     ImGui::InputVec("center", &centerValue);
 
-    ImGui::SliderFloat("brightness", &brightness, 0.0f, 50.0f);
+    ImGui::SliderFloat("brightness", &brightness, 0.0f, 10.0f);
 
     size_t offset = min(100, int(maxErrors.size()));
 

@@ -490,7 +490,7 @@ vec3 UPGBase<Beta>::_connect_directional(const EyeVertex& eye, const LightSample
 
         float vm_current = 0.0f; // _unbiased || eye.length <= 1.0f ? 0.0f : Beta::beta(_circle) * coeff;
 
-        float weightInv = Cp + Beta::beta(_num_scattered) * (Dp + vm_current) + 1.0f;
+        float weightInv = Cp + 1.0f + Beta::beta(_num_scattered) * (Dp + vm_current);
 
         vec3 result = sample.radiance() / sample.light_density * _roulette_inv
             * eye.throughput
