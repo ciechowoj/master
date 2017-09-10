@@ -12,7 +12,7 @@ function Invoke-Master() {
         Write-Host master @args
     }
     else {
-        if ([System.IO.File]::Exists($masterPath)) {
+        if (Test-Path $masterPath) {
             . $masterPath @args
         }
         else {
