@@ -13,7 +13,7 @@ Technique::Technique(const shared<const Scene>& scene, size_t num_threads)
 Technique::~Technique() { }
 
 void Technique::render(
-    ImageView& view,
+    subimage_view_t& view,
     random_generator_t& generator,
     size_t cameraId,
     const vector<vec3>& reference,
@@ -142,7 +142,7 @@ unittest() {
     assert_almost_eq(view_to_world[2], -direction_normalized);
 }
 
-void Technique::_adjust_helper_image(ImageView& view) {
+void Technique::_adjust_helper_image(subimage_view_t& view) {
     size_t view_size = view.width() * view.height();
 
     if (_light_image.size() != view_size) {
@@ -152,7 +152,7 @@ void Technique::_adjust_helper_image(ImageView& view) {
 }
 
 void Technique::_trace_paths(
-    ImageView& view,
+    subimage_view_t& view,
     render_context_t& context,
     size_t cameraId) {
     exec2d(_threadpool, view.xWindow(), view.yWindow(), 32,
@@ -164,7 +164,7 @@ void Technique::_trace_paths(
             local_context.generator = &generator;
         }
 
-        ImageView subview = view;
+        subimage_view_t subview = view;
 
         size_t xBegin = view._xOffset + x0;
         size_t xEnd = view._xOffset + x1;
@@ -182,12 +182,12 @@ void Technique::_trace_paths(
     });
 }
 
-size_t Technique::_commit_images(ImageView& view) {
+size_t Technique::_commit_images(subimage_view_t& view) {
     size_t numeric_errors = 0;
 
     exec_in_bands(_threadpool, view.xWindow(), view.yWindow(), 128,
         [&](size_t x0, size_t x1, size_t y0, size_t y1) {
-        ImageView subview = view;
+        subimage_view_t subview = view;
 
         size_t xBegin = view._xOffset + x0;
         size_t xEnd = view._xOffset + x1;
@@ -296,7 +296,7 @@ vec3 Technique::_accumulate(
 }
 
 void Technique::_for_each_ray(
-    ImageView& view,
+    subimage_view_t& view,
     render_context_t& context)
 {
     const int xBegin = int(view.xBegin());

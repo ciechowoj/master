@@ -11,7 +11,7 @@ public:
         size_t height);
 
     void render(
-        ImageView& view,
+        subimage_view_t& view,
         RandomEngine& engine,
         size_t cameraId,
         const vector<vec3>& reference,

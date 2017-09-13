@@ -32,7 +32,7 @@ public:
     virtual ~Technique();
 
     virtual void render(
-        ImageView& view,
+        subimage_view_t& view,
         RandomEngine& engine,
         size_t cameraId,
         const vector<vec3>& reference,
@@ -55,9 +55,9 @@ protected:
     static SurfacePoint _camera_surface(render_context_t& context);
     static vec3 _camera_direction(render_context_t& context);
 
-    void _adjust_helper_image(ImageView& view);
-    void _trace_paths(ImageView& view, render_context_t& context, size_t cameraId);
-    size_t _commit_images(ImageView& view);
+    void _adjust_helper_image(subimage_view_t& view);
+    void _trace_paths(subimage_view_t& view, render_context_t& context, size_t cameraId);
+    size_t _commit_images(subimage_view_t& view);
 
     float _normal_coefficient(
         const vec3& light_omega,
@@ -95,7 +95,7 @@ protected:
         vec3 (*)(void*));
 
     void _for_each_ray(
-        ImageView& view,
+        subimage_view_t& view,
         render_context_t& context);
 
     void _make_measurements(

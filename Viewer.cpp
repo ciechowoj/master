@@ -12,7 +12,7 @@ Viewer::Viewer(const vector<dvec4>& data, size_t width, size_t height)
 }
 
 void Viewer::render(
-    ImageView& view,
+    subimage_view_t& view,
     RandomEngine& engine,
     size_t cameraId,
     const vector<vec3>& reference,

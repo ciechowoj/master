@@ -21,10 +21,10 @@ class Application : public Framework {
   bool updateScene() override;
 
  private:
-  void _printStatistics(const ImageView& view, double elapsed, double time, bool preprocessed);
-  void _saveIfRequired(const ImageView& view, double elapsed);
-  void _updateQuitCond(const ImageView& view, double elapsed);
-  void _save(const ImageView& view, size_t numSamples, bool snapshot);
+  void _printStatistics(const subimage_view_t& view, double elapsed, double time, bool preprocessed);
+  void _saveIfRequired(const subimage_view_t& view, double elapsed);
+  void _updateQuitCond(const subimage_view_t& view, double elapsed);
+  void _save(const subimage_view_t& view, size_t numSamples, bool snapshot);
 
   double _num_seconds() const;
 

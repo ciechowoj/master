@@ -38,7 +38,7 @@ Application::Application(Options& options) {
 Application::~Application() { rtcDeleteDevice(_device); }
 
 void Application::render(size_t width, size_t height, glm::dvec4* data) {
-  auto view = ImageView(data, width, height);
+  auto view = subimage_view_t(data, width, height);
 
   if (_options.action == Options::Continue) {
     map<string, string> metadata;
@@ -204,7 +204,7 @@ bool Application::updateScene() {
   return false;
 }
 
-void Application::_printStatistics(const ImageView& view, double elapsed,
+void Application::_printStatistics(const subimage_view_t& view, double elapsed,
                                    double time,
                                    bool preprocessed) {
   if (!_options.quiet && _options.technique != Options::Viewer) {
@@ -216,7 +216,7 @@ void Application::_printStatistics(const ImageView& view, double elapsed,
   }
 }
 
-void Application::_saveIfRequired(const ImageView& view, double elapsed) {
+void Application::_saveIfRequired(const subimage_view_t& view, double elapsed) {
   size_t num_samples = _num_samples;
 
   if (num_samples != 0) {
@@ -231,7 +231,7 @@ void Application::_saveIfRequired(const ImageView& view, double elapsed) {
   }
 }
 
-void Application::_updateQuitCond(const ImageView& view, double elapsed) {
+void Application::_updateQuitCond(const subimage_view_t& view, double elapsed) {
   if (_options.technique == Options::Viewer) {
     return;
   }
@@ -242,7 +242,7 @@ void Application::_updateQuitCond(const ImageView& view, double elapsed) {
   }
 }
 
-void Application::_save(const ImageView& view, size_t num_samples,
+void Application::_save(const subimage_view_t& view, size_t num_samples,
                         bool snapshot) {
   save_exr(_options, _technique->statistics(), view.data());
 
