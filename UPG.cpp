@@ -115,7 +115,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             itr->D
                 = (prv->D
                     * Beta::beta(bsdf.densityRev)
-                    + bsdf.finite
+                    + prv->finite
                     * vertex_merging
                     * (prv->length <= _trim_eye ? 0.0f : 1.0f)
                     * Beta::beta(prv->c))
@@ -123,15 +123,20 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
 
             if (surface.is_light()) {
                 if (_enable_vc) {
+                    auto lsdf = _scene->queryLSDF(itr->surface, itr->omega);
+                    auto camera_bsdf = _scene->queryBSDF(itr->surface, vec3(0.0f), itr->omega);
 
                     float Dp
                       = (prv->D
                         * Beta::beta(bsdf.densityRev)
-                        + bsdf.finite
+                        + prv->finite
                         * vertex_merging
                         * (prv->length <= _trim_eye ? 0.0f : 1.0f)
                         * Beta::beta(prv->c))
-                      * Beta::beta(edge.bGeometry * new_bsdf.density);
+                      * Beta::beta(edge.bGeometry * camera_bsdf.density);
+
+                    Dp *= (itr->length <= 2.0f ? 0.0f : 1.0f) * float(_enable_vm);
+                    Dp *= Beta::beta(lsdf.density * itr->c);
 
                     radiance += _connect_light(*itr, Dp);
                 }
@@ -451,7 +456,7 @@ vec3 UPGBase<Beta>::_connect_light(const EyeVertex& eye, float Dp) {
         = (eye.C * Beta::beta(camera_bsdf.density) + Beta::beta(eye.c) * eye.finite)
         * Beta::beta(lsdf.density);
 
-    float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp * (eye.length <= 2.0f ? 0.0f : 1.0f) * float(_enable_vm);
+    float weightInv = Cp + 1.0f + Beta::beta(float(_num_scattered)) * Dp;
 
     return lsdf.radiance
         * eye.throughput

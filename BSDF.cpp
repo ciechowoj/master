@@ -1,3 +1,4 @@
+#include <iostream>
 #include <BSDF.hpp>
 #include <Scene.hpp>
 #include <runtime_assert>
@@ -103,7 +104,7 @@ BSDFQuery LightBSDF::query(const SurfacePoint& surface, vec3 incident,
   query.throughput = local_outgoing.y > 0.0f ? vec3(1.0f) : vec3(0.0f);
 
   query.density = (local_outgoing.y > 0.0f ? 1.0f : 0.0f) * local_outgoing.y *
-                  one_over_pi<float>() / lambert_adjust(local_sphere);
+      one_over_pi<float>() / lambert_adjust(local_sphere);
 
   query.densityRev = 0.0f;
 
