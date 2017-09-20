@@ -23,7 +23,7 @@ function Invoke-Master() {
 
 function Get-TestCases() {
     Get-ChildItem "models" `
-        | Where-Object { $_.Name -match "TestCase23.blend$" } `
+        | Where-Object { $_.Name -match "TestCase2(1|2|3|4).blend$" } `
         | ForEach-Object {  @{ Input = (Resolve-Path $_.FullName -Relative); BaseOutput = ("test_results\" + $_.BaseName) } }
 }
 
@@ -45,7 +45,7 @@ else
     mkdir test_results -Force | Out-Null
 
     foreach ($testCase in $testCases) {
-        $baseArguments = @("--parallel", "--batch", "--beta=0", "--num-minutes=480", "--snapshot=360")
-        Invoke-Master $baseArguments --UPG $testCase.Input ("--output=" + $testCase.BaseOutput + ".UPG0.exr")
+        $baseArguments = @("--parallel", "--batch", "--beta=2", "--num-minutes=240", "--snapshot=360")
+        Invoke-Master $baseArguments --BPT $testCase.Input ("--output=" + $testCase.BaseOutput + ".BPT2.exr")
     }
 }
