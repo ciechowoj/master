@@ -70,7 +70,7 @@ else
 # TestCase16.blend --radius=0.03
 # TestCase17.blend --radius=0.05
 # TestCase18.blend --radius=0.05
-# TestCase19.blend --radius=0.01
+# TestCase19.blend --radius=0.1
 # TestCase20.blend --radius=0.01
 # TestCase21.blend --radius=0.05
 # TestCase22.blend --radius=0.05
