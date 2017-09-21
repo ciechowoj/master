@@ -23,7 +23,7 @@ function Invoke-Master() {
 
 function Get-TestCases() {
     Get-ChildItem "models" `
-        | Where-Object { $_.Name -match "TestCase2(1|2|3|4).blend$" } `
+        | Where-Object { $_.Name -match "TestCase(20|24).blend$" } `
         | ForEach-Object {  @{ Input = (Resolve-Path $_.FullName -Relative); BaseOutput = ("test_results\" + $_.BaseName) } }
 }
 
@@ -49,32 +49,3 @@ else
         Invoke-Master $baseArguments --BPT $testCase.Input ("--output=" + $testCase.BaseOutput + ".BPT2.exr")
     }
 }
-
-
-# TestCase0.blend --radius=0.01
-# TestCase1.blend --radius=0.05
-# TestCase2.blend --radius=0.01
-# TestCase3.blend --radius=0.01
-# TestCase4.blend --radius=0.05
-# TestCase5.blend --radius=0.05
-# TestCase6.blend --radius=0.05
-# TestCase7.blend --radius=0.05
-# TestCase8.blend --radius=0.01
-# TestCase9.blend --radius=0.01
-# TestCase10.blend --radius=0.01
-# TestCase11.blend --radius=0.01
-# TestCase12.blend --radius=0.01
-# TestCase13.blend --radius=0.03
-# TestCase14.blend --radius=0.05
-# TestCase15.blend --radius=0.01
-# TestCase16.blend --radius=0.03
-# TestCase17.blend --radius=0.05
-# TestCase18.blend --radius=0.05
-# TestCase19.blend --radius=0.1
-# TestCase20.blend --radius=0.01
-# TestCase21.blend --radius=0.05
-# TestCase22.blend --radius=0.05
-# TestCase23.blend --radius=0.05
-# TestCase24.blend --radius=0.01
-
-
