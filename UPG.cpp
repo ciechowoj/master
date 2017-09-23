@@ -341,12 +341,22 @@ float UPGBase<Beta>::_vm_subweight_inv(const Connection& connection) {
 }
 
 template <class Beta>
-float UPGBase<Beta>::_vm_biased_subweight_inv(const Connection& connection, float vm_current) {
+float UPGBase<Beta>::_vm_biased_subweight_inv(const Connection& connection, float connect_vertex_merging) {
+  float light_vertex_merging = 0.0f;
+  float eye_vertex_merging = 0.0f;
 
-  float eye_vertex_merging = Beta::beta(_circle * connection.eye.bGeometry * connection.eye_bsdf.density) // light
-    * (connection.eye.length <= 1.0f ? 0.0f : 1.0f);
+  if (_from_light) {
+    light_vertex_merging += _clamp(Beta::beta(_circle / connection.light.a)); // light
 
-  float light_vertex_merging = connection.light.a == 0.0f ? 0.0f : Beta::beta(_circle / connection.light.a); // light
+    eye_vertex_merging += _clamp(Beta::beta(_circle * connection.eye.bGeometry * connection.eye_bsdf.density)) // light
+      * (connection.eye.length <= 1.0f ? 0.0f : 1.0f);
+  }
+  else {
+    light_vertex_merging += _clamp(Beta::beta(_circle * connection.light.bGeometry * connection.light_bsdf.densityRev)) // eye
+      * (connection.light.length <= 1.0f ? 0.0f : 1.0f);
+
+    eye_vertex_merging += _clamp(Beta::beta(_circle / connection.eye.c)); // eye
+  }
 
   float Bp
     = (connection.light.B * Beta::beta(connection.light_bsdf.densityRev) + connection.light_bsdf.finite
@@ -360,7 +370,7 @@ float UPGBase<Beta>::_vm_biased_subweight_inv(const Connection& connection, floa
       * Beta::beta(connection.eye.c) * (connection.eye.length <= _trim_eye ? 0.0f : 1.0f))
     * Beta::beta(connection.edge.fGeometry * connection.light_bsdf.density);
 
-  return Beta::beta(_num_scattered) * (Bp + Dp + vm_current);
+  return Beta::beta(_num_scattered) * (Bp + Dp + connect_vertex_merging);
 }
 
 template <class Beta>
@@ -381,8 +391,8 @@ float UPGBase<Beta>::_vc_biased_weight(const Connection& connection, float vm_cu
     return 1.0f / _vc_subweight_inv(connection);
   }
   else {
-    float vc = _vc_subweight_inv(connection);
-    float vm = _vm_biased_subweight_inv(connection, vm_current);
+    float vc = float(_enable_vc) * _vc_subweight_inv(connection);
+    float vm = float(_enable_vm) * _vm_biased_subweight_inv(connection, vm_current);
     return 1.0f / (vc + vm);
   }
 }
@@ -666,17 +676,17 @@ vec3 UPGBase<Beta>::_gather(
 
   _vertices.rQuery(
     [&](uint32_t index) {
-    time_scope_t _(_statistics.merge_time);
+      time_scope_t _(_statistics.merge_time);
 
-    runtime_assert(!_light_paths[index].surface.is_light());
+      runtime_assert(!_light_paths[index].surface.is_light());
 
-    if (_from_light && !_light_paths[index - 1].surface.is_light()) { // light
-      radiance += _merge_light(*context.generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
-    }
-    else if (!_from_light && !eye.surface.is_camera()) {
-      radiance += _merge_eye(*context.generator, _light_paths[index], eye) * _num_scattered_inv;
-    }
-  },
+      if (_from_light && !_light_paths[index - 1].surface.is_light()) { // light
+        radiance += _merge_light(*context.generator, _light_paths[index - 1], tentative) * _num_scattered_inv;
+      }
+      else if (!_from_light && !eye.surface.is_camera()) {
+        radiance += _merge_eye(*context.generator, _light_paths[index], eye) * _num_scattered_inv;
+      }
+    },
     tentative.surface.position(),
     _radius);
 
@@ -692,13 +702,17 @@ vec3 UPGBase<Beta>::_gather_biased(
 
   _vertices.rQuery(
     [&](uint32_t index) {
-    if (/*!eye.surface.is_camera() || */!_light_paths[index - 1].surface.is_light()) {
-      radiance += _merge_biased(*context.generator,
-        _light_paths[index - 1],
-        _light_paths[index],
-        tentative) * _num_scattered_inv;
-    }
-  },
+      time_scope_t _(_statistics.merge_time);
+
+      runtime_assert(!_light_paths[index].surface.is_light());
+
+      if (_from_light && !_light_paths[index - 1].surface.is_light()) { // light
+        radiance += _merge_biased(*context.generator, _light_paths[index - 1], _light_paths[index], tentative) * _num_scattered_inv;
+      }
+      else if (!_from_light && !eye.surface.is_camera()) {
+        radiance += _merge_biased(*context.generator, _light_paths[index], _light_paths[index], eye) * _num_scattered_inv;
+      }
+    },
     tentative.surface.position(),
     _radius);
 
@@ -792,7 +806,7 @@ vec3 UPGBase<Beta>::_merge_biased(
   }
   else {
     auto weight = _vm_biased_weight(connection,
-      // Beta::beta(_circle * edge.fGeometry * light_bsdf.density));
+      //Beta::beta(_circle * connection.edge.fGeometry * connection.light_bsdf.density));
       Beta::beta(_circle / tentative.a));
 
     time_scope_t _(_statistics.density_time);

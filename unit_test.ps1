@@ -23,7 +23,7 @@ function Invoke-Master() {
 
 function Get-TestCases() {
     Get-ChildItem "models" `
-        | Where-Object { $_.Name -match "TestCase(20|24).blend$" } `
+        | Where-Object { $_.Name -match "TestCase(25).blend$" } `
         | ForEach-Object {  @{ Input = (Resolve-Path $_.FullName -Relative); BaseOutput = ("test_results\" + $_.BaseName) } }
 }
 
