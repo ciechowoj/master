@@ -10,12 +10,12 @@ struct Edge;
 
 template <class Beta>
 class UPGBase : public Technique, protected Beta {
- public:
+public:
   UPGBase(const shared<const Scene>& scene, bool unbiased, bool enable_vc,
-          bool enable_vm, bool from_light, float lights, float roulette, size_t numPhotons,
-          float radius, float alpha, float beta, size_t numThreads);
+    bool enable_vm, bool from_light, float lights, float roulette, size_t numPhotons,
+    float radius, float alpha, float beta, size_t numThreads);
 
- private:
+private:
   struct LightVertex {
     SurfacePoint surface;
     vec3 omega;
@@ -61,7 +61,7 @@ class UPGBase : public Technique, protected Beta {
   LightVertex _sample_light(random_generator_t& generator);
 
   void _traceLight(random_generator_t& generator, vector<LightVertex>& path,
-                   size_t& size);
+    size_t& size);
 
   float _vc_subweight_inv(const Connection& connection);
 
@@ -80,7 +80,7 @@ class UPGBase : public Technique, protected Beta {
   float _weight_vm_light(const Connection& connection);
 
   float _density(random_generator_t& generator, const vec3& omega,
-                 const SurfacePoint& surface, const vec3& target);
+    const SurfacePoint& surface, const vec3& target);
 
   vec3 _connect(const Connection& connection);
 
@@ -94,19 +94,19 @@ class UPGBase : public Technique, protected Beta {
   void _scatter(random_generator_t& generator);
 
   vec3 _gather(render_context_t& context, const EyeVertex& eye,
-               const EyeVertex& tentative);
+    const EyeVertex& tentative);
 
   vec3 _gather_biased(render_context_t& context, const EyeVertex& eye,
-                      const EyeVertex& tentative);
+    const EyeVertex& tentative);
 
   vec3 _merge_light(random_generator_t& generator, const LightVertex& light,
-                    const EyeVertex& eye);
+    const EyeVertex& eye);
 
   vec3 _merge_eye(random_generator_t& generator, const LightVertex& light,
-                  const EyeVertex& eye);
+    const EyeVertex& eye);
 
   vec3 _merge_biased(random_generator_t& generator, const LightVertex& light,
-                     const LightVertex& tentative, const EyeVertex& eye);
+    const LightVertex& tentative, const EyeVertex& eye);
 
   float _clamp(float x) const;
 
@@ -143,11 +143,11 @@ using UPG1 = UPGBase<FixedBeta<1>>;
 using UPG2 = UPGBase<FixedBeta<2>>;
 
 class UPGb : public UPGBase<VariableBeta> {
- public:
+public:
   UPGb(const shared<const Scene>& scene, bool unbiased, bool enable_vc,
-       bool enable_vm, bool from_light, float lights, float roulette, 
-       size_t numPhotons, float radius, float alpha, float beta, 
-       size_t numThreads);
+    bool enable_vm, bool from_light, float lights, float roulette,
+    size_t numPhotons, float radius, float alpha, float beta,
+    size_t numThreads);
 };
 
 }
