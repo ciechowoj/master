@@ -86,26 +86,33 @@ void UserInterface::_displayRadiance(
 {
     if (ImGui::IsMouseDown(0)) {
         auto pos = ImGui::GetMousePos();
-        std::stringstream stream;
 
-        vec4 radiance = image[size_t((height - pos.y - 1) * width + pos.x)];
+        if (0 <= pos.x && pos.x < width &&
+            0 <= pos.y && pos.y < height) {
+            std::stringstream stream;
 
-        vec3 radianceDivW = radiance.xyz() / radiance.w;
+            int x = pos.x;
+            int y = height - pos.y - 1;
 
-        stream
-            << "[" << pos.x << ", " << pos.y << "]: "
-            << std::fixed
-            << std::setprecision(6)
-            << "["
-            << radianceDivW.x
-            << ", "
-            << radianceDivW.y
-            << ", "
-            << radianceDivW.z
-            << "]"
-            << " W/(m*m*sr)";
+            vec4 radiance = image[size_t(y * width + x)];
 
-        ImGui::SetTooltip("%s", stream.str().c_str());
+            vec3 radianceDivW = radiance.xyz() / radiance.w;
+
+            stream
+                << "[" << x << ", " << y << "]: "
+                << std::fixed
+                << std::setprecision(6)
+                << "["
+                << radianceDivW.x
+                << ", "
+                << radianceDivW.y
+                << ", "
+                << radianceDivW.z
+                << "]"
+                << " W/(m*m*sr)";
+
+            ImGui::SetTooltip("%s", stream.str().c_str());
+        }
     }
 }
 
@@ -141,6 +148,7 @@ void UserInterface::_updateSaveRegion(
 }
 
 void UserInterface::_updateComputeAverage() {
+    ImGui::Checkbox("display windows", &displayWindows);
     ImGui::Checkbox("compute average", &computeAverage);
     ImGui::InputVec("", &averageValue);
 }

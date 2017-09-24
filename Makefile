@@ -116,7 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin models/Bearings.blend --UPG --from-light --beta=0
+	./build/master/master.bin gnuplot Bearings.BPT2.exr Bearings.UPG2.exr --output=image.png --traces
 
 profile: all
 	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet

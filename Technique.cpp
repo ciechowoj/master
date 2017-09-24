@@ -17,7 +17,7 @@ void Technique::render(
     random_generator_t& generator,
     size_t cameraId,
     const vector<vec3>& reference,
-    const vector<ivec2>& trace_points)
+    const vector<ivec3>& trace_points)
 {
     auto& cameras = _scene->cameras();
 
@@ -343,7 +343,7 @@ void Technique::_for_each_ray(
 }
 
 void Technique::_make_measurements(
-    const vector<ivec2>& trace_points,
+    const vector<ivec3>& trace_points,
     image_view_t<dvec4> current,
     image_view_t<vec3> reference) {
 
@@ -360,8 +360,8 @@ void Technique::_make_measurements(
       measurement.abs_error,
       current,
       reference,
-      point,
-      2);
+      point.xy(),
+      point.z);
 
     _statistics.measurements.push_back(measurement);
   }

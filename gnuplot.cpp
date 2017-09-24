@@ -108,6 +108,7 @@ string gnuplot(string output, const vector<string>& inputs, string error) {
 
 struct series_t {
   string label;
+  ivec2 point;
   vector<vec2> values;
 };
 
@@ -132,6 +133,7 @@ dataset_t make_dataset(const vector<string>& inputs) {
       size_t index;
       size_t size;
       string label;
+      ivec2 point;
     };
 
     map<ivec2, series_info_t, ivec2_less> series_info;
@@ -149,6 +151,7 @@ dataset_t make_dataset(const vector<string>& inputs) {
         info.index = series_info.size() * 2 + dataset.series.size();
         info.size = measurement.sample_index + 1;
         info.label = input + " " + std::to_string(key.x) + "x" + std::to_string(key.y);
+        info.point = key;
         series_info.insert(std::make_pair(key, info));
       }
     }
@@ -159,8 +162,10 @@ dataset_t make_dataset(const vector<string>& inputs) {
       auto info = info_itr.second;
       auto size = std::min(info.size, statistics.records.size());
       dataset.series[info.index + 0].label = info.label + " RMS";
+      dataset.series[info.index + 0].point = info.point;
       dataset.series[info.index + 0].values.resize(size);
       dataset.series[info.index + 1].label = info.label + " ABS";
+      dataset.series[info.index + 1].point = info.point;
       dataset.series[info.index + 1].values.resize(size);
     }
 
@@ -227,7 +232,6 @@ dataset_t select_series(dataset_t&& dataset, const vector<string>& selections) {
   }
 }
 
-
 void make_gnuplot_script(
   std::ostream& stream,
   string output,
@@ -242,6 +246,55 @@ void make_gnuplot_script(
     stream << (i == 0 ? "plot " : "     ");
     stream << "'" << temp_series[i] << "' using 1:2 with lines " << "title '" << dataset.series[i].label << "'";
     stream << (i == temp_series.size() - 1 ? "\n" : ", \\\n");
+  }
+}
+
+void make_gnuplot_script_grouped(
+  std::ostream& stream,
+  string output,
+  const dataset_t& dataset,
+  const vector<string>& temp_series) {
+
+  struct series_ref_t
+  {
+    const series_t* series;
+    string path;
+  };
+
+  map<ivec2, vector<series_ref_t>, ivec2_less> groups;
+
+  for (size_t i = 0; i < temp_series.size(); ++i) {
+    series_ref_t ref;
+    ref.series = &dataset.series[i];
+    ref.path = temp_series[i];
+
+    auto itr = groups.find(ref.series->point);
+    if (itr != groups.end()) {
+      itr->second.push_back(ref);
+    }
+    else {
+      groups.insert(std::make_pair(ref.series->point, vector<series_ref_t>(1, ref)));
+    }
+  }
+
+  int height = int(sqrt(groups.size()));
+  int width = (groups.size() + height - 1) / height;
+
+  stream << "set terminal pngcairo enhanced truecolor "
+         << "size " << 1024 * width << "," << 1024 * height << "\n";
+  stream << "set logscale y\n";
+  stream << "set output '" << output << "'\n\n";
+
+  stream << "set multiplot layout " << height << "," << width << "\n";
+
+  for (auto&& group : groups) {
+    for (auto itr = group.second.begin(); itr != group.second.end(); ++itr) {
+      stream << (itr == group.second.begin() ? "plot " : "     ");
+      stream
+        << "'" << itr->path << "' using 1:2 with lines "
+        << "title '" << itr->series->label << "'";
+      stream << (itr + 1 == group.second.end() ? "\n" : ", \\\n");
+    }
   }
 }
 
@@ -264,7 +317,7 @@ string gnuplot(string output, const dataset_t& dataset) {
   }
 
   std::ofstream stream(temp_script, std::ios::out | std::ios::trunc);
-  make_gnuplot_script(stream, output, dataset, temp_series);
+  make_gnuplot_script_grouped(stream, output, dataset, temp_series);
   stream.close();
 
   auto result = exec("gnuplot " + temp_script);
@@ -278,7 +331,6 @@ string gnuplot(string output, const dataset_t& dataset) {
 
   return string();
 }
-
 
 string handle_output(std::multimap<string, string>& options, string& output) {
   if (options.count("--output") == 0) {
