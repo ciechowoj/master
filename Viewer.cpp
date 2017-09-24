@@ -16,7 +16,7 @@ void Viewer::render(
     RandomEngine& engine,
     size_t cameraId,
     const vector<vec3>& reference,
-    const vector<ivec2>& trace_points)
+    const vector<ivec3>& trace_points)
 {
     view.copyFrom(_data, _width, _height);
     std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(33));;

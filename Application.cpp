@@ -173,6 +173,11 @@ void Application::postproc(glm::vec4* dst, const glm::dvec4* src, size_t width,
 
     _ui->maxErrors.push_back(_ui->maxError);
   }
+
+  if (_ui->displayWindows)
+  {
+    _renderWindows(dst, width, height, _options.trace);
+  }
 }
 
 bool Application::updateScene() {
@@ -257,5 +262,31 @@ void Application::_save(const subimage_view_t& view, size_t num_samples,
 }
 
 double Application::_num_seconds() const { return _technique->statistics().total_time; }
+
+void Application::_renderWindows(
+  glm::vec4* dst,
+  size_t width,
+  size_t height,
+  const vector<ivec3>& windows) const
+{
+  for (auto&& window : windows) {
+    int x0 = window.x - window.z;
+    int y0 = window.y - window.z;
+    int x1 = window.x + window.z;
+    int y1 = window.y + window.z;
+
+    for (int x = max(0, x0); x < min(x1 + 1, int(width)); ++x)
+      dst[y0 * width + x] = vec4(10.f, 0.f, 0.0f, 1.0f);
+
+    for (int x = max(0, x0); x < min(x1 + 1, int(width)); ++x)
+      dst[y1 * width + x] = vec4(10.f, 0.f, 0.0f, 1.0f);
+
+    for (int y = max(0, y0 + 1); y < min(y1, int(height)); ++y)
+      dst[y * width + x0] = vec4(10.f, 0.f, 0.0f, 1.0f);
+
+    for (int y = max(0, y0 + 1); y < min(y1, int(height)); ++y)
+      dst[y * width + x1] = vec4(10.f, 0.f, 0.0f, 1.0f);
+  }
+}
 
 }

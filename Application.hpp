@@ -28,6 +28,12 @@ class Application : public Framework {
 
   double _num_seconds() const;
 
+  void _renderWindows(
+    glm::vec4* dst,
+    size_t width,
+    size_t height,
+    const vector<ivec3>& windows) const;
+
   Options _options;
   RTCDevice _device;
   random_generator_t _generator;

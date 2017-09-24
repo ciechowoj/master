@@ -36,7 +36,7 @@ public:
         RandomEngine& engine,
         size_t cameraId,
         const vector<vec3>& reference,
-        const vector<ivec2>& trace_points);
+        const vector<ivec3>& trace_points);
 
     const statistics_t& statistics() const;
     void set_statistics(const statistics_t& statistics);
@@ -99,7 +99,7 @@ protected:
         render_context_t& context);
 
     void _make_measurements(
-      const vector<ivec2>& trace_points,
+      const vector<ivec3>& trace_points,
       image_view_t<dvec4> a,
       image_view_t<vec3> b);
 

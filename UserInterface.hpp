@@ -37,10 +37,10 @@ struct UserInterface {
 
     float& brightness;
 
+    bool displayWindows = true;
     bool computeAverage = true;
     vec3 averageValue = vec3(0.0f);
     vec3 centerValue = vec3(0.0f);
-
 
     UserInterface(
         Options options,

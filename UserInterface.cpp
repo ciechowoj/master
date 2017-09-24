@@ -141,6 +141,7 @@ void UserInterface::_updateSaveRegion(
 }
 
 void UserInterface::_updateComputeAverage() {
+    ImGui::Checkbox("display windows", &displayWindows);
     ImGui::Checkbox("compute average", &computeAverage);
     ImGui::InputVec("", &averageValue);
 }

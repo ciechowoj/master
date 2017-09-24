@@ -51,7 +51,7 @@ struct Options {
     size_t camera_id = 0;
     size_t width = 512;
     size_t height = 512;
-	vector<ivec2> trace;
+	vector<ivec3> trace;
 
     bool displayHelp = false;
     bool displayVersion = false;

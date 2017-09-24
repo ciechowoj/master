@@ -15,7 +15,7 @@ public:
         RandomEngine& engine,
         size_t cameraId,
         const vector<vec3>& reference,
-        const vector<ivec2>& trace_points) override;
+        const vector<ivec3>& trace_points) override;
 
 private:
     vector<dvec4> _data;

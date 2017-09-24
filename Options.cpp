@@ -65,6 +65,7 @@ R"(
       --snapshot=<n>              Save output every n seconds (tags output file with time).
       --camera=<id>               Use camera with given id. [default: 0]
       --resolution=<WxH>          Resolution of output image. [default: 512x512]
+      --trace=<XxY[xW]>           Trace errors in window of radius W and at the center at XxY. [default: XxYx2]
 
 )";
 
@@ -78,6 +79,24 @@ ivec2 parse_xnotation2(const string& s) {
   result.x = atoi(x);
   const char* y = strstr(x, "x") + 1;
   result.y = atoi(y);
+  return result;
+}
+
+ivec3 parse_xnotation3(const string& s, int default_z) {
+  ivec3 result;
+  const char* x = s.c_str();
+  result.x = atoi(x);
+  const char* y = strstr(x, "x") + 1;
+  result.y = atoi(y);
+  const char* z = strstr(y, "x");
+
+  if (z != nullptr) {
+    result.z = atoi(z + 1);
+  }
+  else {
+    result.z = default_z;
+  }
+
   return result;
 }
 
@@ -683,7 +702,7 @@ Options parseArgs(int argc, char const* const* argv) {
           }
 
           auto itr = dict.find("--trace");
-          options.trace.push_back(parse_xnotation2(itr->second));
+          options.trace.push_back(parse_xnotation3(itr->second, 1));
           dict.erase(itr);
         }
 
@@ -1102,7 +1121,16 @@ Options::Options(const map<string, string>& dict) {
           trace.resize(i + 1);
         }
 
-        sscanf(item.second.c_str(), "[%d, %d]", &trace[i].x, &trace[i].y);
+        int read = sscanf(
+          item.second.c_str(),
+          "[%d, %d, %d]",
+          &trace[i].x,
+          &trace[i].y,
+          &trace[i].z);
+
+        if (read == 2) {
+          trace[i].z = 2;
+        }
       }
     }
 }
@@ -1144,7 +1172,9 @@ map<string, string> Options::to_dict() const
     for (size_t i = 0; i < trace.size(); ++i) {
       auto x = std::to_string(trace[i].x);
       auto y = std::to_string(trace[i].y);
-      result["options.trace[" + std::to_string(i) + "]"] = "[" + x + ", " + y + "]";
+      auto z = std::to_string(trace[i].z);
+      auto value = "[" + x + ", " + y + ", " + z + "]";
+      result["options.trace[" + std::to_string(i) + "]"] = value;
     }
 
     return result;
