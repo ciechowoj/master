@@ -173,10 +173,10 @@ template <class Beta>
 void UPGBase<Beta>::_preprocess(random_generator_t& generator, double num_samples) {
   time_scope_t _0(_statistics.scatter_time);
 
-  /*if (!_unbiased) {
+  if (!_unbiased) {
       _radius = _initial_radius * pow((num_samples + 1.0f), _alpha * 0.5f - 0.5f);
       _circle = pi<float>() * _radius * _radius;
-  }*/
+  }
 
   _scatter(generator);
 }
