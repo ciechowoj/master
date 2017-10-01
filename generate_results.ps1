@@ -4,7 +4,9 @@ param (
     [switch]$justPrint = $false,
     [switch]$printAverage = $false,
     [int]$beta = 2,
-    [int]$numMinutes=240
+    [int]$numMinutes=240,
+    [switch]$makeReference = $false,
+    [int]$camera = 0
 )
 
 $masterPath = "./master.exe"
@@ -15,7 +17,8 @@ $commonArguments = @(
   "--beta=$beta",
   "--num-minutes=$numMinutes",
   "--resolution=1024x1024",
-  "--snapshot=360")
+  "--snapshot=360",
+  "--camera=$camera")
 
 function Invoke-Master() {
     $baseName = [io.path]::GetFileNameWithoutExtension($args[0])
@@ -40,8 +43,12 @@ function Invoke-Master() {
     }
 
     $output = "--output=result/$basename.$technique.exr"
-
     $finalArguments = $commonArguments, $reference, $output, $args
+
+    if ($makeReference) {
+      $output = "--output=reference/$basename.exr"
+      $finalArguments = $commonArguments, $output, $args
+    }
 
     if ($justPrint) {
         Write-Host master @finalArguments
