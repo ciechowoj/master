@@ -1,8 +1,10 @@
+#!/usr/bin/env powershell
 
 param (
     [switch]$justPrint = $false,
     [switch]$printAverage = $false,
-    [int]$beta = 2
+    [int]$beta = 2,
+    [int]$numMinutes=240
 )
 
 $masterPath = "./master.exe"
@@ -11,7 +13,7 @@ $commonArguments = @(
   "--parallel",
   #"--batch",
   "--beta=$beta",
-  "--num-minutes=240",
+  "--num-minutes=$numMinutes",
   "--resolution=1024x1024",
   "--snapshot=360")
 
@@ -71,6 +73,7 @@ $bearingsTraces = @(
   "--trace=490x845x8")
 
 New-Item -Name result -ItemType directory -Force | Out-Null
-Invoke-Master models/Bearings.blend --BPT $bearingsTraces
-Invoke-Master models/Bearings.blend --UPG --radius=0.1 $bearingsTraces
+#Invoke-Master models/Bearings.blend --BPT $bearingsTraces
+#Invoke-Master models/Bearings.blend --UPG --radius=0.1 $bearingsTraces
 
+Invoke-Master models/BreakfastRoom.blend --BPT
