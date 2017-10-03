@@ -13,7 +13,7 @@ $masterPath = "./master.exe"
 
 $commonArguments = @(
   "--parallel",
-  #"--batch",
+  "--batch",
   "--beta=$beta",
   "--num-minutes=$numMinutes",
   "--resolution=1024x1024",
