@@ -83,4 +83,6 @@ New-Item -Name result -ItemType directory -Force | Out-Null
 #Invoke-Master models/Bearings.blend --BPT $bearingsTraces
 #Invoke-Master models/Bearings.blend --UPG --radius=0.1 $bearingsTraces
 
-Invoke-Master models/BreakfastRoom.blend --BPT
+# Invoke-Master models/BreakfastRoom.blend --BPT
+# Invoke-Master models/Bathroom.blend --UPG --radius=0.05
+Invoke-Master models/BathroomDiscrete.blend --UPG --radius=0.03
