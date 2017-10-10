@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdint>
+#include "flat_hash_map.hpp"
 
 namespace std
 {
@@ -104,7 +105,7 @@ private:
         uint32_t end;
     };
 
-    unordered_map<vec3, Range> _ranges;
+    ska::flat_hash_map<vec3, Range> _ranges;
 
     void build(const vector<T>& data, float radius) {
         struct Comparator {

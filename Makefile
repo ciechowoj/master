@@ -25,8 +25,8 @@ LIBRARY_DIRS = \
 CXX = g++
 CC = g++
 
-CXXFLAGS = -march=native -g -O2 -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
-CCFLAGS = -march=native -g -O2 -Wall -std=c++11 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CXXFLAGS = -march=native -g -O2 -Wall -std=c++14 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
+CCFLAGS = -march=native -g -O2 -Wall -std=c++14 $(INCLUDE_DIRS) -DGLM_FORCE_RADIANS -DGLM_SWIZZLE
 
 EMBREE_LIBS = \
 	-lembree \
@@ -90,7 +90,7 @@ build/master/master.bin: \
 	Makefile \
 	$(MAIN_OBJECTS) \
 	build/master/main.o
-	$(CXX) $(MAIN_OBJECTS) build/master/main.o $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/master.bin
+	$(CXX) $(MAIN_OBJECTS) -g build/master/main.o $(LIBRARY_DIRS) $(MAIN_LIBS) -o build/master/master.bin
 
 build/master/benchmark.bin: \
 	$(LIB_DEPENDENCIES) \
@@ -116,7 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin gnuplot Bearings.BPT2.exr Bearings.UPG2.exr --output=image.png --traces
+	./build/master/master.bin ./models/BathroomDiscrete.blend --UPG --num-samples=1 --radius=0.1 --batch
 
 profile: all
 	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet
