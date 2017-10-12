@@ -5,8 +5,7 @@ param (
     [switch]$printAverage = $false,
     [int]$beta = 2,
     [int]$numMinutes=240,
-    [switch]$makeReference = $false,
-    [int]$camera = 0
+    [switch]$makeReference = $false
 )
 
 $masterPath = "./master.exe"
@@ -17,8 +16,7 @@ $commonArguments = @(
   "--beta=$beta",
   "--num-minutes=$numMinutes",
   "--resolution=1024x1024",
-  "--snapshot=360",
-  "--camera=$camera")
+  "--snapshot=360")
 
 function Invoke-Master() {
     $baseName = [io.path]::GetFileNameWithoutExtension($args[0])
@@ -27,26 +25,32 @@ function Invoke-Master() {
     $extra = ""
 
     $radius = ""
-    $args | where-object { $_ -match "--radius=((\d|\.)*)" } | out-null
+    $args | where-object { $_ -match "--radius=((\d|\.)+)" } | out-null
     if ($matches.length -ge 1) {
       $radius = "." + ($matches[1] -replace "\.","_")
     }
 
+    $camera = ""
+    $args | where-object { $_ -match "--camera=((\d)+)" } | out-null
+    if ($matches.length -ge 1) {
+      $camera = ".cam" + $matches[1]
+    }
+
     if ($args.contains("--BPT")) {
-      $technique = "BPT$beta"
+      $technique = "BPT$beta$camera"
     }
     elseif ($args.contains("--UPG")) {
-      $technique = "UPG$beta$radius"
+      $technique = "UPG$beta$radius$camera"
     }
     elseif ($args.contains("--VCM")) {
-      $technique = "VCM$beta$radius"
+      $technique = "VCM$beta$radius$camera"
     }
 
     $output = "--output=result/$basename.$technique.exr"
     $finalArguments = $commonArguments, $reference, $output, $args
 
     if ($makeReference) {
-      $output = "--output=reference/$basename.exr"
+      $output = "--output=reference/$basename$camera.exr"
       $finalArguments = $commonArguments, $output, $args
     }
 
@@ -83,6 +87,12 @@ New-Item -Name result -ItemType directory -Force | Out-Null
 #Invoke-Master models/Bearings.blend --BPT $bearingsTraces
 #Invoke-Master models/Bearings.blend --UPG --radius=0.1 $bearingsTraces
 
+Invoke-Master models/Bathroom.blend --BPT
+Invoke-Master models/BathroomDiscrete.blend --BPT
+Invoke-Master models/Bearings.blend --BPT
+Invoke-Master models/BreakfastRoom.blend --BPT --camera=0
+Invoke-Master models/BreakfastRoom.blend --BPT --camera=1
+
 # Invoke-Master models/BreakfastRoom.blend --BPT
 # Invoke-Master models/Bathroom.blend --UPG --radius=0.05
-Invoke-Master models/BathroomDiscrete.blend --UPG --radius=0.03
+# Invoke-Master models/BathroomDiscrete.blend --UPG --radius=0.03
