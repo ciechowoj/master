@@ -51,7 +51,9 @@ struct Options {
     size_t camera_id = 0;
     size_t width = 512;
     size_t height = 512;
-	vector<ivec3> trace;
+	  vector<ivec3> trace;
+    vec3 sky_horizon = vec3(0);
+    vec3 sky_zenith = vec3(0);
 
     bool displayHelp = false;
     bool displayVersion = false;

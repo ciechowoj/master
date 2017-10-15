@@ -84,6 +84,15 @@ void Technique::set_statistics(const statistics_t& statistics) {
     _statistics = statistics;
 }
 
+vec3 Technique::sky_gradient(vec3 omega) const {
+    return _sky_horizon * (1 - omega.z) + _sky_zenith * omega.z;
+}
+
+void Technique::set_sky_gradient(vec3 horizon, vec3 zenith) {
+    _sky_horizon = horizon;
+    _sky_zenith = zenith;
+}
+
 vec3 Technique::_traceEye(
     render_context_t& context,
     Ray ray)

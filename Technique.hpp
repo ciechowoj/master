@@ -40,7 +40,12 @@ public:
 
     const statistics_t& statistics() const;
     void set_statistics(const statistics_t& statistics);
+    vec3 sky_gradient(vec3 omega) const;
+    void set_sky_gradient(vec3 horizon, vec3 zenith);
 protected:
+    vec3 _sky_horizon = vec3(0);
+    vec3 _sky_zenith = vec3(0);
+
     double _start_time = NAN;
     statistics_t _statistics;
     shared<const Scene> _scene;

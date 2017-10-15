@@ -66,7 +66,9 @@ R"(
       --camera=<id>               Use camera with given id. [default: 0]
       --resolution=<WxH>          Resolution of output image. [default: 512x512]
       --trace=<XxY[xW]>           Trace errors in window of radius W and at the center at XxY. [default: XxYx2]
-
+      --sky-horizon=<RxGxB>       Color of sky horizon. [default: 0x0x0]
+      --sky-zenith=<RxGxB>        Color of sky zenith. [default: 0x0x0]
+      --blue-sky=<B>              Alias to --sky-horizon=<0x0x0> --sky-zenith<0x0xB>. [default: 0]
 )";
 
 string Options::caption() const {
@@ -956,23 +958,25 @@ shared<Technique> make_upg_technique(const shared<const Scene>& scene, const Opt
 }
 
 shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& options) {
+    shared<Technique> result;
+
     switch (options.technique) {
         case Options::BPT:
             if (options.beta == 0.0f) {
-                return make_bpt_technique<BPT0>(scene, options);
+                result = make_bpt_technique<BPT0>(scene, options);
             }
             else if (options.beta == 1.0f) {
-                return make_bpt_technique<BPT1>(scene, options);
+                result = make_bpt_technique<BPT1>(scene, options);
             }
             else if (options.beta == 2.0f) {
-                return make_bpt_technique<BPT2>(scene, options);
+                result = make_bpt_technique<BPT2>(scene, options);
             }
             else {
-                return make_bpt_technique<BPTb>(scene, options);
+                result = make_bpt_technique<BPTb>(scene, options);
             }
 
         case Options::PT:
-            return std::make_shared<PathTracing>(
+            result = std::make_shared<PathTracing>(
                 scene,
                 options.lights,
                 options.roulette,
@@ -983,21 +987,27 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
         case Options::VCM:
         case Options::UPG:
             if (options.beta == 0.0f) {
-                return make_upg_technique<UPG0>(scene, options);
+                result = make_upg_technique<UPG0>(scene, options);
             }
             else if (options.beta == 1.0f) {
-                return make_upg_technique<UPG1>(scene, options);
+                result = make_upg_technique<UPG1>(scene, options);
             }
             else if (options.beta == 2.0f) {
-                return make_upg_technique<UPG2>(scene, options);
+                result = make_upg_technique<UPG2>(scene, options);
             }
             else {
-                return make_upg_technique<UPGb>(scene, options);
+                result = make_upg_technique<UPGb>(scene, options);
             }
 
         default:
-            return makeViewer(options);
+            result = makeViewer(options);
     }
+
+    result->set_sky_gradient(
+      options.sky_horizon, 
+      options.sky_zenith);
+
+    return result;
 }
 
 shared<Scene> loadScene(const Options& options) {

@@ -46,6 +46,10 @@ vec3 BPTBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
             surface = _scene->intersect(surface, bsdf.omega);
 
             if (!surface.is_present()) {
+                if (itr == 0) {
+                  return sky_gradient(bsdf.omega) *= _roulette_inv;
+                }
+
                 return radiance;
             }
 
