@@ -72,7 +72,7 @@ vec3 UPGBase<Beta>::_traceEye(render_context_t& context, Ray ray) {
       surface = _scene->intersect(surface, bsdf.omega);
 
       if (!surface.is_present()) {
-        if (prv->length == 0) {
+        if (prv->surface.is_camera()) {
           return sky_gradient(bsdf.omega) *= _roulette_inv;
         }
 

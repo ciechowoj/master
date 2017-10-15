@@ -102,6 +102,18 @@ ivec3 parse_xnotation3(const string& s, int default_z) {
   return result;
 }
 
+vec3 parse_xnotation3f(const string& s) {
+  ivec3 result;
+  const char* x = s.c_str();
+  result.x = atof(x);
+  const char* y = strstr(x, "x") + 1;
+  result.y = atof(y);
+  const char* z = strstr(y, "x");
+  result.z = atof(z + 1);
+ 
+  return result;
+}
+
 std::multimap<string, string> extractOptions(int argc, char const* const* argv) {
     std::multimap<string, string> result;
 
@@ -777,6 +789,42 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
+        if (dict.count("--blue-sky")) {
+            if (dict.count("--sky-horizon") || dict.count("--sky-zenith")) {
+                options.displayHelp = true;
+                options.displayMessage = "--blue-sky cannot be specified together with --sky-horizon or --sky-zenith.";
+                return options;
+            }
+            if (!isReal(dict.find("--blue-sky")->second)) {
+                options.displayHelp = true;
+                options.displayMessage = "Invalid value for --blue-sky.";
+                return options;
+            }
+            else {
+                float intensity = atof(dict.find("--blue-sky")->second.c_str());
+
+                if (intensity < 0.0)
+                {
+                  options.displayHelp = true;
+                  options.displayMessage = "A value for --blue-sky must not be nagative.";
+                }
+
+                options.sky_horizon = vec3(intensity, intensity, intensity);
+                options.sky_zenith = vec3(0, 0, intensity);
+                dict.erase("--blue-sky");
+            }
+        }
+
+        if (dict.count("--sky-horizon")) {
+            options.sky_horizon = parse_xnotation3f(dict.find("--sky-horizon")->second);
+            dict.erase("--sky-horizon");
+        }
+
+        if (dict.count("--sky-zenith")) {
+            options.sky_zenith = parse_xnotation3f(dict.find("--sky-zenith")->second);
+            dict.erase("--sky-zenith");
+        }
+
         if (options.num_photons == 0) {
             options.num_photons = options.width * options.height;
         }
@@ -975,6 +1023,8 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
                 result = make_bpt_technique<BPTb>(scene, options);
             }
 
+            break;
+
         case Options::PT:
             result = std::make_shared<PathTracing>(
                 scene,
@@ -983,6 +1033,8 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
                 options.beta,
                 options.max_path,
                 options.num_threads);
+
+            break;
 
         case Options::VCM:
         case Options::UPG:
@@ -999,8 +1051,11 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
                 result = make_upg_technique<UPGb>(scene, options);
             }
 
+            break;
+
         default:
             result = makeViewer(options);
+            break;
     }
 
     result->set_sky_gradient(
