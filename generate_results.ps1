@@ -20,7 +20,6 @@ $commonArguments = @(
 
 function Invoke-Master() {
   $baseName = [io.path]::GetFileNameWithoutExtension($args[0])
-  $reference = "--reference=reference/$baseName.exr"
   $technique = $null
   $extra = ""
 
@@ -35,6 +34,8 @@ function Invoke-Master() {
   if ($matches.length -ge 1) {
     $camera = ".cam" + $matches[1]
   }
+
+  $reference = "--reference=reference/$baseName$camera.exr"
 
   if ($args.contains("--BPT")) {
     $technique = "BPT$beta$camera"
@@ -111,7 +112,7 @@ New-Item -Name result -ItemType directory -Force | Out-Null
 # Invoke-Master models/BathroomDiscrete.blend --UPG --radius=0.03
 
 
-$model = "models/BreakfastRoom1.cam0.exr"
+$model = "models/BreakfastRoom1.blend"
 
 $traces = @(
 	"--trace=300x850x8",
@@ -123,10 +124,6 @@ $traces = @(
 
 Generate-Results $model $traces --camera=0 --radius=0.02
 
-
-
-$model = "models/BreakfastRoom1.cam1.exr"
-
 $traces = @(
 	"--trace=400x810x8",
 	"--trace=420x170x8",
@@ -134,10 +131,6 @@ $traces = @(
 	"--trace=630x485x8")
 
 Generate-Results $model $traces --camera=1 --radius=0.02
-
-
-
-$model = "models/BreakfastRoom1.cam2.exr"
 
 $traces = @(
 	"--trace=75x100x8",
@@ -149,7 +142,7 @@ Generate-Results $model $traces --camera=2 --radius=0.02
 
 
 
-$model = "models/BreakfastRoom2.cam0.exr"
+$model = "models/BreakfastRoom2.blend"
 
 $traces = @(
 	"--trace=190x930x8",
@@ -162,10 +155,6 @@ $traces = @(
 
 Generate-Results $model $traces --camera=0 --radius=0.02
 
-
-
-$model = "models/BreakfastRoom2.cam1.exr"
-
 $traces = @(
 	"--trace=400x450x8",
 	"--trace=400x520x8",
@@ -174,10 +163,6 @@ $traces = @(
 	"--trace=500x730x8")
 
 Generate-Results $model $traces --camera=1 --radius=0.02
-
-
-
-$model = "models/BreakfastRoom2.cam2.exr"
 
 $traces = @(
 	"--trace=780x340x8",
@@ -189,7 +174,7 @@ Generate-Results $model $traces --camera=2 --radius=0.03
 
 
 
-$model = "models/CrytkeSponza.cam0.exr"
+$model = "models/CrytkeSponza.blend"
 
 $traces = @(
 	"--trace=156x575x8",
@@ -200,10 +185,6 @@ $traces = @(
 
 Generate-Results $model $traces --camera=0 --radius=0.015
 
-
-
-$model = "models/CrytekSponza.cam1.exr"
-
 $traces = @(
 	"--trace=20x335x8",
 	"--trace=320x180x8",
@@ -212,10 +193,6 @@ $traces = @(
 	"--trace=720x440x8")
 
 Generate-Results $model $traces --camera=1 --radius=0.015
-
-
-
-$model = "models/CrytekSponza.cam2.exr"
 
 $traces = @(
 	"--trace=500x370x8",
