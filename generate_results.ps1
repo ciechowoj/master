@@ -90,16 +90,15 @@ New-Item -Name result -ItemType directory -Force | Out-Null
 # Invoke-Master models/Bathroom.blend --BPT
 # Invoke-Master models/BathroomDiscrete.blend --BPT
 # Invoke-Master models/Bearings.blend --BPT
-# Invoke-Master models/BreakfastRoom0.blend --BPT --camera=0
-# Invoke-Master models/BreakfastRoom0.blend --BPT --camera=1
-# Invoke-Master models/BreakfastRoom0.blend --BPT --camera=2
-Invoke-Master models/BreakfastRoom1.blend --BPT --camera=0
-Invoke-Master models/BreakfastRoom1.blend --BPT --camera=1
-Invoke-Master models/BreakfastRoom1.blend --BPT --camera=2
-# Invoke-Master models/CrytekSponza.blend --BPT --camera=0 --blue-sky=3
-# Invoke-Master models/CrytekSponza.blend --BPT --camera=1 --blue-sky=3
-# Invoke-Master models/CrytekSponza.blend --BPT --camera=2 --blue-sky=3
-
+# Invoke-Master models/BreakfastRoom1.blend --BPT --camera=0
+# Invoke-Master models/BreakfastRoom1.blend --BPT --camera=1
+# Invoke-Master models/BreakfastRoom1.blend --BPT --camera=2
+Invoke-Master models/BreakfastRoom2.blend --BPT --camera=0
+Invoke-Master models/BreakfastRoom2.blend --BPT --camera=1
+Invoke-Master models/BreakfastRoom2.blend --BPT --camera=2
+# Invoke-Master models/CrytekSponza.blend --BPT --camera=0
+# Invoke-Master models/CrytekSponza.blend --BPT --camera=1
+# Invoke-Master models/CrytekSponza.blend --BPT --camera=2
 # Invoke-Master models/BreakfastRoom.blend --BPT
 # Invoke-Master models/Bathroom.blend --UPG --radius=0.05
 # Invoke-Master models/BathroomDiscrete.blend --UPG --radius=0.03
