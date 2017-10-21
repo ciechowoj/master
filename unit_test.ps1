@@ -1,3 +1,4 @@
+#!/usr/bin/env powershell
 
 param (
     [switch]$justPrint = $false,
@@ -32,7 +33,7 @@ if ($printAverage)
     $testResults = Get-ChildItem "test_results" `
         | Where-Object { $_.Name -match "TestCase.*\.exr$" } `
         | ForEach-Object {  (Resolve-Path $_.FullName -Relative) }
-    
+
     foreach ($testResult in $testResults) {
         Write-Host $testResult
         Invoke-Master avg $testResult
