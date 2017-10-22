@@ -69,9 +69,10 @@ function Invoke-Master() {
 }
 
 function Generate-Results([string]$model, $traces, $camera, $radius) {
-	Invoke-Master $model $camera --BPT $traces
-	Invoke-Master $model $camera --VCM $radius $traces
-	Invoke-Master $model $camera --UPG $radius $traces
+	Invoke-Master $model $camera --BPT @traces
+	exit
+	Invoke-Master $model $camera --VCM $radius @traces
+	Invoke-Master $model $camera --UPG $radius @traces
 }
 
 
