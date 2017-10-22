@@ -34,8 +34,9 @@ R"(
       master sub <x> <y>          Compute difference between <x> and <y>.
       master strip <o> <i>        Remove metadata from <o> and save the result to <i>.
       master merge <o> <a> <b>    Merge <a> and <b> into <o>.
+      master gnuplot <inputs>...  Create convergence charts.
 
-    Options:
+    Options (master):
       -h --help                   Show this screen.
       --version                   Show version.
       --PT                        Use path tracing for rendering (this is default one).
@@ -69,6 +70,13 @@ R"(
       --sky-horizon=<RxGxB>       Color of sky horizon. [default: 0x0x0]
       --sky-zenith=<RxGxB>        Color of sky zenith. [default: 0x0x0]
       --blue-sky=<B>              Alias to --sky-horizon=<0x0x0> --sky-zenith<0x0xB>. [default: 0]
+
+    Options (gnuplot):
+      --input=<path>              An exr file containing errors data.
+      --output                    A output image with chart.
+      --traces                    Generate a matrix of charts with data from window traces.
+      --select=<wildcard>         Consider only series which name matches <wildcard>.
+      --error=<type>              Specify the type of error rms/abs.
 )";
 
 string Options::caption() const {
@@ -110,7 +118,7 @@ vec3 parse_xnotation3f(const string& s) {
   result.y = atof(y);
   const char* z = strstr(y, "x");
   result.z = atof(z + 1);
- 
+
   return result;
 }
 
@@ -1059,7 +1067,7 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
     }
 
     result->set_sky_gradient(
-      options.sky_horizon, 
+      options.sky_horizon,
       options.sky_zenith);
 
     return result;
