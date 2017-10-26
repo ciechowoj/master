@@ -32,7 +32,6 @@
 
 build/*
 test_results/*
-images/*
 .vs/*
 x64/*
 Debug/*
