@@ -19,9 +19,9 @@ template <class T> using shared = std::shared_ptr<T>;
 struct Options {
     enum Technique { PT, BPT, VCM, UPG, Viewer };
     enum Action {
-        Render, AVG, SUB, Errors, Strip, Merge,
-        Filter, Time, Continue, Statistics, Measurements,
-        Gnuplot };
+        Render, Average, Subtract, Errors, Strip, Merge,
+        Time, Continue, Statistics, Measurements,
+        Gnuplot, Bake };
 
     string input0;
     string input1;
@@ -62,11 +62,16 @@ struct Options {
     string caption() const;
 
     Options() = default;
+    Options(Action action) : action(action) { }
     Options(const map<string, string>& dict);
 
     map<string, string> to_dict() const;
     string get_output() const;
 };
+
+std::multimap<string, string> extractOptions(int argc, char const* const* argv);
+void displayHelp();
+bool displayHelp(const std::multimap<string, string>& options);
 
 Options parseArgs(int argc, char const* const* argv);
 void overrideArgs(Options& options, int argc, const char* const* argv);

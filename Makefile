@@ -116,7 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin ./models/BathroomDiscrete.blend --UPG --num-samples=1 --radius=0.1 --batch
+	./build/master/master.bin bake reference/BreakfastRoom1.cam0.exr --output=BreakfastRoom1.cam0.baked.exr
 
 profile: all
 	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet

@@ -57,6 +57,8 @@ int run_fast(Options options) {
     return 0;
 }
 
+int bake(int argc, char **argv);
+
 int main(int argc, char **argv) {
     if (!run_all_tests())
         return 1;
@@ -71,14 +73,14 @@ int main(int argc, char **argv) {
         return status.second;
     }
 
-    if (options.action == Options::AVG) {
+    if (options.action == Options::Average) {
         vec3 average = exr_average(options.input0);
         std::cout << average.x << " " << average.y << " " << average.z << std::endl;
     }
     else if (options.action == Options::Errors) {
         std::cout << compute_errors(options.input0, options.input1);
     }
-    else if (options.action == Options::SUB) {
+    else if (options.action == Options::Subtract) {
         subtract_exr(options.output, options.input0, options.input1);
     }
     else if (options.action == Options::Strip) {
@@ -86,9 +88,6 @@ int main(int argc, char **argv) {
     }
     else if (options.action == Options::Merge) {
         merge_exr(options.output, options.input0, options.input1);
-    }
-    else if (options.action == Options::Filter) {
-        filter_exr(options.output, options.input0);
     }
     else if (options.action == Options::Time) {
         std::cout << query_time(options.input0);
@@ -112,6 +111,9 @@ int main(int argc, char **argv) {
         if (status.first) {
           return status.second;
         }
+    }
+    else if (options.action == Options::Bake) {
+        return bake(argc, argv);
     }
     else {
         if (options.action == Options::Continue) {
@@ -143,3 +145,64 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+int bake(int argc, char **argv) {
+  auto options = extractOptions(argc - 1, argv + 1);
+
+  if (displayHelp(options)) {
+    return 0;
+  }
+
+  auto itr = options.find("--input");
+
+  if (itr == options.end()) {
+    std::cout << "The input file is required." << std::endl;
+    displayHelp();
+    return 1;
+  }
+
+  string input = itr->second;
+  options.erase(itr);
+
+
+  itr = options.find("--output");
+
+  if (itr == options.end()) {
+    std::cout << "The output file is required." << std::endl;
+    displayHelp();
+    return 1;
+  }
+
+  string output = itr->second;
+  options.erase(itr);
+
+  if (options.size() != 0) {
+    std::cout
+        << "Unexpected option '"
+        << options.begin()->first
+        << "' "
+        << options.begin()->second
+        << ".\n";
+
+    displayHelp();
+    return 1;
+  }
+
+  map<string, string> metadata;
+  size_t width, height;
+  vector<vec4> data4;
+  vector<vec3> data3;
+
+  load_exr(input, metadata, width, height, data4);
+
+  data3.resize(data4.size());
+
+  for (size_t i = 0; i < data4.size(); ++i) {
+    data3[i] = data4[i].xyz() / data4[i].w;
+  }
+
+  save_exr(output, metadata, width, height, data3);
+
+  return 0;
+}
+
