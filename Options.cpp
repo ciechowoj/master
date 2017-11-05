@@ -34,8 +34,10 @@ R"(
       master sub <x> <y>          Compute difference between <x> and <y>.
       master strip <o> <i>        Remove metadata from <o> and save the result to <i>.
       master merge <o> <a> <b>    Merge <a> and <b> into <o>.
+      master gnuplot <inputs>...  Create convergence charts.
+      master bake <input>         Remove the channel with number of samples from the image <input>.
 
-    Options:
+    Options (master):
       -h --help                   Show this screen.
       --version                   Show version.
       --PT                        Use path tracing for rendering (this is default one).
@@ -69,6 +71,13 @@ R"(
       --sky-horizon=<RxGxB>       Color of sky horizon. [default: 0x0x0]
       --sky-zenith=<RxGxB>        Color of sky zenith. [default: 0x0x0]
       --blue-sky=<B>              Alias to --sky-horizon=<0x0x0> --sky-zenith<0x0xB>. [default: 0]
+
+    Options (gnuplot):
+      --input=<path>              An exr file containing errors data.
+      --output                    A output image with chart.
+      --traces                    Generate a matrix of charts with data from window traces.
+      --select=<wildcard>         Consider only series which name matches <wildcard>.
+      --error=<type>              Specify the type of error rms/abs.
 )";
 
 string Options::caption() const {
@@ -110,7 +119,7 @@ vec3 parse_xnotation3f(const string& s) {
   result.y = atof(y);
   const char* z = strstr(y, "x");
   result.z = atof(z + 1);
- 
+
   return result;
 }
 
@@ -137,6 +146,29 @@ std::multimap<string, string> extractOptions(int argc, char const* const* argv) 
     }
 
     return result;
+}
+
+void displayHelp() {
+  std::cout << "Master's project.\n";
+  std::cout << help;
+}
+
+bool displayHelp(const std::multimap<string, string>& options) {
+  auto itr = options.find("--help");
+
+  if (itr != options.end()) {
+    displayHelp();
+    return true;
+  }
+
+  itr = options.find("--version");
+
+  if (itr != options.end()) {
+    std::cout << "0.9.0" << std::endl;
+    return true;
+  }
+
+  return false;
 }
 
 bool isUnsigned(const string& s) {
@@ -230,7 +262,7 @@ Options parseAvgArgs(int argc, char const* const* argv) {
         options.displayMessage = "Input file is required.";
     }
     else {
-        options.action = Options::AVG;
+        options.action = Options::Average;
         options.input0 = argv[2];
     }
 
@@ -261,7 +293,7 @@ Options parseSubArgs(int argc, char const* const* argv) {
         options.displayMessage = "Input files are required.";
     }
     else {
-        options.action = Options::SUB;
+        options.action = Options::Subtract;
         options.output = argv[2];
         options.input0 = argv[3];
         options.input1 = argv[4];
@@ -282,22 +314,6 @@ Options parseMergeArgs(int argc, char const* const* argv) {
         options.output = argv[2];
         options.input0 = argv[3];
         options.input1 = argv[4];
-    }
-
-    return options;
-}
-
-Options parseFilterArgs(int argc, char const* const* argv) {
-    Options options;
-
-    if (argc != 4) {
-        options.displayHelp = true;
-        options.displayMessage = "Input file is required.";
-    }
-    else {
-        options.action = Options::Filter;
-        options.output = argv[2];
-        options.input0 = argv[3];
     }
 
     return options;
@@ -334,44 +350,64 @@ Options parseInputOutput(int argc, char const* const* argv, Options::Action acti
     return options;
 }
 
+Options::Action parseAction(const char* argument) {
+  static const std::map<const string, Options::Action> map = {
+    { "average", Options::Action::Average },
+    { "subtract", Options::Action::Subtract },
+    { "errors", Options::Action::Errors },
+    { "strip", Options::Action::Strip },
+    { "merge", Options::Action::Merge },
+    { "time", Options::Action::Time },
+    { "continue", Options::Action::Continue },
+    { "statistics", Options::Action::Statistics },
+    { "measurements", Options::Action::Measurements },
+    { "gnuplot", Options::Action::Gnuplot },
+    { "bake", Options::Action::Bake }
+  };
+
+  auto itr = map.find(argument);
+
+  if (itr != map.end()) {
+    return itr->second;
+  }
+  else {
+    return Options::Action::Render;
+  }
+}
+
+
 Options parseArgs(int argc, char const* const* argv) {
-    if (1 < argc) {
-        if (argv[1] == string("avg")) {
-            return parseAvgArgs(argc, argv);
-        }
-        else if (argv[1] == string("sub")) {
-            return parseSubArgs(argc, argv);
-        }
-        else if (argv[1] == string("errors")) {
-            return parseErrorsArgs(argc, argv);
-        }
-            else if (argv[1] == string("strip")) {
-                  return parseInputOutput(argc, argv, Options::Strip);
-            }
-        else if (argv[1] == string("merge")) {
-            return parseMergeArgs(argc, argv);
-        }
-        else if (argv[1] == string("filter")) {
-            return parseFilterArgs(argc, argv);
-        }
-        else if (argv[1] == string("time")) {
-            return parseSingleInputFile(argc, argv, Options::Time);
-        }
-        else if (argv[1] == string("continue")) {
-          return parseSingleInputFile (argc, argv, Options::Continue);
-        }
-        else if (argv[1] == string("statistics")) {
-          return parseSingleInputFile(argc, argv, Options::Statistics);
-        }
-        else if (argv[1] == string("measurements")) {
-          return parseSingleInputFile(argc, argv, Options::Measurements);
-        }
-        else if (argv[1] == string("gnuplot")) {
-          Options options;
-          options.action = Options::Gnuplot;
-          return options;
-        }
+  if (1 < argc) {
+    auto action = parseAction(argv[1]);
+
+    switch (action) {
+      case Options::Action::Average:
+        return parseAvgArgs(argc, argv);
+      case Options::Action::Subtract:
+        return parseSubArgs(argc, argv);
+      case Options::Action::Errors:
+        return parseErrorsArgs(argc, argv);
+      case Options::Action::Strip:
+        return parseInputOutput(argc, argv, Options::Strip);
+      case Options::Action::Merge:
+        return parseMergeArgs(argc, argv);
+      case Options::Action::Time:
+        return parseSingleInputFile(argc, argv, Options::Time);
+      case Options::Action::Continue:
+        return parseSingleInputFile (argc, argv, Options::Continue);
+      case Options::Action::Statistics:
+        return parseSingleInputFile(argc, argv, Options::Statistics);
+      case Options::Action::Measurements:
+        return parseSingleInputFile(argc, argv, Options::Measurements);
+      case Options::Action::Gnuplot:
+        return Options(Options::Action::Gnuplot);
+      case Options::Action::Bake:
+        return Options(Options::Action::Bake);
+      default:
+        break;
     }
+
+  }
 
     auto dict = extractOptions(argc, argv);
     Options options;
@@ -1059,7 +1095,7 @@ shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& optio
     }
 
     result->set_sky_gradient(
-      options.sky_horizon, 
+      options.sky_horizon,
       options.sky_zenith);
 
     return result;
@@ -1098,11 +1134,10 @@ Options::Technique technique(string technique) {
 string to_string(const Options::Action& action) {
     switch (action) {
         case Options::Render: return "Render";
-        case Options::AVG: return "AVG";
-        case Options::SUB: return "SUB";
+        case Options::Average: return "AVG";
+        case Options::Subtract: return "SUB";
         case Options::Errors: return "Errors";
         case Options::Merge: return "Merge";
-        case Options::Filter: return "Filter";
         case Options::Time: return "Time";
         case Options::Continue: return "Continue";
         case Options::Statistics: return "Statistics";
@@ -1115,16 +1150,14 @@ string to_string(const Options::Action& action) {
 Options::Action action(string action) {
     if (action == "Render")
         return Options::Render;
-    else if (action == "AVG")
-        return Options::AVG;
-    else if (action == "SUB")
-        return Options::SUB;
+    else if (action == "Average")
+        return Options::Average;
+    else if (action == "Subtract")
+        return Options::Subtract;
     else if (action == "Errors")
         return Options::Errors;
     else if (action == "Merge")
         return Options::Merge;
-    else if (action == "Filter")
-        return Options::Filter;
     else if (action == "Time")
         return Options::Time;
     else if (action == "Continue")
