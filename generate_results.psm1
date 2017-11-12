@@ -46,6 +46,10 @@ function Invoke-Master() {
     $technique = "VCM$beta$radius$camera"
   }
 
+  if ($args.contains("--from-camera")) {
+    $technique = $technique + ".from.camera"
+  }
+
   $output = "--output=result/$basename.$technique.exr"
   $finalArguments = $commonArguments, $reference, $output, $args
 
