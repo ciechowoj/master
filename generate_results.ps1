@@ -70,9 +70,9 @@ function Invoke-Master() {
 }
 
 function Generate-Results([string]$model, $traces, $camera, $radius) {
-	Invoke-Master $model $camera --BPT @traces
-	exit
-	Invoke-Master $model $camera --VCM $radius @traces
+  Write-Host $model "camera" $camera
+	# Invoke-Master $model $camera --BPT @traces
+	# Invoke-Master $model $camera --VCM $radius @traces
 	Invoke-Master $model $camera --UPG $radius @traces
 }
 
@@ -115,7 +115,7 @@ exit
 # Invoke-Master models/BathroomDiscrete.blend --UPG --radius=0.03
 
 
-$model = "models/BreakfastRoom1.blend"
+# $model = "models/BreakfastRoom1.blend"
 
 $traces = @(
 	"--trace=300x850x8",
@@ -125,7 +125,7 @@ $traces = @(
 	"--trace=700x250x8",
 	"--trace=850x800x8")
 
-Generate-Results $model $traces --camera=0 --radius=0.02
+# Generate-Results $model $traces --camera=0 --radius=0.02
 
 $traces = @(
 	"--trace=400x810x8",
@@ -133,7 +133,7 @@ $traces = @(
 	"--trace=470x570x8",
 	"--trace=630x485x8")
 
-Generate-Results $model $traces --camera=1 --radius=0.02
+# Generate-Results $model $traces --camera=1 --radius=0.02
 
 $traces = @(
 	"--trace=75x100x8",
@@ -141,7 +141,7 @@ $traces = @(
 	"--trace=650x270x8",
 	"--trace=800x270x8")
 
-Generate-Results $model $traces --camera=2 --radius=0.02
+# Generate-Results $model $traces --camera=2 --radius=0.02
 
 
 
@@ -156,7 +156,7 @@ $traces = @(
 	"--trace=580x210x8",
 	"--trace=690x185x8")
 
-Generate-Results $model $traces --camera=0 --radius=0.02
+# Generate-Results $model $traces --camera=0 --radius=0.02
 
 $traces = @(
 	"--trace=400x450x8",
@@ -165,7 +165,7 @@ $traces = @(
 	"--trace=470x685x8",
 	"--trace=500x730x8")
 
-Generate-Results $model $traces --camera=1 --radius=0.02
+# Generate-Results $model $traces --camera=1 --radius=0.02
 
 $traces = @(
 	"--trace=780x340x8",
@@ -173,11 +173,11 @@ $traces = @(
 	"--trace=255x395x8",
 	"--trace=715x760x8")
 
-Generate-Results $model $traces --camera=2 --radius=0.03
+# Generate-Results $model $traces --camera=2 --radius=0.03
 
 
 
-$model = "models/CrytkeSponza.blend"
+$model = "models/CrytekSponza.blend"
 
 $traces = @(
 	"--trace=156x575x8",
