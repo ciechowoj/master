@@ -59,6 +59,7 @@ function Invoke-Master() {
       Write-Host master @finalArguments
   }
   else {
+      Write-Host master @finalArguments
       if (Test-Path $masterPath) {
           . $masterPath @finalArguments
       }
@@ -96,8 +97,9 @@ New-Item -Name result -ItemType directory -Force | Out-Null
 #Invoke-Master models/Bearings.blend --BPT $bearingsTraces
 #Invoke-Master models/Bearings.blend --UPG --radius=0.1 $bearingsTraces
 
-# Invoke-Master models/Bathroom.blend --BPT
-# Invoke-Master models/BathroomDiscrete.blend --BPT
+Invoke-Master models/Bathroom.blend --BPT
+Invoke-Master models/BathroomDiscrete.blend --BPT
+exit
 # Invoke-Master models/Bearings.blend --BPT
 # Invoke-Master models/BreakfastRoom1.blend --BPT --camera=0
 # Invoke-Master models/BreakfastRoom1.blend --BPT --camera=1
