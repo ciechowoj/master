@@ -119,7 +119,7 @@ function Generate-Results([string]$model, [switch]$justPrint, [switch]$onlyUPG =
 # Invoke-Master models/Bathroom.blend --UPG --radius=0.05
 # Invoke-Master models/BathroomDiscrete.blend --UPG --radius=0.03
 
-function Bearings([switch]$justPrint, [float]$radius)
+function Bearings([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/Bearings.blend"
 
@@ -137,10 +137,10 @@ function Bearings([switch]$justPrint, [float]$radius)
     "--trace=640x815x8",
     "--trace=490x845x8")
 
-  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint
+  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG
 }
 
-function Bathroom([switch]$justPrint, [float]$radius)
+function Bathroom([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/Bathroom.blend"
 
@@ -151,10 +151,10 @@ function Bathroom([switch]$justPrint, [float]$radius)
     "--trace=400x660x8",
     "--trace=850x575x8")
 
-  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint
+  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG
 }
 
-function BreakfastRoom1_Camera0([switch]$justPrint, [float]$radius)
+function BreakfastRoom1_Camera0([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/BreakfastRoom1.blend"
 
@@ -169,10 +169,10 @@ function BreakfastRoom1_Camera0([switch]$justPrint, [float]$radius)
     "--trace=700x900x8",
     "--trace=200x550x8")
 
-  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint # 0.02
+  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.02
 }
 
-function BreakfastRoom1_Camera1([switch]$justPrint, [float]$radius)
+function BreakfastRoom1_Camera1([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/BreakfastRoom1.blend"
   
@@ -182,10 +182,10 @@ function BreakfastRoom1_Camera1([switch]$justPrint, [float]$radius)
     "--trace=470x570x8",
     "--trace=630x485x8")
 
-  Generate-Results $model $traces --camera=1 --radius=$radius -justPrint:$justPrint # 0.02
+  Generate-Results $model $traces --camera=1 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.02
 }
 
-function BreakfastRoom1_Camera2([switch]$justPrint, [float]$radius)
+function BreakfastRoom1_Camera2([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/BreakfastRoom1.blend"
   
@@ -200,11 +200,11 @@ function BreakfastRoom1_Camera2([switch]$justPrint, [float]$radius)
     "--trace=360x750x8",
     "--trace=540x380x8")
 
-  Generate-Results $model $traces --camera=2 --radius=$radius -justPrint:$justPrint # 0.02
+  Generate-Results $model $traces --camera=2 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.02
 }
   
 
-function BreakfastRoom2_Camera0([switch]$justPrint, [float]$radius)
+function BreakfastRoom2_Camera0([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/BreakfastRoom2.blend"
 
@@ -219,10 +219,10 @@ function BreakfastRoom2_Camera0([switch]$justPrint, [float]$radius)
     "--trace=170x750x8",
     "--trace=500x820x8")
 
-  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint # 0.02
+  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.02
 }
 
-function BreakfastRoom2_Camera1([switch]$justPrint, [float]$radius)
+function BreakfastRoom2_Camera1([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/BreakfastRoom2.blend"
 
@@ -237,10 +237,10 @@ function BreakfastRoom2_Camera1([switch]$justPrint, [float]$radius)
     "--trace=500x730x8",
     "--trace=950x650x8")
 
-  Generate-Results $model $traces --camera=1 --radius=$radius -justPrint:$justPrint # 0.02
+  Generate-Results $model $traces --camera=1 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.02
 }
 
-function BreakfastRoom2_Camera2([switch]$justPrint, [float]$radius)
+function BreakfastRoom2_Camera2([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/BreakfastRoom2.blend"
 
@@ -255,10 +255,10 @@ function BreakfastRoom2_Camera2([switch]$justPrint, [float]$radius)
     "--trace=735x690x8",
     "--trace=20x170")
 
-  Generate-Results $model $traces --camera=2 --radius=$radius -justPrint:$justPrint # 0.03
+  Generate-Results $model $traces --camera=2 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.03
 }
 
-function CrytekSponza_Camera0([switch]$justPrint, [float]$radius)
+function CrytekSponza_Camera0([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/CrytekSponza.blend"
 
@@ -273,10 +273,10 @@ function CrytekSponza_Camera0([switch]$justPrint, [float]$radius)
     "--trace=280x950x8",
     "--trace=750x200x8")
 
-  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint # 0.015
+  Generate-Results $model $traces --camera=0 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.015
 }
 
-function CrytekSponza_Camera1([switch]$justPrint, [float]$radius)
+function CrytekSponza_Camera1([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/CrytekSponza.blend"
 
@@ -291,10 +291,10 @@ function CrytekSponza_Camera1([switch]$justPrint, [float]$radius)
     "--trace=300x670x8",
     "--trace=590x700x8")
 
-  Generate-Results $model $traces --camera=1 --radius=$radius -justPrint:$justPrint # 0.015
+  Generate-Results $model $traces --camera=1 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.015
 }
 
-function CrytekSponza_Camera2([switch]$justPrint, [float]$radius)
+function CrytekSponza_Camera2([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/CrytekSponza.blend"
 
@@ -309,7 +309,7 @@ function CrytekSponza_Camera2([switch]$justPrint, [float]$radius)
     "--trace=700x670x8",
     "--trace=600x600x8")
   
-  Generate-Results $model $traces --camera=2 --radius=$radius -justPrint:$justPrint # 0.015
+  Generate-Results $model $traces --camera=2 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.015
 }
 
 function Cluster1([switch]$justPrint)
@@ -327,6 +327,8 @@ function Cluster1([switch]$justPrint)
 
 function Cluster2([switch]$justPrint)
 {
+  Cluster3 -justPrint:$justPrint
+
   $global:numMinutes = 360
   $global:outputDirectory = "result"
 
@@ -335,8 +337,6 @@ function Cluster2([switch]$justPrint)
   CrytekSponza_Camera0 -justPrint:$justPrint -radius 0.015
   CrytekSponza_Camera1 -justPrint:$justPrint -radius 0.015
   CrytekSponza_Camera2 -justPrint:$justPrint -radius 0.015
-
-  Cluster3 -justPrint:$justPrint
 }
 
 function Cluster3([switch]$justPrint)
@@ -344,31 +344,31 @@ function Cluster3([switch]$justPrint)
   $global:numMinutes = 60
   $global:outputDirectory = "radii"
 
-  Bearings -justPrint:$justPrint -radius 0.005 -onlyUPG
-  Bearings -justPrint:$justPrint -radius 0.010 -onlyUPG
-  Bearings -justPrint:$justPrint -radius 0.015 -onlyUPG
-  Bearings -justPrint:$justPrint -radius 0.020 -onlyUPG
-  Bearings -justPrint:$justPrint -radius 0.025 -onlyUPG
-  Bearings -justPrint:$justPrint -radius 0.030 -onlyUPG
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.005 
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.010 
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.015 
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.020 
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.025 
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.030 
 
-  BreakfastRoom2_Camera0 -justPrint:$justPrint -radius 0.010 -onlyUPG
-  BreakfastRoom2_Camera0 -justPrint:$justPrint -radius 0.015 -onlyUPG
-  BreakfastRoom2_Camera0 -justPrint:$justPrint -radius 0.020 -onlyUPG
-  BreakfastRoom2_Camera0 -justPrint:$justPrint -radius 0.025 -onlyUPG
-  BreakfastRoom2_Camera0 -justPrint:$justPrint -radius 0.030 -onlyUPG
-  BreakfastRoom2_Camera0 -justPrint:$justPrint -radius 0.035 -onlyUPG
+  BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.010
+  BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.015
+  BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.020
+  BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.025
+  BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.030
+  BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.035
   
-  BreakfastRoom1_Camera1 -justPrint:$justPrint -radius 0.010 -onlyUPG
-  BreakfastRoom1_Camera1 -justPrint:$justPrint -radius 0.015 -onlyUPG
-  BreakfastRoom1_Camera1 -justPrint:$justPrint -radius 0.020 -onlyUPG
-  BreakfastRoom1_Camera1 -justPrint:$justPrint -radius 0.025 -onlyUPG
-  BreakfastRoom1_Camera1 -justPrint:$justPrint -radius 0.030 -onlyUPG
-  BreakfastRoom1_Camera1 -justPrint:$justPrint -radius 0.035 -onlyUPG
+  BreakfastRoom1_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.010
+  BreakfastRoom1_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.015
+  BreakfastRoom1_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.020
+  BreakfastRoom1_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.025
+  BreakfastRoom1_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.030
+  BreakfastRoom1_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.035
 
-  CrytekSponza_Camera1 -justPrint:$justPrint -radius 0.010 -onlyUPG
-  CrytekSponza_Camera1 -justPrint:$justPrint -radius 0.015 -onlyUPG
-  CrytekSponza_Camera1 -justPrint:$justPrint -radius 0.020 -onlyUPG
-  CrytekSponza_Camera1 -justPrint:$justPrint -radius 0.025 -onlyUPG
-  CrytekSponza_Camera1 -justPrint:$justPrint -radius 0.030 -onlyUPG
-  CrytekSponza_Camera1 -justPrint:$justPrint -radius 0.035 -onlyUPG
+  CrytekSponza_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.010
+  CrytekSponza_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.015
+  CrytekSponza_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.020
+  CrytekSponza_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.025
+  CrytekSponza_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.030
+  CrytekSponza_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.035
 }
