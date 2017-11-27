@@ -405,6 +405,37 @@ string handle_select(std::multimap<string, string>& options, vector<string>& sel
   return string();
 }
 
+string gnuplot_times(int argc, char const* const* argv);
+
+struct gnuplot_arguments {
+  vector<string> inputs;
+  string output;
+  string mode;
+  bool traces;
+
+  string to_string() const {
+    string inputs = "[";
+
+    if (!this->inputs.empty()) {
+      inputs += "\"" + this->inputs[0] + "\"";
+    }
+
+    for (size_t i = 1; i < this->inputs.size(); ++i) {
+      inputs += ", \"" + this->inputs[i] + "\"";
+    }
+
+    inputs += "]";
+
+
+    return "{ \"inputs\": " + inputs + ", " +
+      "\"output\": \"" + output + "\", " +
+      "\"mode\": \"" + mode + "\", " +
+      "\"traces\": " + (traces ? string("true") : string("false")) + " }";
+  }
+};
+
+gnuplot_arguments parse_arguments(int argc, char const* const* argv);
+
 string gnuplot(int argc, char const* const* argv) {
   if (argc < 2) {
     throw std::invalid_argument("argc");
@@ -412,6 +443,10 @@ string gnuplot(int argc, char const* const* argv) {
 
   if (argv[1] != string("gnuplot")) {
     throw std::invalid_argument("argv");
+  }
+
+  if (argc > 2 && argv[2] == string("times")) {
+    return gnuplot_times(argc, argv);
   }
 
   auto options = extract_options(argc - 2, argv + 2);
@@ -467,6 +502,124 @@ string gnuplot(int argc, char const* const* argv) {
   else {
     return gnuplot(output, inputs, error);
   }
+}
+
+gnuplot_arguments parse_arguments(int argc, char const* const* argv) {
+  if (argc < 2) {
+    throw std::invalid_argument("argc");
+  }
+
+  gnuplot_arguments result;
+
+  if (argv[1] != string("gnuplot")) {
+    throw std::invalid_argument("argv");
+  }
+
+  if (argc > 2 && argv[2] == string("times")) {
+    result.mode = argv[2];
+  }
+
+  auto options = extract_options(argc - 3, argv + 3);
+
+  string error_message = handle_output(options, result.output);
+
+  if (!error_message.empty()) {
+    throw std::invalid_argument(error_message);
+  }
+
+  auto itr = options.begin();
+  while (itr != options.end()) {
+    if (itr->first == "--input") {
+      result.inputs.push_back(itr->second);
+      itr = options.erase(itr);
+    }
+    else {
+      ++itr;
+    }
+  }
+
+  error_message = handle_switch(options, "--traces", result.traces);
+
+  if (!error_message.empty()) {
+    throw std::invalid_argument(error_message);
+  }
+
+  return result;
+}
+
+struct time_series_t {
+  struct value_t {
+    size_t frame;
+    float time;
+  };
+
+  string label;
+  vector<value_t> values;
+};
+
+vector<time_series_t> make_time_series(const vector<string>& inputs) {
+  vector<time_series_t> result;
+
+  for (auto&& input : inputs) {
+    auto statistics = load_statistics(input);
+
+    time_series_t series;
+    series.label = input;
+    series.values.resize(statistics.records.size());
+
+    for (size_t i = 0; i < series.values.size(); ++i) {
+      series.values[i].frame = statistics.records[i].sample_index;
+      series.values[i].time = statistics.records[i].frame_duration;
+    }
+
+    result.push_back(series);
+  }
+
+  return result;
+}
+
+string gnuplot_times(int argc, char const* const* argv) {
+  auto arguments = parse_arguments(argc, argv);
+
+  string gnuplot_script = temppath(".gnuplot.txt");
+  vector<string> source_files = temppaths(arguments.inputs.size(), ".txt");
+  vector<time_series_t> series = make_time_series(arguments.inputs);
+
+  for (size_t i = 0; i < source_files.size(); ++i) {
+    std::ofstream stream(source_files[i], std::ios::out | std::ios::trunc);
+    stream << "# " << series[i].label << "\n";
+
+    for (auto&& value : series[i].values) {
+      stream << value.frame << " " << value.time << "\n";
+    }
+  }
+
+
+
+  std::ofstream stream(gnuplot_script, std::ios::out | std::ios::trunc);
+
+  stream << "set terminal pngcairo enhanced truecolor size 4096,1024" << "\n";
+  stream << "set yrange [0:]" << "\n";
+  stream << "set output '" << arguments.output << "'\n\n";
+
+  for (size_t i = 0; i < source_files.size(); ++i) {
+    stream << (i == 0 ? "plot " : "     ");
+    stream << "'" << source_files[i] << "' using 1:2 with lines " << "title '" << series[i].label << "'";
+    stream << (i == source_files.size() - 1 ? "\n" : ", \\\n");
+  }
+
+  stream.close();
+
+  auto result = exec("gnuplot " + gnuplot_script);
+  std::cout << result;
+
+  for (auto&& source_file : source_files) {
+    std::remove(source_file.c_str());
+  }
+
+  std::remove(gnuplot_script.c_str());
+
+  return string();
 }
 
 }

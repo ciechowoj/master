@@ -14,6 +14,7 @@ size_t getmtime(const string& path);
 
 string fullpath(string relative_path);
 string temppath(string extension = "");
+vector<string> temppaths(size_t num_paths, string extension = "");
 bool isfile(string path);
 
 void move_file(string old_path, string new_path);

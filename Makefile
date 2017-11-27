@@ -116,7 +116,7 @@ build/master/%.d: ;
 -include build/master/benchmark.d
 
 run: all
-	./build/master/master.bin bake reference/BreakfastRoom1.cam0.exr --output=BreakfastRoom1.cam0.baked.exr
+	./build/master/master.bin gnuplot times reference/BreakfastRoom1.cam0.exr reference/BreakfastRoom1.cam0.exr  --output=test.png
 
 profile: all
 	time master models/Bearings.blend --UPG --parallel --beta=2 --max-radius=0.2 --num-samples=1 --batch --quiet

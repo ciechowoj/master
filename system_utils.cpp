@@ -116,6 +116,16 @@ string temppath(string extension) {
   #endif
 }
 
+vector<string> temppaths(size_t num_paths, string extension) {
+  vector<string> result;
+
+  for (size_t i = 0; i < num_paths; ++i) {
+    result.push_back(temppath(".txt"));
+  }
+
+  return result;
+}
+
 bool isfile(string path) {
   #ifdef _MSC_VER
   DWORD attributes = GetFileAttributesA(path.c_str());
