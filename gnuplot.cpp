@@ -39,73 +39,6 @@ std::string exec(string cmd) {
   return result;
 }
 
-void make_gnuplot_script(
-  std::ostream& stream,
-  string output,
-  const vector<string>& inputs,
-  const vector<string>& temps) {
-
-  stream << "set terminal png enhanced truecolor" << "\n";
-  stream << "set output '" << output << "'\n\n";
-
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    stream << (i == 0 ? "plot " : "     ");
-    stream << "'" << temps[i] << "' using 1:2 with lines " << "title '" << inputs[i] << "'";
-    stream << (i == inputs.size() - 1 ? "\n" : ", \\\n");
-  }
-}
-
-string gnuplot(string output, const vector<string>& inputs, string error) {
-  vector<statistics_t> statistics;
-  vector<string> temps;
-  string temp_script = temppath(".gnuplot.txt");
-
-  for (auto&& input : inputs) {
-    statistics.push_back(load_statistics(input));
-    temps.push_back(temppath(".txt"));
-  }
-
-  for (size_t i = 0; i < temps.size(); ++i) {
-    std::ofstream stream(temps[i], std::ios::out | std::ios::trunc);
-
-    double time = 0.f;
-
-    if (error == "rms") {
-      stream << "# rms error for " << fullpath(inputs[i]) << "\n";
-
-      for (auto&& record : statistics[i].records) {
-        time += record.frame_duration;
-        stream << time << " " << record.rms_error << "\n";
-      }
-    }
-    else {
-      stream << "# abs error for " << fullpath(inputs[i]) << "\n";
-
-      for (auto&& record : statistics[i].records) {
-        time += record.frame_duration;
-        stream << time << " " << record.abs_error << "\n";
-      }
-    }
-
-    std::cout << temps[i] << std::endl;
-  }
-
-  std::ofstream stream(temp_script, std::ios::out | std::ios::trunc);
-  make_gnuplot_script(stream, output, inputs, temps);
-  stream.close();
-
-  auto result = exec("gnuplot " + temp_script);
-  std::cout << result;
-
-  for (auto&& temp : temps) {
-    std::remove(temp.c_str());
-  }
-
-  std::remove(temp_script.c_str());
-
-  return string();
-}
-
 struct series_t {
   string label;
   ivec2 point;
@@ -496,12 +429,7 @@ string gnuplot(int argc, char const* const* argv) {
     return "Unsupported switch " + options.begin()->first + ".";
   }
 
-  if (traces) {
-    return gnuplot(output, select_series(make_dataset(inputs), selections));
-  }
-  else {
-    return gnuplot(output, inputs, error);
-  }
+  return gnuplot(output, select_series(make_dataset(inputs), selections));
 }
 
 gnuplot_arguments parse_arguments(int argc, char const* const* argv) {
@@ -593,8 +521,6 @@ string gnuplot_times(int argc, char const* const* argv) {
       stream << value.frame << " " << value.time << "\n";
     }
   }
-
-
 
   std::ofstream stream(gnuplot_script, std::ios::out | std::ios::trunc);
 

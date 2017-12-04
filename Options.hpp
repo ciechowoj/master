@@ -79,12 +79,6 @@ pair<bool, int> displayHelpIfNecessary(
     const Options& options,
     const char* version = nullptr);
 
-class Technique;
-class Scene;
-
-shared<Technique> makeTechnique(const shared<const Scene>& scene, Options& options);
-shared<Scene> loadScene(const Options& options);
-
 string to_string(const Options::Technique& technique);
 
 void save_exr(Options options, statistics_t statistics, const vec3* data);
@@ -93,5 +87,7 @@ void save_exr(Options options, statistics_t statistics, const dvec3* data);
 void save_exr(Options options, statistics_t statistics, const dvec4* data);
 void strip_exr(string dst, string src);
 void merge_exr(string dst, string fst, string snd);
+
+using options_t = Options;
 
 }
