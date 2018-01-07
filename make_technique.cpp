@@ -15,6 +15,41 @@
 
 namespace haste {
 
+void print_traces_tabular(std::ostream& stream, const map<string, string>& metadata) {
+    struct trace_t {
+        int index;
+        int x, y, r;
+    };
+
+    vector<trace_t> traces;
+
+    for (auto&& itr : metadata) {
+      if (startswith(itr.first, "options.trace")) {
+        trace_t trace;
+
+        sscanf(
+            itr.first.c_str(),
+            "options.trace[%d]",
+            &trace.index);
+
+        sscanf(
+            itr.second.c_str(),
+            "[%d, %d, %d]",
+            &trace.x,
+            &trace.y,
+            &trace.r);
+
+        traces.push_back(trace);
+       }
+    }
+
+    std::sort(traces.begin(), traces.end(), [](auto a, auto b) { return a.index < b.index; });
+
+    for (auto&& trace : traces) {
+        std::cout << trace.x << " " << trace.y << " " << trace.r << "\n";
+    }
+}
+
 shared<Technique> makeViewer(Options& options) {
     auto data = vector<vec3>();
     auto metadata = map<string, string>();

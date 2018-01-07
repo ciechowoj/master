@@ -318,6 +318,6 @@ void print_measurements_tabular(std::ostream& stream, const statistics_t& statis
   }
 
   stream << sstream.str();
-
 }
+
 }

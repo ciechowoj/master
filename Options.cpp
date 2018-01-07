@@ -29,55 +29,58 @@ R"(
       master <input> [options]
       master (-h | --help)
       master --version
-      master avg <x>              Compute average value of pixels in <x>.
-      master errors <x> <y>       Compute abs and rms (in this order) error between <x> and <y>.
-      master sub <x> <y>          Compute difference between <x> and <y>.
-      master strip <o> <i>        Remove metadata from <o> and save the result to <i>.
-      master merge <o> <a> <b>    Merge <a> and <b> into <o>.
-      master gnuplot <inputs>...  Create convergence charts.
-      master bake <input>         Remove the channel with number of samples from the image <input>.
+      master avg <x>               Compute average value of pixels in <x>.
+      master errors <x> <y>        Compute abs and rms (in this order) error between <x> and <y>.
+      master sub <x> <y>           Compute difference between <x> and <y>.
+      master strip <o> <i>         Remove metadata from <o> and save the result to <i>.
+      master merge <o> <a> <b>     Merge <a> and <b> into <o>.
+      master gnuplot <inputs>...   Create convergence charts.
+      master bake <input>          Remove the channel with number of samples from the image <input>.
+      master statistics <input>    Print statistics from input's metadata.
+      master measurements <input>  Print measurements from input's metadata.
+      master traces <input>        Print traces from input's metadata.
 
     Options (master):
-      -h --help                   Show this screen.
-      --version                   Show version.
-      --PT                        Use path tracing for rendering (this is default one).
-      --BPT                       Use bidirectional path tracing (balance heuristics).
-      --VCM                       Use vertex connection and merging.
-      --UPG                       Use unbiased photon gathering.
-      --num-photons=<n>           Use n photons. [default: 1 000 000]
-      --radius=<n>                Use n as maximum gather radius. [default: 0.1]
-      --roulette=<n>              Russian roulette coefficient. [default: 0.5]
-      --beta=<n>                  MIS beta. [default: 1]
-      --alpha=<n>                 VCM alpha. [default: 0.75]
-      --batch                     Run in batch mode (interactive otherwise).
-      --quiet                     Do not output anything to console.
-      --no-vc                     Disable vertex connection.
-      --no-vm                     Disable vertex merging.
-      --from-camera               Merge from camera perspective.
-      --from-light                Merge from light perspective.
-      --no-lights                 Do not draw the lights.
-      --no-reload                 Disable auto-reload (input file is reloaded on modification in interactive mode).
-      --num-samples=<n>           Terminate after n samples.
-      --num-seconds=<n>           Terminate after n seconds.
-      --num-minutes=<n>           Terminate after n minutes.
-      --parallel                  Use multi-threading.
-      --output=<path>             Output file. <input>.<width>.<height>.<time>.<technique>.exr if not specified.
-      --reference=<path>          Reference file for comparison.
-      --seed=<n>                  Seed random number generator (for single threaded BPT only).
-      --snapshot=<n>              Save output every n seconds (tags output file with time).
-      --camera=<id>               Use camera with given id. [default: 0]
-      --resolution=<WxH>          Resolution of output image. [default: 512x512]
-      --trace=<XxY[xW]>           Trace errors in window of radius W and at the center at XxY. [default: XxYx2]
-      --sky-horizon=<RxGxB>       Color of sky horizon. [default: 0x0x0]
-      --sky-zenith=<RxGxB>        Color of sky zenith. [default: 0x0x0]
-      --blue-sky=<B>              Alias to --sky-horizon=<0x0x0> --sky-zenith<0x0xB>. [default: 0]
+      -h --help                    Show this screen.
+      --version                    Show version.
+      --PT                         Use path tracing for rendering (this is default one).
+      --BPT                        Use bidirectional path tracing (balance heuristics).
+      --VCM                        Use vertex connection and merging.
+      --UPG                        Use unbiased photon gathering.
+      --num-photons=<n>            Use n photons. [default: 1 000 000]
+      --radius=<n>                 Use n as maximum gather radius. [default: 0.1]
+      --roulette=<n>               Russian roulette coefficient. [default: 0.5]
+      --beta=<n>                   MIS beta. [default: 1]
+      --alpha=<n>                  VCM alpha. [default: 0.75]
+      --batch                      Run in batch mode (interactive otherwise).
+      --quiet                      Do not output anything to console.
+      --no-vc                      Disable vertex connection.
+      --no-vm                      Disable vertex merging.
+      --from-camera                Merge from camera perspective.
+      --from-light                 Merge from light perspective.
+      --no-lights                  Do not draw the lights.
+      --no-reload                  Disable auto-reload (input file is reloaded on modification in interactive mode).
+      --num-samples=<n>            Terminate after n samples.
+      --num-seconds=<n>            Terminate after n seconds.
+      --num-minutes=<n>            Terminate after n minutes.
+      --parallel                   Use multi-threading.
+      --output=<path>              Output file. <input>.<width>.<height>.<time>.<technique>.exr if not specified.
+      --reference=<path>           Reference file for comparison.
+      --seed=<n>                   Seed random number generator (for single threaded BPT only).
+      --snapshot=<n>               Save output every n seconds (tags output file with time).
+      --camera=<id>                Use camera with given id. [default: 0]
+      --resolution=<WxH>           Resolution of output image. [default: 512x512]
+      --trace=<XxY[xW]>            Trace errors in window of radius W and at the center at XxY. [default: XxYx2]
+      --sky-horizon=<RxGxB>        Color of sky horizon. [default: 0x0x0]
+      --sky-zenith=<RxGxB>         Color of sky zenith. [default: 0x0x0]
+      --blue-sky=<B>               Alias to --sky-horizon=<0x0x0> --sky-zenith<0x0xB>. [default: 0]
 
     Options (gnuplot):
-      --input=<path>              An exr file containing errors data.
-      --output                    A output image with chart.
-      --traces                    Generate a matrix of charts with data from window traces.
-      --select=<wildcard>         Consider only series which name matches <wildcard>.
-      --error=<type>              Specify the type of error rms/abs.
+      --input=<path>               An exr file containing errors data.
+      --output                     A output image with chart.
+      --traces                     Generate a matrix of charts with data from window traces.
+      --select=<wildcard>          Consider only series which name matches <wildcard>.
+      --error=<type>               Specify the type of error rms/abs.
 )";
 
 string Options::caption() const {
@@ -272,7 +275,7 @@ Options parseAvgArgs(int argc, char const* const* argv) {
 Options parseErrorsArgs(int argc, char const* const* argv) {
     Options options;
 
-    if (argc != 4) {
+    if (argc < 4) {
         options.displayHelp = true;
         options.displayMessage = "Input files are required.";
     }
@@ -280,6 +283,10 @@ Options parseErrorsArgs(int argc, char const* const* argv) {
         options.action = Options::Errors;
         options.input0 = argv[2];
         options.input1 = argv[3];
+
+        for (int i = 4; i < argc; ++i) {
+          options.trace.push_back(parse_xnotation3(argv[i], 8));
+        }
     }
 
     return options;
@@ -361,6 +368,7 @@ Options::Action parseAction(const char* argument) {
     { "continue", Options::Action::Continue },
     { "statistics", Options::Action::Statistics },
     { "measurements", Options::Action::Measurements },
+    { "traces", Options::Action::Traces },
     { "gnuplot", Options::Action::Gnuplot },
     { "bake", Options::Action::Bake }
   };
@@ -399,6 +407,8 @@ Options parseArgs(int argc, char const* const* argv) {
         return parseSingleInputFile(argc, argv, Options::Statistics);
       case Options::Action::Measurements:
         return parseSingleInputFile(argc, argv, Options::Measurements);
+      case Options::Action::Traces:
+        return parseSingleInputFile(argc, argv, Options::Traces);
       case Options::Action::Gnuplot:
         return Options(Options::Action::Gnuplot);
       case Options::Action::Bake:
@@ -1019,6 +1029,7 @@ string to_string(const Options::Action& action) {
         case Options::Continue: return "Continue";
         case Options::Statistics: return "Statistics";
         case Options::Measurements: return "Measurements";
+        case Options::Traces: return "Traces";
         case Options::Gnuplot: return "Gnuplot";
         default: return "UNKNOWN";
     }
@@ -1043,6 +1054,8 @@ Options::Action action(string action) {
       return Options::Statistics;
     else if (action == "Measurements")
       return Options::Measurements;
+    else if (action == "Traces")
+      return Options::Traces;
     else if (action == "Gnuplot")
       return Options::Gnuplot;
     else
