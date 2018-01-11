@@ -289,11 +289,15 @@ void print_measurements_tabular(std::ostream& stream, const statistics_t& statis
 
   std::stringstream sstream;
 
-  sstream << std::fixed << std::setprecision(7) << std::setw(12);
+  sstream << std::fixed << std::setprecision(7);
+
+  sstream << "# ";
+  sstream << std::setw(11) << "time ";
+  sstream << std::setw(12) << "IMAGExRMS ";
+  sstream << std::setw(12) << "IMAGExABS ";
 
   for (auto&& itr : measurements) {
     auto& measurement = itr.second;
-    sstream << "# ";
     sstream << measurement[0].pixel_x << "x" << measurement[0].pixel_y << "xRMS ";
     sstream << measurement[0].pixel_x << "x" << measurement[0].pixel_y << "xABS ";
   }
@@ -303,8 +307,10 @@ void print_measurements_tabular(std::ostream& stream, const statistics_t& statis
   double total_time = 0.0f;
 
   for (size_t i = 0; i < size; ++i) {
-
     sstream << std::setw(12) << total_time << " ";
+
+    sstream << std::setw(12) << statistics.records[i].rms_error << " "
+            << std::setw(12) << statistics.records[i].abs_error << " ";
 
     for (auto&& itr : measurements) {
       auto& measurement = itr.second;
