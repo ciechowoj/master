@@ -9,8 +9,8 @@
 #include <vector>
 #include <loader.hpp>
 
-#include <KDTree3D.hpp>
-#include <KDTree3Dv2.hpp>
+// #include <KDTree3D.hpp>
+// #include <KDTree3Dv2.hpp>
 #include <HashGrid3D.hpp>
 #include <streamops.hpp>
 
@@ -438,7 +438,7 @@ int main(int argc, char **argv) {
     // prepareModelTestCase("test_case_E.dat", 5, 2000, 0.1f, "models/TestCase9.blend");
     // prepareModelTestCase("test_case_F.dat", 500000, 2000, 1.0f, "models/TestCase9.blend");
     // prepareModelTestCase("test_case_G.dat", 500000, 2000, 2.0f, "models/TestCase9.blend");
-    // prepareModelTestCase("test_case_3.dat", 200, 20, 15.f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_case_3.dat", 500000, 2000, 1.f, "models/CornellBoxDiffuse.blend");
 
     test_case_header();
 
@@ -466,16 +466,21 @@ int main(int argc, char **argv) {
     cout << "smallVCM   v10          500000            2000               1      0.4732s      0.0370s      0.5102s" << endl;
     // v7 with improved construction time
     cout << "       v7b v11          500000            2000               1      0.4774s      0.0258s      0.5033s" << endl;
-    cout << "     <current>          500000            2000          1.0000      0.2119s      0.0332s      0.2451s" << endl;
+    // std::unordered_map
+    cout << " unordered_map          500000            2000               1      0.2119s      0.0332s      0.2451s" << endl;
+    // ska::flat_hash_map<vec3, Range>
+    cout << "     <current>          500000            2000               1      0.2087s      0.0285s      0.2372s" << endl;
+SUCCESS
+[Finished in 0.47s]
 
-    run_test_case("test_case_A.dat");
-    run_test_case("test_case_B.dat");
-    run_test_case("test_case_C.dat");
-    run_test_case("test_case_D.dat");
-    run_test_case("test_case_E.dat");
-    run_test_case("test_case_F.dat");
-    run_test_case("test_case_G.dat");
-    run_test_case("test_case_3.dat");
+    // run_test_case("test_data/test_case_A.case");
+    // run_test_case("test_data/test_case_B.case");
+    // run_test_case("test_data/test_case_C.case");
+    // run_test_case("test_data/test_case_D.case");
+    // run_test_case("test_data/test_case_E.case");
+    // run_test_case("test_data/test_case_F.case");
+    // run_test_case("test_data/test_case_G.case");
+    run_test_case("test_data/test_case_3.case");
 
     return 0;
 }
