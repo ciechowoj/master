@@ -20,7 +20,7 @@ struct Options {
     enum Technique { PT, BPT, VCM, UPG, Viewer };
     enum Action {
         Render, Average, Subtract, Errors, Strip, Merge,
-        Time, Continue, Statistics, Measurements,
+        Time, Continue, Statistics, Measurements, Traces,
         Gnuplot, Bake };
 
     string input0;

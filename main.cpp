@@ -6,8 +6,10 @@
 
 #include <Application.hpp>
 
+#include <make_technique.hpp>
 #include <threadpool.hpp>
 #include <iostream>
+#include <iomanip>
 #include <chrono>
 #include <atomic>
 #include <set>
@@ -58,6 +60,7 @@ int run_fast(Options options) {
 }
 
 int bake(int argc, char **argv);
+int compute_errors(std::ostream& stream, const Options& options);
 
 int main(int argc, char **argv) {
     if (!run_all_tests())
@@ -78,7 +81,7 @@ int main(int argc, char **argv) {
         std::cout << average.x << " " << average.y << " " << average.z << std::endl;
     }
     else if (options.action == Options::Errors) {
-        std::cout << compute_errors(options.input0, options.input1);
+        return compute_errors(std::cout, options);
     }
     else if (options.action == Options::Subtract) {
         subtract_exr(options.output, options.input0, options.input1);
@@ -99,6 +102,10 @@ int main(int argc, char **argv) {
     else if (options.action == Options::Measurements) {
       auto metadata = load_metadata(options.input0);
       print_measurements_tabular(std::cout, statistics_t(metadata));
+    }
+    else if (options.action == Options::Traces) {
+      auto metadata = load_metadata(options.input0);
+      print_traces_tabular(std::cout, metadata);
     }
     else if (options.action == Options::Gnuplot) {
         auto error_message = gnuplot(argc, argv);
@@ -206,3 +213,65 @@ int bake(int argc, char **argv) {
   return 0;
 }
 
+int compute_errors(std::ostream& stream, const Options& options) {
+  vector<vec3> dst_data, fst_data, snd_data;
+  map<string, string> fst_metadata, snd_metadata;
+
+  size_t fst_width = 0, snd_width = 0, fst_height = 0, snd_height = 0;
+
+  load_exr(options.input0, fst_metadata, fst_width, fst_height, fst_data);
+  load_exr(options.input1, snd_metadata, snd_width, snd_height, snd_data);
+
+  if (fst_width != snd_width || fst_height != snd_height) {
+    throw std::runtime_error("Sizes of '" + options.input0 +
+      "' and '" + options.input1 + "' doesn't match.");
+  }
+
+  double num = 0.0f;
+  double abs_sum = 0.0;
+  double rms_sum = 0.0;
+
+  for (size_t i = 0; i < fst_data.size(); ++i) {
+    if (!any(isnan(fst_data[i])) && !any(isnan(snd_data[i]))) {
+      auto diff = fst_data[i] - snd_data[i];
+      rms_sum += l1Norm(diff * diff);
+      abs_sum += l1Norm(diff);
+      num += 3.0f;
+    }
+  }
+
+  for (size_t j = 0; j < options.trace.size(); ++j) {
+    double num = 0.0f;
+    double abs_sum = 0.0;
+    double rms_sum = 0.0;
+
+    int x0 = std::max(0, options.trace[j].x - options.trace[j].z);
+    int y0 = std::max(0, options.trace[j].y - options.trace[j].z);
+    int x1 = std::min(int(fst_width), options.trace[j].x + options.trace[j].z);
+    int y1 = std::min(int(fst_height), options.trace[j].y + options.trace[j].z);
+
+    for (int y = y0; y < y1; ++y) {
+      for (int x = x0; x < x1; ++x) {
+        int i = y * fst_width + x;
+        if (!any(isnan(fst_data[i])) && !any(isnan(snd_data[i]))) {
+          auto diff = fst_data[i] - snd_data[i];
+          rms_sum += l1Norm(diff * diff);
+          abs_sum += l1Norm(diff);
+          num += 3.0f;
+        }
+      }
+    }
+
+    stream << std::setprecision(10)
+      << options.trace[j].x << "x" << options.trace[j].y << "x" << options.trace[j].z << " "
+      << abs_sum / num << " "
+      << sqrt(rms_sum / num) << "\n";
+  }
+
+  stream << std::setprecision(10)
+    << "image "
+    << abs_sum / num << " "
+    << sqrt(rms_sum / num) << "\n";
+
+  return 0;
+}

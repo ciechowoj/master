@@ -186,7 +186,8 @@ void make_gnuplot_script_grouped(
   std::ostream& stream,
   string output,
   const dataset_t& dataset,
-  const vector<string>& temp_series) {
+  const vector<string>& temp_series,
+  bool latex) {
 
   struct series_ref_t
   {
@@ -213,8 +214,14 @@ void make_gnuplot_script_grouped(
   int height = int(sqrt(groups.size()));
   int width = (groups.size() + height - 1) / height;
 
-  stream << "set terminal pngcairo enhanced truecolor "
-         << "size " << 1024 * width << "," << 1024 * height << "\n";
+  if (latex) {
+    stream << "set terminal epslatex\n";
+  }
+  else {
+    stream << "set terminal pngcairo enhanced truecolor "
+           << "size " << 1024 * width << "," << 1024 * height << "\n";
+  }
+
   stream << "set logscale y\n";
   stream << "set output '" << output << "'\n\n";
 
@@ -225,13 +232,13 @@ void make_gnuplot_script_grouped(
       stream << (itr == group.second.begin() ? "plot " : "     ");
       stream
         << "'" << itr->path << "' using 1:2 with lines "
-        << "title '" << itr->series->label << "'";
+        << "title '\\footnotesize $" << itr->series->label << "$'";
       stream << (itr + 1 == group.second.end() ? "\n" : ", \\\n");
     }
   }
 }
 
-string gnuplot(string output, const dataset_t& dataset) {
+string gnuplot(string output, const dataset_t& dataset, bool latex) {
   vector<string> temp_series;
   string temp_script = temppath(".gnuplot.txt");
 
@@ -250,7 +257,7 @@ string gnuplot(string output, const dataset_t& dataset) {
   }
 
   std::ofstream stream(temp_script, std::ios::out | std::ios::trunc);
-  make_gnuplot_script_grouped(stream, output, dataset, temp_series);
+  make_gnuplot_script_grouped(stream, output, dataset, temp_series, latex);
   stream.close();
 
   auto result = exec("gnuplot " + temp_script);
@@ -418,6 +425,13 @@ string gnuplot(int argc, char const* const* argv) {
     return error_message;
   }
 
+  bool latex = false;
+  error_message = handle_switch(options, "--latex", latex);
+
+  if (!error_message.empty()) {
+    return error_message;
+  }
+
   vector<string> selections;
   error_message = handle_select(options, selections);
 
@@ -429,7 +443,7 @@ string gnuplot(int argc, char const* const* argv) {
     return "Unsupported switch " + options.begin()->first + ".";
   }
 
-  return gnuplot(output, select_series(make_dataset(inputs), selections));
+  return gnuplot(output, select_series(make_dataset(inputs), selections), latex);
 }
 
 gnuplot_arguments parse_arguments(int argc, char const* const* argv) {
