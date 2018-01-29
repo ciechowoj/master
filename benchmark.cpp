@@ -470,8 +470,6 @@ int main(int argc, char **argv) {
     cout << " unordered_map          500000            2000               1      0.2119s      0.0332s      0.2451s" << endl;
     // ska::flat_hash_map<vec3, Range>
     cout << "     <current>          500000            2000               1      0.2087s      0.0285s      0.2372s" << endl;
-SUCCESS
-[Finished in 0.47s]
 
     // run_test_case("test_data/test_case_A.case");
     // run_test_case("test_data/test_case_B.case");
