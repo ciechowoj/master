@@ -81,8 +81,8 @@ include submodules/glm.makefile
 
 master: build/master/master.bin
 
-benchmark: \
-	build/master/benchmark.bin
+benchmark: build/master/benchmark.bin
+	./build/master/benchmark.bin
 
 build/master/master.bin: \
 	$(LIB_DEPENDENCIES) \

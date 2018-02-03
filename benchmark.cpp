@@ -9,8 +9,7 @@
 #include <vector>
 #include <loader.hpp>
 
-// #include <KDTree3D.hpp>
-// #include <KDTree3Dv2.hpp>
+#include <KDTree3D.hpp>
 #include <HashGrid3D.hpp>
 #include <streamops.hpp>
 
@@ -168,6 +167,16 @@ template <class T> vector<vec3> extractPositions(const vector<T>& data) {
     return result;
 }
 
+template <class T> vector<vec3> extractPositions(const vector<T>& data, size_t size) {
+    vector<vec3> result(data.size());
+
+    for (size_t i = 0; i < size; ++i) {
+        result[i] = data[i].position();
+    }
+
+    return result;
+}
+
 template <class T> vector<T> injectPositions(const vector<vec3>& data) {
     vector<T> result(data.size());
 
@@ -200,6 +209,30 @@ vector<vector<vec3>> solveNaive(
                 return distB == distA ? a.x > b.x : distB < distA;
             });
         }
+
+        std::cout << "query: " << iQuery << " (" << result[iQuery].size() << ")" << endl;
+    }
+
+    return result;
+}
+
+vector<vector<vec3>> solveKDTree(
+    const vector<vec3>& data,
+    const vector<vec3>& queries,
+    float radius)
+{
+    auto testData = injectPositions<TestStruct>(data);
+
+    v3::HashGrid3D<TestStruct> kdtree(&testData, radius);
+    vector<vector<vec3>> result(queries.size());
+    vector<TestStruct> testResult(100000);
+
+    for (size_t iQuery = 0; iQuery < queries.size(); ++iQuery) {
+        size_t size = kdtree.rQuery(&testResult[0], queries[iQuery], radius);
+
+        result[iQuery] = extractPositions(testResult, size);
+        result[iQuery].resize(size);
+        result[iQuery].shrink_to_fit();
 
         std::cout << "query: " << iQuery << " (" << result[iQuery].size() << ")" << endl;
     }
@@ -296,7 +329,8 @@ void prepareModelTestCase(
     auto data = makeModelTestCase(numData, 31415, model);
     auto queries = makeModelTestCase(numQueries, 51413, model);
     // auto queries = wiggle(data, 51413, numQueries, radius);
-    auto result = solveNaive(data, queries, radius);
+    // auto result = solveNaive(data, queries, radius);
+    auto result = solveKDTree(data, queries, radius);
 
     saveTestCase(stream, data, queries, result, radius);
 }
@@ -343,7 +377,7 @@ template <class T> void runQueries(
     }
 }
 
-template <template <class> class T> void run_test_case(ifstream& stream) {
+template <template <class> class T> void run_test_case(string name, ifstream& stream) {
     vector<vec3> data, queries;
     vector<vector<vec3>> result;
     float radius = 0.0f;
@@ -375,37 +409,31 @@ template <template <class> class T> void run_test_case(ifstream& stream) {
     chrono::duration<double> totalTime = end - start;
 
     cout
-        << setw(14) << "<current>"
+        << setw(14) << name
         << setw(16) << data.size()
         << setw(16) << queries.size()
         << setw(16) << radius;
 
     cout
         << setw(12) << setprecision(4) << fixed << buildTime.count() << "s"
-        << setw(12) << setprecision(4) << fixed << queriesTime.count() << "s"
+        << setw(12) << setprecision(4) << fixed << queriesTime.count() / queries.size() * 1000 << "ms"
         << setw(12) << setprecision(4) << fixed << totalTime.count() << "s" << endl;
 
-    for (size_t i = 0; i < result.size(); ++i) {
+    /*for (size_t i = 0; i < result.size(); ++i) {
         auto actual = extractPositions(testResult[i]);
 
         sort(
             actual.begin(),
             actual.end(),
             [&](const vec3& a, const vec3& b) -> bool {
-                auto distA = distance(a, queries[i]);
-                auto distB = distance(b, queries[i]);
-
-                return distB == distA ? a.x > b.x : distB < distA;
+                return a.z != b.z ? a.z < b.z : (a.y != b.y ? a.y < b.y : a.x < b.x);
             });
 
         sort(
             result[i].begin(),
             result[i].end(),
             [&](const vec3& a, const vec3& b) -> bool {
-                auto distA = distance(a, queries[i]);
-                auto distB = distance(b, queries[i]);
-
-                return distB == distA ? a.x > b.x : distB < distA;
+                return a.z != b.z ? a.z < b.z : (a.y != b.y ? a.y < b.y : a.x < b.x);
             });
 
         if (!equal(result[i], actual)) {
@@ -417,18 +445,30 @@ template <template <class> class T> void run_test_case(ifstream& stream) {
 
             return;
         }
-    }
+    }*/
 
-    cout << "SUCCESS" << endl;
+    // cout << "SUCCESS" << endl;
 }
 
 template <template <class> class T> void run_test_case(string path) {
     ifstream stream(path, ifstream::binary);
-    run_test_case<T>(stream);
+    run_test_case<T>("<current>", stream);
+}
+
+void run_comparison(string path) {
+    cout << path << "\n";
+    // ifstream stream0(path, ifstream::binary);
+    // run_test_case<v1::KDTree3D>("v1::KDTree3D", stream0);
+    // ifstream stream1(path, ifstream::binary);
+    // run_test_case<v2::KDTree3D>("v2::KDTree3D", stream1);
+    ifstream stream2(path, ifstream::binary);
+    run_test_case<v2::HashGrid3D>("v2::HashGrid3D", stream2);
+    ifstream stream3(path, ifstream::binary);
+    run_test_case<v3::HashGrid3D>("v3::HashGrid3D", stream3);
 }
 
 void test_case_header() {
-    cout << "          NAME      NUM POINTS     NUM QUERIES          RADIUS        BUILD    N-QUERIES        TOTAL" << endl;
+    cout << "          NAME      NUM POINTS     NUM QUERIES          RADIUS        BUILD    QUERY            TOTAL" << endl;
 }
 
 int main(int argc, char **argv) {
@@ -440,52 +480,87 @@ int main(int argc, char **argv) {
     // prepareModelTestCase("test_case_E.dat", 5, 2000, 0.1f, "models/TestCase9.blend");
     // prepareModelTestCase("test_case_F.dat", 500000, 2000, 1.0f, "models/TestCase9.blend");
     // prepareModelTestCase("test_case_G.dat", 500000, 2000, 2.0f, "models/TestCase9.blend");
-    // prepareModelTestCase("test_case_3.dat", 500000, 2000, 1.f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_case_3.dat", 500000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
 
-    // prepareModelTestCase("Bearings.dat", 500000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("Bearings.dat", 500000, 2000, 0.02f, "models/Bearings.blend");
+
+    // prepareModelTestCase("test_data/bearings1M0_01.case", 1000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings1M0_1.case", 1000000, 2000, 0.1f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/cornell1M0_01.case", 1000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell1M0_1.case", 1000000, 2000, 0.1f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/sponza1M0_01.case", 1000000, 2000, 0.01f, "models/DabrovicSponza.blend");
+    // prepareModelTestCase("test_data/sponza1M0_1.case", 1000000, 2000, 0.1f, "models/DabrovicSponza.blend");
+
+    // prepareModelTestCase("test_data/cornell100k0_1.case", 100000, 2000, 0.1f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell200k0_1.case", 200000, 2000, 0.1f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell300k0_1.case", 300000, 2000, 0.1f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell400k0_1.case", 400000, 2000, 0.1f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell500k0_1.case", 500000, 2000, 0.1f, "models/CornellBoxDiffuse.blend");
+
+    // prepareModelTestCase("test_data/bearings1M0_01.case", 1000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings2M0_01.case", 2000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings3M0_01.case", 3000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings4M0_01.case", 4000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings5M0_01.case", 5000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings6M0_01.case", 6000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings7M0_01.case", 7000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings8M0_01.case", 8000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings9M0_01.case", 9000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings10M0_01.case", 10000000, 2000, 0.01f, "models/Bearings.blend");
+
+    // prepareModelTestCase("test_data/cornell1M0_01.case", 1000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell2M0_01.case", 2000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell3M0_01.case", 3000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell4M0_01.case", 4000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell5M0_01.case", 5000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell6M0_01.case", 6000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell7M0_01.case", 7000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell8M0_01.case", 8000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell9M0_01.case", 9000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
 
     test_case_header();
 
-    // Initial version.
-    cout << "            v0          500000            2000               1      0.9369s      0.1569s      1.0940s" << endl;
-    // Replaced heap.
-    cout << "            v1          500000            2000               1      0.9398s      0.1116s      1.0510s" << endl;
-    // Added proxy structure.
-    cout << "            v2          500000            2000               1      0.7510s      0.0845s      0.8354s" << endl;
-    // Packed axis to proxy structure removed bitfields.
-    cout << "            v3          500000            2000               1      0.7130s      0.0769s      0.7900s" << endl;
-    // Implicit indices in proxy, separate bitfields.
-    cout << "            v4          500000            2000               1      0.7373s      0.0655s      0.8028s" << endl;
-    // Constant cutoff (64 points).
-    cout << "            v5          500000            2000               1      0.7388s      0.0481s      0.7869s" << endl;
-    // Initial implementation of hash grid.
-    cout << "            v6          500000            2000               1      0.4627s      0.0357s      0.4984s" << endl;
-    // Replaced most inner loop (xs takes subsequent places in point array)
-    cout << "            v7          500000            2000               1      0.7933s      0.0257s      0.8190s" << endl;
-    // SmallVCM with cell size equal radius size.
-    cout << "smallVCM    v8          500000            2000               1      0.4805s      0.0486s      0.5290s" << endl;
-    // Standard version with doubled radius.
-    cout << "            v9          500000            2000               1      0.5950s      0.0276s      0.6226s" << endl;
-    // SmallVCM with cell size equal to doubled radius.
-    cout << "smallVCM   v10          500000            2000               1      0.4732s      0.0370s      0.5102s" << endl;
-    // v7 with improved construction time
-    cout << "       v7b v11          500000            2000               1      0.4774s      0.0258s      0.5033s" << endl;
-    // std::unordered_map
-    cout << "unordered_map           500000            2000               1      0.2119s      0.0332s      0.2451s" << endl;
-    // v2 (no opt) / ska::unordered_map
-    cout << "(no opt)/unordered_map  500000            2000               1      0.1982s      0.0390s      0.2372s" << endl;
-    // ska::flat_hash_map<vec3, Range>
-    cout << "flat_hash_map           500000            2000               1      0.2087s      0.0285s      0.2372s" << endl;
+    //run_comparison("test_data/bearings1M0_01.case");
+    //run_comparison("test_data/cornell1M0_01.case");
 
-    // run_test_case("test_data/test_case_A.case");
-    // run_test_case("test_data/test_case_B.case");
-    // run_test_case("test_data/test_case_C.case");
-    // run_test_case("test_data/test_case_D.case");
-    // run_test_case("test_data/test_case_E.case");
-    // run_test_case("test_data/test_case_F.case");
-    // run_test_case("test_data/test_case_G.case");
-    run_test_case<v2::HashGrid3D>("Bearings.dat");
-    run_test_case<v3::HashGrid3D>("Bearings.dat");
+    run_comparison("test_data/bearings1M0_1.case");
+    run_comparison("test_data/cornell1M0_1.case");
+    run_comparison("test_data/sponza1M0_01.case");
+    run_comparison("test_data/sponza1M0_1.case");
+
+    run_comparison("test_data/cornell100k0_1.case");
+    run_comparison("test_data/cornell200k0_1.case");
+    run_comparison("test_data/cornell300k0_1.case");
+    run_comparison("test_data/cornell400k0_1.case");
+    run_comparison("test_data/cornell500k0_1.case");
+
+    run_comparison("test_data/cornell1M0_01.case");
+    run_comparison("test_data/cornell2M0_01.case");
+    run_comparison("test_data/cornell3M0_01.case");
+    run_comparison("test_data/cornell4M0_01.case");
+    run_comparison("test_data/cornell5M0_01.case");
+    run_comparison("test_data/cornell6M0_01.case");
+    run_comparison("test_data/cornell7M0_01.case");
+    run_comparison("test_data/cornell8M0_01.case");
+    run_comparison("test_data/cornell9M0_01.case");
+    run_comparison("test_data/cornell10M0_01.case");
+
+    run_comparison("test_data/bearings1M0_01.case");
+    run_comparison("test_data/bearings2M0_01.case");
+    run_comparison("test_data/bearings3M0_01.case");
+    run_comparison("test_data/bearings4M0_01.case");
+    run_comparison("test_data/bearings5M0_01.case");
+    run_comparison("test_data/bearings6M0_01.case");
+    run_comparison("test_data/bearings7M0_01.case");
+    run_comparison("test_data/bearings8M0_01.case");
+    run_comparison("test_data/bearings9M0_01.case");
+    run_comparison("test_data/bearings10M0_01.case");
 
     return 0;
 }
+
+
+// v1::KDTree3D           7000000            2000          0.0100     19.7090s      0.3613ms     20.4316s
+// v2::KDTree3D           7000000            2000          0.0100     15.2202s      0.0979ms     15.4159s
+// v2::HashGrid3D         7000000            2000          0.0100      4.2575s      0.0772ms      4.4119s
+// v3::HashGrid3D         7000000            2000          0.0100      5.4795s      0.0776ms      5.6346s
