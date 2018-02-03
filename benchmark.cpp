@@ -121,6 +121,8 @@ vector<vec3> makeModelTestCase(size_t n, size_t seed, string model) {
     mt19937 generator(seed);
     uniform_real_distribution<float> distribution(0.f, areaSums.back());
 
+    uniform_real_distribution<float> uniform(0.f, 1.f);
+
     vector<vec3> result(n);
 
     for (size_t i = 0; i < n; ++i) {
@@ -129,8 +131,8 @@ vector<vec3> makeModelTestCase(size_t n, size_t seed, string model) {
             areaSums.end(),
             distribution(generator)) - areaSums.begin();
 
-        float u = distribution(generator);
-        float v = distribution(generator);
+        float u = uniform(generator);
+        float v = uniform(generator);
 
         if (u + v > 1) {
             u = 1.f - u;
@@ -292,8 +294,8 @@ void prepareModelTestCase(
     string model)
 {
     auto data = makeModelTestCase(numData, 31415, model);
-    // auto queries = makeModelTestCase(numQueries, 51413, model);
-    auto queries = wiggle(data, 51413, numQueries, radius);
+    auto queries = makeModelTestCase(numQueries, 51413, model);
+    // auto queries = wiggle(data, 51413, numQueries, radius);
     auto result = solveNaive(data, queries, radius);
 
     saveTestCase(stream, data, queries, result, radius);
@@ -420,9 +422,9 @@ template <template <class> class T> void run_test_case(ifstream& stream) {
     cout << "SUCCESS" << endl;
 }
 
-void run_test_case(string path) {
+template <template <class> class T> void run_test_case(string path) {
     ifstream stream(path, ifstream::binary);
-    run_test_case<v3::HashGrid3D>(stream);
+    run_test_case<T>(stream);
 }
 
 void test_case_header() {
@@ -439,6 +441,8 @@ int main(int argc, char **argv) {
     // prepareModelTestCase("test_case_F.dat", 500000, 2000, 1.0f, "models/TestCase9.blend");
     // prepareModelTestCase("test_case_G.dat", 500000, 2000, 2.0f, "models/TestCase9.blend");
     // prepareModelTestCase("test_case_3.dat", 500000, 2000, 1.f, "models/CornellBoxDiffuse.blend");
+
+    // prepareModelTestCase("Bearings.dat", 500000, 2000, 0.01f, "models/Bearings.blend");
 
     test_case_header();
 
@@ -467,9 +471,11 @@ int main(int argc, char **argv) {
     // v7 with improved construction time
     cout << "       v7b v11          500000            2000               1      0.4774s      0.0258s      0.5033s" << endl;
     // std::unordered_map
-    cout << " unordered_map          500000            2000               1      0.2119s      0.0332s      0.2451s" << endl;
+    cout << "unordered_map           500000            2000               1      0.2119s      0.0332s      0.2451s" << endl;
+    // v2 (no opt) / ska::unordered_map
+    cout << "(no opt)/unordered_map  500000            2000               1      0.1982s      0.0390s      0.2372s" << endl;
     // ska::flat_hash_map<vec3, Range>
-    cout << "     <current>          500000            2000               1      0.2087s      0.0285s      0.2372s" << endl;
+    cout << "flat_hash_map           500000            2000               1      0.2087s      0.0285s      0.2372s" << endl;
 
     // run_test_case("test_data/test_case_A.case");
     // run_test_case("test_data/test_case_B.case");
@@ -478,7 +484,8 @@ int main(int argc, char **argv) {
     // run_test_case("test_data/test_case_E.case");
     // run_test_case("test_data/test_case_F.case");
     // run_test_case("test_data/test_case_G.case");
-    run_test_case("test_data/test_case_3.case");
+    run_test_case<v2::HashGrid3D>("Bearings.dat");
+    run_test_case<v3::HashGrid3D>("Bearings.dat");
 
     return 0;
 }
