@@ -108,7 +108,7 @@ private:
         uint32_t end;
     };
 
-    std::unordered_map<vec3, Range> _ranges;
+    ska::flat_hash_map<vec3, Range> _ranges;
 
     void build(const vector<T>& data, float radius) {
         struct Comparator {
@@ -232,7 +232,7 @@ private:
         uint32_t end;
     };
 
-    std::unordered_map<vec3, Range> _ranges;
+    ska::flat_hash_map<vec3, Range> _ranges;
 
     void build(const vector<T>& data, float radius) {
         struct Comparator {
