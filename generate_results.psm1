@@ -5,10 +5,10 @@ $outputDirectory = "result"
 
 function Invoke-Master() {
   $beta = 2
-  $makeReference = $false
+  $makeReference = $args.contains("-makeReference")
   $justPrint = $args.contains("-justPrint")
 
-  $args = @($args | Where-Object { $_ -ne "-justPrint" })
+  $args = @($args | Where-Object { $_ -ne "-justPrint" -and $_ -ne "-makeReference" })
 
   $commonArguments = @(
     "--parallel",
@@ -100,24 +100,6 @@ function Generate-Results([string]$model, [switch]$justPrint, [switch]$onlyUPG =
     Invoke-Master $model $camera --UPG $radius @traces
   }
 }
-
-# Bearings.blend
-# Invoke-Master models/Bearings.blend --BPT $bearingsTraces
-# Invoke-Master models/Bathroom.blend --BPT
-# Invoke-Master models/BathroomDiscrete.blend --BPT
-# Invoke-Master models/Bearings.blend --BPT
-# Invoke-Master models/BreakfastRoom1.blend --BPT --camera=0
-# Invoke-Master models/BreakfastRoom1.blend --BPT --camera=1
-# Invoke-Master models/BreakfastRoom1.blend --BPT --camera=2
-# Invoke-Master models/BreakfastRoom2.blend --BPT --camera=0
-# Invoke-Master models/BreakfastRoom2.blend --BPT --camera=1
-# Invoke-Master models/BreakfastRoom2.blend --BPT --camera=2
-# Invoke-Master models/CrytekSponza.blend --BPT --camera=0
-# Invoke-Master models/CrytekSponza.blend --BPT --camera=1
-# Invoke-Master models/CrytekSponza.blend --BPT --camera=2
-# Invoke-Master models/BreakfastRoom.blend --BPT
-# Invoke-Master models/Bathroom.blend --UPG --radius=0.05
-# Invoke-Master models/BathroomDiscrete.blend --UPG --radius=0.03
 
 function Bearings([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
@@ -371,4 +353,38 @@ function Cluster3([switch]$justPrint)
   CrytekSponza_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.025
   CrytekSponza_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.030
   CrytekSponza_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.035
+}
+
+function Cluster4([switch]$justPrint)
+{
+  $global:numMinutes = 180
+  $global:outputDirectory = "radii"
+  $radius = "--radius=0.03"
+
+  Invoke-Master "models/TestCase40.blend" --BPT $(If ($justPrint) {"-justPrint"}) -makeReference
+  Invoke-Master "models/TestCase40.blend" --UPG $(If ($justPrint) {"-justPrint"}) $radius -makeReference
+  Invoke-Master "models/TestCase41.blend" --BPT $(If ($justPrint) {"-justPrint"}) -makeReference
+  Invoke-Master "models/TestCase41.blend" --UPG $(If ($justPrint) {"-justPrint"}) $radius -makeReference
+  Invoke-Master "models/TestCase42.blend" --BPT $(If ($justPrint) {"-justPrint"}) -makeReference
+  Invoke-Master "models/TestCase42.blend" --UPG $(If ($justPrint) {"-justPrint"}) $radius -makeReference
+  Invoke-Master "models/TestCase43.blend" --BPT $(If ($justPrint) {"-justPrint"}) -makeReference
+  Invoke-Master "models/TestCase43.blend" --UPG $(If ($justPrint) {"-justPrint"}) $radius -makeReference
+}
+
+function Cluster5([switch]$justPrint)
+{
+  $global:numMinutes = 1200
+  $global:outputDirectory = "result"
+
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.020 
+}
+
+function Cluster6([switch]$justPrint)
+{
+  $global:numMinutes = 480
+  $global:outputDirectory = "result"
+  $radius = "--radius=0.03"
+
+  Invoke-Master "models/Bearings.blend" --BPT $(If ($justPrint) {"-justPrint"}) -makeReference --camera=3
+  Invoke-Master "models/Bearings.blend" --UPG $(If ($justPrint) {"-justPrint"}) $radius --camera=3
 }
