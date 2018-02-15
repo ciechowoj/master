@@ -24,7 +24,7 @@ namespace std
             // return x ^ (y << 1) ^ (z << 2);
 
             #if defined _MSC_VER
-            return std::_Hash_seq((const unsigned char*)(&key), sizeof(key));
+            return std::_Hash_bytes((const unsigned char*)(&key), sizeof(key));
             #else
             return std::_Hash_impl::hash(key);
             #endif
