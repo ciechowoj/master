@@ -385,6 +385,6 @@ function Cluster6([switch]$justPrint)
   $global:outputDirectory = "result"
   $radius = "--radius=0.03"
 
-  Invoke-Master "models/Bearings.blend" --BPT $(If ($justPrint) {"-justPrint"}) -makeReference --camera=3
-  Invoke-Master "models/Bearings.blend" --UPG $(If ($justPrint) {"-justPrint"}) $radius --camera=3
+  Invoke-Master "models/Bearings.blend" --BPT $(If ($justPrint) {"-justPrint"}) -makeReference --camera=2
+  Invoke-Master "models/Bearings.blend" --UPG $(If ($justPrint) {"-justPrint"}) $radius --camera=2
 }
