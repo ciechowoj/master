@@ -157,7 +157,7 @@ function BreakfastRoom1_Camera0([switch]$justPrint, [switch]$onlyUPG = $false, [
 function BreakfastRoom1_Camera1([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/BreakfastRoom1.blend"
-  
+
   $traces = @(
     "--trace=400x810x8",
     "--trace=420x170x8",
@@ -170,7 +170,7 @@ function BreakfastRoom1_Camera1([switch]$justPrint, [switch]$onlyUPG = $false, [
 function BreakfastRoom1_Camera2([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
   $model = "models/BreakfastRoom1.blend"
-  
+
   $traces = @(
     "--trace=75x100x8",
     "--trace=435x400x8",
@@ -184,7 +184,7 @@ function BreakfastRoom1_Camera2([switch]$justPrint, [switch]$onlyUPG = $false, [
 
   Generate-Results $model $traces --camera=2 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.02
 }
-  
+
 
 function BreakfastRoom2_Camera0([switch]$justPrint, [switch]$onlyUPG = $false, [float]$radius)
 {
@@ -290,7 +290,7 @@ function CrytekSponza_Camera2([switch]$justPrint, [switch]$onlyUPG = $false, [fl
     "--trace=290x680x8",
     "--trace=700x670x8",
     "--trace=600x600x8")
-  
+
   Generate-Results $model $traces --camera=2 --radius=$radius -justPrint:$justPrint -onlyUPG:$onlyUPG # 0.015
 }
 
@@ -326,12 +326,12 @@ function Cluster3([switch]$justPrint)
   $global:numMinutes = 60
   $global:outputDirectory = "radii"
 
-  Bearings -justPrint:$justPrint -onlyUPG -radius 0.005 
-  Bearings -justPrint:$justPrint -onlyUPG -radius 0.010 
-  Bearings -justPrint:$justPrint -onlyUPG -radius 0.015 
-  Bearings -justPrint:$justPrint -onlyUPG -radius 0.020 
-  Bearings -justPrint:$justPrint -onlyUPG -radius 0.025 
-  Bearings -justPrint:$justPrint -onlyUPG -radius 0.030 
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.005
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.010
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.015
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.020
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.025
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.030
 
   BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.010
   BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.015
@@ -339,7 +339,7 @@ function Cluster3([switch]$justPrint)
   BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.025
   BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.030
   BreakfastRoom2_Camera0 -justPrint:$justPrint -onlyUPG -radius 0.035
-  
+
   BreakfastRoom1_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.010
   BreakfastRoom1_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.015
   BreakfastRoom1_Camera1 -justPrint:$justPrint -onlyUPG -radius 0.020
@@ -376,7 +376,7 @@ function Cluster5([switch]$justPrint)
   $global:numMinutes = 1200
   $global:outputDirectory = "result"
 
-  Bearings -justPrint:$justPrint -onlyUPG -radius 0.020 
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.020
 }
 
 function Cluster6([switch]$justPrint)
@@ -385,6 +385,6 @@ function Cluster6([switch]$justPrint)
   $global:outputDirectory = "result"
   $radius = "--radius=0.03"
 
-  Invoke-Master "models/Bearings.blend" --BPT $(If ($justPrint) {"-justPrint"}) -makeReference --camera=3
-  Invoke-Master "models/Bearings.blend" --UPG $(If ($justPrint) {"-justPrint"}) $radius --camera=3
+  Invoke-Master "models/Bearings.blend" --BPT $(If ($justPrint) {"-justPrint"}) -makeReference --camera=2
+  Invoke-Master "models/Bearings.blend" --UPG $(If ($justPrint) {"-justPrint"}) $radius --camera=2
 }

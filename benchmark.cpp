@@ -234,7 +234,8 @@ vector<vector<vec3>> solveKDTree(
         result[iQuery].resize(size);
         result[iQuery].shrink_to_fit();
 
-        std::cout << "query: " << iQuery << " (" << result[iQuery].size() << ")" << endl;
+        // std::cout << "query: " << iQuery << " (" << result[iQuery].size() << ")" << "\n";
+        std::cout << "(" << result[iQuery].size() << ") ";
     }
 
     return result;
@@ -344,6 +345,7 @@ void prepareModelTestCase(
 {
     ofstream stream(path, ofstream::binary);
     prepareModelTestCase(stream, numData, numQueries, radius, model);
+    std::cout << path << " [DONE]" << std::endl;
 }
 
 template <class T> bool equal(const vector<T>& a, const vector<T>& b)
@@ -408,6 +410,14 @@ template <template <class> class T> void run_test_case(string name, ifstream& st
     chrono::duration<double> queriesTime = end - build;
     chrono::duration<double> totalTime = end - start;
 
+    size_t num_reported = std::accumulate(
+        testResult.begin(),
+        testResult.end(),
+        size_t(0),
+        [](auto a, auto b) { return a + b.size(); });
+
+    double avg_result_size = double(num_reported) / testResult.size();
+
     cout
         << setw(14) << name
         << setw(16) << data.size()
@@ -417,6 +427,7 @@ template <template <class> class T> void run_test_case(string name, ifstream& st
     cout
         << setw(12) << setprecision(4) << fixed << buildTime.count() << "s"
         << setw(12) << setprecision(4) << fixed << queriesTime.count() / queries.size() * 1000 << "ms"
+        << setw(12) << setprecision(4) << fixed << avg_result_size
         << setw(12) << setprecision(4) << fixed << totalTime.count() << "s" << endl;
 
     /*for (size_t i = 0; i < result.size(); ++i) {
@@ -459,10 +470,11 @@ void run_comparison(string path) {
     cout << path << "\n";
     // ifstream stream0(path, ifstream::binary);
     // run_test_case<v1::KDTree3D>("v1::KDTree3D", stream0);
-    // ifstream stream1(path, ifstream::binary);
-    // run_test_case<v2::KDTree3D>("v2::KDTree3D", stream1);
-    ifstream stream2(path, ifstream::binary);
-    run_test_case<v2::HashGrid3D>("v2::HashGrid3D", stream2);
+
+    ifstream stream1(path, ifstream::binary);
+    run_test_case<v2::KDTree3D>("v2::KDTree3D", stream1);
+    /*ifstream stream2(path, ifstream::binary);
+    run_test_case<v2::HashGrid3D>("v2::HashGrid3D", stream2);*/
     ifstream stream3(path, ifstream::binary);
     run_test_case<v3::HashGrid3D>("v3::HashGrid3D", stream3);
 }
@@ -471,7 +483,9 @@ void test_case_header() {
     cout << "          NAME      NUM POINTS     NUM QUERIES          RADIUS        BUILD    QUERY            TOTAL" << endl;
 }
 
-int main(int argc, char **argv) {
+void test_suite0()
+{
+    test_case_header();
 
     // prepareModelTestCase("test_case_A.dat", 1, 2000, 0.1f, "models/TestCase9.blend");
     // prepareModelTestCase("test_case_B.dat", 2, 2000, 0.1f, "models/TestCase9.blend");
@@ -518,11 +532,6 @@ int main(int argc, char **argv) {
     // prepareModelTestCase("test_data/cornell8M0_01.case", 8000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
     // prepareModelTestCase("test_data/cornell9M0_01.case", 9000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
 
-    test_case_header();
-
-    //run_comparison("test_data/bearings1M0_01.case");
-    //run_comparison("test_data/cornell1M0_01.case");
-
     run_comparison("test_data/bearings1M0_1.case");
     run_comparison("test_data/cornell1M0_1.case");
     run_comparison("test_data/sponza1M0_01.case");
@@ -555,6 +564,88 @@ int main(int argc, char **argv) {
     run_comparison("test_data/bearings8M0_01.case");
     run_comparison("test_data/bearings9M0_01.case");
     run_comparison("test_data/bearings10M0_01.case");
+}
+
+int main(int argc, char **argv) {
+    // prepareModelTestCase("test_data/cornell1M0_01.case", 1000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell2M0_01.case", 2000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell3M0_01.case", 3000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell4M0_01.case", 4000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell5M0_01.case", 5000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell6M0_01.case", 6000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell7M0_01.case", 7000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell8M0_01.case", 8000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/cornell9M0_01.case", 9000000, 2000, 0.01f, "models/CornellBoxDiffuse.blend");
+    // prepareModelTestCase("test_data/bearings1M0_01.case", 1000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings2M0_01.case", 2000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings3M0_01.case", 3000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings4M0_01.case", 4000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings5M0_01.case", 5000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings6M0_01.case", 6000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings7M0_01.case", 7000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings8M0_01.case", 8000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings9M0_01.case", 9000000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/sponza1M0_01.case", 1000000, 2000, 0.01f, "models/CrytekSponza.blend");
+    // prepareModelTestCase("test_data/sponza2M0_01.case", 2000000, 2000, 0.01f, "models/CrytekSponza.blend");
+    // prepareModelTestCase("test_data/sponza3M0_01.case", 3000000, 2000, 0.01f, "models/CrytekSponza.blend");
+    // prepareModelTestCase("test_data/sponza4M0_01.case", 4000000, 2000, 0.01f, "models/CrytekSponza.blend");
+    // prepareModelTestCase("test_data/sponza5M0_01.case", 5000000, 2000, 0.01f, "models/CrytekSponza.blend");
+    // prepareModelTestCase("test_data/sponza6M0_01.case", 6000000, 2000, 0.01f, "models/CrytekSponza.blend");
+    // prepareModelTestCase("test_data/sponza7M0_01.case", 7000000, 2000, 0.01f, "models/CrytekSponza.blend");
+    // prepareModelTestCase("test_data/sponza8M0_01.case", 8000000, 2000, 0.01f, "models/CrytekSponza.blend");
+    // prepareModelTestCase("test_data/sponza9M0_01.case", 9000000, 2000, 0.01f, "models/CrytekSponza.blend");
+
+
+    // prepareModelTestCase("test_data/bearings280k0_01.case", 280000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings560k0_01.case", 560000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings840k0_01.case", 840000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings1120k0_01.case", 1120000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings1400k0_01.case", 1400000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings1680k0_01.case", 1680000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings1960k0_01.case", 1960000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings2240k0_01.case", 2240000, 2000, 0.01f, "models/Bearings.blend");
+    // prepareModelTestCase("test_data/bearings2520k0_01.case", 2520000, 2000, 0.01f, "models/Bearings.blend");
+
+
+
+    run_comparison("test_data/bearings280k0_01.case");
+    run_comparison("test_data/bearings560k0_01.case");
+    run_comparison("test_data/bearings840k0_01.case");
+    run_comparison("test_data/bearings1120k0_01.case");
+    run_comparison("test_data/bearings1400k0_01.case");
+    run_comparison("test_data/bearings1680k0_01.case");
+    run_comparison("test_data/bearings1960k0_01.case");
+    run_comparison("test_data/bearings2240k0_01.case");
+    run_comparison("test_data/bearings2520k0_01.case");
+
+
+    // run_comparison("test_data/cornell1M0_01.case");
+    // run_comparison("test_data/cornell2M0_01.case");
+    // run_comparison("test_data/cornell3M0_01.case");
+    // run_comparison("test_data/cornell4M0_01.case");
+    // run_comparison("test_data/cornell5M0_01.case");
+    // run_comparison("test_data/cornell6M0_01.case");
+    // run_comparison("test_data/cornell7M0_01.case");
+    // run_comparison("test_data/cornell8M0_01.case");
+    // run_comparison("test_data/cornell9M0_01.case");
+    // run_comparison("test_data/bearings1M0_01.case");
+    // run_comparison("test_data/bearings2M0_01.case");
+    // run_comparison("test_data/bearings3M0_01.case");
+    // run_comparison("test_data/bearings4M0_01.case");
+    // run_comparison("test_data/bearings5M0_01.case");
+    // run_comparison("test_data/bearings6M0_01.case");
+    // run_comparison("test_data/bearings7M0_01.case");
+    // run_comparison("test_data/bearings8M0_01.case");
+    // run_comparison("test_data/bearings9M0_01.case");
+    // run_comparison("test_data/sponza1M0_01.case");
+    // run_comparison("test_data/sponza2M0_01.case");
+    // run_comparison("test_data/sponza3M0_01.case");
+    // run_comparison("test_data/sponza4M0_01.case");
+    // run_comparison("test_data/sponza5M0_01.case");
+    // run_comparison("test_data/sponza6M0_01.case");
+    // run_comparison("test_data/sponza7M0_01.case");
+    // run_comparison("test_data/sponza8M0_01.case");
+    // run_comparison("test_data/sponza9M0_01.case");
 
     return 0;
 }
