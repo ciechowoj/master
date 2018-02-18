@@ -21,7 +21,7 @@ struct Options {
     enum Action {
         Render, Average, Subtract, Errors, Strip, Merge,
         Time, Continue, Statistics, Measurements, Traces,
-        Gnuplot, Bake };
+        Gnuplot, Bake, RelErr };
 
     string input0;
     string input1;

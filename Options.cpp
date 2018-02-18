@@ -292,7 +292,7 @@ Options parseErrorsArgs(int argc, char const* const* argv) {
     return options;
 }
 
-Options parseSubArgs(int argc, char const* const* argv) {
+Options parseInput2Output(int argc, char const* const* argv, Options::Action action) {
     Options options;
 
     if (argc != 5) {
@@ -300,7 +300,7 @@ Options parseSubArgs(int argc, char const* const* argv) {
         options.displayMessage = "Input files are required.";
     }
     else {
-        options.action = Options::Subtract;
+        options.action = action;
         options.output = argv[2];
         options.input0 = argv[3];
         options.input1 = argv[4];
@@ -364,6 +364,7 @@ Options::Action parseAction(const char* argument) {
     { "errors", Options::Action::Errors },
     { "strip", Options::Action::Strip },
     { "merge", Options::Action::Merge },
+    { "relerr", Options::Action::RelErr },
     { "time", Options::Action::Time },
     { "continue", Options::Action::Continue },
     { "statistics", Options::Action::Statistics },
@@ -392,7 +393,7 @@ Options parseArgs(int argc, char const* const* argv) {
       case Options::Action::Average:
         return parseAvgArgs(argc, argv);
       case Options::Action::Subtract:
-        return parseSubArgs(argc, argv);
+        return parseInput2Output(argc, argv, Options::Subtract);
       case Options::Action::Errors:
         return parseErrorsArgs(argc, argv);
       case Options::Action::Strip:
@@ -413,6 +414,8 @@ Options parseArgs(int argc, char const* const* argv) {
         return Options(Options::Action::Gnuplot);
       case Options::Action::Bake:
         return Options(Options::Action::Bake);
+      case Options::Action::RelErr:
+        return parseInput2Output(argc, argv, Options::RelErr);
       default:
         break;
     }
@@ -1031,6 +1034,8 @@ string to_string(const Options::Action& action) {
         case Options::Measurements: return "Measurements";
         case Options::Traces: return "Traces";
         case Options::Gnuplot: return "Gnuplot";
+        case Options::Bake: return "Bake";
+        case Options::RelErr: return "RelErr";
         default: return "UNKNOWN";
     }
 }
@@ -1058,6 +1063,8 @@ Options::Action action(string action) {
       return Options::Traces;
     else if (action == "Gnuplot")
       return Options::Gnuplot;
+    else if (action == "RelErr")
+      return Options::RelErr;
     else
         throw std::invalid_argument("action");
 }
