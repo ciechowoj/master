@@ -19,9 +19,9 @@ template <class T> using shared = std::shared_ptr<T>;
 struct Options {
     enum Technique { PT, BPT, VCM, UPG, Viewer };
     enum Action {
-        Render, Average, Subtract, Errors, Strip, Merge,
-        Time, Continue, Statistics, Measurements, Traces,
-        Gnuplot, Bake, RelErr };
+        Render, Average, Errors, Time, Statistics,
+        Measurements, Traces, Continue, Gnuplot,
+        RelErr, Merge, Strip, Bake };
 
     string input0;
     string input1;
@@ -46,6 +46,7 @@ struct Options {
     size_t num_threads = 1;
     bool reload = true;
     bool enable_seed = false;
+    bool enable_ui = true;
     size_t seed = 0;
     size_t snapshot = 0;
     size_t camera_id = 0;

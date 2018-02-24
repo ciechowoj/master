@@ -23,11 +23,9 @@ void UserInterface::update(
     const vec4* image,
     double elapsed)
 {
-    // bool show_test_window = true;
-    // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-    // ImGui::ShowTestWindow(&show_test_window);
-
-    // updateCamera();
+    if (!options.enable_ui) {
+        return;
+    }
 
     ImGui::SetNextWindowPos(ImVec2(0, /*height - 150*/ 0), ImGuiSetCond_Once);
     ImGui::SetNextWindowSize(ImVec2(300, 256), ImGuiSetCond_Once);

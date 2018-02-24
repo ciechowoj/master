@@ -26,61 +26,62 @@ using namespace std::__cxx11;
 static const char help[] =
 R"(
     Usage:
-      master <input> [options]
-      master (-h | --help)
-      master --version
-      master avg <x>               Compute average value of pixels in <x>.
-      master errors <x> <y>        Compute abs and rms (in this order) error between <x> and <y>.
-      master sub <x> <y>           Compute difference between <x> and <y>.
-      master strip <o> <i>         Remove metadata from <o> and save the result to <i>.
-      master merge <o> <a> <b>     Merge <a> and <b> into <o>.
-      master gnuplot <inputs>...   Create convergence charts.
-      master bake <input>          Remove the channel with number of samples from the image <input>.
-      master statistics <input>    Print statistics from input's metadata.
-      master measurements <input>  Print measurements from input's metadata.
-      master traces <input>        Print traces from input's metadata.
+      master <in> [options]           Render the scene from the <in> file.
+      master average <in>             Compute average value of pixels in the image <in>.
+      master errors <fst> <snd>       Compute abs and rms (in this order) errors between the images <fst> and <snd>.
+      master time <in>                Returns the rendering time of the image <in>.
+      master statistics <in>          Extract and print statistics from the <in> file.
+      master measurements <in>        Extract and print measurements from the <in> file.
+      master traces <in>              Print traces from input metadata.
+      master continue <in>            Continue rendering of the <in> image.
+      master gnuplot <ins>...         Create convergence charts from multiple <ins> images.
+      master diff <out> <fst> <snd>   Compute relative difference between <fst> and <and> and save the result as <out>.
+      master merge <out> <fst> <snd>  Merge the images <fst> and <snd> and save the result as <out>.
+      master strip <out> <in>         Strip metadata from file <in> and save the result as <out>.
+      master bake <out> <in>          Remove the channel with number of samples from the image <in> save the result as <out>.
 
     Options (master):
-      -h --help                    Show this screen.
-      --version                    Show version.
-      --PT                         Use path tracing for rendering (this is default one).
-      --BPT                        Use bidirectional path tracing (balance heuristics).
-      --VCM                        Use vertex connection and merging.
-      --UPG                        Use unbiased photon gathering.
-      --num-photons=<n>            Use n photons. [default: 1 000 000]
-      --radius=<n>                 Use n as maximum gather radius. [default: 0.1]
-      --roulette=<n>               Russian roulette coefficient. [default: 0.5]
-      --beta=<n>                   MIS beta. [default: 1]
-      --alpha=<n>                  VCM alpha. [default: 0.75]
-      --batch                      Run in batch mode (interactive otherwise).
-      --quiet                      Do not output anything to console.
-      --no-vc                      Disable vertex connection.
-      --no-vm                      Disable vertex merging.
-      --from-camera                Merge from camera perspective.
-      --from-light                 Merge from light perspective.
-      --no-lights                  Do not draw the lights.
-      --no-reload                  Disable auto-reload (input file is reloaded on modification in interactive mode).
-      --num-samples=<n>            Terminate after n samples.
-      --num-seconds=<n>            Terminate after n seconds.
-      --num-minutes=<n>            Terminate after n minutes.
-      --parallel                   Use multi-threading.
-      --output=<path>              Output file. <input>.<width>.<height>.<time>.<technique>.exr if not specified.
-      --reference=<path>           Reference file for comparison.
-      --seed=<n>                   Seed random number generator (for single threaded BPT only).
-      --snapshot=<n>               Save output every n seconds (tags output file with time).
-      --camera=<id>                Use camera with given id. [default: 0]
-      --resolution=<WxH>           Resolution of output image. [default: 512x512]
-      --trace=<XxY[xW]>            Trace errors in window of radius W and at the center at XxY. [default: XxYx2]
-      --sky-horizon=<RxGxB>        Color of sky horizon. [default: 0x0x0]
-      --sky-zenith=<RxGxB>         Color of sky zenith. [default: 0x0x0]
-      --blue-sky=<B>               Alias to --sky-horizon=<0x0x0> --sky-zenith<0x0xB>. [default: 0]
+      -h --help                       Show this help.
+      --version                       Show version.
+      --PT                            Use path tracing for rendering (this is default one).
+      --BPT                           Use bidirectional path tracing (balance heuristics).
+      --VCM                           Use vertex connection and merging.
+      --UPG                           Use unbiased photon gathering.
+      --num-photons=<n>               Use <n> photons. [default: 1 000 000]
+      --radius=<n>                    Use <n> as maximum gather radius. [default: 0.1]
+      --roulette=<n>                  Russian roulette coefficient. [default: 0.5]
+      --beta=<n>                      MIS beta. [default: 1]
+      --alpha=<n>                     VCM alpha. [default: 0.75]
+      --batch                         Run in batch mode (interactive otherwise).
+      --quiet                         Do not output anything to console.
+      --no-vc                         Disable vertex connection.
+      --no-vm                         Disable vertex merging.
+      --no-ui                         Disable user interface.
+      --from-camera                   Merge from camera perspective.
+      --from-light                    Merge from light perspective.
+      --no-lights                     Do not draw the lights.
+      --no-reload                     Disable auto-reload (input file is reloaded on modification in interactive mode).
+      --num-samples=<n>               Terminate after <n> samples.
+      --num-seconds=<n>               Terminate after <n> seconds.
+      --num-minutes=<n>               Terminate after <n> minutes.
+      --parallel                      Use multi-threading.
+      --output=<path>                 Output file. <input>.<width>.<height>.<time>.<technique>.exr if not specified.
+      --reference=<path>              Reference file for comparison.
+      --seed=<n>                      Seed random number generator.
+      --snapshot=<n>                  Save output every <n> seconds.
+      --camera=<id>                   Use camera with given id. [default: 0]
+      --resolution=<WxH>              Resolution of output image. [default: 512x512]
+      --trace=<XxY[xW]>               Trace errors in window of radius W and at the center at XxY. [default: XxYx2]
+      --sky-horizon=<RxGxB>           Color of sky horizon. [default: 0x0x0]
+      --sky-zenith=<RxGxB>            Color of sky zenith. [default: 0x0x0]
+      --blue-sky=<B>                  Alias to --sky-horizon=<0x0x0> --sky-zenith<0x0xB>. [default: 0]
 
     Options (gnuplot):
-      --input=<path>               An exr file containing errors data.
-      --output                     A output image with chart.
-      --traces                     Generate a matrix of charts with data from window traces.
-      --select=<wildcard>          Consider only series which name matches <wildcard>.
-      --error=<type>               Specify the type of error rms/abs.
+      --input=<path>                  An exr file containing errors data.
+      --output                        A output image with chart.
+      --traces                        Generate a matrix of charts with data from window traces.
+      --select=<wildcard>             Consider only series which name matches <wildcard>.
+      --error=<type>                  Specify the type of error rms/abs.
 )";
 
 string Options::caption() const {
@@ -360,17 +361,16 @@ Options parseInputOutput(int argc, char const* const* argv, Options::Action acti
 Options::Action parseAction(const char* argument) {
   static const std::map<const string, Options::Action> map = {
     { "average", Options::Action::Average },
-    { "subtract", Options::Action::Subtract },
     { "errors", Options::Action::Errors },
-    { "strip", Options::Action::Strip },
-    { "merge", Options::Action::Merge },
-    { "relerr", Options::Action::RelErr },
     { "time", Options::Action::Time },
-    { "continue", Options::Action::Continue },
     { "statistics", Options::Action::Statistics },
     { "measurements", Options::Action::Measurements },
     { "traces", Options::Action::Traces },
+    { "continue", Options::Action::Continue },
     { "gnuplot", Options::Action::Gnuplot },
+    { "diff", Options::Action::RelErr },
+    { "merge", Options::Action::Merge },
+    { "strip", Options::Action::Strip },
     { "bake", Options::Action::Bake }
   };
 
@@ -392,8 +392,6 @@ Options parseArgs(int argc, char const* const* argv) {
     switch (action) {
       case Options::Action::Average:
         return parseAvgArgs(argc, argv);
-      case Options::Action::Subtract:
-        return parseInput2Output(argc, argv, Options::Subtract);
       case Options::Action::Errors:
         return parseErrorsArgs(argc, argv);
       case Options::Action::Strip:
@@ -811,6 +809,11 @@ Options parseArgs(int argc, char const* const* argv) {
             }
         }
 
+        if (dict.count("--no-ui")) {
+            options.enable_ui = false;
+            dict.erase("--no-ui");
+        }
+
         if (dict.count("--camera")) {
             if (!isUnsigned(dict.find("--camera")->second)) {
                 options.displayHelp = true;
@@ -1025,7 +1028,6 @@ string to_string(const Options::Action& action) {
     switch (action) {
         case Options::Render: return "Render";
         case Options::Average: return "AVG";
-        case Options::Subtract: return "SUB";
         case Options::Errors: return "Errors";
         case Options::Merge: return "Merge";
         case Options::Time: return "Time";
@@ -1045,8 +1047,6 @@ Options::Action action(string action) {
         return Options::Render;
     else if (action == "Average")
         return Options::Average;
-    else if (action == "Subtract")
-        return Options::Subtract;
     else if (action == "Errors")
         return Options::Errors;
     else if (action == "Merge")
@@ -1099,6 +1099,13 @@ Options::Options(const map<string, string>& dict) {
     reload = stoi(dict.find("options.reload")->second);
     enable_seed = stoi(dict.find("options.enable_seed")->second);
     seed = stoll(dict.find("options.seed")->second);
+
+    auto itr = dict.find("options.enable_ui");
+
+    if (itr != dict.end()) {
+      enable_ui = stoi(itr->second);
+    }
+
     snapshot = stoll(dict.find("options.snapshot")->second);
     camera_id = stoll(dict.find("options.camera_id")->second);
     width = stoll(dict.find("options.width")->second);
@@ -1158,6 +1165,7 @@ map<string, string> Options::to_dict() const
     result["options.num_threads"] = to_string(num_threads);
     result["options.reload"] = to_string(reload);
     result["options.enable_seed"] = to_string(enable_seed);
+    result["options.enable_ui"] = to_string(enable_ui);
     result["options.seed"] = to_string(seed);
     result["options.snapshot"] = to_string(snapshot);
     result["options.camera_id"] = to_string(camera_id);

@@ -79,13 +79,10 @@ int main(int argc, char **argv) {
 
     if (options.action == Options::Average) {
         vec3 average = exr_average(options.input0);
-        std::cout << average.x << " " << average.y << " " << average.z << std::endl;
+        std::cout << "[" << average.x << " " << average.y << " " << average.z << "]" << std::endl;
     }
     else if (options.action == Options::Errors) {
         return compute_errors(std::cout, options);
-    }
-    else if (options.action == Options::Subtract) {
-        subtract_exr(options.output, options.input0, options.input1);
     }
     else if (options.action == Options::Strip) {
         strip_exr(options.output, options.input0);
@@ -272,9 +269,8 @@ int compute_errors(std::ostream& stream, const Options& options) {
   }
 
   stream << std::setprecision(10)
-    << "image "
-    << abs_sum / num << " "
-    << sqrt(rms_sum / num) << "\n";
+    << "ABS: " << abs_sum / num << "\n"
+    << "RMS: " << sqrt(rms_sum / num) << "\n";
 
   return 0;
 }
@@ -298,7 +294,7 @@ int compute_relative_error(const Options& options) {
 
   for (size_t i = 0; i < fst_data.size(); ++i) {
     if (!any(isnan(fst_data[i])) && !any(isnan(snd_data[i]))) {
-      diff_data[i] = vec3(length(fst_data[i]) - length(snd_data[i]));
+      diff_data[i] = vec3(length(fst_data[i]) - length(snd_data[i])) / std::min(length(fst_data[i]), length(snd_data[i]));
     }
     else {
       diff_data[i] = vec3(0.f);
@@ -306,37 +302,67 @@ int compute_relative_error(const Options& options) {
   }
 
   // blur
-  blur_data.resize(fst_width * fst_height);
+  blur_data = diff_data;
 
   ptrdiff_t width = ptrdiff_t(fst_width);
   ptrdiff_t height = ptrdiff_t(fst_height);
-  ptrdiff_t window = 1;
+  ptrdiff_t window = 2;
 
-  for (int i = 0; i < 5; ++i) {
-    for (ptrdiff_t y = 0; y < height; ++y) {
-      for (ptrdiff_t x = 0; x < width; ++x) {
-        float num = 0.0f;
-        vec3 acc = vec3(0.0f);
+  float max;
+  if (window > 0) {
+    for (int i = 0; i < 3; ++i) {
+      max = 0.0f;
 
-        for (ptrdiff_t y_w = std::max<ptrdiff_t>(0, y - window); y_w < std::min<ptrdiff_t>(height, y + window + 1); ++y_w) {
-          for (ptrdiff_t x_w = std::max<ptrdiff_t>(0, x - window); x_w < std::min<ptrdiff_t>(width, x + window + 1); ++x_w) {
-            acc += diff_data[y_w * width + x_w];
-            num += 1.0f;
+      for (ptrdiff_t y = 0; y < height; ++y) {
+        for (ptrdiff_t x = 0; x < width; ++x) {
+          float num = 0.0f;
+          vec3 acc = vec3(0.0f);
+
+          for (ptrdiff_t y_w = std::max<ptrdiff_t>(0, y - window); y_w < std::min<ptrdiff_t>(height, y + window + 1); ++y_w) {
+            for (ptrdiff_t x_w = std::max<ptrdiff_t>(0, x - window); x_w < std::min<ptrdiff_t>(width, x + window + 1); ++x_w) {
+              acc += diff_data[y_w * width + x_w];
+              num += 1.0f;
+            }
           }
+
+          blur_data[y * width + x] = acc / num;
+          max = std::max(max, abs(blur_data[y * width + x].x));
         }
-
-        blur_data[y * width + x] = acc / num;
       }
-    }
 
-    diff_data = blur_data;
+      diff_data = blur_data;
+    }
+  }
+  std::cout << "max: " << max << std::endl;
+
+  // draw gauge
+  float x0 = 0.9, y0 = 0.05, x1 = 0.95, y1 = 0.95;
+
+  ptrdiff_t x0i = ptrdiff_t(x0 * width);
+  ptrdiff_t y0i = ptrdiff_t(y0 * height);
+  ptrdiff_t x1i = ptrdiff_t(x1 * width);
+  ptrdiff_t y1i = ptrdiff_t(y1 * height);
+
+  max = 1;
+  float range = 2 * max;
+
+  for (auto y = 0; y < (y1i - y0i); ++y) {
+    for (auto x = 0; x < (x1i - x0i); ++x) {
+
+      float i = range * float(y) / float(y1i - y0i) - max;
+
+      blur_data[(y + y0i) * width + x + x0i] = vec3(i, i, i);
+    }
   }
 
   // map to color
   for (ptrdiff_t y = 0; y < height; ++y) {
     for (ptrdiff_t x = 0; x < width; ++x) {
       auto p = blur_data[y * width + x];
-      blur_data[y * width + x] = p.x < 0.0f ? vec3(0.0f, -p.x, 0.0f) : vec3(p.x, 0.0f, 0.0f);
+
+      blur_data[y * width + x] = p.x < 0.0f
+      ? vec3(0.0f, std::max(0.f, -p.x * 2), std::max(0.f, -p.x * 2 - 1.f))
+      : vec3(std::max(0.f, p.x * 2.f), std::max(0.f, p.x * 2 - 1.f), 0.f);
     }
   }
 
