@@ -30,9 +30,8 @@ R"(
       master average <in>             Compute average value of pixels in the image <in>.
       master errors <fst> <snd>       Compute abs and rms (in this order) errors between the images <fst> and <snd>.
       master time <in>                Returns the rendering time of the image <in>.
-      master statistics <in>          Extract and print statistics from the <in> file.
       master measurements <in>        Extract and print measurements from the <in> file.
-      master traces <in>              Print traces from input metadata.
+      master traces <in>              Print positions of traces extracted from input file metadata.
       master continue <in>            Continue rendering of the <in> image.
       master gnuplot <ins>...         Create convergence charts from multiple <ins> images.
       master diff <out> <fst> <snd>   Compute relative difference between <fst> and <and> and save the result as <out>.
@@ -77,11 +76,38 @@ R"(
       --blue-sky=<B>                  Alias to --sky-horizon=<0x0x0> --sky-zenith<0x0xB>. [default: 0]
 
     Options (gnuplot):
-      --input=<path>                  An exr file containing errors data.
-      --output                        A output image with chart.
+      --input=<path>                  The path to .exr file containing error data.
+      --output                        The output image with the chart.
       --traces                        Generate a matrix of charts with data from window traces.
       --select=<wildcard>             Consider only series which name matches <wildcard>.
-      --error=<type>                  Specify the type of error rms/abs.
+
+    Examples:
+      View the image.exr file.
+        master image.exr
+
+      Render scene.blend using UPG with vertex merging from camera perspective.
+        master scene.blend --UPG --radius=0.01 --beta=2 --from-camera --output=image.exr
+
+      Render scene.blend using BPT for 20 minutes, save the result every 6 minutes.
+        master scene.blend --BPT --output=image.exr --num-minutes=20 --snapshot=360
+
+      Render scene.blend using BPT use all cores, use camera no. 2.
+        master scene.blend --BPT --output=image.exr --parallel --camera=2
+
+      Render scene.blend using UPG use reference.exr as the reference image, compute errors in square window at position [32, 32] with side size equal to 16.
+        master scene.blend --UPG --output=image.exr --reference=reference.exr --trace=32x32x8
+
+      Render scene.blend using UPG use all cores compute errors for multiple windows.
+        master scene.blend --UPG --output=image.exr --reference=reference.exr --trace=32x32x8 --trace=42x142x16
+
+      Merge two results from two different images.
+        master output.exr image-machineA.exr image-machineB.exr
+
+      Render image in batch (headless) mode.
+        master scene.blend --BPT --output=image.exr --parallel --camera=2 --batch
+
+      Render simple gradient based sky in places where there is no geometry.
+        master scene.blend --BPT --output=image.exr --parallel --batch --blue-sky=10
 )";
 
 string Options::caption() const {
