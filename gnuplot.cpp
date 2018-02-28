@@ -41,7 +41,7 @@ std::string exec(string cmd) {
 
 struct series_t {
   string label;
-  ivec2 point;
+  string group;
   vector<vec2> values;
 };
 
@@ -66,7 +66,7 @@ dataset_t make_dataset(const vector<string>& inputs) {
       size_t index;
       size_t size;
       string label;
-      ivec2 point;
+      string group;
     };
 
     map<ivec2, series_info_t, ivec2_less> series_info;
@@ -83,8 +83,8 @@ dataset_t make_dataset(const vector<string>& inputs) {
         series_info_t info;
         info.index = series_info.size() * 2 + dataset.series.size();
         info.size = measurement.sample_index + 1;
-        info.label = input + " " + std::to_string(key.x) + "x" + std::to_string(key.y);
-        info.point = key;
+        info.group = std::to_string(key.x) + "x" + std::to_string(key.y);
+        info.label = input + " " + info.group;
         series_info.insert(std::make_pair(key, info));
       }
     }
@@ -95,10 +95,10 @@ dataset_t make_dataset(const vector<string>& inputs) {
       auto info = info_itr.second;
       auto size = std::min(info.size, statistics.records.size());
       dataset.series[info.index + 0].label = info.label + " RMS";
-      dataset.series[info.index + 0].point = info.point;
+      dataset.series[info.index + 0].group = info.group;
       dataset.series[info.index + 0].values.resize(size);
       dataset.series[info.index + 1].label = info.label + " ABS";
-      dataset.series[info.index + 1].point = info.point;
+      dataset.series[info.index + 1].group = info.group;
       dataset.series[info.index + 1].values.resize(size);
     }
 
@@ -112,6 +112,23 @@ dataset_t make_dataset(const vector<string>& inputs) {
         dataset.series[info.index + 1].values[measurement.sample_index].x = frame_times[measurement.sample_index];
         dataset.series[info.index + 1].values[measurement.sample_index].y = measurement.abs_error;
       }
+    }
+
+    size_t index = dataset.series.size();
+    dataset.series.resize(index + 2);
+
+    dataset.series[index + 0].label = input + " image RMS";
+    dataset.series[index + 0].group = "image";
+    dataset.series[index + 0].values.resize(statistics.records.size());
+    dataset.series[index + 1].label = input + " image ABS";
+    dataset.series[index + 1].group = "image";
+    dataset.series[index + 1].values.resize(statistics.records.size());
+
+    for (size_t i = 0; i < statistics.records.size(); ++i) {
+      dataset.series[index + 0].values[i].x = frame_times[i + 1];
+      dataset.series[index + 0].values[i].y = statistics.records[i].rms_error;
+      dataset.series[index + 1].values[i].x = frame_times[i + 1];
+      dataset.series[index + 1].values[i].y = statistics.records[i].abs_error;
     }
   }
 
@@ -195,19 +212,19 @@ void make_gnuplot_script_grouped(
     string path;
   };
 
-  map<ivec2, vector<series_ref_t>, ivec2_less> groups;
+  map<string, vector<series_ref_t>> groups;
 
   for (size_t i = 0; i < temp_series.size(); ++i) {
     series_ref_t ref;
     ref.series = &dataset.series[i];
     ref.path = temp_series[i];
 
-    auto itr = groups.find(ref.series->point);
+    auto itr = groups.find(ref.series->group);
     if (itr != groups.end()) {
       itr->second.push_back(ref);
     }
     else {
-      groups.insert(std::make_pair(ref.series->point, vector<series_ref_t>(1, ref)));
+      groups.insert(std::make_pair(ref.series->group, vector<series_ref_t>(1, ref)));
     }
   }
 
