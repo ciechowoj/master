@@ -431,12 +431,8 @@ string compute_errors(string fst, string snd) {
   stringstream stream;
 
   stream << std::setprecision(10)
-    << abs_sum / num << " "
-    << sqrt(rms_sum / num) << " "
-    << fst_metadata.find("total_time")->second << " "
-    << snd_metadata.find("total_time")->second << " "
-    << fst_metadata.find("technique")->second << " "
-    << snd_metadata.find("technique")->second;
+    << "ABS: " << abs_sum / num << "\n"
+    << "RMS: " << sqrt(rms_sum / num);
 
   return stream.str();
 }

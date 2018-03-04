@@ -51,7 +51,7 @@ public:
     bool batch() const;
 
 protected:
-    float _scale = 0.1f;
+    float _scale = 1.f;
 
 private:
     GLFWwindow* _window = nullptr;
