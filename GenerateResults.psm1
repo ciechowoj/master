@@ -85,10 +85,10 @@ function Generate-Results([string]$model, [switch]$justPrint, [switch]$onlyUPG =
     {
       Invoke-Master $model $camera --BPT @traces -justPrint
       Invoke-Master $model $camera --VCM $radius @traces -justPrint
-      Invoke-Master $model $camera --UPG --from-camera $radius @traces -justPrint
     }
 
     Invoke-Master $model $camera --UPG $radius @traces -justPrint
+    Invoke-Master $model $camera --UPG --from-camera $radius @traces -justPrint
   }
   else
   {
@@ -96,10 +96,10 @@ function Generate-Results([string]$model, [switch]$justPrint, [switch]$onlyUPG =
     {
       Invoke-Master $model $camera --BPT @traces
       Invoke-Master $model $camera --VCM $radius @traces
-      Invoke-Master $model $camera --UPG --from-camera $radius @traces
     }
 
     Invoke-Master $model $camera --UPG $radius @traces
+    Invoke-Master $model $camera --UPG --from-camera $radius @traces
   }
 }
 
@@ -471,4 +471,16 @@ function Cluster8([switch]$justPrint) {
   Invoke-MasterRadiiExtra models/Bathroom.blend -justPrint:$justPrint -camera 0 -traces $bathroomTraces
   Invoke-MasterRadiiExtra models/BreakfastRoom1.blend -justPrint:$justPrint -camera 1 -traces $breakfastRoom1Camera1Traces
   Invoke-MasterRadiiExtra models/BreakfastRoom2.blend -justPrint:$justPrint -camera 1 -traces $breakfastRoom2Camera1Traces
+}
+
+function Cluster9([switch]$justPrint)
+{
+  $global:numMinutes = 60
+  $global:outputDirectory = "radii"
+
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.050
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.055
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.060
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.065
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.070
 }
