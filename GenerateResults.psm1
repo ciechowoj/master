@@ -78,7 +78,6 @@ function Invoke-Master() {
 function Generate-Results([string]$model, [switch]$justPrint, [switch]$onlyUPG = $false, $traces, $camera, $radius) {
   New-Item -Name $global:outputDirectory -ItemType directory -Force | Out-Null
 
-  Write-Host $model "camera" $camera
   if ($justPrint)
   {
     if (-not $onlyUPG)
@@ -389,21 +388,17 @@ function Cluster7([switch]$justPrint) {
 
   $global:outputDirectory = "radii"
 
-  % Invoke-MasterRadii models/Bathroom.blend -justPrint:$justPrint -camera 0 -traces $bathroomTraces
-  % Invoke-MasterRadii models/Bearings.blend -justPrint:$justPrint -camera 0 -traces $bearingsTraces
-  % Invoke-MasterRadii models/BreakfastRoom1.blend -justPrint:$justPrint -camera 0 -traces $breakfastRoom1Camera0Traces
-  % Invoke-MasterRadii models/BreakfastRoom1.blend -justPrint:$justPrint -camera 1 -traces $breakfastRoom1Camera1Traces
-  % Invoke-MasterRadii models/BreakfastRoom1.blend -justPrint:$justPrint -camera 2 -traces $breakfastRoom1Camera2Traces
-  % Invoke-MasterRadii models/BreakfastRoom2.blend -justPrint:$justPrint -camera 0 -traces $breakfastRoom2Camera0Traces
-  % Invoke-MasterRadii models/BreakfastRoom2.blend -justPrint:$justPrint -camera 1 -traces $breakfastRoom2Camera1Traces
-  % Invoke-MasterRadii models/BreakfastRoom2.blend -justPrint:$justPrint -camera 2 -traces $breakfastRoom2Camera2Traces
-  % Invoke-MasterRadii models/CrytekSponza.blend -justPrint:$justPrint -camera 0 -traces $crytekSponzaCamera0Traces
-  % Invoke-MasterRadii models/CrytekSponza.blend -justPrint:$justPrint -camera 1 -traces $crytekSponzaCamera1Traces
-  % Invoke-MasterRadii models/CrytekSponza.blend -justPrint:$justPrint -camera 2 -traces $crytekSponzaCamera2Traces
-
   Invoke-MasterRadii models/Bathroom.blend -justPrint:$justPrint -camera 0 -traces $bathroomTraces
+  Invoke-MasterRadii models/Bearings.blend -justPrint:$justPrint -camera 0 -traces $bearingsTraces
+  Invoke-MasterRadii models/BreakfastRoom1.blend -justPrint:$justPrint -camera 0 -traces $breakfastRoom1Camera0Traces
   Invoke-MasterRadii models/BreakfastRoom1.blend -justPrint:$justPrint -camera 1 -traces $breakfastRoom1Camera1Traces
+  Invoke-MasterRadii models/BreakfastRoom1.blend -justPrint:$justPrint -camera 2 -traces $breakfastRoom1Camera2Traces
+  Invoke-MasterRadii models/BreakfastRoom2.blend -justPrint:$justPrint -camera 0 -traces $breakfastRoom2Camera0Traces
   Invoke-MasterRadii models/BreakfastRoom2.blend -justPrint:$justPrint -camera 1 -traces $breakfastRoom2Camera1Traces
+  Invoke-MasterRadii models/BreakfastRoom2.blend -justPrint:$justPrint -camera 2 -traces $breakfastRoom2Camera2Traces
+  Invoke-MasterRadii models/CrytekSponza.blend -justPrint:$justPrint -camera 0 -traces $crytekSponzaCamera0Traces
+  Invoke-MasterRadii models/CrytekSponza.blend -justPrint:$justPrint -camera 1 -traces $crytekSponzaCamera1Traces
+  Invoke-MasterRadii models/CrytekSponza.blend -justPrint:$justPrint -camera 2 -traces $crytekSponzaCamera2Traces
 }
 
 function Cluster8([switch]$justPrint) {
