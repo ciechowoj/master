@@ -420,23 +420,6 @@ function Cluster8([switch]$justPrint) {
       -traces $traces
   }
 
-  function Invoke-MasterRadii(
-    [string]$path,
-    [switch]$justPrint,
-    [single]$radius,
-    [int]$camera,
-    $traces) {
-    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.010
-    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.015
-    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.020
-    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.025
-    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.030
-    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.035
-    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.040
-    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.045
-    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.050
-  }
-
   function Invoke-MasterRadiiExtra(
     [string]$path,
     [switch]$justPrint,
@@ -450,18 +433,6 @@ function Cluster8([switch]$justPrint) {
   }
 
   $global:outputDirectory = "radii"
-
-  # Invoke-MasterRadii models/Bathroom.blend -justPrint:$justPrint -camera 0 -traces $bathroomTraces
-  # Invoke-MasterRadii models/Bearings.blend -justPrint:$justPrint -camera 0 -traces $bearingsTraces
-  # Invoke-MasterRadii models/BreakfastRoom1.blend -justPrint:$justPrint -camera 0 -traces $breakfastRoom1Camera0Traces
-  # Invoke-MasterRadii models/BreakfastRoom1.blend -justPrint:$justPrint -camera 1 -traces $breakfastRoom1Camera1Traces
-  # Invoke-MasterRadii models/BreakfastRoom1.blend -justPrint:$justPrint -camera 2 -traces $breakfastRoom1Camera2Traces
-  # Invoke-MasterRadii models/BreakfastRoom2.blend -justPrint:$justPrint -camera 0 -traces $breakfastRoom2Camera0Traces
-  # Invoke-MasterRadii models/BreakfastRoom2.blend -justPrint:$justPrint -camera 1 -traces $breakfastRoom2Camera1Traces
-  # Invoke-MasterRadii models/BreakfastRoom2.blend -justPrint:$justPrint -camera 2 -traces $breakfastRoom2Camera2Traces
-  # Invoke-MasterRadii models/CrytekSponza.blend -justPrint:$justPrint -camera 0 -traces $crytekSponzaCamera0Traces
-  # Invoke-MasterRadii models/CrytekSponza.blend -justPrint:$justPrint -camera 1 -traces $crytekSponzaCamera1Traces
-  # Invoke-MasterRadii models/CrytekSponza.blend -justPrint:$justPrint -camera 2 -traces $crytekSponzaCamera2Traces
 
   Invoke-MasterRadiiExtra models/Bathroom.blend -justPrint:$justPrint -camera 0 -traces $bathroomTraces
   Invoke-MasterRadiiExtra models/BreakfastRoom1.blend -justPrint:$justPrint -camera 1 -traces $breakfastRoom1Camera1Traces
@@ -478,4 +449,46 @@ function Cluster9([switch]$justPrint)
   Bathroom -justPrint:$justPrint -onlyUPG -radius 0.060
   Bathroom -justPrint:$justPrint -onlyUPG -radius 0.065
   Bathroom -justPrint:$justPrint -onlyUPG -radius 0.070
+}
+
+function Cluster10([switch]$justPrint) {
+  function Invoke-MasterLocal(
+    [string]$path,
+    [switch]$justPrint,
+    [single]$radius,
+    [int]$camera,
+    $traces) {
+
+    Invoke-MasterV2 `
+      $path `
+      -justPrint:$justPrint `
+      -beta 2 `
+      -radius $radius `
+      -camera $camera `
+      -numMinutes 60 `
+      -technique "VCM" `
+      -traces $traces
+  }
+
+  function Invoke-MasterRadiiExtra(
+    [string]$path,
+    [switch]$justPrint,
+    [single]$radius,
+    [int]$camera,
+    $traces) {
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.07
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.08
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.09
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.10
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.11
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.12
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.13
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.14
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.2
+    Invoke-MasterLocal $path -justPrint:$justPrint -camera $camera -traces $traces -radius 0.3
+  }
+
+  $global:outputDirectory = "radii"
+
+  Invoke-MasterRadiiExtra models/Bathroom.blend -justPrint:$justPrint -camera 0 -traces $bathroomTraces
 }
