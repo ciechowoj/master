@@ -492,3 +492,21 @@ function Cluster10([switch]$justPrint) {
 
   Invoke-MasterRadiiExtra models/Bathroom.blend -justPrint:$justPrint -camera 0 -traces $bathroomTraces
 }
+
+function Cluster11([switch]$justPrint)
+{
+  $global:numMinutes = 30
+  $global:outputDirectory = "radii"
+
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.05
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.06
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.07
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.08
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.09
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.10
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.11
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.12
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.13
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.14
+}
+
