@@ -498,15 +498,27 @@ function Cluster11([switch]$justPrint)
   $global:numMinutes = 30
   $global:outputDirectory = "radii"
 
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.05
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.06
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.07
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.08
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.09
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.10
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.11
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.12
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.13
-  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.14
+
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.005
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.010
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.015
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.020
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.025
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.030
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.035
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.040
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.045
+  Bathroom -justPrint:$justPrint -onlyUPG -radius 0.055
+
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.05
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.06
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.07
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.08
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.09
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.10
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.11
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.12
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.13
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.14
 }
 
