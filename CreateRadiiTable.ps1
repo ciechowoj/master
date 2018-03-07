@@ -1,14 +1,12 @@
 #!/usr/bin/env powershell
 
-
-
 function Get-Images() {
   Get-ChildItem radii `
     | ForEach-Object { `
       if ($_ -match "^(?<Scene>\w*)\.(?<Method>\w*)\d\.(?<Radius>\w*)\.cam(?<Camera>\d*)(?<FromCamera>\.from\.camera\.|\.)exr") {
         $properties = @{
           Path = $_.FullName;
-          Scene = $Matches.Scene;
+          Scene = $Matches.Scene + "^$($Matches.Camera)";
           Method = $Matches.Method + $(If ($Matches.FromCamera -eq ".from.camera.") { "^*" } Else { "" });
           Radius = [single]($Matches.Radius -replace '_', '.');
           Camera = $Matches.Camera;
@@ -66,13 +64,19 @@ function Group-Radii($images) {
   $images `
     | Group-Object -Property Scene,Camera,Method `
     | ForEach-Object {
-      $radii = $_.Group | Select-Object -Property Radius
+      $radii = Convert-ToAssociative $_.Group;
+      $radiiKeys = @($radii.Keys)
+      $radiiValues = @($radii.Values | ForEach-Object { $_.AbsError })
+      $minError = [single]($radiiValues | Measure-Object -Minimum).Minimum;
+      $minRadius = $radiiKeys[$radiiValues.IndexOf($minError)]
 
       $properties = @{
         Path = $_.Group[0].Path;
         Scene = $_.Group[0].Scene;
         Method = $_.Group[0].Method;
-        Radii = Convert-ToAssociative $_.Group;
+        Radii = $radii;
+        MinError = $minError;
+        MinRadius = $minRadius;
         Camera = $_.Group[0].Camera;
         FromCamera = $_.Group[0].FromCamera -eq ".from.camera.";
       }
@@ -111,8 +115,10 @@ function Format-RadiiTable($images) {
   $images = Group-Radii $images
 
   "\begin{table}[ht]"
+  "\tiny"
   "\setlength\tabcolsep{2pt}"
   "\begin{center}"
+  "\begin{adjustbox}{angle=90}"
   "\begin{tabular}{ |l|l|" + [string]::Join("|", ($radii | ForEach-Object { "c" })) + "|l| }"
   "  \hline"
 
@@ -126,6 +132,36 @@ function Format-RadiiTable($images) {
   }
 
   "\end{tabular}"
+  "\end{adjustbox}"
+  "\end{center}"
+  "\end{table}"
+}
+
+
+function Format-BestRadiiTable($images) {
+  $images = Group-Radii $images
+  $radii = @{}
+
+  foreach ($image in $images) {
+    $radii[[System.Tuple]::Create($image.Scene, $image.Method)] = $image.MinRadius
+  }
+
+  $scenes = $images | Foreach-Object { $_.Scene } | Select-Object -Unique
+  $methods = $images | Foreach-Object { $_.Method } | Select-Object -Unique
+
+  "\begin{table}[ht]"
+  "\setlength\tabcolsep{2pt}"
+  "\begin{center}"
+  "\begin{tabular}{ |l|" + [string]::Join("|", ($methods | ForEach-Object { "l" })) + "| } \hline"
+
+  "  Scene & " + [string]::Join(" & ", ($methods | ForEach-Object { "$" + $_ + "$" })) + " \\ [0.5ex] \hline\hline"
+
+  foreach ($scene in $scenes) {
+    $row = $methods | ForEach-Object { $key = [System.Tuple]::Create($scene, $_); $(if ($radii.Contains($key)) { $radii[$key] } else { "-" }) }
+    "  $" + $scene + "$ & " + [string]::Join(" & ", $row) + " \\ \hline"
+  }
+
+  "\end{tabular}"
   "\end{center}"
   "\end{table}"
 }
@@ -133,31 +169,4 @@ function Format-RadiiTable($images) {
 $images = Get-ImagesWithErrors `
   | Where-Object { (-not ($_.Scene -like "BreakfastRoom*")) -or ($_.Camera -ne 2) }
 
-
-
-Format-RadiiTable $images
-
-
-
-# \begin{tabular}{ |r|l| }
-#     \hline
-#     \% time self & function name \\ [0.5ex] \hline\hline
-#      23.16 & \verb+embree::avx::BVHNIntersector1<...>::occluded(...)+ \\ \hline
-#      19.46 & \verb+embree::avx::BVHNIntersector1<...>::intersect(...)+ \\ \hline
-#       8.91 & \verb+UPGBase<...>::_gather(...)+ \\ \hline
-#       7.00 & \verb+UPGBase<...>::_connect(...)+ \\ \hline
-#       4.88 & \verb+Scene::querySurface(...) const+ \\ \hline
-#       3.43 & \verb+DiffuseBSDF::query(...) const+ \\ \hline
-#       2.95 & \verb+Scene::occluded(...) const+ \\ \hline
-#       2.88 & \verb+ska::detailv3::sherwood_v3_table<...>::grow()+ \\ \hline
-#       2.02 & \verb+UPGBase<...>::_traceEye(...)+ \\ \hline
-#       2.00 & \verb+HashGrid3D<...>::build(...)+ \\ \hline
-#       1.94 & \verb+PhongBSDF::query(...) const+ \\ \hline
-#       1.15 & \verb+std::mersenne_twister_engine<...>::operator()()+ \\ \hline
-#       1.11 & \verb+std::sort<...>(...)+ \\ \hline
-#       1.06 & \verb+Scene::intersect(...) const+ \\ \hline
-#      18.05 & other \\ [0.5ex] \hline\hline
-#      \% time total & function name \\ [0.5ex] \hline\hline
-#      % \rowcolor{green}
-#      15.32 & \verb+UPGBase<...>::scatter(...)+ \\ \hline
-# \end{tabular}
+Format-BestRadiiTable $images
