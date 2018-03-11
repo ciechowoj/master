@@ -286,6 +286,10 @@ function Invoke-MasterV2(
     "--snapshot=360",
     "--$technique")
 
+  if ($fromCamera) {
+    $commonArguments += "--from-camera"
+  }
+
   $masterPath = "./master.exe"
 
   $baseName = [io.path]::GetFileNameWithoutExtension($path)
@@ -522,3 +526,167 @@ function Cluster11([switch]$justPrint)
   # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.14
 }
 
+function Invoke-GenerateResults(
+  [string]$path,
+  [switch]$justPrint,
+  [switch]$withBPT,
+  [single]$upgRadius,
+  [single]$gpuRadius,
+  [single]$vcmRadius,
+  [int]$camera,
+  [int]$numMinutes,
+  $traces) {
+
+  if ($withBPT) {
+    Invoke-MasterV2 `
+      $path `
+      -justPrint:$justPrint `
+      -beta 2 `
+      -camera $camera `
+      -numMinutes $numMinutes `
+      -technique "BPT" `
+      -traces $traces
+  }
+
+  Invoke-MasterV2 `
+    $path `
+    -justPrint:$justPrint `
+    -beta 2 `
+    -radius $upgRadius `
+    -camera $camera `
+    -numMinutes $numMinutes `
+    -technique "UPG" `
+    -traces $traces
+
+  Invoke-MasterV2 `
+    $path `
+    -justPrint:$justPrint `
+    -beta 2 `
+    -radius $gpuRadius `
+    -camera $camera `
+    -numMinutes $numMinutes `
+    -fromCamera `
+    -technique "UPG" `
+    -traces $traces
+
+  Invoke-MasterV2 `
+    $path `
+    -justPrint:$justPrint `
+    -beta 2 `
+    -radius $vcmRadius `
+    -camera $camera `
+    -numMinutes $numMinutes `
+    -technique "VCM" `
+    -traces $traces
+
+  if ($justPrint) {
+    Write-Output ""
+  }
+}
+
+function Invoke-Bearings([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/Bearings.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $bearingTraces
+}
+
+function Invoke-Bathroom([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/Bathroom.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $bathroomTraces
+}
+
+function Invoke-BreakfastRoom1Camera0([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/BreakfastRoom1.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $breakfastRoom1Camera0Traces
+}
+
+function Invoke-BreakfastRoom1Camera1([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/BreakfastRoom1.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 1 -numMinutes $numMinutes -traces $breakfastRoom1Camera1Traces
+}
+
+function Invoke-BreakfastRoom1Camera2([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/BreakfastRoom1.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 2 -numMinutes $numMinutes -traces $breakfastRoom1Camera2Traces
+}
+
+function Invoke-BreakfastRoom2Camera0([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/BreakfastRoom2.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $breakfastRoom2Camera0Traces
+}
+
+function Invoke-BreakfastRoom2Camera1([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/BreakfastRoom2.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 1 -numMinutes $numMinutes -traces $breakfastRoom2Camera1Traces
+}
+
+function Invoke-BreakfastRoom2Camera2([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/BreakfastRoom2.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 2 -numMinutes $numMinutes -traces $breakfastRoom2Camera2Traces
+}
+
+function Invoke-CrytekSponzaCamera0([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/CrytekSponza.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $crytekSponzaCamera0Traces
+}
+
+function Invoke-CrytekSponzaCamera1([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/CrytekSponza.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $crytekSponzaCamera1Traces
+}
+
+function Invoke-CrytekSponzaCamera2([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
+{
+  Invoke-GenerateResults "models/CrytekSponza.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $crytekSponzaCamera2Traces
+}
+
+function Cluster12([switch]$justPrint, [int]$numMinutes = 360)
+{
+  Invoke-Bathroom -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.05 -gpuRadius 0.045 -vcmRadius 0.1
+  Invoke-Bearings -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.035 -gpuRadius 0.035 -vcmRadius 0.04
+  Invoke-BreakfastRoom1Camera0 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.01 -gpuRadius 0.01 -vcmRadius 0.025
+  Invoke-BreakfastRoom1Camera1 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.01 -gpuRadius 0.01 -vcmRadius 0.05
+  Invoke-BreakfastRoom2Camera0 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.015 -gpuRadius 0.01 -vcmRadius 0.015
+}
+
+function Cluster13([switch]$justPrint, [int]$numMinutes = 360)
+{
+  Invoke-BreakfastRoom2Camera1 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.02 -gpuRadius 0.01 -vcmRadius 0.05
+  Invoke-CrytekSponzaCamera0 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.02 -gpuRadius 0.01 -vcmRadius 0.035
+  Invoke-CrytekSponzaCamera1 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.02 -gpuRadius 0.01 -vcmRadius 0.035
+  Invoke-CrytekSponzaCamera2 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.02 -gpuRadius 0.01 -vcmRadius 0.03
+}
+
+function Cluster14([switch]$justPrint, [int]$numMinutes = 360)
+{
+  Cluster12 -justPrint:$justPrint -numMinutes $numMinutes
+  Cluster13 -justPrint:$justPrint -numMinutes $numMinutes
+}
+
+function Cluster15([switch]$justPrint)
+{
+  $global:numMinutes = 30
+  $global:outputDirectory = "radii"
+
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.005
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.010
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.015
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.020
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.025
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.030
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.035
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.040
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.045
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.055
+  Bearings -justPrint:$justPrint -onlyUPG -radius 0.060
+
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.05
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.06
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.07
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.08
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.09
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.10
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.11
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.12
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.13
+  # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.14
+}
