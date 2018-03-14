@@ -642,7 +642,7 @@ function Invoke-CrytekSponzaCamera2([switch]$justPrint, [single]$upgRadius, [sin
 function Cluster12([switch]$justPrint, [int]$numMinutes = 360)
 {
   Invoke-Bathroom -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.05 -gpuRadius 0.045 -vcmRadius 0.1
-  Invoke-Bearings -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.035 -gpuRadius 0.035 -vcmRadius 0.04
+  Invoke-Bearings -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.03 -gpuRadius 0.02 -vcmRadius 0.04
   Invoke-BreakfastRoom1Camera0 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.01 -gpuRadius 0.01 -vcmRadius 0.025
   Invoke-BreakfastRoom1Camera1 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.01 -gpuRadius 0.01 -vcmRadius 0.05
   Invoke-BreakfastRoom2Camera0 -justPrint:$justPrint -numMinutes $numMinutes -upgRadius 0.015 -gpuRadius 0.01 -vcmRadius 0.015

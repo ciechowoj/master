@@ -127,7 +127,7 @@ function Format-RadiiTable($images) {
     foreach ($image in $group.Group) {
       $radiiList = " & " + [string]::Join(" & ", (Format-Radii $radii $image.Radii)) + " \\ \hline"
 
-      "  $" + $image.Method + "$ & $" + $image.Scene + "^" + $image.Camera + "$" + $radiiList
+      "  $" + $image.Method + "$ & $" + $image.Scene + "$" + $radiiList
     }
   }
 
