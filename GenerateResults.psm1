@@ -4,6 +4,7 @@
 
 $numMinutes=360
 $outputDirectory = "result"
+$global:outputDirectory = "result"
 
 function Invoke-Master() {
   $beta = 2
