@@ -95,7 +95,7 @@ function Format-RadiiTable($images) {
       if ($actual.Contains($radius)) {
         $errorRaw = $actual[$radius].AbsError
         $error = $errorRaw * [system.math]::Pow(10, -$exponent)
-        $errorString = $error.ToString("0.0000")
+        $errorString = $error.ToString("0.00")
         if ($errorRaw -eq $minimum) {
           "\cellcolor{green} " + $errorString
         }
@@ -111,14 +111,13 @@ function Format-RadiiTable($images) {
     "$\times 10^{$exponent}$"
   }
 
-  $radii = Get-RadiiList $images
+  $radii = Get-RadiiList $images # | Where-Object { $_ -le 0.06 }
   $images = Group-Radii $images
 
   "\begin{table}[ht]"
   "\tiny"
   "\setlength\tabcolsep{2pt}"
   "\begin{center}"
-  "\begin{adjustbox}{angle=90}"
   "\begin{tabular}{ |l|l|" + [string]::Join("|", ($radii | ForEach-Object { "c" })) + "|l| }"
   "  \hline"
 
@@ -132,7 +131,6 @@ function Format-RadiiTable($images) {
   }
 
   "\end{tabular}"
-  "\end{adjustbox}"
   "\end{center}"
   "\end{table}"
 }
@@ -166,7 +164,29 @@ function Format-BestRadiiTable($images) {
   "\end{table}"
 }
 
+function Format-PlotData($images) {
+  $radii = Get-RadiiList $images # | Where-Object { $_ -le 0.06 }
+  $images = Group-Radii $images
+
+  $index = 2
+
+  $labels = $images `
+    | ForEach-Object { [string]$index + " " + $_.Scene + "[" + $_.Method + "]"; $index++ } `
+    | ForEach-Object { "{0, -32}" -f $_ }
+
+  [string]::Join("", "{0, -32}" -f "# 1 Radius ", $labels)
+
+  foreach ($radius in $radii) {
+    $errors = $images `
+      | ForEach-Object { $(if ($_.Radii.Contains($radius)) { $_.Radii[$radius].AbsError } else { "?" }) } `
+      | ForEach-Object { "{0, -32}" -f $_ }
+
+    [string]::Join("", "{0, -32}" -f $radius, $errors)
+
+  }
+}
+
 $images = Get-ImagesWithErrors `
   | Where-Object { (-not ($_.Scene -like "BreakfastRoom*")) -or ($_.Camera -ne 2) }
 
-Format-BestRadiiTable $images
+Format-PlotData $images
