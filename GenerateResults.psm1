@@ -284,7 +284,8 @@ function Invoke-MasterV2(
     "--num-minutes=$numMinutes",
     "--resolution=1024x1024",
     "--snapshot=360",
-    "--$technique")
+    "--$technique",
+    "--camera=$camera")
 
   if ($fromCamera) {
     $commonArguments += "--from-camera"
@@ -631,12 +632,12 @@ function Invoke-CrytekSponzaCamera0([switch]$justPrint, [single]$upgRadius, [sin
 
 function Invoke-CrytekSponzaCamera1([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
 {
-  Invoke-GenerateResults "models/CrytekSponza.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $crytekSponzaCamera1Traces
+  Invoke-GenerateResults "models/CrytekSponza.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 1 -numMinutes $numMinutes -traces $crytekSponzaCamera1Traces
 }
 
 function Invoke-CrytekSponzaCamera2([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
 {
-  Invoke-GenerateResults "models/CrytekSponza.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $crytekSponzaCamera2Traces
+  Invoke-GenerateResults "models/CrytekSponza.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 2 -numMinutes $numMinutes -traces $crytekSponzaCamera2Traces
 }
 
 function Cluster12([switch]$justPrint, [int]$numMinutes = 360)
