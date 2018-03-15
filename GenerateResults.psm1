@@ -587,7 +587,7 @@ function Invoke-GenerateResults(
 
 function Invoke-Bearings([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
 {
-  Invoke-GenerateResults "models/Bearings.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $bearingTraces
+  Invoke-GenerateResults "models/Bearings.blend" -justPrint:$justPrint -upgRadius $upgRadius -gpuRadius $gpuRadius -vcmRadius $vcmRadius -camera 0 -numMinutes $numMinutes -traces $bearingsTraces
 }
 
 function Invoke-Bathroom([switch]$justPrint, [single]$upgRadius, [single]$gpuRadius, [single]$vcmRadius, [int]$numMinutes)
