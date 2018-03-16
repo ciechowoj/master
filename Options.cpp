@@ -153,6 +153,14 @@ vec3 parse_xnotation3f(const string& s) {
   return result;
 }
 
+std::string format_xnotation3f(const vec3& v) {
+  auto x = std::to_string(v.x);
+  auto y = std::to_string(v.y);
+  auto z = std::to_string(v.z);
+
+  return x + "x" + y + "x" + z;
+}
+
 std::multimap<string, string> extractOptions(int argc, char const* const* argv) {
     std::multimap<string, string> result;
 
@@ -1137,6 +1145,18 @@ Options::Options(const map<string, string>& dict) {
     width = stoll(dict.find("options.width")->second);
     height = stoll(dict.find("options.height")->second);
 
+    auto sky_horizon_itr = dict.find("options.sky_horizon");
+
+    if (sky_horizon_itr != dict.end()) {
+      sky_horizon = parse_xnotation3f(sky_horizon_itr->second);
+    }
+
+    auto sky_zenith_itr = dict.find("options.sky_zenith");
+
+    if (sky_zenith_itr != dict.end()) {
+      sky_zenith = parse_xnotation3f(sky_zenith_itr->second);
+    }
+
     const string prefix = "options.trace[";
 
     for (auto&& item : dict) {
@@ -1197,6 +1217,8 @@ map<string, string> Options::to_dict() const
     result["options.camera_id"] = to_string(camera_id);
     result["options.width"] = to_string(width);
     result["options.height"] = to_string(height);
+    result["options.sky_horizon"] = format_xnotation3f(sky_horizon);
+    result["options.sky_zenith"] = format_xnotation3f(sky_zenith);
 
     for (size_t i = 0; i < trace.size(); ++i) {
       auto x = std::to_string(trace[i].x);
