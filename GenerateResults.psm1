@@ -275,6 +275,7 @@ function Invoke-MasterV2(
   [int]$camera,
   [int]$numMinutes,
   [string]$technique,
+  [single]$blueSky = [single]::NaN,
   $traces) {
 
   $commonArguments = @(
@@ -290,6 +291,10 @@ function Invoke-MasterV2(
 
   if ($fromCamera) {
     $commonArguments += "--from-camera"
+  }
+
+  if (-not [single]::IsNaN($blueSky)) {
+    $commonArguments += "--blue-sky=$blueSky"
   }
 
   $masterPath = "./master.exe"
@@ -316,6 +321,10 @@ function Invoke-MasterV2(
 
   if ($fromCamera) {
     $techniqueString = $techniqueString + ".from.camera"
+  }
+
+  if (-not [single]::IsNaN($blueSky)) {
+    $techniqueString += ".bs$($blueSky.ToString(`"0.00`") -replace "\.", "_")"
   }
 
   $output = "--output=$global:outputDirectory/$basename.$techniqueString.exr"
@@ -691,4 +700,19 @@ function Cluster15([switch]$justPrint)
   # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.12
   # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.13
   # Bathroom -justPrint:$justPrint -onlyUPG -radius 0.14
+}
+
+function Cluster16([switch]$justPrint) {
+  function Local([single]$blueSky) {
+    Invoke-MasterV2 `
+      "models/CrytekSponza.blend" `
+      -justPrint:$justPrint `
+      -beta 2 `
+      -camera 1 `
+      -numMinutes 480 `
+      -technique "BPT" `
+      -blueSky $blueSky
+  }
+
+  Local 1.0
 }
